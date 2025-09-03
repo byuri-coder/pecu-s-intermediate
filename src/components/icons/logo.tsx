@@ -3,23 +3,39 @@ import * as React from "react";
 export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
+        viewBox="0 0 64 64"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         {...props}
     >
-        <path d="M12 2L3 7v10l9 5 9-5V7L12 2z" fill="hsl(var(--primary))" stroke="none" />
-        <g transform="translate(0, -1)">
-            {/* P shape with golden stroke */}
-            <path d="M12 15a3 3 0 0 0 0-6H9v6h3z" stroke="hsl(45, 100%, 51%)" />
-            <path d="M9 9V19" stroke="hsl(45, 100%, 51%)" />
-            
+        <g>
+            {/* Main hexagon P-shape */}
+            <path 
+                d="M32 4 L58 19 L58 49 L32 64 L6 49 L6 19 L32 4 Z M18 26 V42 H32 C42 42 42 26 32 26 H18 Z" 
+                fill="hsl(var(--primary))" 
+                stroke="none"
+            />
+            {/* Gold border for the P */}
+            <path 
+                d="M18 28 V40 H32 C40 40 40 28 32 28 H18 Z" 
+                stroke="hsl(45, 100%, 51%)"
+                strokeWidth="2.5"
+                fill="none"
+            />
             {/* Arrows pointing up */}
-            <path d="m11 9 1-2 1 2" stroke="hsl(var(--primary-foreground))" strokeWidth="1" />
-            <path d="m11 12 1-2 1 2" stroke="hsl(var(--primary-foreground))" strokeWidth="1" />
+            <path 
+                d="M28 36 L32 32 L36 36"
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path 
+                d="M28 31 L32 27 L36 31"
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </g>
     </svg>
 );
