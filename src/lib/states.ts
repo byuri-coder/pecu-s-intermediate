@@ -22,4 +22,8 @@ export const states = [
   { value: 'RS', label: 'Rio Grande do Sul' },
   { value: 'RO', label: 'Rondônia' },
   { value: 'RR', label: 'Roraima' },
-  { value
+  { value: 'SC', label: 'Santa Catarina' },
+  { value: 'SP', label: 'São Paulo' },
+  { value: 'SE', label: 'Sergipe' },
+  { value: 'TO', label: 'Tocantins' },
+];
