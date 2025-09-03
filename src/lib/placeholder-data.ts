@@ -1,4 +1,4 @@
-import type { CarbonCredit } from '@/lib/types';
+import type { CarbonCredit, TaxCredit } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
   {
@@ -71,6 +71,45 @@ export const placeholderCredits: CarbonCredit[] = [
     vintage: '2023',
     standard: 'Verra VCS',
     projectOverview: 'A conservation project aimed at protecting the unique biodiversity of the Cerrado biome from agricultural expansion. The project supports local communities with sustainable income alternatives.',
+    status: 'Vendido',
+  },
+];
+
+export const placeholderTaxCredits: TaxCredit[] = [
+  {
+    id: 'tax-icms-01',
+    sellerName: 'Varejista Paulista S.A.',
+    taxType: 'ICMS',
+    amount: 150000,
+    price: 145500,
+    location: 'São Paulo, SP',
+    status: 'Disponível',
+  },
+  {
+    id: 'tax-pis-cofins-02',
+    sellerName: 'Indústria Metalúrgica do Sul',
+    taxType: 'PIS/COFINS',
+    amount: 75000,
+    price: 72000,
+    location: 'Porto Alegre, RS',
+    status: 'Disponível',
+  },
+  {
+    id: 'tax-ipi-03',
+    sellerName: 'Importadora Geral Ltda.',
+    taxType: 'IPI',
+    amount: 25000,
+    price: 24000,
+    location: 'Santos, SP',
+    status: 'Negociando',
+  },
+  {
+    id: 'tax-iss-04',
+    sellerName: 'Serviços de TI Inovadores',
+    taxType: 'ISS',
+    amount: 50000,
+    price: 48500,
+    location: 'Rio de Janeiro, RJ',
     status: 'Vendido',
   },
 ];
