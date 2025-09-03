@@ -30,7 +30,7 @@ export function Header() {
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navItems.slice(0, 5).map((item) => (
-              <NavLink key={item.href} href={item.href}>
+              <NavLink key={`${item.href}-${item.label}`} href={item.href}>
                 {item.label}
               </NavLink>
             ))}
@@ -55,7 +55,7 @@ export function Header() {
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="text-sm font-medium text-foreground">
+                <Link key={`${item.href}-${item.label}`} href={item.href} className="text-sm font-medium text-foreground">
                   {item.label}
                 </Link>
               ))}
