@@ -24,7 +24,7 @@ export function Header() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/credito-de-carbono" className="mr-6 flex items-center space-x-2">
-            <Logo className="h-6 w-6" />
+            <Logo className="h-8 w-8" />
             <span className="hidden font-bold sm:inline-block">
               PECU'S INTERMEDIATE
             </span>
@@ -51,7 +51,7 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
             <Link href="/" className="mr-6 flex items-center space-x-2">
-                <Logo className="h-6 w-6" />
+                <Logo className="h-8 w-8" />
                 <span className="font-bold">PECU'S INTERMEDIATE</span>
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
