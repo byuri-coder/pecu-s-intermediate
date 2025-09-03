@@ -14,7 +14,7 @@ export function Header() {
     { href: '/dashboard', label: 'Gerenciamento' },
     { href: '/register-credit', label: 'Cadastrar Crédito' },
     { href: '/tributos', label: 'Tributos' },
-    { href: '#', label: 'Terras Rurais' },
+    { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
   ];
 
@@ -30,7 +30,7 @@ export function Header() {
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navItems.map((item) => (
-              <NavLink key={item.label} href={item.href}>
+              <NavLink key={`${item.href}-${item.label}`} href={item.href}>
                 {item.label}
               </NavLink>
             ))}
@@ -55,7 +55,7 @@ export function Header() {
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
               {navItems.map((item) => (
-                <Link key={`${item.label}-mobile`} href={item.href} className="text-sm font-medium text-foreground">
+                <Link key={`${item.href}-${item.label}-mobile`} href={item.href} className="text-sm font-medium text-foreground">
                   {item.label}
                 </Link>
               ))}

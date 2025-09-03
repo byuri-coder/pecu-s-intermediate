@@ -20,3 +20,18 @@ export type TaxCredit = {
   location: string;
   status: 'Disponível' | 'Negociando' | 'Vendido';
 };
+
+export type RuralLand = {
+  id: string;
+  title: string;
+  description: string;
+  owner: string;
+  sizeHa: number;
+  businessType: 'Venda' | 'Permuta' | 'Mineração' | 'Arrendamento';
+  location: string;
+  images: string[];
+  documentation: string; // Link or description of available docs
+  registration: string; // Land registration identifier
+  price?: number; // Optional, might not apply to all business types
+  status: 'Disponível' | 'Negociando' | 'Vendido';
+};

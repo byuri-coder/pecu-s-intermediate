@@ -1,4 +1,4 @@
-import type { CarbonCredit, TaxCredit } from '@/lib/types';
+import type { CarbonCredit, TaxCredit, RuralLand } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
   {
@@ -112,4 +112,61 @@ export const placeholderTaxCredits: TaxCredit[] = [
     location: 'Rio de Janeiro, RJ',
     status: 'Vendido',
   },
+];
+
+export const placeholderRuralLands: RuralLand[] = [
+  {
+    id: 'land-001',
+    title: 'Fazenda Vale Verde',
+    description: 'Propriedade produtiva com dupla aptidão (soja e gado), rica em água, com sede e infraestrutura completa. Documentação 100% regularizada.',
+    owner: 'Agropecuária Sul S.A.',
+    sizeHa: 1200,
+    businessType: 'Venda',
+    location: 'Mato Grosso do Sul, Brasil',
+    images: ['/placeholder-images/farm-1.jpg', '/placeholder-images/farm-2.jpg', '/placeholder-images/farm-3.jpg'],
+    documentation: 'Toda a documentação (CAR, GEO, ITR) está disponível para consulta mediante proposta.',
+    registration: 'CRI 12.345-6',
+    price: 36000000,
+    status: 'Disponível',
+  },
+  {
+    id: 'land-002',
+    title: 'Sítio Recanto das Águas',
+    description: 'Área ideal para arrendamento de pastagem, com excelente topografia e acesso facilitado. Pastos formados e cercas em bom estado.',
+    owner: 'João da Silva',
+    sizeHa: 350,
+    businessType: 'Arrendamento',
+    location: 'Minas Gerais, Brasil',
+    images: ['/placeholder-images/pasture-1.jpg', '/placeholder-images/pasture-2.jpg'],
+    documentation: 'Contrato de arrendamento padrão disponível. Documentos da propriedade em dia.',
+    registration: 'CRI 9.876-5',
+    price: 500, // Price per Ha per year
+    status: 'Disponível',
+  },
+  {
+    id: 'land-003',
+    title: 'Gleba Diamante Bruto',
+    description: 'Área com alto potencial para exploração mineral (quartzo e feldspato), com estudos geológicos preliminares indicando viabilidade. Oferecemos parceria ou venda total.',
+    owner: 'Mineração Pedra Alta Ltda.',
+    sizeHa: 800,
+    businessType: 'Mineração',
+    location: 'Bahia, Brasil',
+    images: ['/placeholder-images/mining-1.jpg', '/placeholder-images/mining-2.jpg'],
+    documentation: 'Relatórios geológicos e licenças prévias disponíveis.',
+    registration: 'CRI 45.678-1',
+    status: 'Disponível',
+  },
+  {
+    id: 'land-004',
+    title: 'Permuta Urbana em Fazenda',
+    description: 'Excelente fazenda para pecuária. Aceito permuta por imóveis comerciais em capitais (preferência por São Paulo ou Curitiba).',
+    owner: 'Carlos Pereira Investimentos',
+    sizeHa: 2500,
+    businessType: 'Permuta',
+    location: 'Goiás, Brasil',
+    images: ['/placeholder-images/exchange-1.jpg', '/placeholder-images/exchange-2.jpg', '/placeholder-images/exchange-3.jpg'],
+    documentation: 'Matrícula atualizada e livre de ônus.',
+    registration: 'CRI 23.451-9',
+    status: 'Negociando',
+  }
 ];
