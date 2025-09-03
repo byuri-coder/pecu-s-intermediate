@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Mountain } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { Logo } from '../icons/logo';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -23,9 +24,9 @@ export function Header() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/credito-de-carbono" className="mr-6 flex items-center space-x-2">
-            <Mountain className="h-6 w-6 text-primary" />
+            <Logo className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block">
-              CarbonLink
+              PECU'S INTERMEDIATE
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -50,8 +51,8 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
             <Link href="/" className="mr-6 flex items-center space-x-2">
-                <Mountain className="h-6 w-6 text-primary" />
-                <span className="font-bold">CarbonLink</span>
+                <Logo className="h-6 w-6" />
+                <span className="font-bold">PECU'S INTERMEDIATE</span>
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
               {navItems.map((item) => (

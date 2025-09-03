@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'CarbonLink',
+  title: 'PECU\'S INTERMEDIATE',
   description: 'A modern marketplace for carbon credits.',
 };
 
