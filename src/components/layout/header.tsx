@@ -11,7 +11,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 
 export function Header() {
   const navItems = [
-    { href: '/marketplace', label: 'Marketplace' },
+    { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
     { href: '/register-credit', label: 'Cadastrar Crédito' },
     { href: '/dashboard', label: 'Gerenciamento' },
     { href: '#', label: 'Tributos' },
@@ -22,7 +22,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
-          <Link href="/marketplace" className="mr-6 flex items-center space-x-2">
+          <Link href="/credito-de-carbono" className="mr-6 flex items-center space-x-2">
             <Mountain className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block">
               CarbonLink

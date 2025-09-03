@@ -28,7 +28,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href="/marketplace" className="hover:text-primary">Marketplace</Link>
+        <Link href="/credito-de-carbono" className="hover:text-primary">Crédito de Carbono</Link>
         <ChevronRight className="h-4 w-4" />
         <span className="text-foreground">{credit.sellerName} - {credit.creditType}</span>
       </div>

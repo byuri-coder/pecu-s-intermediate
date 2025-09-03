@@ -8,7 +8,7 @@ export default function RegisterCreditPage() {
         <CardHeader>
           <CardTitle className="text-3xl font-bold font-headline">Cadastrar Crédito de Carbono</CardTitle>
           <CardDescription>
-            Preencha o formulário abaixo para listar seus créditos de carbono em nosso marketplace.
+            Preencha o formulário abaixo para listar seus créditos de carbono.
           </CardDescription>
         </CardHeader>
         <CardContent>

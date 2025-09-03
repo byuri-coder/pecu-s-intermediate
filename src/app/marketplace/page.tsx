@@ -12,7 +12,7 @@ export default function MarketplacePage() {
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <section className="text-center mb-12">
         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl font-headline">
-          Marketplace de Créditos de Carbono
+          Crédito de Carbono
         </h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
           Explore, negocie e invista em um futuro mais verde.

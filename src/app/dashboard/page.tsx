@@ -48,7 +48,7 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Créditos Anunciados</CardTitle>
-                <CardDescription>Gerencie os créditos que você listou no marketplace.</CardDescription>
+                <CardDescription>Gerencie os créditos que você listou.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>

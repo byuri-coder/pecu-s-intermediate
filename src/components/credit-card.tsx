@@ -43,7 +43,7 @@ export function CreditCard({ credit }: CreditCardProps) {
           </p>
         </div>
         <Button asChild className="w-full">
-          <Link href={`/marketplace/${credit.id}`}>Negociar</Link>
+          <Link href={`/credito-de-carbono/${credit.id}`}>Negociar</Link>
         </Button>
       </CardFooter>
     </Card>
