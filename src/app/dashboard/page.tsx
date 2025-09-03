@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MovementsChart } from './movements-chart';
+import { cn } from '@/lib/utils';
 
 const StatusBadge = ({ status }: { status: CarbonCredit['status'] }) => {
   const variant = {
@@ -24,11 +25,6 @@ const StatusBadge = ({ status }: { status: CarbonCredit['status'] }) => {
 
   return <Badge variant={variant} className={cn('capitalize', className)}>{status}</Badge>
 };
-
-function cn(...inputs: (string | undefined)[]) {
-  return inputs.filter(Boolean).join(' ');
-}
-
 
 export default function DashboardPage() {
   return (
