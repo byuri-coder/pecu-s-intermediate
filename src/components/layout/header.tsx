@@ -11,11 +11,11 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 
 export function Header() {
   const navItems = [
-    { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
-    { href: '/register-credit', label: 'Cadastrar Crédito' },
     { href: '/dashboard', label: 'Gerenciamento' },
     { href: '#', label: 'Tributos' },
     { href: '#', label: 'Terras Rurais' },
+    { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
+    { href: '/register-credit', label: 'Cadastrar Crédito' },
   ];
 
   return (
@@ -29,7 +29,7 @@ export function Header() {
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navItems.slice(0, 5).map((item) => (
+            {navItems.map((item) => (
               <NavLink key={`${item.href}-${item.label}`} href={item.href}>
                 {item.label}
               </NavLink>
