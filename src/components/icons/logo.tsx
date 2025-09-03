@@ -13,10 +13,13 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
     >
         <path d="M12 2L3 7v10l9 5 9-5V7L12 2z" fill="hsl(var(--primary))" stroke="none" />
         <g transform="translate(0, -1)">
-            <path d="M8 15V9h4a3 3 0 010 6H8z" stroke="hsl(45, 100%, 51%)" />
-            <path d="M11.5 13.5l-1-1" stroke="hsl(45, 100%, 51%)" />
-            <path d="M12.5 13.5l1-1" stroke="hsl(45, 100%, 51%)" />
-            <path d="M12 11.5V10" stroke="hsl(45, 100%, 51%)" />
+            {/* P shape with golden stroke */}
+            <path d="M12 15a3 3 0 0 0 0-6H9v6h3z" stroke="hsl(45, 100%, 51%)" />
+            <path d="M9 9V19" stroke="hsl(45, 100%, 51%)" />
+            
+            {/* Arrows pointing up */}
+            <path d="m11 9 1-2 1 2" stroke="hsl(var(--primary-foreground))" strokeWidth="1" />
+            <path d="m11 12 1-2 1 2" stroke="hsl(var(--primary-foreground))" strokeWidth="1" />
         </g>
     </svg>
 );
