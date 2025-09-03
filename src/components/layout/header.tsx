@@ -70,7 +70,7 @@ export function Header() {
           </div>
           <nav className="flex items-center">
             <Button asChild>
-              <Link href="/cadastro">Login / Cadastrar</Link>
+              <Link href="/login">Login</Link>
             </Button>
           </nav>
         </div>

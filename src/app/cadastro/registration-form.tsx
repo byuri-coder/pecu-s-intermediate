@@ -28,6 +28,9 @@ const registrationSchema = z.object({
   email: z.string().email('Email inválido'),
   contactPhone: z.string().min(10, 'Telefone de contato inválido'),
   
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  confirmPassword: z.string().min(6, 'A confirmação de senha é obrigatória'),
+
   stateRegistration: z.string().optional(),
   registrationState: z.string().optional(),
 
@@ -37,6 +40,9 @@ const registrationSchema = z.object({
   zipCode: z.string().min(8, 'CEP inválido'),
   
   specialRegistration: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
 });
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
@@ -52,6 +58,8 @@ export function RegistrationForm() {
       cpfCnpj: '',
       email: '',
       contactPhone: '',
+      password: '',
+      confirmPassword: '',
       stateRegistration: '',
       registrationState: '',
       address: '',
@@ -89,7 +97,7 @@ export function RegistrationForm() {
           
           {/* Personal Information */}
           <section className="space-y-4 p-6 border rounded-lg">
-            <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais</h3>
+            <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais e Acesso</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField name="fullName" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} placeholder="Seu nome completo" /></FormControl><FormMessage /></FormItem>
@@ -102,6 +110,12 @@ export function RegistrationForm() {
               )} />
               <FormField name="contactPhone" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Telefone para Contato</FormLabel><FormControl><Input type="tel" {...field} placeholder="(00) 90000-0000" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="password" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" {...field} placeholder="Crie uma senha forte" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="confirmPassword" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Confirme sua Senha</FormLabel><FormControl><Input type="password" {...field} placeholder="Repita a senha" /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
           </section>
