@@ -12,10 +12,10 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 export function Header() {
   const navItems = [
     { href: '/dashboard', label: 'Gerenciamento' },
+    { href: '/register-credit', label: 'Cadastrar Crédito' },
     { href: '#', label: 'Tributos' },
     { href: '#', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
-    { href: '/register-credit', label: 'Cadastrar Crédito' },
   ];
 
   return (
