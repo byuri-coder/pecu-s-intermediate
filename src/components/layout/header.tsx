@@ -69,7 +69,9 @@ export function Header() {
             {/* Can add search bar here if needed */}
           </div>
           <nav className="flex items-center">
-            <Button>Login</Button>
+            <Button asChild>
+              <Link href="/cadastro">Login / Cadastrar</Link>
+            </Button>
           </nav>
         </div>
       </div>

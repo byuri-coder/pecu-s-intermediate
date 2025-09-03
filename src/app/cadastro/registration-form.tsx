@@ -1,0 +1,185 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { useTransition } from 'react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, MapPin } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { states } from '@/lib/states';
+
+const registrationSchema = z.object({
+  fullName: z.string().min(3, 'Nome completo é obrigatório'),
+  cpfCnpj: z.string().min(11, 'CPF ou CNPJ inválido'),
+  email: z.string().email('Email inválido'),
+  contactPhone: z.string().min(10, 'Telefone de contato inválido'),
+  
+  stateRegistration: z.string().optional(),
+  registrationState: z.string().optional(),
+
+  address: z.string().min(5, 'Endereço é obrigatório'),
+  city: z.string().min(2, 'Cidade é obrigatória'),
+  state: z.string().min(2, 'Estado é obrigatório'),
+  zipCode: z.string().min(8, 'CEP inválido'),
+  
+  specialRegistration: z.string().optional(),
+});
+
+type RegistrationFormValues = z.infer<typeof registrationSchema>;
+
+export function RegistrationForm() {
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      fullName: '',
+      cpfCnpj: '',
+      email: '',
+      contactPhone: '',
+      stateRegistration: '',
+      registrationState: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      specialRegistration: '',
+    },
+  });
+  
+  const address = form.watch('address');
+  const city = form.watch('city');
+  const state = form.watch('state');
+  const fullAddress = [address, city, state].filter(Boolean).join(', ');
+
+
+  const onSubmit = (data: RegistrationFormValues) => {
+    startTransition(async () => {
+      // Here you would typically send the data to your backend
+      console.log(data);
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Sua conta foi criada. Você já pode negociar na plataforma.",
+      });
+      form.reset();
+    });
+  };
+
+  return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          
+          {/* Personal Information */}
+          <section className="space-y-4 p-6 border rounded-lg">
+            <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField name="fullName" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} placeholder="Seu nome completo" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="cpfCnpj" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>CPF ou CNPJ</FormLabel><FormControl><Input {...field} placeholder="00.000.000/0000-00" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="email" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="seu.email@exemplo.com" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="contactPhone" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Telefone para Contato</FormLabel><FormControl><Input type="tel" {...field} placeholder="(00) 90000-0000" /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+          </section>
+
+          {/* Registration Information */}
+          <section className="space-y-4 p-6 border rounded-lg">
+             <h3 className="text-xl font-semibold border-b pb-2">Informações Fiscais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField name="stateRegistration" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Inscrição Estadual</FormLabel><FormControl><Input {...field} placeholder="Número da Inscrição (se aplicável)" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="registrationState" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Estado de Inscrição</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage /></FormItem>
+              )} />
+            </div>
+          </section>
+
+          {/* Address Information */}
+          <section className="space-y-4 p-6 border rounded-lg">
+             <h3 className="text-xl font-semibold border-b pb-2">Endereço</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FormField name="address" control={form.control} render={({ field }) => (
+                <FormItem className="lg:col-span-3"><FormLabel>Endereço Completo</FormLabel><FormControl><Input {...field} placeholder="Rua, Número, Bairro" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="city" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField name="state" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Estado</FormLabel>
+                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage /></FormItem>
+              )} />
+              <FormField name="zipCode" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} placeholder="00000-000" /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            {fullAddress && (
+                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                 >
+                    <MapPin className="h-4 w-4" />
+                    Visualizar no Google Maps
+                 </a>
+            )}
+          </section>
+
+          {/* Special Authorizations */}
+          <section className="space-y-4 p-6 border rounded-lg">
+            <h3 className="text-xl font-semibold border-b pb-2">Autorizações Especiais</h3>
+             <FormField name="specialRegistration" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Matrículas ou Autorizações Especiais</FormLabel>
+                  <FormControl><Textarea {...field} placeholder="Se necessário, informe aqui matrículas em órgãos, programas ou autorizações (ex: para mineração, venda de certos créditos, etc.)" /></FormControl>
+                  <FormDescription>Campo opcional. Preencha caso sua atividade exija alguma autorização específica.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )} />
+          </section>
+
+          <Button type="submit" className="w-full text-lg" size="lg" disabled={isPending}>
+            {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+            Criar Minha Conta
+          </Button>
+        </form>
+      </Form>
+  );
+}
