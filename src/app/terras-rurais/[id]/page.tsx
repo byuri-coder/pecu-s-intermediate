@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Mining, User, FileText, Fingerprint } from 'lucide-react';
+import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint } from 'lucide-react';
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType']
     const icons = {
       'Venda': Handshake,
       'Permuta': Building,
-      'Mineração': Mining,
+      'Mineração': Pickaxe,
       'Arrendamento': Sprout,
     };
     const Icon = icons[type];

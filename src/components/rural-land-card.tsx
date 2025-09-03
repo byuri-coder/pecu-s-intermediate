@@ -3,7 +3,7 @@ import type { RuralLand } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, MountainIcon, Handshake, Sprout, Building, Mining } from 'lucide-react';
+import { MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ const BusinessTypeIcon = ({ type }: { type: RuralLand['businessType'] }) => {
   const icons = {
     'Venda': Handshake,
     'Permuta': Building,
-    'Mineração': Mining,
+    'Mineração': Pickaxe,
     'Arrendamento': Sprout,
   };
   const Icon = icons[type];
