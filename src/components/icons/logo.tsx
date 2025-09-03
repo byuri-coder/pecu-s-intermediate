@@ -10,7 +10,7 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
         <g>
             {/* Main hexagon P-shape */}
             <path 
-                d="M32 4 L58 19 L58 49 L32 64 L6 49 L6 19 L32 4 Z M18 26 V42 H32 C42 42 42 26 32 26 H18 Z" 
+                d="M32 2 L58 18 L58 50 L32 66 L6 50 L6 18 L32 2 Z M18 26 V42 H32 C42 42 42 26 32 26 H18 Z" 
                 fill="hsl(var(--primary))" 
                 stroke="none"
             />
