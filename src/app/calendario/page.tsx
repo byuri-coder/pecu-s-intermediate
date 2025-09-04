@@ -6,10 +6,12 @@ import { Calendar, TrendingUp, TrendingDown, Leaf, Landmark, Mountain } from 'lu
 import { cn } from '@/lib/utils';
 import { placeholderOperations } from '@/lib/placeholder-data';
 import type { Operation } from '@/lib/types';
-import { addDays, isSameDay } from 'date-fns';
+import { isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+
 
 const AssetIcon = ({ assetType }: { assetType: Operation['assetType'] }) => {
     const icons = {
@@ -57,7 +59,7 @@ export default function CalendarPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="flex justify-center">
                     <Card className="p-0">
-                        <Calendar
+                        <CalendarComponent
                             mode="single"
                             selected={date}
                             onSelect={setDate}
@@ -65,11 +67,8 @@ export default function CalendarPage() {
                             modifiers={{
                                 hasOperation: operationDates,
                             }}
-                            modifiersStyles={{
-                                hasOperation: {
-                                    border: "2px solid hsl(var(--primary))",
-                                    borderRadius: 'var(--radius)',
-                                },
+                            modifiersClassNames={{
+                                hasOperation: 'day-with-operation',
                             }}
                         />
                     </Card>

@@ -72,4 +72,7 @@ body {
   .font-headline {
     font-family: 'Georgia', serif;
   }
+  .day-with-operation {
+    @apply border-2 border-primary rounded-md;
+  }
 }
