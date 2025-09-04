@@ -6,7 +6,7 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import WolframAlphaAPI from 'wolfram-alpha-api';
+const WolframAlphaAPI = require('wolfram-alpha-api');
 
 let waApi: any;
 if (process.env.WOLFRAM_ALPHA_APP_ID) {
