@@ -5,7 +5,7 @@
  * - calculatorTool - A tool that takes a natural language query for a calculation and returns the result.
  */
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 const WolframAlphaAPI = require('wolfram-alpha-api');
 
 let waApi: any;
