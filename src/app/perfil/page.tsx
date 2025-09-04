@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { User } from 'lucide-react';
+import { ProfileForm } from './profile-form';
 
 export default function ProfilePage() {
   return (
@@ -17,7 +18,7 @@ export default function ProfilePage() {
             </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Em breve: formulário para editar foto de perfil, email, autorizações especiais, endereço, nome, senha e inscrição estadual.</p>
+          <ProfileForm />
         </CardContent>
       </Card>
     </div>

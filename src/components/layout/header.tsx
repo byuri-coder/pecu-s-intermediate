@@ -103,7 +103,7 @@ export function Header() {
                     <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
-                    <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Adicionar Filiais</span></Link>
+                    <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Gerenciar Filiais</span></Link>
                   </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
@@ -113,9 +113,12 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <nav className="flex items-center">
-              <Button asChild>
+             <nav className="flex items-center space-x-2">
+              <Button variant="ghost" asChild>
                 <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/cadastro">Cadastre-se</Link>
               </Button>
             </nav>
           )}
