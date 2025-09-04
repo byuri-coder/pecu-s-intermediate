@@ -1,4 +1,4 @@
-import type { CarbonCredit, TaxCredit, RuralLand } from '@/lib/types';
+import type { CarbonCredit, TaxCredit, RuralLand, Operation } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
   {
@@ -112,6 +112,15 @@ export const placeholderTaxCredits: TaxCredit[] = [
     location: 'Rio de Janeiro, RJ',
     status: 'Vendido',
   },
+   {
+    id: 'tax-icms-05',
+    sellerName: 'Atacado Nacional',
+    taxType: 'ICMS',
+    amount: 320000,
+    price: 300000,
+    location: 'Belo Horizonte, MG',
+    status: 'Disponível',
+  },
 ];
 
 export const placeholderRuralLands: RuralLand[] = [
@@ -155,6 +164,7 @@ export const placeholderRuralLands: RuralLand[] = [
     documentation: 'Relatórios geológicos e licenças prévias disponíveis.',
     registration: 'CRI 45.678-1',
     status: 'Disponível',
+    price: 5000000
   },
   {
     id: 'land-004',
@@ -168,5 +178,53 @@ export const placeholderRuralLands: RuralLand[] = [
     documentation: 'Matrícula atualizada e livre de ônus.',
     registration: 'CRI 23.451-9',
     status: 'Negociando',
+    price: 75000000
   }
+];
+
+const today = new Date();
+const currentYear = today.getFullYear();
+const currentMonth = today.getMonth();
+
+export const placeholderOperations: Operation[] = [
+  {
+    id: 'op-001',
+    date: new Date(currentYear, currentMonth, 3),
+    type: 'Venda',
+    assetType: 'Crédito de Carbono',
+    description: 'Venda de 1.000 créditos (proj-amazon-reforestation)',
+    value: 15500,
+  },
+  {
+    id: 'op-002',
+    date: new Date(currentYear, currentMonth, 10),
+    type: 'Compra',
+    assetType: 'Crédito Tributário',
+    description: 'Aquisição de saldo credor de ICMS (tax-icms-01)',
+    value: 145500,
+  },
+    {
+    id: 'op-003',
+    date: new Date(currentYear, currentMonth, 10),
+    type: 'Venda',
+    assetType: 'Terra Rural',
+    description: 'Venda da Fazenda Rio Claro',
+    value: 5000000,
+  },
+  {
+    id: 'op-004',
+    date: new Date(currentYear, currentMonth, 18),
+    type: 'Venda',
+    assetType: 'Crédito de Carbono',
+    description: 'Venda de 5.000 créditos (proj-bahia-wind-farm)',
+    value: 110000,
+  },
+  {
+    id: 'op-005',
+    date: new Date(currentYear, currentMonth - 1, 25),
+    type: 'Compra',
+    assetType: 'Crédito de Carbono',
+    description: 'Compra de 2.000 créditos (proj-cerrado-conservation)',
+    value: 39600,
+  },
 ];

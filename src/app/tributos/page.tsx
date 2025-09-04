@@ -34,6 +34,7 @@ export default function TaxCreditsMarketplacePage() {
                   <SelectItem value="iss">ISS</SelectItem>
                   <SelectItem value="pis-cofins">PIS/COFINS</SelectItem>
                   <SelectItem value="ipi">IPI</SelectItem>
+                   <SelectItem value="outros">Outros</SelectItem>
                 </SelectContent>
               </Select>
             </div>

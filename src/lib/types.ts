@@ -14,7 +14,7 @@ export type CarbonCredit = {
 export type TaxCredit = {
   id: string;
   sellerName: string;
-  taxType: 'ICMS' | 'ISS' | 'PIS/COFINS' | 'IPI';
+  taxType: 'ICMS' | 'ISS' | 'PIS/COFINS' | 'IPI' | 'Outros';
   amount: number;
   price: number;
   location: string;
@@ -34,4 +34,13 @@ export type RuralLand = {
   registration: string; // Land registration identifier
   price?: number; // Optional, might not apply to all business types
   status: 'Disponível' | 'Negociando' | 'Vendido';
+};
+
+export type Operation = {
+  id: string;
+  date: Date;
+  type: 'Compra' | 'Venda';
+  assetType: 'Crédito de Carbono' | 'Crédito Tributário' | 'Terra Rural';
+  description: string;
+  value: number;
 };
