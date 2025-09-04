@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Bot } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { AgentChat } from './agent-chat';
 
 export default function AgentPage() {
@@ -8,11 +8,11 @@ export default function AgentPage() {
       <Card className="border-primary/20">
         <CardHeader className="text-center">
             <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit mb-4">
-                <Bot className="h-8 w-8" />
+                <Sparkles className="h-8 w-8" />
             </div>
-          <CardTitle className="text-3xl font-bold font-headline">Agente de Assistência</CardTitle>
+          <CardTitle className="text-3xl font-bold font-headline">Agente de Assistência IA</CardTitle>
           <CardDescription>
-            Seu assistente IA para cálculos e análises tributárias e financeiras.
+            Seu assistente para cálculos e análises tributárias e financeiras.
           </CardDescription>
         </CardHeader>
         <CardContent>
