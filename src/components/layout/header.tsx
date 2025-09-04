@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User } from 'lucide-react';
 import { Logo } from '../icons/logo';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -12,12 +14,13 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 
 export function Header() {
   const navItems = [
-    { href: '/dashboard', label: 'Gerenciamento' },
-    { href: '/register-credit', label: 'Cadastrar Crédito' },
     { href: '/tributos', label: 'Tributos' },
     { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
   ];
+
+  // Placeholder for user authentication state
+  const isLoggedIn = true;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -64,15 +67,58 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Can add search bar here if needed */}
-          </div>
-          <nav className="flex items-center">
-            <Button asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-          </nav>
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          {isLoggedIn ? (
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="/avatars/01.png" alt="User Avatar" />
+                    <AvatarFallback>
+                        <UserCircle className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Usuário Logado</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      usuario@email.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/perfil"><User className="mr-2 h-4 w-4" /><span>Meu Perfil</span></Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Gerenciamento</span></Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/cadastrar-ativo"><FilePlus className="mr-2 h-4 w-4" /><span>Cadastrar Ativos</span></Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário</span></Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Adicionar Filiais</span></Link>
+                  </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <nav className="flex items-center">
+              <Button asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+            </nav>
+          )}
         </div>
       </div>
     </header>
