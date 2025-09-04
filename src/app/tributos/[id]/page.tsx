@@ -1,14 +1,10 @@
 import { placeholderTaxCredits } from '@/lib/placeholder-data';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Landmark, MapPin, BadgePercent, Building } from 'lucide-react';
+import { ChevronRight, Landmark, MapPin, BadgePercent, Building, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendido' }) => {
@@ -95,7 +91,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
             <CardHeader>
               <CardTitle>Negociação</CardTitle>
               <CardDescription>
-                Faça sua proposta para adquirir o saldo credor.
+                Entre em contato para adquirir o saldo credor.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -118,11 +114,11 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
               </div>
 
               <div className="space-y-3 pt-4">
-                <Button type="submit" className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível'}>
-                  Confirmar Intenção de Compra
-                </Button>
-                <Button type="button" variant="outline" className="w-full text-base" size="lg">
-                  Contatar Vendedor
+                <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível'}>
+                  <Link href={`/negociacao/${credit.id}?type=tax-credit`}>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Iniciar Negociação
+                  </Link>
                 </Button>
               </div>
             </CardContent>

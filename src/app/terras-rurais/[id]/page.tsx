@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint } from 'lucide-react';
+import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare } from 'lucide-react';
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
@@ -160,11 +159,11 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
               )}
              
               <div className="space-y-3 pt-4">
-                <Button type="submit" className="w-full text-base" size="lg" disabled={land.status !== 'Disponível'}>
-                  Tenho Interesse
-                </Button>
-                <Button type="button" variant="outline" className="w-full text-base" size="lg">
-                  Contatar Proprietário
+                 <Button asChild className="w-full text-base" size="lg" disabled={land.status !== 'Disponível'}>
+                  <Link href={`/negociacao/${land.id}?type=rural-land`}>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Iniciar Negociação
+                  </Link>
                 </Button>
               </div>
             </CardContent>

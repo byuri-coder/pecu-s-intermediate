@@ -104,7 +104,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
             </div>
         )}
         <Button asChild className="w-full" disabled={land.status !== 'Disponível'}>
-          <Link href={`/terras-rurais/${land.id}`}>Ver Detalhes</Link>
+          <Link href={`/negociacao/${land.id}?type=rural-land`}>Ver Detalhes</Link>
         </Button>
       </CardFooter>
     </Card>

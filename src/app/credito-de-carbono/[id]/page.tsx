@@ -4,11 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe } from 'lucide-react';
+import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare } from 'lucide-react';
 
 export default function CreditDetailPage({ params }: { params: { id: string } }) {
   const credit = placeholderCredits.find((p) => p.id === params.id);
@@ -88,9 +85,9 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         <div className="lg:col-span-1">
           <Card className="sticky top-20">
             <CardHeader>
-              <CardTitle>Negociação</CardTitle>
+              <CardTitle>Interessado?</CardTitle>
               <CardDescription>
-                Faça sua proposta para adquirir os créditos.
+                Inicie uma conversa para negociar este ativo.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -100,27 +97,12 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(credit.pricePerCredit)}
                 </span>
               </div>
-
-              <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantidade desejada</Label>
-                  <Input id="quantity" type="number" placeholder="Ex: 500" defaultValue={100} />
-                  <p className="text-xs text-muted-foreground">Máximo: {credit.quantity.toLocaleString()}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Preço proposto por crédito (BRL)</Label>
-                  <Input id="price" type="number" placeholder={credit.pricePerCredit.toString()} defaultValue={credit.pricePerCredit} />
-                </div>
-                <Separator className="my-6" />
-                <div className="space-y-2">
-                    <p className="text-sm font-semibold">Valor Total Estimado:</p>
-                    <p className="text-3xl font-bold text-primary text-center">R$ {(credit.pricePerCredit * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <div className="space-y-3 pt-4">
-                  <Button type="submit" className="w-full text-base" size="lg">Confirmar Intenção de Compra</Button>
-                  <Button type="button" variant="outline" className="w-full text-base" size="lg">Contatar Vendedor</Button>
-                </div>
-              </form>
+              <Button asChild className="w-full text-base" size="lg">
+                  <Link href={`/negociacao/${credit.id}?type=carbon-credit`}>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Iniciar Negociação
+                  </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

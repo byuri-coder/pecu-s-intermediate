@@ -60,7 +60,7 @@ export function TaxCreditCard({ credit }: TaxCreditCardProps) {
           </p>
         </div>
         <Button asChild className="w-full" disabled={credit.status !== 'Disponível'}>
-          <Link href={`/tributos/${credit.id}`}>Negociar</Link>
+          <Link href={`/negociacao/${credit.id}?type=tax-credit`}>Negociar</Link>
         </Button>
       </CardFooter>
     </Card>
