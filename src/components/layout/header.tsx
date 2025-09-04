@@ -76,7 +76,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="/avatars/01.png" alt="User Avatar" />
+                    <AvatarImage src="https://picsum.photos/seed/avatar1/36/36" alt="User Avatar" />
                     <AvatarFallback>
                         <UserCircle className="h-6 w-6" />
                     </AvatarFallback>

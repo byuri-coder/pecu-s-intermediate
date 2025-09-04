@@ -108,7 +108,7 @@ export function ProfileForm() {
             <div className="flex items-center gap-6">
                 <div className="relative">
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src="/avatars/01.png" alt="User Avatar" />
+                        <AvatarImage src="https://picsum.photos/seed/avatar1/96/96" alt="User Avatar" />
                         <AvatarFallback>
                             <UserCircle className="h-12 w-12" />
                         </AvatarFallback>
