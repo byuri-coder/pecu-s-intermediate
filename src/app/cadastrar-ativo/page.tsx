@@ -2,6 +2,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RegisterCreditForm } from '../register-credit/register-credit-form';
 import { Leaf, Mountain, Landmark } from 'lucide-react';
+import { RegisterRuralLandForm } from './register-rural-land-form';
+import { RegisterTaxCreditForm } from './register-tax-credit-form';
 
 export default function RegisterAssetPage() {
   return (
@@ -41,24 +43,24 @@ export default function RegisterAssetPage() {
               </Card>
             </TabsContent>
             <TabsContent value="rural-land">
-              <Card>
+              <Card className="border-primary/20">
                 <CardHeader>
-                  <CardTitle>Cadastro de Terra Rural</CardTitle>
-                  <CardDescription>Esta funcionalidade estará disponível em breve.</CardDescription>
+                  <CardTitle>Formulário de Terra Rural</CardTitle>
+                  <CardDescription>Preencha os detalhes abaixo. Após a análise, você poderá publicar no marketplace.</CardDescription>
                 </CardHeader>
-                <CardContent className="text-center text-muted-foreground py-12">
-                  <p>(Em breve: formulário para cadastrar terras para venda, arrendamento, etc.)</p>
+                <CardContent>
+                  <RegisterRuralLandForm />
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="tax-credit">
-              <Card>
+              <Card className="border-primary/20">
                   <CardHeader>
-                    <CardTitle>Cadastro de Crédito Tributário</CardTitle>
-                    <CardDescription>Esta funcionalidade estará disponível em breve.</CardDescription>
+                    <CardTitle>Formulário de Crédito Tributário</CardTitle>
+                    <CardDescription>Preencha os detalhes abaixo. Após a análise, você poderá publicar no marketplace.</CardDescription>
                   </CardHeader>
-                  <CardContent className="text-center text-muted-foreground py-12">
-                      <p>(Em breve: formulário para cadastrar saldos credores de ICMS, PIS/COFINS, etc.)</p>
+                  <CardContent>
+                      <RegisterTaxCreditForm />
                   </CardContent>
               </Card>
             </TabsContent>
