@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Bot, Loader2, Send, User, Sparkles, FileText, DollarSign, Bookmark } from 'lucide-react';
+import { Bot, Loader2, Send, User, Sparkles, FileText, DollarSign, Bookmark, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -140,6 +140,14 @@ export function AgentChat() {
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Modelos de Economia</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" disabled={isPending}>
+                                    <Landmark className="h-5 w-5 text-muted-foreground" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Modelos Tributários</p></TooltipContent>
                         </Tooltip>
                         
                         <FormField
