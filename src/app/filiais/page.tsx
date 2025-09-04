@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Building, PlusCircle } from 'lucide-react';
+import { Building, PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { AddBranchForm } from './add-branch-form';
 
 // Placeholder data for existing branches
@@ -50,10 +61,37 @@ export default function BranchesPage() {
               <div className="space-y-4">
                   <div className="border rounded-lg">
                       {branches.map((branch, index) => (
-                          <div key={branch.id} className={`p-4 ${index < branches.length - 1 ? 'border-b' : ''}`}>
-                              <p className="font-semibold">{branch.name}</p>
-                              <p className="text-sm text-muted-foreground">CNPJ: {branch.cnpj}</p>
-                              <p className="text-sm text-muted-foreground">{branch.address}</p>
+                          <div key={branch.id} className={`flex items-center justify-between p-4 ${index < branches.length - 1 ? 'border-b' : ''}`}>
+                              <div>
+                                <p className="font-semibold">{branch.name}</p>
+                                <p className="text-sm text-muted-foreground">CNPJ: {branch.cnpj}</p>
+                                <p className="text-sm text-muted-foreground">{branch.address}</p>
+                              </div>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Excluir Filial</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Essa ação não pode ser desfeita. Isso irá apagar permanentemente a filial <span className="font-semibold">{branch.name}</span> dos nossos servidores.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        className="bg-destructive hover:bg-destructive/90"
+                                        onClick={() => console.log('delete branch', branch.id)}
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                           </div>
                       ))}
                   </div>
