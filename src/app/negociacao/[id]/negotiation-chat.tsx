@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -34,15 +35,15 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
                 return <p>{msg.content}</p>;
             case 'pdf':
                 return (
-                    <div className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30">
+                    <a href="#" className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30 hover:bg-secondary/50 transition-colors">
                         <FileText className="h-6 w-6 text-red-600"/>
                         <span className="font-medium text-sm truncate">{msg.content}</span>
-                    </div>
+                    </a>
                 )
             case 'image':
                 return (
                      <div className="w-full aspect-video rounded-md overflow-hidden relative">
-                        <img src={msg.content} alt="Imagem enviada no chat" className="object-cover w-full h-full" />
+                        <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover" data-ai-hint="farm field" />
                      </div>
                 )
             default:
