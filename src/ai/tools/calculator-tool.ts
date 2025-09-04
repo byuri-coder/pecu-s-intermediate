@@ -10,7 +10,7 @@ import WolframAlphaAPI from 'wolfram-alpha-api';
 
 let waApi: any;
 if (process.env.WOLFRAM_ALPHA_APP_ID) {
-    waApi = new (WolframAlphaAPI as any)(process.env.WOLFRAM_ALPHA_APP_ID);
+    waApi = WolframAlphaAPI(process.env.WOLFRAM_ALPHA_APP_ID);
 } else {
     console.warn("WOLFRAM_ALPHA_APP_ID is not set. The calculator tool will not work.");
 }
