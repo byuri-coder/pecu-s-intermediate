@@ -297,14 +297,62 @@ function DifalCalculator() {
     );
 }
 
+// 6. Calculadora de Base de Cálculo com Redução
+function ReducedBaseCalculator() {
+  const [totalValue, setTotalValue] = useState('');
+  const [reductionPercent, setReductionPercent] = useState('');
+  const [result, setResult] = useState<number | null>(null);
 
+  const handleCalculate = () => {
+    const value = parseFloat(totalValue);
+    const reduction = parseFloat(reductionPercent);
+
+    if (!isNaN(value) && !isNaN(reduction) && reduction >= 0 && reduction <= 100) {
+      const reducedBase = value * (1 - reduction / 100);
+      setResult(reducedBase);
+    } else {
+      setResult(null);
+    }
+  };
+
+  return (
+    <Card className="shadow-lg border-none">
+      <CardContent className="p-6 space-y-6">
+        <p className="text-sm text-center text-muted-foreground">Útil para cenários com benefícios fiscais de redução de base de cálculo.</p>
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="totalValue">Valor Total da Operação (R$)</Label>
+                <Input id="totalValue" type="number" placeholder="Ex: 1000" value={totalValue} onChange={(e) => setTotalValue(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="reductionPercent">Percentual de Redução (%)</Label>
+                <Input id="reductionPercent" type="number" placeholder="Ex: 25" value={reductionPercent} onChange={(e) => setReductionPercent(e.target.value)} />
+            </div>
+        </div>
+        <Button onClick={handleCalculate} className="w-full">Calcular Base Reduzida</Button>
+        {result !== null && (
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado</CardTitle></CardHeader>
+            <CardContent className="p-4 pt-0 space-y-3">
+                <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                    <span className="text-muted-foreground">Base de Cálculo Reduzida</span>
+                    <span className="font-bold text-primary text-lg">{formatCurrency(result)}</span>
+                </div>
+            </CardContent>
+          </Card>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // Componente principal que une todas as calculadoras
 export function TaxCalculator() {
   return (
     <Tabs defaultValue="desagio" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 lg:grid-cols-7 h-auto flex-wrap">
+      <TabsList className="grid w-full grid-cols-4 md:grid-cols-4 lg:grid-cols-8 h-auto flex-wrap">
         <TabsTrigger value="desagio">Deságio</TabsTrigger>
+        <TabsTrigger value="base-calculo">Base de Cálculo</TabsTrigger>
         <TabsTrigger value="icms">ICMS</TabsTrigger>
         <TabsTrigger value="icms-st">ICMS-ST</TabsTrigger>
         <TabsTrigger value="difal">DIFAL</TabsTrigger>
@@ -314,6 +362,9 @@ export function TaxCalculator() {
       </TabsList>
       <TabsContent value="desagio">
         <DiscountCalculator />
+      </TabsContent>
+       <TabsContent value="base-calculo">
+        <ReducedBaseCalculator />
       </TabsContent>
       <TabsContent value="icms">
         <SimpleTaxCalculator taxName="ICMS" taxRate={18} />
