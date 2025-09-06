@@ -476,11 +476,95 @@ function ReducedBaseCalculator() {
   );
 }
 
+// 7. Calculadora IRPF
+function IrpfCalculator() {
+  const [monthlyIncome, setMonthlyIncome] = useState('');
+  const [result, setResult] = useState<{ tax: number; rate: number; deduction: number } | null>(null);
+
+  const calculateIrpf = (income: number) => {
+    let rate = 0;
+    let deduction = 0;
+    if (income <= 2259.20) {
+      rate = 0;
+      deduction = 0;
+    } else if (income <= 2826.65) {
+      rate = 7.5;
+      deduction = 169.44;
+    } else if (income <= 3751.05) {
+      rate = 15;
+      deduction = 381.44;
+    } else if (income <= 4664.68) {
+      rate = 22.5;
+      deduction = 662.77;
+    } else {
+      rate = 27.5;
+      deduction = 896.00;
+    }
+    const tax = (income * rate) / 100 - deduction;
+    return { tax: Math.max(0, tax), rate, deduction };
+  };
+
+  const handleCalculate = () => {
+    const income = parseFloat(monthlyIncome);
+    if (!isNaN(income)) {
+      setResult(calculateIrpf(income));
+    } else {
+      setResult(null);
+    }
+  };
+
+  return (
+    <Card className="shadow-lg border-none">
+      <CardContent className="p-6 space-y-6">
+        <p className="text-sm text-center text-muted-foreground">Cálculo simplificado do IRPF mensal (tabela progressiva).</p>
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="monthlyIncome">Rendimento Mensal Tributável (R$)</Label>
+                <Input id="monthlyIncome" type="number" placeholder="Ex: 5000" value={monthlyIncome} onChange={(e) => setMonthlyIncome(e.target.value)} />
+            </div>
+        </div>
+        <Button onClick={handleCalculate} className="w-full">Calcular IRPF</Button>
+        {result !== null && (
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado do IRPF</CardTitle></CardHeader>
+            <CardContent className="p-4 pt-0 space-y-3">
+                <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                    <span className="text-muted-foreground">Alíquota Efetiva</span>
+                    <span className="font-bold">{result.rate}%</span>
+                </div>
+                <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                    <span className="text-muted-foreground">Imposto Devido</span>
+                    <span className="font-bold text-primary text-lg">{formatCurrency(result.tax)}</span>
+                </div>
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                        <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                        <div>
+                            <p className="font-semibold">Fórmula:</p>
+                            <code className="text-xs p-2 bg-muted rounded-md block mt-1">Imposto = (Rendimento * Alíquota / 100) - Parcela a Deduzir</code>
+                        </div>
+                        <div>
+                            <p className="font-semibold">Cálculo Aplicado:</p>
+                            <code className="text-xs p-2 bg-muted rounded-md block mt-1">{formatCurrency(result.tax)} = ({formatCurrency(parseFloat(monthlyIncome))} * {result.rate}% / 100) - {formatCurrency(result.deduction)}</code>
+                        </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </CardContent>
+          </Card>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
 // Componente principal que une todas as calculadoras
 export function TaxCalculator() {
   return (
     <Tabs defaultValue="desagio" className="w-full">
-      <TabsList className="grid w-full grid-cols-4 md:grid-cols-4 lg:grid-cols-8 h-auto flex-wrap">
+      <TabsList className="grid w-full grid-cols-4 md:grid-cols-4 lg:grid-cols-9 h-auto flex-wrap">
         <TabsTrigger value="desagio">Deságio</TabsTrigger>
         <TabsTrigger value="base-calculo">Base de Cálculo</TabsTrigger>
         <TabsTrigger value="icms">ICMS</TabsTrigger>
@@ -489,6 +573,7 @@ export function TaxCalculator() {
         <TabsTrigger value="ipi">IPI</TabsTrigger>
         <TabsTrigger value="pis-cofins">PIS/COFINS</TabsTrigger>
         <TabsTrigger value="irpj-csll">IRPJ/CSLL</TabsTrigger>
+        <TabsTrigger value="irpf">IRPF</TabsTrigger>
       </TabsList>
       <TabsContent value="desagio">
         <DiscountCalculator />
@@ -514,8 +599,9 @@ export function TaxCalculator() {
        <TabsContent value="irpj-csll">
         <SimpleTaxCalculator taxName="IRPJ/CSLL" taxRate={24} taxRateLabel="Alíquota IRPJ+CSLL (%) (Lucro Real)" />
       </TabsContent>
+       <TabsContent value="irpf">
+        <IrpfCalculator />
+      </TabsContent>
     </Tabs>
   );
 }
-
-    
