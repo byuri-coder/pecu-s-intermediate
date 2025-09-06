@@ -2,118 +2,82 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { BadgePercent } from 'lucide-react';
 
-export function Calculator() {
-  const [display, setDisplay] = useState('0');
-  const [currentValue, setCurrentValue] = useState<number | null>(null);
-  const [operator, setOperator] = useState<string | null>(null);
-  const [waitingForOperand, setWaitingForOperand] = useState(false);
+export function TaxCalculator() {
+  const [creditAmount, setCreditAmount] = useState('');
+  const [sellingPrice, setSellingPrice] = useState('');
+  const [result, setResult] = useState<{ discountValue: number; discountPercentage: number } | null>(null);
 
-  const inputDigit = (digit: string) => {
-    if (waitingForOperand) {
-      setDisplay(digit);
-      setWaitingForOperand(false);
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  const handleCalculate = () => {
+    const amount = parseFloat(creditAmount);
+    const price = parseFloat(sellingPrice);
+
+    if (!isNaN(amount) && !isNaN(price) && amount > 0 && price > 0 && price <= amount) {
+      const discountValue = amount - price;
+      const discountPercentage = (discountValue / amount) * 100;
+      setResult({ discountValue, discountPercentage });
     } else {
-      setDisplay(display === '0' ? digit : display + digit);
+      setResult(null);
+      // Maybe show a toast message for invalid input
     }
   };
-
-  const inputDecimal = () => {
-    if (!display.includes('.')) {
-      setDisplay(display + '.');
-    }
-  };
-
-  const clearDisplay = () => {
-    setDisplay('0');
-    setCurrentValue(null);
-    setOperator(null);
-    setWaitingForOperand(false);
-  };
-
-  const performOperation = (nextOperator: string) => {
-    const inputValue = parseFloat(display);
-
-    if (currentValue === null) {
-      setCurrentValue(inputValue);
-    } else if (operator) {
-      const result = calculate(currentValue, inputValue, operator);
-      setCurrentValue(result);
-      setDisplay(String(result));
-    }
-
-    setWaitingForOperand(true);
-    setOperator(nextOperator);
-  };
-
-  const calculate = (firstOperand: number, secondOperand: number, operator: string) => {
-    switch (operator) {
-      case '+':
-        return firstOperand + secondOperand;
-      case '-':
-        return firstOperand - secondOperand;
-      case '*':
-        return firstOperand * secondOperand;
-      case '/':
-        return firstOperand / secondOperand;
-      case '=':
-        return secondOperand;
-      default:
-        return secondOperand;
-    }
-  };
-  
-  const handleEquals = () => {
-    const inputValue = parseFloat(display);
-    if (operator && currentValue !== null) {
-      const result = calculate(currentValue, inputValue, operator);
-      setCurrentValue(result);
-      setDisplay(String(result));
-      setOperator(null);
-      setWaitingForOperand(true);
-    }
-  };
-  
-  const buttons = [
-    { label: 'C', handler: clearDisplay, className: 'bg-destructive/80 hover:bg-destructive text-destructive-foreground col-span-2' },
-    { label: '%', handler: () => performOperation('%') },
-    { label: '/', handler: () => performOperation('/') },
-    { label: '7', handler: () => inputDigit('7') },
-    { label: '8', handler: () => inputDigit('8') },
-    { label: '9', handler: () => inputDigit('9') },
-    { label: '*', handler: () => performOperation('*') },
-    { label: '4', handler: () => inputDigit('4') },
-    { label: '5', handler: () => inputDigit('5') },
-    { label: '6', handler: () => inputDigit('6') },
-    { label: '-', handler: () => performOperation('-') },
-    { label: '1', handler: () => inputDigit('1') },
-    { label: '2', handler: () => inputDigit('2') },
-    { label: '3', handler: () => inputDigit('3') },
-    { label: '+', handler: () => performOperation('+') },
-    { label: '0', handler: () => inputDigit('0'), className: 'col-span-2' },
-    { label: '.', handler: inputDecimal },
-    { label: '=', handler: handleEquals, className: 'bg-primary/90 hover:bg-primary' },
-  ];
 
   return (
-    <Card className="p-4 shadow-lg">
-      <CardContent className="p-0">
-        <div className="bg-muted text-muted-foreground rounded-lg p-4 mb-4 text-right text-4xl font-mono break-all">
-          {display}
+    <Card className="shadow-lg">
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="creditAmount">Valor de Face do Crédito (R$)</Label>
+                <Input
+                    id="creditAmount"
+                    type="number"
+                    placeholder="Ex: 100000"
+                    value={creditAmount}
+                    onChange={(e) => setCreditAmount(e.target.value)}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="sellingPrice">Preço de Venda (R$)</Label>
+                <Input
+                    id="sellingPrice"
+                    type="number"
+                    placeholder="Ex: 95000"
+                    value={sellingPrice}
+                    onChange={(e) => setSellingPrice(e.target.value)}
+                />
+            </div>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          {buttons.map((btn) => (
-            <Button
-              key={btn.label}
-              onClick={btn.handler}
-              variant={['C', '%', '/', '*', '-', '+', '='].includes(btn.label) ? 'secondary' : 'outline'}
-              className={`text-2xl h-16 ${btn.className || ''}`}
-            >
-              {btn.label}
-            </Button>
-          ))}
-        </div>
+        <Button onClick={handleCalculate} className="w-full">
+            Calcular Deságio
+        </Button>
+        {result && (
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg text-center">Resultado do Cálculo</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-3">
+                <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                    <span className="text-muted-foreground">Valor do Deságio</span>
+                    <span className="font-bold text-primary text-lg">{formatCurrency(result.discountValue)}</span>
+                </div>
+                 <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                    <span className="text-muted-foreground">Percentual de Deságio</span>
+                    <span className="font-bold text-primary text-lg flex items-center gap-1">
+                        <BadgePercent className="h-5 w-5"/>
+                        {result.discountPercentage.toFixed(2)}%
+                    </span>
+                </div>
+            </CardContent>
+          </Card>
+        )}
       </CardContent>
     </Card>
   );

@@ -17,7 +17,7 @@ export function Header() {
     { href: '/tributos', label: 'Tributos' },
     { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
-    { href: '/agente-de-assistencia', label: 'Calculadora', icon: Calculator },
+    { href: '/agente-de-assistencia', label: 'Calculadora Tributária', icon: Calculator },
   ];
 
   // Placeholder for user authentication state

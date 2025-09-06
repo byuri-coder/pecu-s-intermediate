@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { CalculatorIcon } from 'lucide-react';
-import { Calculator } from './calculator';
+import { TaxCalculator } from './calculator';
 
 export default function CalculatorPage() {
   return (
@@ -10,13 +10,13 @@ export default function CalculatorPage() {
             <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit mb-4">
                 <CalculatorIcon className="h-8 w-8" />
             </div>
-          <CardTitle className="text-3xl font-bold font-headline">Calculadora</CardTitle>
+          <CardTitle className="text-3xl font-bold font-headline">Calculadora Tributária</CardTitle>
           <CardDescription>
-            Utilize a calculadora para operações rápidas.
+            Calcule o deságio de créditos tributários facilmente.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Calculator />
+          <TaxCalculator />
         </CardContent>
       </Card>
     </div>
