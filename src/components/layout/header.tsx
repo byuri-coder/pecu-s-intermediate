@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Bot } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,7 +17,7 @@ export function Header() {
     { href: '/tributos', label: 'Tributos' },
     { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
-    { href: '/agente-de-assistencia', label: 'Agente de Assistência', icon: Bot },
+    { href: '/agente-de-assistencia', label: 'Calculadora', icon: Calculator },
   ];
 
   // Placeholder for user authentication state
@@ -35,10 +35,10 @@ export function Header() {
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navItems.map((item) => (
-              <NavLink key={`${item.href}-${item.label}`} href={item.href}>
+              <Link key={`${item.href}-${item.label}`} href={item.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center">
                  {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : null}
                 {item.label}
-              </NavLink>
+              </Link>
             ))}
           </nav>
         </div>
