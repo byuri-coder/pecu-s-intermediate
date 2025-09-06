@@ -1,19 +1,11 @@
 'use server';
 /**
- * @fileOverview A Genkit tool for performing mathematical and financial calculations using the WolframAlpha API.
+ * @fileOverview A Genkit tool for performing mathematical and financial calculations using a powerful AI model.
  *
  * - calculatorTool - A tool that takes a natural language query for a calculation and returns the result.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-const WolframAlphaAPI = require('wolfram-alpha-api');
-
-let waApi: any;
-if (process.env.WOLFRAM_ALPHA_APP_ID) {
-    waApi = WolframAlphaAPI(process.env.WOLFRAM_ALPHA_APP_ID);
-} else {
-    console.warn("WOLFRAM_ALPHA_APP_ID is not set. The calculator tool will not work.");
-}
 
 export const calculatorTool = ai.defineTool(
     {
@@ -23,14 +15,14 @@ export const calculatorTool = ai.defineTool(
         outputSchema: z.string().describe('The result of the calculation.'),
     },
     async (query) => {
-        if (!waApi) {
-            return "WolframAlpha API is not configured.";
-        }
         try {
-            const result = await waApi.getShort(query);
-            return result;
+            const { output } = await ai.generate({
+                prompt: `Calculate the following and return only the numerical or final text result, without any extra explanation: ${query}`,
+                model: 'googleai/gemini-2.5-flash',
+            });
+            return output!;
         } catch (e) {
-            console.error("Error calling WolframAlpha API:", e);
+            console.error("Error calling AI for calculation:", e);
             return "An error occurred while performing the calculation.";
         }
     }
