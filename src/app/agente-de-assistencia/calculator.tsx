@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BadgePercent, Minus, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Helper to format currency
 const formatCurrency = (value: number) => {
@@ -30,6 +32,7 @@ function DiscountCalculator() {
       setResult({ discountValue, discountPercentage });
     } else {
       setResult(null);
+      alert("Por favor, insira valores válidos. O preço de venda não pode ser maior que o valor de face.");
     }
   };
 
@@ -62,6 +65,30 @@ function DiscountCalculator() {
                         {result.discountPercentage.toFixed(2)}%
                     </span>
                 </div>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                    <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                      <div>
+                        <p className="font-semibold">Fórmula do Deságio:</p>
+                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">Valor do Deságio = Valor de Face - Preço de Venda</code>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Cálculo Aplicado:</p>
+                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">{formatCurrency(result.discountValue)} = {formatCurrency(parseFloat(creditAmount))} - {formatCurrency(parseFloat(sellingPrice))}</code>
+                      </div>
+                      <hr/>
+                       <div>
+                        <p className="font-semibold">Fórmula do Percentual:</p>
+                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">% Deságio = (Valor do Deságio / Valor de Face) * 100</code>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Cálculo Aplicado:</p>
+                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">{result.discountPercentage.toFixed(2)}% = ({formatCurrency(result.discountValue)} / {formatCurrency(parseFloat(creditAmount))}) * 100</code>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
             </CardContent>
           </Card>
         )}
@@ -108,6 +135,21 @@ function SimpleTaxCalculator({ taxName, taxRate, taxRateLabel = `Alíquota de ${
                                 <span className="text-muted-foreground">Valor do Imposto</span>
                                 <span className="font-bold text-primary text-lg">{formatCurrency(result)}</span>
                             </div>
+                            <Accordion type="single" collapsible className="w-full">
+                              <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                                <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                  <div>
+                                    <p className="font-semibold">Fórmula do Imposto:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">Valor do Imposto = (Base de Cálculo * Alíquota) / 100</code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">Cálculo Aplicado:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">{formatCurrency(result)} = ({formatCurrency(parseFloat(baseValue))} * {parseFloat(rate)}%) / 100</code>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
                         </CardContent>
                     </Card>
                 )}
@@ -161,6 +203,33 @@ function PisCofinsCalculator() {
                                 <span className="text-muted-foreground font-bold">Total</span>
                                 <span className="font-bold text-primary text-lg">{formatCurrency(result.total)}</span>
                             </div>
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="item-1">
+                                    <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                                    <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                    <div>
+                                        <p className="font-semibold">Fórmulas:</p>
+                                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                            PIS = (Faturamento * {PIS_RATE}%) / 100<br/>
+                                            COFINS = (Faturamento * {COFINS_RATE}%) / 100
+                                        </code>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">Cálculos Aplicados:</p>
+                                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                            PIS: {formatCurrency(result.pis)} = ({formatCurrency(parseFloat(baseValue))} * {PIS_RATE}%) / 100 <br/>
+                                            COFINS: {formatCurrency(result.cofins)} = ({formatCurrency(parseFloat(baseValue))} * {COFINS_RATE}%) / 100
+                                        </code>
+                                    </div>
+                                     <div>
+                                        <p className="font-semibold">Total:</p>
+                                        <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                            {formatCurrency(result.total)} = {formatCurrency(result.pis)} + {formatCurrency(result.cofins)}
+                                        </code>
+                                    </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </CardContent>
                     </Card>
                 )}
@@ -175,7 +244,7 @@ function IcmsStCalculator() {
     const [mva, setMva] = useState('40'); // Margem de Valor Agregado
     const [internalRate, setInternalRate] = useState('18'); // Alíquota interna do estado de destino
     const [interstateRate, setInterstateRate] = useState('12'); // Alíquota interestadual
-    const [result, setResult] = useState<{ baseST: number, icmsST: number } | null>(null);
+    const [result, setResult] = useState<{ baseST: number, icmsST: number, icmsProprio: number } | null>(null);
 
     const handleCalculate = () => {
         const value = parseFloat(productValue);
@@ -189,7 +258,7 @@ function IcmsStCalculator() {
             const baseST = baseICMS * (1 + mvaValue / 100);
             const icmsDebito = (baseST * internal) / 100;
             const icmsST = icmsDebito - icmsProprio;
-            setResult({ baseST, icmsST });
+            setResult({ baseST, icmsST, icmsProprio });
         } else {
             setResult(null);
         }
@@ -230,6 +299,31 @@ function IcmsStCalculator() {
                                 <span className="text-muted-foreground font-bold">Valor do ICMS-ST</span>
                                 <span className="font-bold text-primary text-lg">{formatCurrency(result.icmsST)}</span>
                             </div>
+                            <Accordion type="single" collapsible className="w-full">
+                              <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                                <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                  <div>
+                                    <p className="font-semibold">Fórmulas:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                        Base de Cálculo ST = Valor do Produto * (1 + MVA/100)<br/>
+                                        ICMS Próprio = Valor do Produto * (Alíquota Interestadual / 100)<br/>
+                                        Débito de ICMS = Base de Cálculo ST * (Alíquota Interna / 100)<br/>
+                                        Valor ICMS-ST = Débito de ICMS - ICMS Próprio
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">Cálculos Aplicados:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                        Base ST: {formatCurrency(result.baseST)} = {formatCurrency(parseFloat(productValue))} * (1 + {mva} / 100)<br/>
+                                        ICMS Próprio: {formatCurrency(result.icmsProprio)} = {formatCurrency(parseFloat(productValue))} * ({interstateRate} / 100)<br/>
+                                        Débito ICMS: {formatCurrency((result.baseST * parseFloat(internalRate)) / 100)} = {formatCurrency(result.baseST)} * ({internalRate} / 100)<br/>
+                                        ICMS-ST: {formatCurrency(result.icmsST)} = {formatCurrency((result.baseST * parseFloat(internalRate)) / 100)} - {formatCurrency(result.icmsProprio)}
+                                    </code>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
                         </CardContent>
                     </Card>
                 )}
@@ -289,6 +383,27 @@ function DifalCalculator() {
                                 <span className="text-muted-foreground">Valor do DIFAL</span>
                                 <span className="font-bold text-primary text-lg">{formatCurrency(result)}</span>
                             </div>
+                             <Accordion type="single" collapsible className="w-full">
+                              <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                                <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                  <div>
+                                    <p className="font-semibold">Fórmulas:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                        Alíquota DIFAL = Alíquota Destino - Alíquota Interestadual<br/>
+                                        Valor DIFAL = Base de Cálculo * (Alíquota DIFAL / 100)
+                                    </code>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">Cálculo Aplicado:</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">
+                                        Alíquota DIFAL: {parseFloat(destinationRate) - parseFloat(interstateRate)}% = {destinationRate}% - {interstateRate}% <br/>
+                                        Valor DIFAL: {formatCurrency(result)} = {formatCurrency(parseFloat(baseValue))} * ({(parseFloat(destinationRate) - parseFloat(interstateRate))} / 100)
+                                    </code>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
                         </CardContent>
                     </Card>
                 )}
@@ -338,6 +453,21 @@ function ReducedBaseCalculator() {
                     <span className="text-muted-foreground">Base de Cálculo Reduzida</span>
                     <span className="font-bold text-primary text-lg">{formatCurrency(result)}</span>
                 </div>
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-sm">Ver Detalhes do Cálculo</AccordionTrigger>
+                        <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                        <div>
+                            <p className="font-semibold">Fórmula:</p>
+                            <code className="text-xs p-2 bg-muted rounded-md block mt-1">Base Reduzida = Valor Total * (1 - Percentual de Redução / 100)</code>
+                        </div>
+                        <div>
+                            <p className="font-semibold">Cálculo Aplicado:</p>
+                            <code className="text-xs p-2 bg-muted rounded-md block mt-1">{formatCurrency(result)} = {formatCurrency(parseFloat(totalValue))} * (1 - {parseFloat(reductionPercent)} / 100)</code>
+                        </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </CardContent>
           </Card>
         )}
@@ -387,3 +517,5 @@ export function TaxCalculator() {
     </Tabs>
   );
 }
+
+    
