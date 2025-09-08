@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck } from 'lucide-react';
+import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 
@@ -54,6 +57,8 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   const isTaxCredit = assetType === 'tax-credit';
 
+  const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40'; // Placeholder avatar
+
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
         {/* Coluna da Lista de Chats */}
@@ -62,15 +67,85 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
         </div>
         
         {/* Coluna do Chat */}
-        <div className="md:col-span-8 lg:col-span-5 h-full flex flex-col gap-4">
+        <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">
             <Card className="flex-grow flex flex-col">
                 <CardHeader className="flex-row items-center justify-between">
-                    <div>
-                        <CardTitle className="text-xl">{sellerName}</CardTitle>
-                        <CardDescription>
-                            Negociando: <Link className="text-primary hover:underline" href={`${getAssetTypeRoute(assetType)}/${asset.id}`}>{assetName}</Link>
-                        </CardDescription>
-                    </div>
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <div className="flex items-center gap-3 cursor-pointer group">
+                                <Avatar className="h-11 w-11">
+                                    <AvatarImage src={sellerAvatar} />
+                                    <AvatarFallback>{sellerName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-xl group-hover:underline">{sellerName}</CardTitle>
+                                    <CardDescription>
+                                        Negociando: <Link className="text-primary hover:underline" href={`${getAssetTypeRoute(assetType)}/${asset.id}`}>{assetName}</Link>
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </SheetTrigger>
+                        <SheetContent className="sm:max-w-md">
+                            <SheetHeader>
+                                <SheetTitle>Informações do Vendedor</SheetTitle>
+                                <SheetDescription>
+                                    Perfil e documentos relacionados ao ativo em negociação.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <div className="py-6 space-y-6">
+                                <Card>
+                                    <CardHeader className="p-4">
+                                        <div className="flex items-center gap-4">
+                                             <Avatar className="h-16 w-16">
+                                                <AvatarImage src={sellerAvatar} />
+                                                <AvatarFallback><UserCircle className="h-8 w-8"/></AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <h3 className="text-lg font-semibold">{sellerName}</h3>
+                                                <p className="text-sm text-muted-foreground">Membro desde 2023</p>
+                                                <p className="text-sm text-muted-foreground">Verificado</p>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                </Card>
+
+                                {isTaxCredit && (
+                                     <Card>
+                                        <CardHeader>
+                                            <CardTitle>Documentos do Ativo</CardTitle>
+                                            <CardDescription>Acesse os arquivos comprobatórios.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-3">
+                                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
+                                                <div className="flex items-center gap-3">
+                                                    <ShieldCheck className="h-6 w-6 text-primary"/>
+                                                    <div>
+                                                        <p className="font-semibold text-sm">Certidão Negativa de Débitos</p>
+                                                        <p className="text-xs text-muted-foreground">cnd_2024.pdf</p>
+                                                    </div>
+                                                </div>
+                                                <Button variant="outline" size="icon">
+                                                    <Download className="h-4 w-4"/>
+                                                </Button>
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
+                                                <div className="flex items-center gap-3">
+                                                    <FileText className="h-6 w-6 text-primary"/>
+                                                    <div>
+                                                        <p className="font-semibold text-sm">Documentos Comprobatórios</p>
+                                                        <p className="text-xs text-muted-foreground">docs.zip</p>
+                                                    </div>
+                                                </div>
+                                                <Button variant="outline" size="icon">
+                                                    <Download className="h-4 w-4"/>
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
                      <div className="space-x-2">
                         <Button variant="outline" size="sm" className="bg-green-100 hover:bg-green-200 text-green-800 border-green-300"><ThumbsUp className="mr-2 h-4 w-4"/> Aceitar</Button>
                         <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4"/> Ajustar</Button>
@@ -85,56 +160,6 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                     </div>
                 </CardContent>
             </Card>
-        </div>
-
-        {/* Coluna de Informações e Documentos */}
-        <div className="hidden lg:block lg:col-span-4 h-full">
-            <div className="space-y-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Detalhes da Negociação</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>Status: <span className="font-semibold text-yellow-600">Em andamento</span></p>
-                        <p>Última proposta: <span className="font-semibold">R$ 14,50</span></p>
-                    </CardContent>
-                </Card>
-
-                {isTaxCredit && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Documentos do Ativo</CardTitle>
-                            <CardDescription>Acesse os arquivos comprobatórios.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
-                                <div className="flex items-center gap-3">
-                                    <ShieldCheck className="h-6 w-6 text-primary"/>
-                                    <div>
-                                        <p className="font-semibold text-sm">Certidão Negativa de Débitos</p>
-                                        <p className="text-xs text-muted-foreground">cnd_2024.pdf</p>
-                                    </div>
-                                </div>
-                                <Button variant="outline" size="icon">
-                                    <Download className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="h-6 w-6 text-primary"/>
-                                    <div>
-                                        <p className="font-semibold text-sm">Documentos Comprobatórios</p>
-                                        <p className="text-xs text-muted-foreground">docs.zip</p>
-                                    </div>
-                                </div>
-                                <Button variant="outline" size="icon">
-                                    <Download className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
         </div>
     </div>
   );
