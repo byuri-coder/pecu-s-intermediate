@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send } from 'lucide-react';
+import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
@@ -52,22 +52,17 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : asset.creditType}`;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
-
+  const isTaxCredit = assetType === 'tax-credit';
 
   return (
-    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
-        {/* Coluna da Lista de Chats (visível em mobile, escondida em desktop) */}
-        <div className="md:hidden h-full">
+    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
+        {/* Coluna da Lista de Chats */}
+        <div className="md:col-span-4 lg:col-span-3 h-full">
              <ChatList />
         </div>
         
-        {/* Coluna da Lista de Chats (visível em desktop) */}
-        <div className="hidden md:block md:col-span-1 lg:col-span-2 h-full">
-            <ChatList />
-        </div>
-
-        {/* Coluna do Chat e Ações */}
-        <div className="md:col-span-3 lg:col-span-3 h-full flex flex-col gap-4">
+        {/* Coluna do Chat */}
+        <div className="md:col-span-8 lg:col-span-5 h-full flex flex-col gap-4">
             <Card className="flex-grow flex flex-col">
                 <CardHeader className="flex-row items-center justify-between">
                     <div>
@@ -90,6 +85,56 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                     </div>
                 </CardContent>
             </Card>
+        </div>
+
+        {/* Coluna de Informações e Documentos */}
+        <div className="hidden lg:block lg:col-span-4 h-full">
+            <div className="space-y-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Detalhes da Negociação</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>Status: <span className="font-semibold text-yellow-600">Em andamento</span></p>
+                        <p>Última proposta: <span className="font-semibold">R$ 14,50</span></p>
+                    </CardContent>
+                </Card>
+
+                {isTaxCredit && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Documentos do Ativo</CardTitle>
+                            <CardDescription>Acesse os arquivos comprobatórios.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
+                                <div className="flex items-center gap-3">
+                                    <ShieldCheck className="h-6 w-6 text-primary"/>
+                                    <div>
+                                        <p className="font-semibold text-sm">Certidão Negativa de Débitos</p>
+                                        <p className="text-xs text-muted-foreground">cnd_2024.pdf</p>
+                                    </div>
+                                </div>
+                                <Button variant="outline" size="icon">
+                                    <Download className="h-4 w-4"/>
+                                </Button>
+                            </div>
+                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
+                                <div className="flex items-center gap-3">
+                                    <FileText className="h-6 w-6 text-primary"/>
+                                    <div>
+                                        <p className="font-semibold text-sm">Documentos Comprobatórios</p>
+                                        <p className="text-xs text-muted-foreground">docs.zip</p>
+                                    </div>
+                                </div>
+                                <Button variant="outline" size="icon">
+                                    <Download className="h-4 w-4"/>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
         </div>
     </div>
   );
