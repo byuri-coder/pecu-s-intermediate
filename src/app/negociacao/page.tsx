@@ -1,0 +1,24 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChatList } from './chat-list';
+import { MessageSquare } from 'lucide-react';
+
+export default function NegotiationHubPage() {
+  return (
+    <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 h-[calc(100vh-10rem)]">
+        <div className="md:col-span-1 lg:col-span-2 h-full">
+            <ChatList />
+        </div>
+        <div className="md:col-span-3 lg:col-span-3 h-full hidden md:flex">
+            <Card className="w-full h-full flex items-center justify-center">
+                <CardContent className="text-center">
+                    <MessageSquare className="mx-auto h-16 w-16 text-muted-foreground/30" />
+                    <h2 className="mt-4 text-2xl font-semibold">Selecione uma conversa</h2>
+                    <p className="mt-2 text-muted-foreground">Escolha uma negociação na lista ao lado para ver os detalhes.</p>
+                </CardContent>
+            </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
