@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, Loader2 } from 'lucide-react';
+import { UploadCloud, Loader2, FileText, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerTaxCreditAction } from './actions';
 
@@ -29,6 +29,7 @@ const registerTaxCreditSchema = z.object({
   amount: z.coerce.number().min(1, 'O valor do crédito deve ser maior que zero'),
   price: z.coerce.number().min(1, 'O preço de venda deve ser maior que zero'),
   details: z.string().min(10, 'Forneça detalhes sobre a origem do crédito'),
+  fiscalStatus: z.string({ required_error: 'A situação fiscal é obrigatória' }),
 }).refine(data => data.price < data.amount, {
   message: 'O preço de venda deve ser menor que o valor de face do crédito.',
   path: ['price'],
@@ -109,7 +110,34 @@ export function RegisterTaxCreditForm() {
         </section>
 
         <section>
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Documentação Comprobatória</h3>
+            <h3 className="text-xl font-semibold mb-4 border-b pb-2">Certidão Negativa de Débitos (CND)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <FormField name="fiscalStatus" control={form.control} render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Situação da Certidão</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione a situação fiscal" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            <SelectItem value="Negativa">Negativa</SelectItem>
+                            <SelectItem value="Positiva com efeitos de Negativa">Positiva com efeitos de Negativa</SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                 )} />
+                  <FormItem>
+                    <FormLabel>Arquivo da Certidão</FormLabel>
+                     <div className="border border-input rounded-md flex items-center pr-3">
+                        <Input type="file" className="border-0 shadow-none focus-visible:ring-0 flex-1" />
+                        <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <FormDescription>Anexe o arquivo da CND (conhecido como "Nada Consta").</FormDescription>
+                </FormItem>
+            </div>
+        </section>
+
+        <section>
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Outros Documentos Comprobatórios</h3>
            <div className="space-y-4">
               <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -117,7 +145,7 @@ export function RegisterTaxCreditForm() {
                 <p className="text-xs text-muted-foreground/70">Documentos (PDF, XML, DOCX)</p>
                 <Input type="file" className="hidden" multiple />
               </div>
-              <p className="text-sm text-muted-foreground">Anexe documentos que comprovem a liquidez e certeza do crédito, como certidões, decisões judiciais, etc. As informações sensíveis podem ser omitidas.</p>
+              <p className="text-sm text-muted-foreground">Anexe documentos adicionais que comprovem a liquidez e certeza do crédito, como certidões, decisões judiciais, etc. As informações sensíveis podem ser omitidas.</p>
            </div>
         </section>
 
