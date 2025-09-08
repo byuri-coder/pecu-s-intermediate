@@ -55,7 +55,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
 
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 h-[calc(100vh-10rem)] container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
         {/* Coluna da Lista de Chats (visível em mobile, escondida em desktop) */}
         <div className="md:hidden h-full">
              <ChatList />
