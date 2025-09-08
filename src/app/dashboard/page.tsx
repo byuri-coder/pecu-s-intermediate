@@ -26,7 +26,15 @@ const StatusBadge = ({ status }: { status: CarbonCredit['status'] }) => {
   return <Badge variant={variant} className={cn('capitalize', className)}>{status}</Badge>
 };
 
-export default function DashboardPage() {
+export default function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: {
+    tab?: string;
+  };
+}) {
+  const currentTab = searchParams?.tab || 'my-credits';
+
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
@@ -34,7 +42,7 @@ export default function DashboardPage() {
         
         <MovementsChart />
 
-        <Tabs defaultValue="my-credits">
+        <Tabs defaultValue={currentTab}>
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="my-credits">Meus Créditos Anunciados</TabsTrigger>
             <TabsTrigger value="negotiations">Minhas Negociações</TabsTrigger>

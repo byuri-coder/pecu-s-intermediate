@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,8 +70,20 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2">
           {isLoggedIn ? (
+            <>
+              <Button variant="ghost" size="icon" className="relative" asChild>
+                  <Link href="/dashboard?tab=negotiations">
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="sr-only">Negociações</span>
+                    {/* Notification dot */}
+                    <span className="absolute top-1 right-1.5 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/90"></span>
+                    </span>
+                  </Link>
+              </Button>
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -115,6 +127,7 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
              <nav className="flex items-center space-x-2">
               <Button variant="ghost" asChild>
