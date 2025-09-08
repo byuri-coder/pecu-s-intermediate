@@ -78,15 +78,15 @@ export function ChatList() {
                     <AvatarImage src={convo.avatar} />
                     <AvatarFallback>{convo.name.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <div className="flex-grow overflow-hidden">
-                    <div className="flex justify-between items-center">
-                        <p className="font-semibold truncate">{convo.name}</p>
-                        <p className={cn("text-xs", isActive ? "text-primary" : "text-muted-foreground")}>{convo.time}</p>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center gap-2">
+                        <p className="font-semibold truncate flex-1">{convo.name}</p>
+                        <p className={cn("text-xs flex-shrink-0", isActive ? "text-primary" : "text-muted-foreground")}>{convo.time}</p>
                     </div>
-                     <div className="flex justify-between items-start mt-1">
-                        <p className="text-sm text-muted-foreground truncate w-11/12">{convo.lastMessage}</p>
+                     <div className="flex justify-between items-start mt-1 gap-2">
+                        <p className="text-sm text-muted-foreground truncate flex-1">{convo.lastMessage}</p>
                         {convo.unread > 0 && (
-                            <span className="flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full h-5 w-5">
+                            <span className="flex items-center justify-center bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex-shrink-0">
                                 {convo.unread}
                             </span>
                         )}
