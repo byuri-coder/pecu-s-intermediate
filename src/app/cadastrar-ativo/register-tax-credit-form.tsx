@@ -145,7 +145,7 @@ export function RegisterTaxCreditForm() {
                 <p className="text-xs text-muted-foreground/70">Documentos (PDF, XML, DOCX)</p>
                 <Input type="file" className="hidden" multiple />
               </div>
-              <p className="text-sm text-muted-foreground">Anexe documentos adicionais que comprovem a liquidez e certeza do crédito, como certidões, decisões judiciais, etc. As informações sensíveis podem ser omitidas.</p>
+              <p className="text-sm text-muted-foreground">Anexe documentos adicionais que comprovem a liquidez e certeza do crédito, como certidões, decisões judiciais, notas fiscais, etc. As informações sensíveis podem ser omitidas.</p>
            </div>
         </section>
 
