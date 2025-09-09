@@ -4,7 +4,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition } from 'react';
+import { useTransition, useEffect } from 'react';
+import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,22 +19,43 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, FileText, Download } from 'lucide-react';
+import { Loader2, Upload, FileText, Download, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Petition } from '@/lib/types';
+import { states } from '@/lib/states';
+import { cn } from '@/lib/utils';
+import { numberToWords } from '@/lib/number-to-words'; // Assuming this utility exists
+
 
 const petitionSchema = z.object({
   title: z.string().min(5, 'O título é muito curto.'),
   customHeader: z.string().optional(),
+  
+  // Dados do Cedente (Vendedor) - Simulados por enquanto
   partyCnpj: z.string().min(14, 'O CNPJ da parte é obrigatório.'),
   creditBalance: z.coerce.number().min(0, 'O saldo credor não pode ser negativo.'),
+  
+  // Dados do Representante
+  representativeName: z.string().min(1, "Nome do representante é obrigatório."),
   representativeRole: z.string().min(1, "Cargo do representante é obrigatório."),
   representativeState: z.string().min(1, "Estado do representante é obrigatório."),
   representativeCpf: z.string().min(11, "CPF do representante é inválido."),
+
+  // Dados da Operação
+  tipoOperacao: z.string().min(1, "O tipo de operação é obrigatório."),
+  periodoApuracao: z.string().min(1, "O período de apuração é obrigatório."),
+  negotiatedValue: z.coerce.number().optional(),
+  
+  // Corpo e data
   petitionBody: z.string().min(50, 'O corpo da petição precisa ser mais detalhado.'),
+  petitionDate: z.date().optional(),
+
+  // Status
   status: z.enum(['rascunho', 'finalizado']),
 });
+
 
 type PetitionFormValues = z.infer<typeof petitionSchema>;
 
@@ -42,7 +64,7 @@ interface PetitionFormProps {
   onSuccess: () => void;
 }
 
-const defaultPetitionBody = `AO(À)
+const defaultPetitionBodyTemplate = `AO(À)
 Ilmo.(a) Sr.(a) Secretário(a) da Fazenda do Estado de [UF]
 
 Ref.: Requerimento de transferência de crédito acumulado de ICMS — Pedido de homologação
@@ -62,9 +84,9 @@ Endereço: [ENDERECO_CESSIONARIO]
 
 I — DOS FATOS
 
-O(a) Requerente declara ser titular de créditos acumulados de ICMS no valor nominal de R$ [VALOR_NOMINAL_CREDITO] (por extenso: [VALOR_NOMINAL_POR_EXTENSO]), gerados no período de [PERIODO_DE_APURACAO], originados de operações de [TIPO_DE_OPERACAO — ex.: exportação, insumos agropecuários, bens de capital, etc.], devidamente demonstrados nas notas fiscais e documentos que seguem anexos.
+O(a) Requerente declara ser titular de créditos acumulados de ICMS no valor nominal de R$ [VALOR_NOMINAL_CREDITO] (por extenso: [VALOR_NOMINAL_POR_EXTENSO]), gerados no período de [PERIODO_DE_APURACAO], originados de operações de [TIPO_DE_OPERACAO], devidamente demonstrados nas notas fiscais e documentos que seguem anexos.
 
-Em decorrência de negociação comercial com [RAZAO_SOCIAL_CESSIONARIO], as partes acordaram a cessão onerosa de parte dos referidos créditos, equivalente a R$ [VALOR_NEGOCIADO] (por extenso: [VALOR_NEGOCIADO_POR_EXTENSO]), correspondente a [QUANTIDADE_OU_PORCENTAGEM] do saldo indicado, mediante condições ajustadas entre as partes, conforme instrumento particular anexo.
+Em decorrência de negociação comercial com [RAZAO_SOCIAL_CESSIONARIO], as partes acordaram a cessão onerosa de parte dos referidos créditos, equivalente a R$ [VALOR_NEGOCIADO] (por extenso: [VALOR_NEGOCIADO_POR_EXTENSO]), correspondente a [QUANTIDADE_OU_PORCENTAGEM]% do saldo indicado, mediante condições ajustadas entre as partes, conforme instrumento particular anexo.
 
 Para instruir o presente pedido, acompanham-se todos os documentos exigidos pela normativa aplicável e pelo procedimento administrativo do Estado de [UF], conforme lista de anexos abaixo.
 
@@ -124,18 +146,80 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
 
   const form = useForm<PetitionFormValues>({
     resolver: zodResolver(petitionSchema),
-    defaultValues: {
-      title: petition?.title || '',
-      customHeader: petition?.customHeader || '',
-      partyCnpj: petition?.partyCnpj || '',
-      creditBalance: petition?.creditBalance || 0,
-      representativeRole: petition?.representativeRole || '',
-      representativeState: petition?.representativeState || '',
-      representativeCpf: petition?.representativeCpf || '',
-      petitionBody: petition?.petitionBody || defaultPetitionBody,
-      status: petition?.status || 'rascunho',
+    defaultValues: petition ? {
+        ...petition,
+        creditBalance: petition.creditBalance || 0,
+        petitionDate: petition.dataPeticao ? new Date(petition.dataPeticao) : undefined,
+    } : {
+      title: 'Nova Petição',
+      customHeader: '',
+      partyCnpj: '11.222.333/0001-44', // Mock
+      creditBalance: 150000.00, // Mock
+      representativeName: '',
+      representativeRole: '',
+      representativeState: '',
+      representativeCpf: '',
+      tipoOperacao: '',
+      periodoApuracao: '',
+      negotiatedValue: 145000.00, // Mock
+      petitionBody: defaultPetitionBodyTemplate,
+      status: 'rascunho',
     },
   });
+
+  const watchedFields = form.watch();
+
+  useEffect(() => {
+    // Mock data that would come from the platform
+    const cedente = {
+        razaoSocial: 'Empresa Cedente S.A. (Vendedora)',
+        ie: '123.456.789.110',
+        endereco: 'Rua das Flores, 123, São Paulo, SP',
+    };
+    const cessionario = {
+        razaoSocial: 'Empresa Cessionária Ltda. (Compradora)',
+        cnpj: '99.888.777/0001-66',
+        ie: '987.654.321.119',
+        endereco: 'Avenida Principal, 456, Rio de Janeiro, RJ',
+    };
+    
+    const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    
+    let updatedBody = defaultPetitionBodyTemplate;
+
+    const replacements = {
+        '[UF]': watchedFields.representativeState || '[UF]',
+        '[RAZAO_SOCIAL_CEDENTE]': cedente.razaoSocial,
+        '[CNPJ_CEDENTE]': watchedFields.partyCnpj || '[CNPJ_CEDENTE]',
+        '[IE_CEDENTE]': cedente.ie,
+        '[ENDERECO_CEDENTE]': cedente.endereco,
+        '[NOME_REPRESENTANTE_CEDENTE]': watchedFields.representativeName || '[NOME_REPRESENTANTE_CEDENTE]',
+        '[CPF_REPRESENTANTE]': watchedFields.representativeCpf || '[CPF_REPRESENTANTE]',
+        '[CARGO_REPRESENTANTE]': watchedFields.representativeRole || '[CARGO_REPRESENTANTE]',
+        '[RAZAO_SOCIAL_CESSIONARIO]': cessionario.razaoSocial,
+        '[CNPJ_CESSIONARIO]': cessionario.cnpj,
+        '[IE_CESSIONARIO]': cessionario.ie,
+        '[ENDERECO_CESSIONARIO]': cessionario.endereco,
+        '[VALOR_NOMINAL_CREDITO]': formatCurrency(watchedFields.creditBalance || 0),
+        '[VALOR_NOMINAL_POR_EXTENSO]': numberToWords(watchedFields.creditBalance || 0),
+        '[PERIODO_DE_APURACAO]': watchedFields.periodoApuracao || '[PERIODO_DE_APURACAO]',
+        '[TIPO_DE_OPERACAO]': watchedFields.tipoOperacao || '[TIPO_DE_OPERACAO]',
+        '[VALOR_NEGOCIADO]': formatCurrency(watchedFields.negotiatedValue || 0),
+        '[VALOR_NEGOCIADO_POR_EXTENSO]': numberToWords(watchedFields.negotiatedValue || 0),
+        '[QUANTIDADE_OU_PORCENTAGEM]': watchedFields.creditBalance && watchedFields.negotiatedValue ? ((watchedFields.negotiatedValue / watchedFields.creditBalance) * 100).toFixed(2) : '0.00',
+        '[LOCAL]': cedente.endereco.split(',').slice(-2).join(', ').trim(),
+        '[DATA_PREENCHIDA_PELA_PLATAFORMA]': watchedFields.petitionDate ? format(watchedFields.petitionDate, 'dd/MM/yyyy') : '[DATA]',
+    };
+
+    for (const [key, value] of Object.entries(replacements)) {
+        updatedBody = updatedBody.replace(new RegExp(key.replace(/\[/g, '\\[').replace(/\]/g, '\\]'), 'g'), value);
+    }
+    
+    if(updatedBody !== watchedFields.petitionBody) {
+      form.setValue('petitionBody', updatedBody, { shouldDirty: true });
+    }
+
+  }, [watchedFields, form]);
 
   const onSubmit = (data: PetitionFormValues) => {
     startTransition(async () => {
@@ -155,58 +239,13 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField name="title" control={form.control} render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                    <FormLabel>Título da Petição</FormLabel>
-                    <FormControl><Input {...field} placeholder="Ex: Petição de Transferência ICMS" /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-            <FormField name="partyCnpj" control={form.control} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>CNPJ da Parte</FormLabel>
-                    <FormControl><Input {...field} placeholder="00.000.000/0001-00" /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-             <FormField name="creditBalance" control={form.control} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Saldo Credor (R$)</FormLabel>
-                    <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-             <FormField name="representativeRole" control={form.control} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Cargo do Representante</FormLabel>
-                    <FormControl><Input {...field} placeholder="Ex: Diretor Financeiro" /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-             <FormField name="representativeCpf" control={form.control} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>CPF do Representante</FormLabel>
-                    <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-             <FormField name="representativeState" control={form.control} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Estado do Representante</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                            <SelectItem value="SP">São Paulo</SelectItem>
-                            <SelectItem value="MG">Minas Gerais</SelectItem>
-                            <SelectItem value="PR">Paraná</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-            )} />
-        </div>
-
+        <FormField name="title" control={form.control} render={({ field }) => (
+            <FormItem>
+                <FormLabel>Título da Petição</FormLabel>
+                <FormControl><Input {...field} placeholder="Ex: Petição de Transferência ICMS" /></FormControl>
+                <FormMessage />
+            </FormItem>
+        )} />
         <FormField name="customHeader" control={form.control} render={({ field }) => (
             <FormItem>
                 <FormLabel>Cabeçalho Personalizado</FormLabel>
@@ -215,31 +254,99 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
             </FormItem>
         )} />
 
+        <h3 className="text-lg font-semibold border-b pb-2">Dados da Operação e Representante</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField name="partyCnpj" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>CNPJ do Cedente (Vendedor)</FormLabel><FormControl><Input {...field} placeholder="00.000.000/0001-00" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="creditBalance" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Saldo Credor Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField name="negotiatedValue" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Valor Negociado (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField name="representativeName" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Nome do Representante Legal</FormLabel><FormControl><Input {...field} placeholder="Nome completo do signatário" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="representativeRole" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Cargo do Representante</FormLabel><FormControl><Input {...field} placeholder="Ex: Diretor Financeiro" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="representativeCpf" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>CPF do Representante</FormLabel><FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="representativeState" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Estado da Petição (UF)</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                        </SelectContent>
+                    </Select><FormMessage />
+                </FormItem>
+            )} />
+             <FormField name="tipoOperacao" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Tipo de Operação (Origem)</FormLabel><FormControl><Input {...field} placeholder="Ex: exportação, insumos agropecuários" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="periodoApuracao" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Período de Apuração</FormLabel><FormControl><Input {...field} placeholder="Ex: Janeiro/2023 a Dezembro/2023" /></FormControl><FormMessage /></FormItem>
+            )} />
+             <FormField name="petitionDate" control={form.control} render={({ field }) => (
+                <FormItem className="flex flex-col"><FormLabel>Data do Documento</FormLabel>
+                  <Popover><PopoverTrigger asChild>
+                    <FormControl>
+                      <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                        {field.value ? format(field.value, "PPP") : <span>Escolha uma data</span>}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  </PopoverContent></Popover><FormMessage />
+                </FormItem>
+              )} />
+        </div>
+
         <FormField name="petitionBody" control={form.control} render={({ field }) => (
             <FormItem>
                 <FormLabel>Corpo da Petição</FormLabel>
-                <FormControl><Textarea {...field} rows={10} placeholder="Digite ou cole aqui o texto principal da sua petição. Você pode usar placeholders como {{CNPJ_PARTE}} ou {{SALDO_CREDOR}} que serão substituídos dinamicamente." /></FormControl>
+                <FormControl><Textarea {...field} rows={15} placeholder="O corpo da petição será preenchido dinamicamente." /></FormControl>
                 <FormMessage />
             </FormItem>
         )} />
-
-        <div>
-            <FormLabel>Anexos</FormLabel>
-             <div className="space-y-2 mt-2">
-                <div className="border rounded-md p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm">certidao_negativa_debitos.pdf</span>
+        
+        <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Anexos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem>
+                    <FormLabel>Planilha de Apuração</FormLabel>
+                    <FormControl><Input type="file" /></FormControl>
+                </FormItem>
+                 <FormItem>
+                    <FormLabel>Balanço / Declaração Contábil</FormLabel>
+                    <FormControl><Input type="file" /></FormControl>
+                </FormItem>
+                 <FormItem>
+                    <FormLabel>Notas Fiscais (Arquivo .ZIP)</FormLabel>
+                    <FormControl><Input type="file" accept=".zip" /></FormControl>
+                </FormItem>
+                 <FormItem>
+                    <FormLabel>Contrato de Cessão</FormLabel>
+                    <FormControl><Input type="file" /></FormControl>
+                </FormItem>
+            </div>
+             <div>
+                <FormLabel>Outros Documentos</FormLabel>
+                <div className="space-y-2 mt-2">
+                    <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-secondary">
+                        <Upload className="mx-auto h-8 w-8 text-muted-foreground"/>
+                        <p className="text-sm mt-2">Adicionar novo anexo</p>
+                        <Input type="file" className="hidden" />
                     </div>
-                    <Button type="button" variant="outline" size="sm">Remover</Button>
-                </div>
-                 <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-secondary">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground"/>
-                    <p className="text-sm mt-2">Adicionar novo anexo</p>
-                    <Input type="file" className="hidden" />
                 </div>
             </div>
         </div>
+
 
          <FormField name="status" control={form.control} render={({ field }) => (
             <FormItem>

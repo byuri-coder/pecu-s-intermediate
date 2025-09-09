@@ -8,16 +8,32 @@ import { z } from 'zod';
 
 
 const petitionSchema = z.object({
-  title: z.string().min(5),
+  title: z.string().min(5, 'O título é muito curto.'),
   customHeader: z.string().optional(),
-  partyCnpj: z.string().min(14),
-  creditBalance: z.coerce.number().min(0),
-  representativeRole: z.string().min(1),
-  representativeState: z.string().min(1),
-  representativeCpf: z.string().min(11),
-  petitionBody: z.string().min(50),
+  
+  // Dados do Cedente (Vendedor)
+  partyCnpj: z.string().min(14, 'O CNPJ da parte é obrigatório.'),
+  creditBalance: z.coerce.number().min(0, 'O saldo credor não pode ser negativo.'),
+  
+  // Dados do Representante
+  representativeName: z.string().min(1, "Nome do representante é obrigatório."),
+  representativeRole: z.string().min(1, "Cargo do representante é obrigatório."),
+  representativeState: z.string().min(1, "Estado do representante é obrigatório."),
+  representativeCpf: z.string().min(11, "CPF do representante é inválido."),
+
+  // Dados da Operação
+  tipoOperacao: z.string().min(1, "O tipo de operação é obrigatório."),
+  periodoApuracao: z.string().min(1, "O período de apuração é obrigatório."),
+  negotiatedValue: z.coerce.number().optional(),
+  
+  // Corpo e data
+  petitionBody: z.string().min(50, 'O corpo da petição precisa ser mais detalhado.'),
+  petitionDate: z.date().optional(),
+
+  // Status
   status: z.enum(['rascunho', 'finalizado']),
 });
+
 
 // Mock function, replace with actual Firebase call
 export async function createPetition(userId: string, data: FormData) {

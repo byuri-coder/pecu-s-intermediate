@@ -55,9 +55,13 @@ export type Petition = {
     customHeader?: string;
     partyCnpj?: string;
     creditBalance?: number;
+    representativeName?: string;
     representativeRole?: string;
     representativeState?: string;
     representativeCpf?: string;
     petitionBody?: string;
     attachments?: { type: string; url: string }[];
+    periodoApuracao?: string;
+    tipoOperacao?: string;
+    dataPeticao?: Date;
 };
