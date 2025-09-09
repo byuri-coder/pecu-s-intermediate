@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare, FileSignature } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -119,6 +119,9 @@ export function Header() {
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Gerenciar Filiais</span></Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/peticoes"><FileSignature className="mr-2 h-4 w-4" /><span>Minhas Petições</span></Link>
                   </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>

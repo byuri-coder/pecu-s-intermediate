@@ -44,3 +44,16 @@ export type Operation = {
   description: string;
   value: number;
 };
+
+export type Petition = {
+    id: string;
+    title: string;
+    status: 'rascunho' | 'finalizado';
+    updatedAt: Date;
+    // Add other fields from your schema as needed for the frontend
+    customHeader?: string;
+    partyCnpj?: string;
+    creditBalance?: number;
+    petitionBody?: string;
+    attachments?: { type: string; url: string }[];
+};
