@@ -1,4 +1,4 @@
-import type { CarbonCredit, TaxCredit, RuralLand, Operation } from '@/lib/types';
+import type { CarbonCredit, TaxCredit, RuralLand, Operation, Petition } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
   {
@@ -226,5 +226,27 @@ export const placeholderOperations: Operation[] = [
     assetType: 'Crédito de Carbono',
     description: 'Compra de 2.000 créditos (proj-cerrado-conservation)',
     value: 39600,
+  },
+];
+
+
+export const placeholderPetitions: Petition[] = [
+  {
+    id: 'pet-001',
+    title: 'Petição de Transferência ICMS - Lote A',
+    status: 'finalizado',
+    updatedAt: '2024-05-20T10:00:00Z',
+  },
+  {
+    id: 'pet-002',
+    title: 'Rascunho Petição PIS/COFINS',
+    status: 'rascunho',
+    updatedAt: '2024-05-18T14:30:00Z',
+  },
+   {
+    id: 'pet-003',
+    title: 'Modelo Padrão IPI',
+    status: 'rascunho',
+    updatedAt: '2024-05-15T09:00:00Z',
   },
 ];

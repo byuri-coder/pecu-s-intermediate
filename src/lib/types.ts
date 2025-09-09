@@ -50,7 +50,7 @@ export type Petition = {
     id: string;
     title: string;
     status: 'rascunho' | 'finalizado';
-    updatedAt: Date;
+    updatedAt: string | Date;
     // Add other fields from your schema as needed for the frontend
     customHeader?: string;
     partyCnpj?: string;

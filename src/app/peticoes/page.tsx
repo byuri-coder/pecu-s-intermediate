@@ -17,7 +17,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -39,32 +38,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Petition } from '@/lib/types';
 import { PetitionForm } from './petition-form';
+import { placeholderPetitions } from '@/lib/placeholder-data';
 
-// Placeholder data for existing petitions
-const petitions: Petition[] = [
-  {
-    id: 'pet-001',
-    title: 'Petição de Transferência ICMS - Lote A',
-    status: 'finalizado',
-    updatedAt: new Date(),
-  },
-  {
-    id: 'pet-002',
-    title: 'Rascunho Petição PIS/COFINS',
-    status: 'rascunho',
-    updatedAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-  },
-   {
-    id: 'pet-003',
-    title: 'Modelo Padrão IPI',
-    status: 'rascunho',
-    updatedAt: new Date(Date.now() - 86400000 * 5), // 5 days ago
-  },
-];
 
 export default function PetitionsPage() {
   const [isFormOpen, setFormOpen] = React.useState(false);
   const [selectedPetition, setSelectedPetition] = React.useState<Petition | null>(null);
+
+  const petitions = placeholderPetitions.map(p => ({...p, updatedAt: new Date(p.updatedAt)}));
 
   const handleEdit = (petition: Petition) => {
     setSelectedPetition(petition);
