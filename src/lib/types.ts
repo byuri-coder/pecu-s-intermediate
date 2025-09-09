@@ -1,3 +1,4 @@
+
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -54,6 +55,9 @@ export type Petition = {
     customHeader?: string;
     partyCnpj?: string;
     creditBalance?: number;
+    representativeRole?: string;
+    representativeState?: string;
+    representativeCpf?: string;
     petitionBody?: string;
     attachments?: { type: string; url: string }[];
 };

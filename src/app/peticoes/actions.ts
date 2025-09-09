@@ -12,6 +12,9 @@ const petitionSchema = z.object({
   customHeader: z.string().optional(),
   partyCnpj: z.string().min(14),
   creditBalance: z.coerce.number().min(0),
+  representativeRole: z.string().min(1),
+  representativeState: z.string().min(1),
+  representativeCpf: z.string().min(11),
   petitionBody: z.string().min(50),
   status: z.enum(['rascunho', 'finalizado']),
 });

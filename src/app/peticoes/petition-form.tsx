@@ -28,6 +28,9 @@ const petitionSchema = z.object({
   customHeader: z.string().optional(),
   partyCnpj: z.string().min(14, 'O CNPJ da parte é obrigatório.'),
   creditBalance: z.coerce.number().min(0, 'O saldo credor não pode ser negativo.'),
+  representativeRole: z.string().min(1, "Cargo do representante é obrigatório."),
+  representativeState: z.string().min(1, "Estado do representante é obrigatório."),
+  representativeCpf: z.string().min(11, "CPF do representante é inválido."),
   petitionBody: z.string().min(50, 'O corpo da petição precisa ser mais detalhado.'),
   status: z.enum(['rascunho', 'finalizado']),
 });
@@ -47,10 +50,13 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     resolver: zodResolver(petitionSchema),
     defaultValues: {
       title: petition?.title || '',
-      customHeader: '', // Placeholder
-      partyCnpj: '', // Placeholder
-      creditBalance: 0, // Placeholder
-      petitionBody: '', // Placeholder
+      customHeader: petition?.customHeader || '',
+      partyCnpj: petition?.partyCnpj || '',
+      creditBalance: petition?.creditBalance || 0,
+      representativeRole: petition?.representativeRole || '',
+      representativeState: petition?.representativeState || '',
+      representativeCpf: petition?.representativeCpf || '',
+      petitionBody: petition?.petitionBody || '',
       status: petition?.status || 'rascunho',
     },
   });
@@ -92,6 +98,34 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
                 <FormItem>
                     <FormLabel>Saldo Credor (R$)</FormLabel>
                     <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+             <FormField name="representativeRole" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Cargo do Representante</FormLabel>
+                    <FormControl><Input {...field} placeholder="Ex: Diretor Financeiro" /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+             <FormField name="representativeCpf" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>CPF do Representante</FormLabel>
+                    <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+             <FormField name="representativeState" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Estado do Representante</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            <SelectItem value="SP">São Paulo</SelectItem>
+                            <SelectItem value="MG">Minas Gerais</SelectItem>
+                            <SelectItem value="PR">Paraná</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                 </FormItem>
             )} />
