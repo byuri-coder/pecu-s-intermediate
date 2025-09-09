@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { useTransition, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import 'jspdf-autotable';
 
 
 import { Button } from '@/components/ui/button';
@@ -231,59 +231,120 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     }
   }, [watchedFields, form]);
 
-  const handleDownloadPdf = () => {
-    const input = petitionPreviewRef.current;
-    if (!input) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível encontrar o conteúdo da petição para gerar o PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-  
-    startTransition(async () => {
-      try {
-        const canvas = await html2canvas(input, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
-  
-        let position = 0;
-        let pageHeight = pdf.internal.pageSize.height;
-        let heightLeft = canvasHeight * (pdfWidth / canvasWidth);
-  
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, height);
-        heightLeft -= pageHeight;
-  
-        while (heightLeft >= 0) {
-          position = heightLeft - (canvasHeight * (pdfWidth / canvasWidth));
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, height);
-          heightLeft -= pageHeight;
+ const handleDownloadPdf = () => {
+    if (isPending) return;
+
+    startTransition(() => {
+        try {
+            const doc = new jsPDF('p', 'pt', 'a4');
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Margins in points (1 cm = 28.35 pt, 1 pt = 0.3527 mm)
+            const margin = {
+                top: 85, // ~3cm
+                bottom: 57, // ~2cm
+                left: 85, // ~3cm
+                right: 57, // ~2cm
+            };
+            const contentWidth = pageWidth - margin.left - margin.right;
+            let cursorY = margin.top;
+
+            const addPageNumber = (doc: jsPDF) => {
+                const pageCount = (doc.internal as any).getNumberOfPages();
+                if (pageCount > 1) {
+                    doc.setPage(pageCount);
+                    doc.setFontSize(12);
+                    doc.text(String(pageCount), pageWidth - margin.right, margin.top / 2);
+                }
+            };
+            
+            const checkAndAddPage = () => {
+                if (cursorY > pageHeight - margin.bottom) {
+                    addPageNumber(doc);
+                    doc.addPage();
+                    cursorY = margin.top;
+                }
+            };
+
+            const fullBody = getUpdatedBody();
+            const paragraphs = fullBody.split('\n');
+
+            doc.setFont('helvetica', 'normal');
+
+            for (const paragraph of paragraphs) {
+                if (paragraph.trim() === '') {
+                    cursorY += 12 * 1.5; // Empty line space
+                    checkAndAddPage();
+                    continue;
+                }
+                
+                let isBold = false;
+                let isCentered = false;
+                let align: "left" | "center" | "justify" = 'justify';
+                let fontSize = 12;
+                let text = paragraph;
+                const firstLineIndent = 35.4; // 1.25 cm
+
+                // Simple formatting rules based on content
+                if (text.startsWith('AO(À)') || text.startsWith('Ilmo.(a)')) {
+                    align = 'center';
+                } else if (text.startsWith('I —') || text.startsWith('II —') || text.startsWith('III —') || text.startsWith('IV —') || text.startsWith('V —') || text.startsWith('VI —')) {
+                    isBold = true;
+                    fontSize = 14;
+                    align = 'left';
+                    cursorY += 12; // Extra space before titles
+                } else if (text.startsWith('Nestes termos')) {
+                    align = 'center';
+                     cursorY += 24; // Extra space before
+                } else if (text.match(/^\s*\[LOCAL\],/)) {
+                    align = 'left'; // will be positioned manually to the right
+                }
+
+
+                doc.setFontSize(fontSize);
+                doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+                const lines = doc.splitTextToSize(text, contentWidth - (align === 'justify' ? firstLineIndent : 0));
+
+                lines.forEach((line: string, index: number) => {
+                    checkAndAddPage();
+                    let xPos = margin.left;
+                    if(align === 'justify' && index === 0) {
+                        xPos += firstLineIndent;
+                    }
+                    
+                    const options: { align?: "left" | "center" | "justify", baseline?: "top" | "middle" | "bottom" } = {};
+                    if(align === 'justify') options.align = 'justify';
+
+                    if (text.match(/^\s*\[LOCAL\],/)) {
+                        doc.text(line, pageWidth - margin.right, cursorY, { align: 'right' });
+                    } else {
+                        doc.text(line, xPos, cursorY, options);
+                    }
+                    
+                    cursorY += fontSize * 1.5; // Line height
+                });
+            }
+
+            addPageNumber(doc); // Add page number to the last page if needed
+            doc.save(`${form.getValues('title').replace(/ /g, '_')}.pdf`);
+
+            toast({
+                title: "Sucesso!",
+                description: "O download do seu PDF foi iniciado.",
+            });
+        } catch (error) {
+            console.error("Failed to generate PDF", error);
+            toast({
+                title: "Erro ao Gerar PDF",
+                description: "Ocorreu um problema ao tentar gerar o arquivo PDF. Tente novamente.",
+                variant: "destructive",
+            });
         }
-  
-        pdf.save(`${form.getValues('title').replace(/ /g, '_')}.pdf`);
-        toast({
-          title: "Sucesso!",
-          description: "O download do seu PDF foi iniciado.",
-        });
-      } catch (error) {
-        console.error("Failed to generate PDF", error);
-        toast({
-          title: "Erro ao Gerar PDF",
-          description: "Ocorreu um problema ao tentar gerar o arquivo PDF. Tente novamente.",
-          variant: "destructive",
-        });
-      }
     });
-  };
+};
+
 
   const onSubmit = (data: PetitionFormValues) => {
     startTransition(async () => {
@@ -360,7 +421,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
                     <Popover><PopoverTrigger asChild>
                         <FormControl>
                         <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Escolha uma data</span>}
+                            {field.value ? format(new Date(field.value), "PPP", { locale: require('date-fns/locale/pt-BR') }) : <span>Escolha uma data</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                         </FormControl>
