@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -44,7 +45,7 @@ const petitionSchema = z.object({
   // Dados do Representante
   representativeName: z.string().min(1, "Nome do representante é obrigatório."),
   representativeRole: z.string().min(1, "Cargo do representante é obrigatório."),
-  representativeState: z.string().min(1, "Estado do representante é obrigatório."),
+  representativeState: z.string().min(1, "Estado da petição é obrigatório."),
   representativeCpf: z.string().min(11, "CPF do representante é inválido."),
 
   // Dados da Operação
@@ -147,15 +148,13 @@ CPF: [CPF_REPRESENTANTE] — Assinatura digital: [ASSINATURA_ICP_BRASIL_URL]
 export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const petitionPreviewRef = useRef<HTMLDivElement>(null);
-
 
   const form = useForm<PetitionFormValues>({
     resolver: zodResolver(petitionSchema),
     defaultValues: petition ? {
         ...petition,
         creditBalance: petition.creditBalance || 0,
-        petitionDate: petition.updatedAt ? new Date(petition.updatedAt) : undefined,
+        petitionDate: petition.petitionDate ? new Date(petition.petitionDate) : new Date(),
     } : {
       title: 'Nova Petição',
       customHeader: '',
@@ -170,6 +169,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
       negotiatedValue: 145000.00, // Mock
       petitionBody: defaultPetitionBodyTemplate,
       status: 'rascunho',
+      petitionDate: new Date(),
     },
   });
 
@@ -229,6 +229,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     if(updatedBody !== watchedFields.petitionBody) {
       form.setValue('petitionBody', updatedBody, { shouldDirty: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedFields, form]);
 
  const handleDownloadPdf = () => {
@@ -421,7 +422,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
                     <Popover><PopoverTrigger asChild>
                         <FormControl>
                         <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                            {field.value ? format(new Date(field.value), "PPP", { locale: require('date-fns/locale/pt-BR') }) : <span>Escolha uma data</span>}
+                            {field.value ? format(new Date(field.value), "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                         </FormControl>
@@ -508,7 +509,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
         </Form>
         <div className="border rounded-lg bg-secondary/20 p-4 overflow-y-auto">
             <h3 className="text-lg font-semibold mb-2 text-center">Pré-visualização</h3>
-            <div ref={petitionPreviewRef} className="bg-white p-8 rounded-md shadow-md text-sm text-black">
+            <div className="bg-white p-8 rounded-md shadow-md text-sm text-black">
                  {watchedFields.customHeader && (
                     <div className="text-center mb-4 border-b pb-4">
                         <p className="whitespace-pre-wrap">{watchedFields.customHeader}</p>
