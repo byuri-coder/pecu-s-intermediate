@@ -4,8 +4,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition, useEffect } from 'react';
+import { useTransition, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -144,13 +147,15 @@ CPF: [CPF_REPRESENTANTE] — Assinatura digital: [ASSINATURA_ICP_BRASIL_URL]
 export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const petitionPreviewRef = useRef<HTMLDivElement>(null);
+
 
   const form = useForm<PetitionFormValues>({
     resolver: zodResolver(petitionSchema),
     defaultValues: petition ? {
         ...petition,
         creditBalance: petition.creditBalance || 0,
-        petitionDate: petition.dataPeticao ? new Date(petition.dataPeticao) : undefined,
+        petitionDate: petition.updatedAt ? new Date(petition.updatedAt) : undefined,
     } : {
       title: 'Nova Petição',
       customHeader: '',
@@ -170,7 +175,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
 
   const watchedFields = form.watch();
 
-  useEffect(() => {
+  const getUpdatedBody = () => {
     // Mock data that would come from the platform
     const cedente = {
         razaoSocial: 'Empresa Cedente S.A. (Vendedora)',
@@ -189,38 +194,96 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     let updatedBody = defaultPetitionBodyTemplate;
 
     const replacements = {
-        '[UF]': watchedFields.representativeState || '[UF]',
-        '[RAZAO_SOCIAL_CEDENTE]': cedente.razaoSocial,
-        '[CNPJ_CEDENTE]': watchedFields.partyCnpj || '[CNPJ_CEDENTE]',
-        '[IE_CEDENTE]': cedente.ie,
-        '[ENDERECO_CEDENTE]': cedente.endereco,
-        '[NOME_REPRESENTANTE_CEDENTE]': watchedFields.representativeName || '[NOME_REPRESENTANTE_CEDENTE]',
-        '[CPF_REPRESENTANTE]': watchedFields.representativeCpf || '[CPF_REPRESENTANTE]',
-        '[CARGO_REPRESENTANTE]': watchedFields.representativeRole || '[CARGO_REPRESENTANTE]',
-        '[RAZAO_SOCIAL_CESSIONARIO]': cessionario.razaoSocial,
-        '[CNPJ_CESSIONARIO]': cessionario.cnpj,
-        '[IE_CESSIONARIO]': cessionario.ie,
-        '[ENDERECO_CESSIONARIO]': cessionario.endereco,
-        '[VALOR_NOMINAL_CREDITO]': formatCurrency(watchedFields.creditBalance || 0),
-        '[VALOR_NOMINAL_POR_EXTENSO]': numberToWords(watchedFields.creditBalance || 0),
-        '[PERIODO_DE_APURACAO]': watchedFields.periodoApuracao || '[PERIODO_DE_APURACAO]',
-        '[TIPO_DE_OPERACAO]': watchedFields.tipoOperacao || '[TIPO_DE_OPERACAO]',
-        '[VALOR_NEGOCIADO]': formatCurrency(watchedFields.negotiatedValue || 0),
-        '[VALOR_NEGOCIADO_POR_EXTENSO]': numberToWords(watchedFields.negotiatedValue || 0),
-        '[QUANTIDADE_OU_PORCENTAGEM]': watchedFields.creditBalance && watchedFields.negotiatedValue ? ((watchedFields.negotiatedValue / watchedFields.creditBalance) * 100).toFixed(2) : '0.00',
-        '[LOCAL]': cedente.endereco.split(',').slice(-2).join(', ').trim(),
-        '[DATA_PREENCHIDA_PELA_PLATAFORMA]': watchedFields.petitionDate ? format(watchedFields.petitionDate, 'dd/MM/yyyy') : '[DATA]',
+        '\\[UF\\]': watchedFields.representativeState || '[UF]',
+        '\\[RAZAO_SOCIAL_CEDENTE\\]': cedente.razaoSocial,
+        '\\[CNPJ_CEDENTE\\]': watchedFields.partyCnpj || '[CNPJ_CEDENTE]',
+        '\\[IE_CEDENTE\\]': cedente.ie,
+        '\\[ENDERECO_CEDENTE\\]': cedente.endereco,
+        '\\[NOME_REPRESENTANTE_CEDENTE\\]': watchedFields.representativeName || '[NOME_REPRESENTANTE_CEDENTE]',
+        '\\[CPF_REPRESENTANTE\\]': watchedFields.representativeCpf || '[CPF_REPRESENTANTE]',
+        '\\[CARGO_REPRESENTANTE\\]': watchedFields.representativeRole || '[CARGO_REPRESENTANTE]',
+        '\\[RAZAO_SOCIAL_CESSIONARIO\\]': cessionario.razaoSocial,
+        '\\[CNPJ_CESSIONARIO\\]': cessionario.cnpj,
+        '\\[IE_CESSIONARIO\\]': cessionario.ie,
+        '\\[ENDERECO_CESSIONARIO\\]': cessionario.endereco,
+        '\\[VALOR_NOMINAL_CREDITO\\]': formatCurrency(watchedFields.creditBalance || 0),
+        '\\[VALOR_NOMINAL_POR_EXTENSO\\]': numberToWords(watchedFields.creditBalance || 0),
+        '\\[PERIODO_DE_APURACAO\\]': watchedFields.periodoApuracao || '[PERIODO_DE_APURACAO]',
+        '\\[TIPO_DE_OPERACAO\\]': watchedFields.tipoOperacao || '[TIPO_DE_OPERACAO]',
+        '\\[VALOR_NEGOCIADO\\]': formatCurrency(watchedFields.negotiatedValue || 0),
+        '\\[VALOR_NEGOCIADO_POR_EXTENSO\\]': numberToWords(watchedFields.negotiatedValue || 0),
+        '\\[QUANTIDADE_OU_PORCENTAGEM\\]': watchedFields.creditBalance && watchedFields.negotiatedValue ? ((watchedFields.negotiatedValue / watchedFields.creditBalance) * 100).toFixed(2) : '0.00',
+        '\\[LOCAL\\]': cedente.endereco.split(',').slice(-2).join(', ').trim(),
+        '\\[DATA_PREENCHIDA_PELA_PLATAFORMA\\]': watchedFields.petitionDate ? format(new Date(watchedFields.petitionDate), 'dd/MM/yyyy') : '[DATA]',
     };
 
     for (const [key, value] of Object.entries(replacements)) {
-        updatedBody = updatedBody.replace(new RegExp(key.replace(/\[/g, '\\[').replace(/\]/g, '\\]'), 'g'), value);
+        updatedBody = updatedBody.replace(new RegExp(key, 'g'), value);
     }
     
+    return updatedBody;
+  }
+
+  useEffect(() => {
+    const updatedBody = getUpdatedBody();
     if(updatedBody !== watchedFields.petitionBody) {
       form.setValue('petitionBody', updatedBody, { shouldDirty: true });
     }
-
   }, [watchedFields, form]);
+
+  const handleDownloadPdf = () => {
+    const input = petitionPreviewRef.current;
+    if (!input) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível encontrar o conteúdo da petição para gerar o PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    startTransition(async () => {
+      try {
+        const canvas = await html2canvas(input, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+  
+        let position = 0;
+        let pageHeight = pdf.internal.pageSize.height;
+        let heightLeft = canvasHeight * (pdfWidth / canvasWidth);
+  
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, height);
+        heightLeft -= pageHeight;
+  
+        while (heightLeft >= 0) {
+          position = heightLeft - (canvasHeight * (pdfWidth / canvasWidth));
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, height);
+          heightLeft -= pageHeight;
+        }
+  
+        pdf.save(`${form.getValues('title').replace(/ /g, '_')}.pdf`);
+        toast({
+          title: "Sucesso!",
+          description: "O download do seu PDF foi iniciado.",
+        });
+      } catch (error) {
+        console.error("Failed to generate PDF", error);
+        toast({
+          title: "Erro ao Gerar PDF",
+          description: "Ocorreu um problema ao tentar gerar o arquivo PDF. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
 
   const onSubmit = (data: PetitionFormValues) => {
     startTransition(async () => {
@@ -237,149 +300,162 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
-        
-        <FormField name="title" control={form.control} render={({ field }) => (
-            <FormItem>
-                <FormLabel>Título da Petição</FormLabel>
-                <FormControl><Input {...field} placeholder="Ex: Petição de Transferência ICMS" /></FormControl>
-                <FormMessage />
-            </FormItem>
-        )} />
-        <FormField name="customHeader" control={form.control} render={({ field }) => (
-            <FormItem>
-                <FormLabel>Cabeçalho Personalizado</FormLabel>
-                <FormControl><Textarea {...field} rows={2} placeholder="Insira o texto que aparecerá no cabeçalho do documento." /></FormControl>
-                <FormMessage />
-            </FormItem>
-        )} />
-
-        <h3 className="text-lg font-semibold border-b pb-2">Dados da Operação e Representante</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField name="partyCnpj" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>CNPJ do Cedente (Vendedor)</FormLabel><FormControl><Input {...field} placeholder="00.000.000/0001-00" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="creditBalance" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Saldo Credor Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField name="negotiatedValue" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Valor Negociado (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField name="representativeName" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Nome do Representante Legal</FormLabel><FormControl><Input {...field} placeholder="Nome completo do signatário" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="representativeRole" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Cargo do Representante</FormLabel><FormControl><Input {...field} placeholder="Ex: Diretor Financeiro" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="representativeCpf" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>CPF do Representante</FormLabel><FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="representativeState" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Estado da Petição (UF)</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                            {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select><FormMessage />
-                </FormItem>
-            )} />
-             <FormField name="tipoOperacao" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Tipo de Operação (Origem)</FormLabel><FormControl><Input {...field} placeholder="Ex: exportação, insumos agropecuários" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="periodoApuracao" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Período de Apuração</FormLabel><FormControl><Input {...field} placeholder="Ex: Janeiro/2023 a Dezembro/2023" /></FormControl><FormMessage /></FormItem>
-            )} />
-             <FormField name="petitionDate" control={form.control} render={({ field }) => (
-                <FormItem className="flex flex-col"><FormLabel>Data do Documento</FormLabel>
-                  <Popover><PopoverTrigger asChild>
-                    <FormControl>
-                      <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                        {field.value ? format(field.value, "PPP") : <span>Escolha uma data</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                  </PopoverContent></Popover><FormMessage />
-                </FormItem>
-              )} />
-        </div>
-
-        <FormField name="petitionBody" control={form.control} render={({ field }) => (
-            <FormItem>
-                <FormLabel>Corpo da Petição</FormLabel>
-                <FormControl><Textarea {...field} rows={15} placeholder="O corpo da petição será preenchido dinamicamente." /></FormControl>
-                <FormMessage />
-            </FormItem>
-        )} />
-        
-        <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Anexos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh]">
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 overflow-y-auto pr-4">
+            
+            <FormField name="title" control={form.control} render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Planilha de Apuração</FormLabel>
-                    <FormControl><Input type="file" /></FormControl>
+                    <FormLabel>Título da Petição</FormLabel>
+                    <FormControl><Input {...field} placeholder="Ex: Petição de Transferência ICMS" /></FormControl>
+                    <FormMessage />
                 </FormItem>
-                 <FormItem>
-                    <FormLabel>Balanço / Declaração Contábil</FormLabel>
-                    <FormControl><Input type="file" /></FormControl>
+            )} />
+            <FormField name="customHeader" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Cabeçalho Personalizado</FormLabel>
+                    <FormControl><Textarea {...field} rows={2} placeholder="Insira o texto que aparecerá no cabeçalho do documento." /></FormControl>
+                    <FormMessage />
                 </FormItem>
-                 <FormItem>
-                    <FormLabel>Notas Fiscais (Arquivo .ZIP)</FormLabel>
-                    <FormControl><Input type="file" accept=".zip" /></FormControl>
-                </FormItem>
-                 <FormItem>
-                    <FormLabel>Contrato de Cessão</FormLabel>
-                    <FormControl><Input type="file" /></FormControl>
-                </FormItem>
+            )} />
+
+            <h3 className="text-lg font-semibold border-b pb-2">Dados da Operação e Representante</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField name="partyCnpj" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>CNPJ do Cedente (Vendedor)</FormLabel><FormControl><Input {...field} placeholder="00.000.000/0001-00" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="creditBalance" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Saldo Credor Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="negotiatedValue" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Valor Negociado (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="representativeName" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Representante Legal</FormLabel><FormControl><Input {...field} placeholder="Nome completo do signatário" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="representativeRole" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Cargo do Representante</FormLabel><FormControl><Input {...field} placeholder="Ex: Diretor Financeiro" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="representativeCpf" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>CPF do Representante</FormLabel><FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="representativeState" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Estado da Petição (UF)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select><FormMessage />
+                    </FormItem>
+                )} />
+                <FormField name="tipoOperacao" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Tipo de Operação (Origem)</FormLabel><FormControl><Input {...field} placeholder="Ex: exportação, insumos agropecuários" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="periodoApuracao" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Período de Apuração</FormLabel><FormControl><Input {...field} placeholder="Ex: Janeiro/2023 a Dezembro/2023" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="petitionDate" control={form.control} render={({ field }) => (
+                    <FormItem className="flex flex-col"><FormLabel>Data do Documento</FormLabel>
+                    <Popover><PopoverTrigger asChild>
+                        <FormControl>
+                        <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(new Date(field.value), "PPP") : <span>Escolha uma data</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent></Popover><FormMessage />
+                    </FormItem>
+                )} />
             </div>
-             <div>
-                <FormLabel>Outros Documentos</FormLabel>
-                <div className="space-y-2 mt-2">
-                    <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-secondary">
-                        <Upload className="mx-auto h-8 w-8 text-muted-foreground"/>
-                        <p className="text-sm mt-2">Adicionar novo anexo</p>
-                        <Input type="file" className="hidden" />
+
+            <FormField name="petitionBody" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Corpo da Petição (Editável)</FormLabel>
+                    <FormControl><Textarea {...field} rows={15} placeholder="O corpo da petição será preenchido dinamicamente." /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+            
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Anexos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormItem>
+                        <FormLabel>Planilha de Apuração</FormLabel>
+                        <FormControl><Input type="file" /></FormControl>
+                    </FormItem>
+                    <FormItem>
+                        <FormLabel>Balanço / Declaração Contábil</FormLabel>
+                        <FormControl><Input type="file" /></FormControl>
+                    </FormItem>
+                    <FormItem>
+                        <FormLabel>Notas Fiscais (Arquivo .ZIP)</FormLabel>
+                        <FormControl><Input type="file" accept=".zip" /></FormControl>
+                    </FormItem>
+                    <FormItem>
+                        <FormLabel>Contrato de Cessão</FormLabel>
+                        <FormControl><Input type="file" /></FormControl>
+                    </FormItem>
+                </div>
+                <div>
+                    <FormLabel>Outros Documentos</FormLabel>
+                    <div className="space-y-2 mt-2">
+                        <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-secondary">
+                            <Upload className="mx-auto h-8 w-8 text-muted-foreground"/>
+                            <p className="text-sm mt-2">Adicionar novo anexo</p>
+                            <Input type="file" className="hidden" />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
 
-         <FormField name="status" control={form.control} render={({ field }) => (
-            <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    <SelectItem value="rascunho">Rascunho</SelectItem>
-                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>Rascunhos podem ser editados. Petições finalizadas ficam bloqueadas para edição.</FormDescription>
-                <FormMessage />
-            </FormItem>
-        )} />
+            <FormField name="status" control={form.control} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                        <SelectItem value="rascunho">Rascunho</SelectItem>
+                        <SelectItem value="finalizado">Finalizado</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <FormDescription>Rascunhos podem ser editados. Petições finalizadas ficam bloqueadas para edição.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )} />
 
-        <div className="flex justify-between items-center pt-4 border-t">
-            <div>
-                <Button type="button" variant="outline" disabled={petition?.status !== 'finalizado'}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Baixar PDF
-                </Button>
+            <div className="flex justify-between items-center pt-4 border-t">
+                <div>
+                    <Button type="button" variant="outline" onClick={handleDownloadPdf} disabled={form.getValues('status') !== 'finalizado' || isPending}>
+                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                        Baixar PDF
+                    </Button>
+                </div>
+                <div className="flex gap-2">
+                    <Button type="button" variant="secondary" onClick={onSuccess}>Cancelar</Button>
+                    <Button type="submit" disabled={isPending}>
+                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {petition ? 'Salvar Alterações' : 'Criar Petição'}
+                    </Button>
+                </div>
             </div>
-            <div className="flex gap-2">
-                <Button type="button" variant="secondary" onClick={onSuccess}>Cancelar</Button>
-                <Button type="submit" disabled={isPending}>
-                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {petition ? 'Salvar Alterações' : 'Criar Petição'}
-                </Button>
+        </form>
+        </Form>
+        <div className="border rounded-lg bg-secondary/20 p-4 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-2 text-center">Pré-visualização</h3>
+            <div ref={petitionPreviewRef} className="bg-white p-8 rounded-md shadow-md text-sm text-black">
+                 {watchedFields.customHeader && (
+                    <div className="text-center mb-4 border-b pb-4">
+                        <p className="whitespace-pre-wrap">{watchedFields.customHeader}</p>
+                    </div>
+                )}
+                <p className="whitespace-pre-wrap">{getUpdatedBody()}</p>
             </div>
         </div>
-      </form>
-    </Form>
+    </div>
   );
 }
