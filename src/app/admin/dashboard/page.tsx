@@ -160,7 +160,7 @@ export default function Dashboard() {
                   <TableHead className="hidden xl:table-cell">
                     Status
                   </TableHead>
-                  <TableHead className="hidden xl:table-cell">
+                  <TableHead className="hidden md:table-cell lg:hidden xl:table-cell">
                     Data
                   </TableHead>
                   <TableHead className="text-right">Valor</TableHead>
