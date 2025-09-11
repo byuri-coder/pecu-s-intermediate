@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Menu,
 } from "lucide-react"
+import * as React from 'react';
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,7 +37,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Logo } from "@/components/icons/logo"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -66,6 +67,28 @@ function NavLink({ item, isMobile = false }: { item: typeof navItems[0], isMobil
 }
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+  React.useEffect(() => {
+    // Em um app real, isso seria validado com um token seguro, não sessionStorage.
+    const adminSession = sessionStorage.getItem('adminAuthenticated');
+    if (adminSession !== 'true') {
+      router.replace('/admin/login');
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+
+  if (!isAuthenticated) {
+    // Renderiza um loader ou nada enquanto a verificação acontece
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Verificando autorização...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr] bg-muted/40">
       <div className="hidden border-r bg-background md:block">
