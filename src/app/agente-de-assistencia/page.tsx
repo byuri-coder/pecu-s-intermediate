@@ -7,6 +7,7 @@ import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus,
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
+import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
 
 const calculators = [
     {
@@ -35,14 +36,14 @@ const calculators = [
         description: 'Simule o cálculo básico de ICMS em operações.',
         icon: Landmark,
         href: '/agente-de-assistencia/icms',
-        component: null
+        component: <IcmsCalculator />
     },
     {
         title: 'Calculadora PIS/COFINS',
         description: 'Cálculo simplificado para o regime cumulativo (Lucro Presumido).',
         icon: FileText,
         href: '/agente-de-assistencia/pis-cofins',
-        component: null
+        component: <PisCofinsCalculator />
     },
     {
         title: 'Calculadora ICMS-ST',
@@ -54,9 +55,9 @@ const calculators = [
     {
         title: 'Calculadora DIFAL',
         description: 'Calcule o Diferencial de Alíquota para consumidor final.',
-        icon: Minus,
+        icon: Plus,
         href: '/agente-de-assistencia/difal',
-        component: null
+        component: <DifalCalculator />
     },
     {
         title: 'Calculadora IRPJ/CSLL',
@@ -145,18 +146,31 @@ export default function CalculatorHubPage() {
                     </AlertDescription>
                 </Alert>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{activeCalc}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {selectedCalculator}
-                    </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{activeCalc}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {selectedCalculator}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-secondary/30">
+                        <CardHeader>
+                            <CardTitle>Agente de Assistência IA</CardTitle>
+                            <CardDescription>Faça uma pergunta sobre finanças ou tributação.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {/* Placeholder for AI Chatbot */}
+                            <div className="h-96 flex items-center justify-center text-muted-foreground bg-background rounded-lg">
+                                <p>(Chatbot IA em breve)</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </CardContent>
         </Card>
     </div>
   );
 }
-
-    
