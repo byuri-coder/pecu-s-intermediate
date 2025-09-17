@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
 import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const calculators = [
     {
@@ -16,35 +17,35 @@ const calculators = [
         description: 'Calcule o valor e o percentual de deságio em operações com créditos.',
         icon: BadgePercent,
         href: '/agente-de-assistencia/desagio',
-        component: <DiscountCalculator />
+        component: DiscountCalculator
     },
     {
         title: 'Juros Simples',
         description: 'Calcule juros simples para aplicações ou empréstimos.',
         icon: Percent,
         href: '/agente-de-assistencia/juros-simples',
-        component: <SimpleInterestCalculator />,
+        component: SimpleInterestCalculator,
     },
     {
         title: 'Juros Compostos',
         description: 'Simule o poder dos juros compostos em seus investimentos.',
         icon: TrendingUp,
         href: '/agente-de-assistencia/juros-compostos',
-        component: <CompoundInterestCalculator />,
+        component: CompoundInterestCalculator,
     },
     {
         title: 'Calculadora de ICMS',
         description: 'Simule o cálculo básico de ICMS em operações.',
         icon: Landmark,
         href: '/agente-de-assistencia/icms',
-        component: <IcmsCalculator />
+        component: IcmsCalculator
     },
     {
         title: 'Calculadora PIS/COFINS',
         description: 'Cálculo simplificado para o regime cumulativo (Lucro Presumido).',
         icon: FileText,
         href: '/agente-de-assistencia/pis-cofins',
-        component: <PisCofinsCalculator />
+        component: PisCofinsCalculator
     },
     {
         title: 'Calculadora ICMS-ST',
@@ -58,7 +59,7 @@ const calculators = [
         description: 'Calcule o Diferencial de Alíquota para consumidor final.',
         icon: Plus,
         href: '/agente-de-assistencia/difal',
-        component: <DifalCalculator />
+        component: DifalCalculator
     },
     {
         title: 'Calculadora IRPJ/CSLL',
@@ -72,14 +73,14 @@ const calculators = [
         description: 'Compare regimes tributários (Simples, Presumido, Real).',
         icon: Briefcase,
         href: '/agente-de-assistencia/pj',
-        component: <PJCalculator />,
+        component: PJCalculator,
     },
     {
         title: 'Custos de Funcionário',
         description: 'Estime o custo total de um funcionário para sua empresa.',
         icon: Users,
         href: '/agente-de-assistencia/custo-funcionario',
-        component: <EmployeeCostCalculator />,
+        component: EmployeeCostCalculator,
     },
 ];
 
@@ -98,16 +99,91 @@ const CalculatorCard = ({ title, description, icon: Icon, href, ComingSoon }: { 
     </div>
 );
 
+const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) => {
+    let chartContent = null;
+    let title = "Gráfico de Resultados";
+    let description = "Visualize o resultado dos seus cálculos.";
+
+    const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+    if (chartType === 'Calculadora de Deságio' && data) {
+        title = "Composição do Valor do Crédito";
+        description = "Valor de face, preço de venda e deságio.";
+        const chartData = [
+            { name: 'Valor', "Preço de Venda": data.price, "Deságio": data.discountValue },
+        ];
+        chartContent = (
+             <BarChart data={chartData} layout="vertical" stackOffset="expand">
+                <XAxis type="number" hide tickFormatter={(tick) => `${tick * 100}%`}/>
+                <YAxis type="category" dataKey="name" hide />
+                <Tooltip formatter={(value, name, props) => [`${formatCurrency(value as number)} (${(props.payload[name] / (props.payload['Preço de Venda'] + props.payload['Deságio']) * 100).toFixed(1)}%)`, name]}/>
+                <Legend />
+                <Bar dataKey="Preço de Venda" stackId="a" fill="hsl(var(--primary))" radius={[4, 0, 0, 4]} />
+                <Bar dataKey="Deságio" stackId="a" fill="hsl(var(--primary) / 0.3)" radius={[0, 4, 4, 0]} />
+            </BarChart>
+        );
+    } else if (chartType === 'Juros Simples' && data) {
+        title = "Capital vs. Juros";
+        description = "Proporção entre o capital inicial e os juros acumulados.";
+        const chartData = [ { name: 'Montante', 'Capital Inicial': data.principal, 'Juros Simples': data.totalInterest } ];
+        chartContent = (
+            <BarChart data={chartData} stackOffset="expand" layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" hide />
+                <Tooltip formatter={(value) => formatCurrency(value as number)}/>
+                <Legend />
+                <Bar dataKey="Capital Inicial" stackId="a" fill="hsl(var(--primary))" />
+                <Bar dataKey="Juros Simples" stackId="a" fill="hsl(var(--primary) / 0.5)" />
+            </BarChart>
+        );
+    } else if (chartType === 'Juros Compostos' && data) {
+        title = "Evolução do Investimento";
+        description = "Proporção do total investido e dos juros ganhos.";
+        const chartData = [ { name: 'Montante', 'Total Investido': data.totalInvested, 'Juros Compostos': data.totalInterest } ];
+        chartContent = (
+            <BarChart data={chartData} stackOffset="expand" layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" hide />
+                <Tooltip formatter={(value) => formatCurrency(value as number)}/>
+                <Legend />
+                <Bar dataKey="Total Investido" stackId="a" fill="hsl(var(--primary))" />
+                <Bar dataKey="Juros Compostos" stackId="a" fill="hsl(var(--primary) / 0.5)" />
+            </BarChart>
+        );
+    }
+
+    return (
+        <Card className="bg-secondary/30">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={250}>
+                   {chartContent || (
+                        <div className="h-full flex items-center justify-center text-muted-foreground bg-background rounded-lg">
+                            <p className="text-center">Calcule para ver o gráfico.</p>
+                        </div>
+                   )}
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function CalculatorHubPage() {
-    const [selectedCalculator, setSelectedCalculator] = React.useState<React.ReactNode>(<DiscountCalculator />);
-    const [activeCalc, setActiveCalc] = React.useState('Calculadora de Deságio');
+    const [selectedCalculatorKey, setSelectedCalculatorKey] = React.useState(calculators[0].title);
+    const [chartData, setChartData] = React.useState(null);
 
+    const SelectedCalculator = React.useMemo(() => {
+        return calculators.find(c => c.title === selectedCalculatorKey)?.component || null;
+    }, [selectedCalculatorKey]);
 
-    const handleSelectCalc = (component: React.ReactNode, title: string) => {
+    const handleSelectCalc = (component: React.ElementType | null, title: string) => {
         if(component) {
-            setSelectedCalculator(component);
-            setActiveCalc(title);
+            setSelectedCalculatorKey(title);
+            setChartData(null); // Reset chart on new selection
         }
     };
 
@@ -150,25 +226,14 @@ export default function CalculatorHubPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                      <Card>
                         <CardHeader>
-                            <CardTitle>{activeCalc}</CardTitle>
+                            <CardTitle>{selectedCalculatorKey}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {selectedCalculator}
+                            {SelectedCalculator ? <SelectedCalculator onCalculate={setChartData}/> : <p>Selecione uma calculadora.</p>}
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-secondary/30">
-                        <CardHeader>
-                            <CardTitle>Agente de Assistência IA</CardTitle>
-                            <CardDescription>Faça uma pergunta sobre finanças ou tributação.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {/* Placeholder for AI Chatbot */}
-                            <div className="h-96 flex items-center justify-center text-muted-foreground bg-background rounded-lg">
-                                <p>(Chatbot IA em breve)</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <FinancialChart data={chartData} chartType={selectedCalculatorKey}/>
                 </div>
             </CardContent>
         </Card>

@@ -17,7 +17,7 @@ const formatCurrency = (value: number) => {
 };
 
 // 1. Calculadora de Deságio
-export function DiscountCalculator() {
+export function DiscountCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
   const [creditAmount, setCreditAmount] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [result, setResult] = useState<{ discountValue: number; discountPercentage: number } | null>(null);
@@ -29,9 +29,12 @@ export function DiscountCalculator() {
     if (!isNaN(amount) && !isNaN(price) && amount > 0 && price > 0 && price <= amount) {
       const discountValue = amount - price;
       const discountPercentage = (discountValue / amount) * 100;
-      setResult({ discountValue, discountPercentage });
+      const calcResult = { discountValue, discountPercentage };
+      setResult(calcResult);
+      onCalculate({ ...calcResult, price, amount });
     } else {
       setResult(null);
+      onCalculate(null);
       alert("Por favor, insira valores válidos. O preço de venda não pode ser maior que o valor de face.");
     }
   };
@@ -96,7 +99,7 @@ export function DiscountCalculator() {
 }
 
 // 2. Calculadora de Juros Simples
-export function SimpleInterestCalculator() {
+export function SimpleInterestCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
     const [principal, setPrincipal] = useState('');
     const [rate, setRate] = useState('');
     const [time, setTime] = useState('');
@@ -110,9 +113,12 @@ export function SimpleInterestCalculator() {
         if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P > 0 && i > 0 && t > 0) {
             const totalInterest = P * i * t;
             const totalAmount = P + totalInterest;
-            setResult({ totalAmount, totalInterest });
+            const calcResult = { totalAmount, totalInterest };
+            setResult(calcResult);
+            onCalculate({ ...calcResult, principal: P });
         } else {
             setResult(null);
+            onCalculate(null);
             alert("Por favor, preencha todos os campos com valores positivos.");
         }
     };
@@ -170,7 +176,7 @@ export function SimpleInterestCalculator() {
 }
 
 // 3. Calculadora de Juros Compostos
-export function CompoundInterestCalculator() {
+export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
     const [principal, setPrincipal] = useState('');
     const [rate, setRate] = useState('');
     const [time, setTime] = useState('');
@@ -190,9 +196,12 @@ export function CompoundInterestCalculator() {
             }
             const totalInvested = P + (C * t);
             const totalInterest = totalAmount - totalInvested;
-            setResult({ totalAmount, totalInterest, totalInvested });
+            const calcResult = { totalAmount, totalInterest, totalInvested };
+            setResult(calcResult);
+            onCalculate(calcResult);
         } else {
             setResult(null);
+            onCalculate(null);
             alert("Por favor, preencha o capital inicial, a taxa e o tempo com valores positivos.");
         }
     };
