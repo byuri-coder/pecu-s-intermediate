@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator } from './calculator';
