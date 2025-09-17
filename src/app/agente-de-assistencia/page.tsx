@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
+import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
 
 const calculators = [
     {
@@ -71,14 +72,14 @@ const calculators = [
         description: 'Compare regimes tributários (Simples, Presumido, Real).',
         icon: Briefcase,
         href: '/agente-de-assistencia/pj',
-        component: null,
+        component: <PJCalculator />,
     },
     {
         title: 'Custos de Funcionário',
         description: 'Estime o custo total de um funcionário para sua empresa.',
         icon: Users,
         href: '/agente-de-assistencia/custo-funcionario',
-        component: null,
+        component: <EmployeeCostCalculator />,
     },
 ];
 
