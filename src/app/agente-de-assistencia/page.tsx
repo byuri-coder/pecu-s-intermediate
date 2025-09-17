@@ -40,7 +40,7 @@ const calculators = [
         title: 'Calculadora DIFAL',
         description: 'Calcule o Diferencial de Alíquota para consumidor final.',
         icon: Minus,
-        href: '/agente-deassistencia/difal',
+        href: '/agente-de-assistencia/difal',
         component: null
     },
     {
