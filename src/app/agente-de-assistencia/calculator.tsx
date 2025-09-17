@@ -181,7 +181,7 @@ export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data
     const [rate, setRate] = useState('');
     const [time, setTime] = useState('');
     const [monthlyContribution, setMonthlyContribution] = useState('0');
-    const [result, setResult] = useState<{ totalAmount: number; totalInterest: number; totalInvested: number } | null>(null);
+    const [result, setResult] = useState<{ totalAmount: number; totalInterest: number; totalInvested: number; monthlyData: { month: number; value: number }[] } | null>(null);
 
     const handleCalculate = () => {
         const P = parseFloat(principal);
@@ -190,13 +190,19 @@ export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data
         const C = parseFloat(monthlyContribution) || 0;
 
         if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P >= 0 && i > 0 && t > 0) {
-            let totalAmount = P * Math.pow((1 + i), t);
-            if (C > 0) {
-                totalAmount += C * ((Math.pow((1 + i), t) - 1) / i);
+            const monthlyData: { month: number; value: number }[] = [];
+            let currentAmount = P;
+
+            for (let month = 1; month <= t; month++) {
+                currentAmount = currentAmount * (1 + i) + C;
+                monthlyData.push({ month, value: parseFloat(currentAmount.toFixed(2)) });
             }
+            
+            const totalAmount = currentAmount;
             const totalInvested = P + (C * t);
             const totalInterest = totalAmount - totalInvested;
-            const calcResult = { totalAmount, totalInterest, totalInvested };
+            
+            const calcResult = { totalAmount, totalInterest, totalInvested, monthlyData };
             setResult(calcResult);
             onCalculate(calcResult);
         } else {

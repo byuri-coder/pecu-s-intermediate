@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
 import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
 
 const calculators = [
     {
@@ -47,26 +47,12 @@ const calculators = [
         href: '/agente-de-assistencia/pis-cofins',
         component: PisCofinsCalculator
     },
-    {
-        title: 'Calculadora ICMS-ST',
-        description: 'Simulação de cálculo de ICMS por Substituição Tributária.',
-        icon: ReceiptText,
-        href: '/agente-de-assistencia/icms-st',
-        component: null
-    },
-    {
+     {
         title: 'Calculadora DIFAL',
         description: 'Calcule o Diferencial de Alíquota para consumidor final.',
         icon: Plus,
         href: '/agente-de-assistencia/difal',
         component: DifalCalculator
-    },
-    {
-        title: 'Calculadora IRPJ/CSLL',
-        description: 'Estimativa de IRPJ e CSLL para Lucro Real ou Presumido.',
-        icon: Scale,
-        href: '/agente-de-assistencia/irpj-csll',
-        component: null
     },
     {
         title: 'Calculadora para PJ',
@@ -105,50 +91,55 @@ const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) =
     let description = "Visualize o resultado dos seus cálculos.";
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    const COLORS = ['hsl(var(--primary))', 'hsl(var(--primary) / 0.3)'];
 
     if (chartType === 'Calculadora de Deságio' && data) {
         title = "Composição do Valor do Crédito";
-        description = "Valor de face, preço de venda e deságio.";
+        description = "Proporção entre preço de venda e deságio.";
         const chartData = [
-            { name: 'Valor', "Preço de Venda": data.price, "Deságio": data.discountValue },
+            { name: 'Preço de Venda', value: data.price },
+            { name: 'Deságio', value: data.discountValue },
         ];
         chartContent = (
-             <BarChart data={chartData} layout="vertical" stackOffset="expand">
-                <XAxis type="number" hide tickFormatter={(tick) => `${tick * 100}%`}/>
-                <YAxis type="category" dataKey="name" hide />
-                <Tooltip formatter={(value, name, props) => [`${formatCurrency(value as number)} (${(props.payload[name] / (props.payload['Preço de Venda'] + props.payload['Deságio']) * 100).toFixed(1)}%)`, name]}/>
+             <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                </Pie>
+                <Tooltip formatter={(value) => formatCurrency(value as number)}/>
                 <Legend />
-                <Bar dataKey="Preço de Venda" stackId="a" fill="hsl(var(--primary))" radius={[4, 0, 0, 4]} />
-                <Bar dataKey="Deságio" stackId="a" fill="hsl(var(--primary) / 0.3)" radius={[0, 4, 4, 0]} />
-            </BarChart>
+            </PieChart>
         );
     } else if (chartType === 'Juros Simples' && data) {
         title = "Capital vs. Juros";
         description = "Proporção entre o capital inicial e os juros acumulados.";
-        const chartData = [ { name: 'Montante', 'Capital Inicial': data.principal, 'Juros Simples': data.totalInterest } ];
+        const chartData = [
+            { name: 'Capital Inicial', value: data.principal },
+            { name: 'Juros Simples', value: data.totalInterest },
+        ];
         chartContent = (
-            <BarChart data={chartData} stackOffset="expand" layout="vertical">
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" hide />
+            <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                </Pie>
                 <Tooltip formatter={(value) => formatCurrency(value as number)}/>
                 <Legend />
-                <Bar dataKey="Capital Inicial" stackId="a" fill="hsl(var(--primary))" />
-                <Bar dataKey="Juros Simples" stackId="a" fill="hsl(var(--primary) / 0.5)" />
-            </BarChart>
+            </PieChart>
         );
-    } else if (chartType === 'Juros Compostos' && data) {
+    } else if (chartType === 'Juros Compostos' && data && data.monthlyData) {
         title = "Evolução do Investimento";
-        description = "Proporção do total investido e dos juros ganhos.";
-        const chartData = [ { name: 'Montante', 'Total Investido': data.totalInvested, 'Juros Compostos': data.totalInterest } ];
+        description = "Curva de crescimento do montante ao longo dos meses.";
         chartContent = (
-            <BarChart data={chartData} stackOffset="expand" layout="vertical">
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" hide />
+            <LineChart data={data.monthlyData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => formatCurrency(value)}/>
                 <Tooltip formatter={(value) => formatCurrency(value as number)}/>
                 <Legend />
-                <Bar dataKey="Total Investido" stackId="a" fill="hsl(var(--primary))" />
-                <Bar dataKey="Juros Compostos" stackId="a" fill="hsl(var(--primary) / 0.5)" />
-            </BarChart>
+                <Line type="monotone" dataKey="value" name="Montante" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}/>
+            </LineChart>
         );
     }
 
