@@ -128,3 +128,8 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
     </div>
   );
 }
+export async function generateStaticParams() {
+  return placeholderTaxCredits.map((taxCredit) => ({
+    id: taxCredit.id,
+  }));
+}

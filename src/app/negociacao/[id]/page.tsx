@@ -164,3 +164,23 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
+export async function generateStaticParams() {
+    const params: { id: string; type: AssetType }[] = [];
+  
+    // Créditos de Carbono
+    placeholderCredits.forEach(credit => {
+      params.push({ id: credit.id, type: 'carbon-credit' });
+    });
+  
+    // Créditos Tributários
+    placeholderTaxCredits.forEach(taxCredit => {
+      params.push({ id: taxCredit.id, type: 'tax-credit' });
+    });
+  
+    // Terras Rurais
+    placeholderRuralLands.forEach(ruralLand => {
+      params.push({ id: ruralLand.id, type: 'rural-land' });
+    });
+  
+    return params;
+  }

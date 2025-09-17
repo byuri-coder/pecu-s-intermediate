@@ -110,3 +110,10 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+export async function generateStaticParams() {
+  // Como 'placeholderCredits' já está disponível e contém todos os créditos
+  // podemos usá-lo diretamente para obter todos os IDs.
+  return placeholderCredits.map((credit) => ({
+    id: credit.id,
+  }));
+}

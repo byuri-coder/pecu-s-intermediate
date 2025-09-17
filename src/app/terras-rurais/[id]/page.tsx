@@ -173,3 +173,8 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     </div>
   );
 }
+export async function generateStaticParams() {
+  return placeholderRuralLands.map((ruralLand) => ({
+    id: ruralLand.id,
+  }));
+}
