@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator } from './calculator';
@@ -20,7 +20,7 @@ const calculators = [
         description: 'Simule o cálculo básico de ICMS em operações.',
         icon: Landmark,
         href: '/agente-de-assistencia/icms',
-        component: null // Placeholder for future component
+        component: null
     },
     {
         title: 'Calculadora PIS/COFINS',
@@ -32,7 +32,7 @@ const calculators = [
     {
         title: 'Calculadora ICMS-ST',
         description: 'Simulação de cálculo de ICMS por Substituição Tributária.',
-        icon: Landmark,
+        icon: ReceiptText,
         href: '/agente-de-assistencia/icms-st',
         component: null
     },
@@ -40,7 +40,7 @@ const calculators = [
         title: 'Calculadora DIFAL',
         description: 'Calcule o Diferencial de Alíquota para consumidor final.',
         icon: Minus,
-        href: '/agente-de-assistencia/difal',
+        href: '/agente-deassistencia/difal',
         component: null
     },
     {
@@ -49,6 +49,34 @@ const calculators = [
         icon: Scale,
         href: '/agente-de-assistencia/irpj-csll',
         component: null
+    },
+    {
+        title: 'Juros Simples',
+        description: 'Calcule juros simples para aplicações ou empréstimos.',
+        icon: Percent,
+        href: '/agente-de-assistencia/juros-simples',
+        component: null,
+    },
+    {
+        title: 'Juros Compostos',
+        description: 'Simule o poder dos juros compostos em seus investimentos.',
+        icon: TrendingUp,
+        href: '/agente-de-assistencia/juros-compostos',
+        component: null,
+    },
+    {
+        title: 'Calculadora para PJ',
+        description: 'Compare regimes tributários (Simples, Presumido, Real).',
+        icon: Briefcase,
+        href: '/agente-de-assistencia/pj',
+        component: null,
+    },
+    {
+        title: 'Custos de Funcionário',
+        description: 'Estime o custo total de um funcionário para sua empresa.',
+        icon: Users,
+        href: '/agente-de-assistencia/custo-funcionario',
+        component: null,
     },
 ];
 
