@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BadgePercent, Minus, Plus } from 'lucide-react';
+import { BadgePercent, Minus, Plus, Calendar, DollarSign, PiggyBank } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Helper to format currency
 const formatCurrency = (value: number) => {
@@ -93,3 +94,169 @@ export function DiscountCalculator() {
       </div>
   );
 }
+
+// 2. Calculadora de Juros Simples
+export function SimpleInterestCalculator() {
+    const [principal, setPrincipal] = useState('');
+    const [rate, setRate] = useState('');
+    const [time, setTime] = useState('');
+    const [result, setResult] = useState<{ totalAmount: number; totalInterest: number } | null>(null);
+
+    const handleCalculate = () => {
+        const P = parseFloat(principal);
+        const i = parseFloat(rate) / 100; // Taxa como decimal
+        const t = parseFloat(time);
+
+        if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P > 0 && i > 0 && t > 0) {
+            const totalInterest = P * i * t;
+            const totalAmount = P + totalInterest;
+            setResult({ totalAmount, totalInterest });
+        } else {
+            setResult(null);
+            alert("Por favor, preencha todos os campos com valores positivos.");
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="principal">Capital Inicial (R$)</Label>
+                    <Input id="principal" type="number" placeholder="Ex: 1000" value={principal} onChange={e => setPrincipal(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="rate">Taxa de Juros (% ao mês)</Label>
+                    <Input id="rate" type="number" placeholder="Ex: 1.5" value={rate} onChange={e => setRate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="time">Período (meses)</Label>
+                    <Input id="time" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                </div>
+            </div>
+            <Button onClick={handleCalculate} className="w-full">Calcular Juros Simples</Button>
+            {result && (
+                <Card className="bg-secondary/30 border-primary/20">
+                    <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado do Cálculo</CardTitle></CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Total de Juros</span>
+                            <span className="font-bold text-primary text-lg flex items-center gap-1">
+                                <Plus className="h-5 w-5"/>
+                                {formatCurrency(result.totalInterest)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Montante Final</span>
+                            <span className="font-bold text-primary text-lg flex items-center gap-1">
+                                <PiggyBank className="h-5 w-5"/>
+                                {formatCurrency(result.totalAmount)}
+                            </span>
+                        </div>
+                         <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-sm">Ver Fórmula</AccordionTrigger>
+                                <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                    <p className="font-semibold">Fórmula do Montante (Juros Simples):</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">M = P * (1 + i * t)</code>
+                                    <p className="text-xs">Onde: <b>M</b> = Montante, <b>P</b> = Capital, <b>i</b> = Taxa, <b>t</b> = Tempo</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+}
+
+// 3. Calculadora de Juros Compostos
+export function CompoundInterestCalculator() {
+    const [principal, setPrincipal] = useState('');
+    const [rate, setRate] = useState('');
+    const [time, setTime] = useState('');
+    const [monthlyContribution, setMonthlyContribution] = useState('0');
+    const [result, setResult] = useState<{ totalAmount: number; totalInterest: number; totalInvested: number } | null>(null);
+
+    const handleCalculate = () => {
+        const P = parseFloat(principal);
+        const i = parseFloat(rate) / 100;
+        const t = parseFloat(time);
+        const C = parseFloat(monthlyContribution) || 0;
+
+        if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P >= 0 && i > 0 && t > 0) {
+            let totalAmount = P * Math.pow((1 + i), t);
+            if (C > 0) {
+                totalAmount += C * ((Math.pow((1 + i), t) - 1) / i);
+            }
+            const totalInvested = P + (C * t);
+            const totalInterest = totalAmount - totalInvested;
+            setResult({ totalAmount, totalInterest, totalInvested });
+        } else {
+            setResult(null);
+            alert("Por favor, preencha o capital inicial, a taxa e o tempo com valores positivos.");
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="principal-compound">Capital Inicial (R$)</Label>
+                    <Input id="principal-compound" type="number" placeholder="Ex: 1000" value={principal} onChange={e => setPrincipal(e.target.value)} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="contribution-compound">Aporte Mensal (R$, opcional)</Label>
+                    <Input id="contribution-compound" type="number" placeholder="Ex: 100" value={monthlyContribution} onChange={e => setMonthlyContribution(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="rate-compound">Taxa de Juros (% ao mês)</Label>
+                    <Input id="rate-compound" type="number" placeholder="Ex: 1" value={rate} onChange={e => setRate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="time-compound">Período (meses)</Label>
+                    <Input id="time-compound" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                </div>
+            </div>
+            <Button onClick={handleCalculate} className="w-full">Calcular Juros Compostos</Button>
+            {result && (
+                <Card className="bg-secondary/30 border-primary/20">
+                    <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado do Cálculo</CardTitle></CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Total Investido</span>
+                            <span className="font-bold text-lg">{formatCurrency(result.totalInvested)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Total de Juros</span>
+                             <span className="font-bold text-green-600 text-lg flex items-center gap-1">
+                                <Plus className="h-5 w-5"/>
+                                {formatCurrency(result.totalInterest)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Montante Final</span>
+                            <span className="font-bold text-primary text-lg flex items-center gap-1">
+                                <PiggyBank className="h-5 w-5"/>
+                                {formatCurrency(result.totalAmount)}
+                            </span>
+                        </div>
+                        <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-sm">Ver Fórmulas</AccordionTrigger>
+                                <AccordionContent className="space-y-3 text-sm p-2 bg-background rounded-md">
+                                    <p className="font-semibold">Fórmula do Montante (Juros Compostos):</p>
+                                    <code className="text-xs p-2 bg-muted rounded-md block mt-1">M = P * (1 + i)^t</code>
+                                     <p className="font-semibold mt-2">Fórmula com Aportes Mensais (C):</p>
+                                     <code className="text-xs p-2 bg-muted rounded-md block mt-1">M = [P * (1+i)^t] + [C * (((1+i)^t - 1) / i)]</code>
+                                    <p className="text-xs">Onde: <b>M</b> = Montante, <b>P</b> = Capital, <b>i</b> = Taxa, <b>t</b> = Tempo, <b>C</b> = Aporte</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+}
+
+    

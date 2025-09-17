@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from 'react';
@@ -5,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { DiscountCalculator } from './calculator';
+import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 
 const calculators = [
     {
@@ -14,6 +15,20 @@ const calculators = [
         icon: BadgePercent,
         href: '/agente-de-assistencia/desagio',
         component: <DiscountCalculator />
+    },
+    {
+        title: 'Juros Simples',
+        description: 'Calcule juros simples para aplicações ou empréstimos.',
+        icon: Percent,
+        href: '/agente-de-assistencia/juros-simples',
+        component: <SimpleInterestCalculator />,
+    },
+    {
+        title: 'Juros Compostos',
+        description: 'Simule o poder dos juros compostos em seus investimentos.',
+        icon: TrendingUp,
+        href: '/agente-de-assistencia/juros-compostos',
+        component: <CompoundInterestCalculator />,
     },
     {
         title: 'Calculadora de ICMS',
@@ -49,20 +64,6 @@ const calculators = [
         icon: Scale,
         href: '/agente-de-assistencia/irpj-csll',
         component: null
-    },
-    {
-        title: 'Juros Simples',
-        description: 'Calcule juros simples para aplicações ou empréstimos.',
-        icon: Percent,
-        href: '/agente-de-assistencia/juros-simples',
-        component: null,
-    },
-    {
-        title: 'Juros Compostos',
-        description: 'Simule o poder dos juros compostos em seus investimentos.',
-        icon: TrendingUp,
-        href: '/agente-de-assistencia/juros-compostos',
-        component: null,
     },
     {
         title: 'Calculadora para PJ',
@@ -157,3 +158,5 @@ export default function CalculatorHubPage() {
     </div>
   );
 }
+
+    
