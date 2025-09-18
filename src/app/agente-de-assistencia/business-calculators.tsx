@@ -20,10 +20,18 @@ const formatCurrency = (value: number) => {
 // 1. Calculadora para PJ
 export function PJCalculator() {
     const [revenue, setRevenue] = useState('');
-    const [result, setResult] = useState<{ simples: number; presumido: number } | null>(null);
+    const [pisCofinsRate, setPisCofinsRate] = useState('3.65');
+    const [issRate, setIssRate] = useState('5');
+    const [presumptionRate, setPresumptionRate] = useState('32');
+    
+    const [result, setResult] = useState<{ simples: number; presumido: { [key: string]: number } } | null>(null);
 
     const handleCalculate = () => {
         const monthlyRevenue = parseFloat(revenue);
+        const pisCofins = parseFloat(pisCofinsRate) / 100;
+        const iss = parseFloat(issRate) / 100;
+        const presuncao = parseFloat(presumptionRate) / 100;
+
         if(!isNaN(monthlyRevenue) && monthlyRevenue > 0) {
             const annualRevenue = monthlyRevenue * 12;
             
@@ -35,17 +43,27 @@ export function PJCalculator() {
 
             const simplesTax = monthlyRevenue * simplesRate;
 
-            // Simplificação para Lucro Presumido (Serviços)
-            const presuncao = 0.32;
-            const pisCofins = 0.0365;
-            const iss = 0.05; // Varia por município, usando 5% como exemplo
-            const irpjCsllBase = monthlyRevenue * presuncao;
-            const irpj = irpjCsllBase * 0.15;
-            const csll = irpjCsllBase * 0.09;
+            // Detalhamento para Lucro Presumido (Serviços)
+            const pisCofinsTax = monthlyRevenue * pisCofins;
+            const issTax = monthlyRevenue * iss;
             
-            const presumidoTax = (monthlyRevenue * (pisCofins + iss)) + irpj + csll;
+            const irpjCsllBase = monthlyRevenue * presuncao;
+            const irpjTax = irpjCsllBase * 0.15;
+            const csllTax = irpjCsllBase * 0.09;
+            
+            const presumidoTotal = pisCofinsTax + issTax + irpjTax + csllTax;
 
-            setResult({ simples: simplesTax, presumido: presumidoTax });
+            setResult({ 
+                simples: simplesTax, 
+                presumido: {
+                    baseCalculo: irpjCsllBase,
+                    irpj: irpjTax,
+                    csll: csllTax,
+                    pisCofins: pisCofinsTax,
+                    iss: issTax,
+                    total: presumidoTotal,
+                }
+            });
 
         } else {
             setResult(null);
@@ -55,24 +73,68 @@ export function PJCalculator() {
 
     return (
         <div className="space-y-6">
-            <div className="space-y-2">
-                <Label htmlFor="revenuePJ">Faturamento Mensal (Serviços)</Label>
-                <Input id="revenuePJ" type="number" placeholder="Ex: 15000" value={revenue} onChange={e => setRevenue(e.target.value)} />
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="revenuePJ">Faturamento Mensal (Serviços)</Label>
+                    <Input id="revenuePJ" type="number" placeholder="Ex: 15000" value={revenue} onChange={e => setRevenue(e.target.value)} />
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="presumptionRate">Base Presunção (%)</Label>
+                        <Input id="presumptionRate" type="number" value={presumptionRate} onChange={e => setPresumptionRate(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="pisCofinsRate">PIS/COFINS (%)</Label>
+                        <Input id="pisCofinsRate" type="number" value={pisCofinsRate} onChange={e => setPisCofinsRate(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="issRate">ISS (%)</Label>
+                        <Input id="issRate" type="number" value={issRate} onChange={e => setIssRate(e.target.value)} />
+                    </div>
+                </div>
             </div>
             <Button onClick={handleCalculate} className="w-full">Comparar Regimes</Button>
             {result && (
                 <Card className="bg-secondary/30 border-primary/20">
                     <CardHeader className="p-4"><CardTitle className="text-lg text-center">Estimativa Mensal de Impostos</CardTitle></CardHeader>
-                    <CardContent className="p-4 pt-0">
+                    <CardContent className="p-4 pt-0 space-y-4">
                          <div className="flex justify-between items-center bg-background p-3 rounded-md">
-                            <span className="text-muted-foreground">Simples Nacional</span>
+                            <span className="text-muted-foreground">Simples Nacional (Estimado)</span>
                             <span className="font-bold text-primary text-lg">{formatCurrency(result.simples)}</span>
                         </div>
-                        <div className="flex justify-between items-center bg-background p-3 rounded-md mt-2">
-                            <span className="text-muted-foreground">Lucro Presumido</span>
-                             <span className="font-bold text-lg">{formatCurrency(result.presumido)}</span>
+                        
+                        <div>
+                             <h4 className="text-md font-semibold text-center my-2 text-muted-foreground">Detalhes do Lucro Presumido</h4>
+                             <Table>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell>Base de Cálculo (IRPJ/CSLL)</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(result.presumido.baseCalculo)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableCell>IRPJ (15%)</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(result.presumido.irpj)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableCell>CSLL (9%)</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(result.presumido.csll)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableCell>PIS/COFINS ({pisCofinsRate}%)</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(result.presumido.pisCofins)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableCell>ISS ({issRate}%)</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(result.presumido.iss)}</TableCell>
+                                    </TableRow>
+                                    <TableRow className="font-bold bg-background">
+                                        <TableCell>Total Lucro Presumido</TableCell>
+                                        <TableCell className="text-right text-primary text-lg">{formatCurrency(result.presumido.total)}</TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-4 text-center">Valores são estimativas para empresas de serviço (Anexo III Simples / 32% presunção). Lucro Real não incluído devido à complexidade.</p>
+                        <p className="text-xs text-muted-foreground mt-4 text-center">Valores são estimativas. Lucro Real não incluído devido à complexidade. Consulte um contador.</p>
                     </CardContent>
                 </Card>
             )}
