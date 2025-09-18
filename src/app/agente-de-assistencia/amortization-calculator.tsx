@@ -91,7 +91,7 @@ export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: an
         
         const totalPaid = table.reduce((acc, row) => acc + row.installment, 0) + downPaymentValue;
         const totalInterest = table.reduce((acc, row) => acc + row.interest, 0);
-        const finalPercentage = (totalPaid / financedValue) * 100;
+        const finalPercentage = (totalInterest / financedValue) * 100;
 
         setResult(table);
         setSummary({ totalPaid, totalInterest, finalPercentage });
@@ -175,7 +175,7 @@ export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: an
                             <span className="font-bold text-lg">{formatCurrency(summary.totalInterest)}</span>
                         </div>
                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
-                            <span className="text-muted-foreground">% Final Pago sobre o Valor Financiado</span>
+                            <span className="text-muted-foreground">% de Juros sobre o Valor Financiado</span>
                             <span className="font-bold text-primary text-lg flex items-center gap-1">
                                 <BadgePercent className="h-5 w-5"/>
                                 {summary.finalPercentage.toFixed(2)}%
