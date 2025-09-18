@@ -3,12 +3,13 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
 import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
+import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
 
 const calculators = [
@@ -32,6 +33,13 @@ const calculators = [
         icon: TrendingUp,
         href: '/agente-de-assistencia/juros-compostos',
         component: CompoundInterestCalculator,
+    },
+    {
+        title: 'Simulador de Amortização',
+        description: 'Compare os sistemas de amortização Price e SAC para financiamentos.',
+        icon: Table,
+        href: '/agente-de-assistencia/amortizacao',
+        component: AmortizationCalculator,
     },
     {
         title: 'Calculadora de ICMS',
@@ -89,6 +97,8 @@ const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) =
     let chartContent = null;
     let title = "Gráfico de Resultados";
     let description = "Visualize o resultado dos seus cálculos.";
+    const hasData = data && chartType !== 'Simulador de Amortização';
+
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     const COLORS = ['hsl(var(--primary))', 'hsl(var(--primary) / 0.3)'];
@@ -151,9 +161,13 @@ const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) =
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
-                   {chartContent || (
+                   {hasData && chartContent ? chartContent : (
                         <div className="h-full flex items-center justify-center text-muted-foreground bg-background rounded-lg">
-                            <p className="text-center">Calcule para ver o gráfico.</p>
+                            <p className="text-center">
+                                {chartType === 'Simulador de Amortização' 
+                                 ? 'A tabela de amortização é exibida no painel da calculadora.'
+                                 : 'Calcule para ver o gráfico.'}
+                            </p>
                         </div>
                    )}
                 </ResponsiveContainer>
