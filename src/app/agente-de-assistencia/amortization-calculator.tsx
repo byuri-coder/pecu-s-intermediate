@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download } from 'lucide-react';
+import { Download, BadgePercent } from 'lucide-react';
 
 type AmortizationRow = {
     month: number;
@@ -17,6 +17,12 @@ type AmortizationRow = {
     interest: number;
     amortization: number;
     balance: number;
+};
+
+type Summary = {
+    totalPaid: number;
+    totalInterest: number;
+    finalPercentage: number;
 };
 
 // Helper to format currency
@@ -28,19 +34,24 @@ const formatCurrency = (value: number) => {
 
 export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
     const [loanAmount, setLoanAmount] = useState('');
+    const [downPayment, setDownPayment] = useState('');
     const [interestRate, setInterestRate] = useState('');
     const [installments, setInstallments] = useState('');
     const [amortizationType, setAmortizationType] = useState<'price' | 'sac'>('price');
     const [result, setResult] = useState<AmortizationRow[] | null>(null);
+    const [summary, setSummary] = useState<Summary | null>(null);
 
     const handleCalculate = () => {
-        const PV = parseFloat(loanAmount);
+        const financedValue = parseFloat(loanAmount);
+        const downPaymentValue = parseFloat(downPayment) || 0;
+        const PV = financedValue - downPaymentValue;
         const i = parseFloat(interestRate) / 100;
         const n = parseInt(installments);
 
-        if (isNaN(PV) || isNaN(i) || isNaN(n) || PV <= 0 || i <= 0 || n <= 0) {
-            alert("Por favor, preencha todos os campos com valores positivos.");
+        if (isNaN(financedValue) || isNaN(i) || isNaN(n) || financedValue <= 0 || i <= 0 || n <= 0 || PV <= 0) {
+            alert("Por favor, preencha o valor do financiamento, taxa de juros e parcelas com valores positivos. O valor financiado (após a entrada) também deve ser positivo.");
             setResult(null);
+            setSummary(null);
             onCalculate(null);
             return;
         }
@@ -78,7 +89,12 @@ export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: an
             }
         }
         
+        const totalPaid = table.reduce((acc, row) => acc + row.installment, 0) + downPaymentValue;
+        const totalInterest = table.reduce((acc, row) => acc + row.interest, 0);
+        const finalPercentage = (totalPaid / financedValue) * 100;
+
         setResult(table);
+        setSummary({ totalPaid, totalInterest, finalPercentage });
         onCalculate({ type: amortizationType, table: table });
     };
 
@@ -118,13 +134,17 @@ export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: an
                         <Input id="loanAmount" type="number" placeholder="Ex: 100000" value={loanAmount} onChange={(e) => setLoanAmount(e.target.value)} />
                     </div>
                      <div className="space-y-2">
+                        <Label htmlFor="downPayment">Valor da Entrada (R$, opcional)</Label>
+                        <Input id="downPayment" type="number" placeholder="Ex: 20000" value={downPayment} onChange={(e) => setDownPayment(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
                         <Label htmlFor="installments">Número de Parcelas</Label>
                         <Input id="installments" type="number" placeholder="Ex: 360" value={installments} onChange={(e) => setInstallments(e.target.value)} />
                     </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="interestRate">Taxa de Juros Mensal (%)</Label>
-                    <Input id="interestRate" type="number" placeholder="Ex: 0.85" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} />
+                    <div className="space-y-2">
+                        <Label htmlFor="interestRate">Taxa de Juros Mensal (%)</Label>
+                        <Input id="interestRate" type="number" placeholder="Ex: 0.85" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} />
+                    </div>
                 </div>
                 
                 <RadioGroup defaultValue="price" value={amortizationType} onValueChange={(value: 'price' | 'sac') => setAmortizationType(value)} className="flex items-center space-x-4">
@@ -141,6 +161,29 @@ export function AmortizationCalculator({ onCalculate }: { onCalculate: (data: an
             </div>
             
             <Button onClick={handleCalculate} className="w-full">Calcular Amortização</Button>
+
+            {summary && (
+                <Card className="bg-secondary/30 border-primary/20">
+                     <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resumo da Simulação</CardTitle></CardHeader>
+                     <CardContent className="p-4 pt-0 space-y-3">
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Montante Total Pago</span>
+                            <span className="font-bold text-primary text-lg">{formatCurrency(summary.totalPaid)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Total de Juros Pagos</span>
+                            <span className="font-bold text-lg">{formatCurrency(summary.totalInterest)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">% Final Pago sobre o Valor Financiado</span>
+                            <span className="font-bold text-primary text-lg flex items-center gap-1">
+                                <BadgePercent className="h-5 w-5"/>
+                                {summary.finalPercentage.toFixed(2)}%
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {result && (
                 <Card className="bg-secondary/30 border-primary/20">
