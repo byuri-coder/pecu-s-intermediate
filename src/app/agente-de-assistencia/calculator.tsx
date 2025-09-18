@@ -102,15 +102,22 @@ export function DiscountCalculator({ onCalculate }: { onCalculate: (data: any) =
 export function SimpleInterestCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
     const [principal, setPrincipal] = useState('');
     const [rate, setRate] = useState('');
+    const [ratePeriod, setRatePeriod] = useState('monthly');
     const [time, setTime] = useState('');
+    const [timePeriod, setTimePeriod] = useState('months');
     const [result, setResult] = useState<{ totalAmount: number; totalInterest: number } | null>(null);
 
     const handleCalculate = () => {
         const P = parseFloat(principal);
-        const i = parseFloat(rate) / 100; // Taxa como decimal
-        const t = parseFloat(time);
+        const inputRate = parseFloat(rate);
+        const inputTime = parseFloat(time);
 
-        if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P > 0 && i > 0 && t > 0) {
+        if (!isNaN(P) && !isNaN(inputRate) && !isNaN(inputTime) && P > 0 && inputRate > 0 && inputTime > 0) {
+            
+            // Normalize everything to months
+            const i = ratePeriod === 'annual' ? (inputRate / 100) / 12 : inputRate / 100;
+            const t = timePeriod === 'years' ? inputTime * 12 : inputTime;
+
             const totalInterest = P * i * t;
             const totalAmount = P + totalInterest;
             const calcResult = { totalAmount, totalInterest };
@@ -130,13 +137,37 @@ export function SimpleInterestCalculator({ onCalculate }: { onCalculate: (data: 
                     <Label htmlFor="principal">Capital Inicial (R$)</Label>
                     <Input id="principal" type="number" placeholder="Ex: 1000" value={principal} onChange={e => setPrincipal(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="rate">Taxa de Juros (% ao mês)</Label>
-                    <Input id="rate" type="number" placeholder="Ex: 1.5" value={rate} onChange={e => setRate(e.target.value)} />
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                         <Label htmlFor="rate">Taxa de Juros</Label>
+                         <Input id="rate" type="number" placeholder="Ex: 1.5" value={rate} onChange={e => setRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                         <Label htmlFor="rate-period">Período da Taxa</Label>
+                         <Select value={ratePeriod} onValueChange={setRatePeriod}>
+                            <SelectTrigger id="rate-period"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="monthly">ao mês</SelectItem>
+                                <SelectItem value="annual">ao ano</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="time">Período (meses)</Label>
-                    <Input id="time" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                 <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="time">Período</Label>
+                        <Input id="time" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                         <Label htmlFor="time-period">Unidade</Label>
+                         <Select value={timePeriod} onValueChange={setTimePeriod}>
+                            <SelectTrigger id="time-period"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="months">Meses</SelectItem>
+                                <SelectItem value="years">Anos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
             <Button onClick={handleCalculate} className="w-full">Calcular Juros Simples</Button>
@@ -179,17 +210,24 @@ export function SimpleInterestCalculator({ onCalculate }: { onCalculate: (data: 
 export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data: any) => void }) {
     const [principal, setPrincipal] = useState('');
     const [rate, setRate] = useState('');
+    const [ratePeriod, setRatePeriod] = useState('monthly');
     const [time, setTime] = useState('');
+    const [timePeriod, setTimePeriod] = useState('months');
     const [monthlyContribution, setMonthlyContribution] = useState('0');
     const [result, setResult] = useState<{ totalAmount: number; totalInterest: number; totalInvested: number; monthlyData: { month: number; value: number }[] } | null>(null);
 
     const handleCalculate = () => {
         const P = parseFloat(principal);
-        const i = parseFloat(rate) / 100;
-        const t = parseFloat(time);
+        const inputRate = parseFloat(rate);
+        const inputTime = parseFloat(time);
         const C = parseFloat(monthlyContribution) || 0;
 
-        if (!isNaN(P) && !isNaN(i) && !isNaN(t) && P >= 0 && i > 0 && t > 0) {
+        if (!isNaN(P) && !isNaN(inputRate) && !isNaN(inputTime) && P >= 0 && inputRate > 0 && inputTime > 0) {
+            
+            // Normalize everything to months for calculation
+            const i = ratePeriod === 'annual' ? Math.pow(1 + (inputRate / 100), 1/12) - 1 : inputRate / 100;
+            const t = timePeriod === 'years' ? inputTime * 12 : inputTime;
+
             const monthlyData: { month: number; value: number }[] = [];
             let currentAmount = P;
 
@@ -223,13 +261,37 @@ export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data
                     <Label htmlFor="contribution-compound">Aporte Mensal (R$, opcional)</Label>
                     <Input id="contribution-compound" type="number" placeholder="Ex: 100" value={monthlyContribution} onChange={e => setMonthlyContribution(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="rate-compound">Taxa de Juros (% ao mês)</Label>
-                    <Input id="rate-compound" type="number" placeholder="Ex: 1" value={rate} onChange={e => setRate(e.target.value)} />
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="rate-compound">Taxa de Juros</Label>
+                        <Input id="rate-compound" type="number" placeholder="Ex: 1" value={rate} onChange={e => setRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="rate-period-compound">Período da Taxa</Label>
+                        <Select value={ratePeriod} onValueChange={setRatePeriod}>
+                            <SelectTrigger id="rate-period-compound"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="monthly">ao mês</SelectItem>
+                                <SelectItem value="annual">ao ano</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="time-compound">Período (meses)</Label>
-                    <Input id="time-compound" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="time-compound">Período</Label>
+                        <Input id="time-compound" type="number" placeholder="Ex: 12" value={time} onChange={e => setTime(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="time-period-compound">Unidade</Label>
+                         <Select value={timePeriod} onValueChange={setTimePeriod}>
+                            <SelectTrigger id="time-period-compound"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="months">Meses</SelectItem>
+                                <SelectItem value="years">Anos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
             <Button onClick={handleCalculate} className="w-full">Calcular Juros Compostos</Button>
@@ -273,5 +335,7 @@ export function CompoundInterestCalculator({ onCalculate }: { onCalculate: (data
         </div>
     );
 }
+
+    
 
     
