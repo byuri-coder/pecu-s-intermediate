@@ -285,20 +285,36 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Documentos Comprobatórios de Transferência</CardTitle>
-                    <CardDescription>Comprador: anexe aqui o comprovante de pagamento para que o vendedor seja notificado e libere o ativo.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
-                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte o comprovante</p>
-                        <p className="text-xs text-muted-foreground/70">PDF, JPG, PNG (máx. 10MB)</p>
-                        <Input type="file" className="hidden" />
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Comprovação do Comprador</CardTitle>
+                        <CardDescription>Anexe o comprovante de pagamento para o vendedor liberar o ativo.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
+                            <p className="text-xs text-muted-foreground/70">PDF, JPG, PNG (máx. 10MB)</p>
+                            <Input type="file" className="hidden" />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Comprovação do Vendedor</CardTitle>
+                        <CardDescription>Anexe o documento que comprova a transferência da titularidade do ativo.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
+                            <p className="text-xs text-muted-foreground/70">PDF, DOCX, ZIP (máx. 25MB)</p>
+                            <Input type="file" className="hidden" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
       )}
 
