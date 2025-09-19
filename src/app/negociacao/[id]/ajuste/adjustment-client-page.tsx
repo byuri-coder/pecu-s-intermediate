@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
@@ -47,11 +48,22 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [costSplit, setCostSplit] = React.useState('50/50');
   const [sellerAgrees, setSellerAgrees] = React.useState(false);
   const [buyerAgrees, setBuyerAgrees] = React.useState(false);
+  const [isFinalized, setFinalized] = React.useState(false);
 
   const id = asset.id;
-
+  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : asset.price) : 50000;
   const platformCost = negotiatedValue * 0.01;
+
+  // Mock payment data - in a real app, this would be fetched from the seller's profile
+  const paymentInfo = {
+    bank: "Banco Exemplo S.A.",
+    agency: "0001",
+    account: "12345-6",
+    pixKey: "documento@email.com",
+    holder: sellerName,
+  };
+
 
   const getDivisionDescription = () => {
     switch(costSplit) {
@@ -63,7 +75,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   }
   
   const finalContractText = contractTemplate
-    .replace('[VENDEDOR]', 'owner' in asset ? asset.owner : asset.sellerName)
+    .replace('[VENDEDOR]', sellerName)
     .replace('[COMPRADOR]', 'Comprador Exemplo S.A.')
     .replace(/\[TIPO_ATIVO\]/g, assetType === 'carbon-credit' ? 'Crédito de Carbono' : assetType === 'tax-credit' ? 'Crédito Tributário' : 'Terra Rural')
     .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
@@ -77,7 +89,16 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             title: "Contrato Finalizado!",
             description: "O contrato foi assinado e a negociação concluída.",
         });
-        router.push('/dashboard');
+        setFinalized(true);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+    
+    const copyToClipboard = (text: string, fieldName: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: `${fieldName} copiado!`,
+            description: `O valor foi copiado para a área de transferência.`
+        });
     }
 
   return (
@@ -170,15 +191,42 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
              <Button 
                 size="lg" 
                 className="w-full" 
-                disabled={!sellerAgrees || !buyerAgrees}
+                disabled={!sellerAgrees || !buyerAgrees || isFinalized}
                 onClick={handleFinalize}
             >
                 {sellerAgrees && buyerAgrees ? <CheckCircle className="mr-2 h-5 w-5"/> : null}
-                Aceitar e Assinar Contrato
+                {isFinalized ? 'Contrato Assinado' : 'Aceitar e Assinar Contrato'}
             </Button>
           </div>
         </CardContent>
       </Card>
+      
+      {isFinalized && (
+        <Alert className="mt-8 border-green-600 bg-green-50 text-green-900">
+            <Banknote className="h-4 w-4 !text-green-900" />
+            <AlertTitle>Ação Necessária: Pagamento</AlertTitle>
+            <AlertDescription>
+                <p>O contrato foi assinado! Para concluir a transação, o comprador deve agora realizar a transferência no valor de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}</strong> para o vendedor utilizando os dados abaixo. Após a confirmação, o ativo será transferido.</p>
+                <Card className="mt-4 bg-white/70">
+                    <CardHeader>
+                        <CardTitle className="text-base">Dados para Pagamento - {paymentInfo.holder}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                        <div className="flex justify-between items-center"><span><strong>Banco:</strong> {paymentInfo.bank}</span></div>
+                        <div className="flex justify-between items-center"><span><strong>Agência:</strong> {paymentInfo.agency}</span></div>
+                        <div className="flex justify-between items-center"><span><strong>Conta:</strong> {paymentInfo.account}</span></div>
+                        <div className="flex justify-between items-center">
+                            <span><strong>Chave PIX:</strong> {paymentInfo.pixKey}</span>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(paymentInfo.pixKey, 'Chave PIX')}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </AlertDescription>
+        </Alert>
+      )}
+
     </div>
   );
 }

@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MapPin, UserCircle, Pencil } from 'lucide-react';
+import { Loader2, MapPin, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,6 +43,13 @@ const profileSchema = z.object({
   zipCode: z.string().min(8, 'CEP inválido'),
   
   specialRegistration: z.string().optional(),
+
+  // Payment Info
+  bankName: z.string().optional(),
+  agency: z.string().optional(),
+  account: z.string().optional(),
+  pixKey: z.string().optional(),
+  
 }).refine((data) => {
     if (data.newPassword && !data.currentPassword) {
         return false;
@@ -74,7 +81,12 @@ export function ProfileForm() {
       city: 'São Paulo',
       state: 'SP',
       zipCode: '01234-567',
-      specialRegistration: 'Autorização para comercialização de créditos de carbono Verra VCS #1234.'
+      specialRegistration: 'Autorização para comercialização de créditos de carbono Verra VCS #1234.',
+      // Mocked payment data
+      bankName: 'Banco Exemplo S.A.',
+      agency: '0001',
+      account: '12345-6',
+      pixKey: 'documento@email.com'
     },
   });
   
@@ -141,6 +153,27 @@ export function ProfileForm() {
                         <FormItem><FormLabel>Confirme a Nova Senha</FormLabel><FormControl><Input type="password" {...field} placeholder="Repita a nova senha" /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
+            </div>
+          </section>
+
+          <section className="space-y-4 p-6 border rounded-lg">
+            <h3 className="text-xl font-semibold border-b pb-2 flex items-center gap-2"><Landmark className="h-5 w-5"/> Informações de Pagamento</h3>
+            <FormDescription>
+                Estes dados serão compartilhados com o comprador após a conclusão de uma negociação para que o pagamento seja efetuado.
+            </FormDescription>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <FormField name="bankName" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Nome do Banco</FormLabel><FormControl><Input {...field} placeholder="Ex: Banco do Brasil" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="agency" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Agência</FormLabel><FormControl><Input {...field} placeholder="Ex: 0001" /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField name="account" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Conta Corrente com dígito</FormLabel><FormControl><Input {...field} placeholder="Ex: 12345-6" /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField name="pixKey" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormItem>
+                )} />
             </div>
           </section>
 
