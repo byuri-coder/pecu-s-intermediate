@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Input } from '@/components/ui/input';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -280,6 +281,21 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                          <Button variant="outline" onClick={handleDownloadDocx}>
                             <FileText className="mr-2 h-4 w-4" /> Baixar DOCX
                         </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Documentos Comprobatórios de Transferência</CardTitle>
+                    <CardDescription>Comprador: anexe aqui o comprovante de pagamento para que o vendedor seja notificado e libere o ativo.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte o comprovante</p>
+                        <p className="text-xs text-muted-foreground/70">PDF, JPG, PNG (máx. 10MB)</p>
+                        <Input type="file" className="hidden" />
                     </div>
                 </CardContent>
             </Card>
