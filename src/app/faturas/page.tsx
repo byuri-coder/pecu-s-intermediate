@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, Landmark } from "lucide-react";
+import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, Landmark, UploadCloud, Info } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,21 +33,39 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { placeholderInvoices } from "@/lib/placeholder-data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import * as React from "react";
+import { Input } from "@/components/ui/input";
 
 export default function InvoicesPage() {
     const { toast } = useToast();
+    const [invoices, setInvoices] = React.useState(placeholderInvoices);
+    const [isPaymentDialog, setPaymentDialog] = React.useState(false);
+    const [isUploadDialog, setUploadDialog] = React.useState(false);
+    const [selectedInvoice, setSelectedInvoice] = React.useState<typeof invoices[0] | null>(null);
 
-    const handlePay = (invoiceId: string) => {
+
+    const handleUploadConfirmation = () => {
+        if (!selectedInvoice) return;
+        
+        // In a real app, you would upload the file and send data to the backend.
+        setInvoices(invoices.map(inv => 
+            inv.id === selectedInvoice.id ? { ...inv, status: 'Em Análise' } : inv
+        ));
+
         toast({
-            title: "Pagamento Simulado",
-            description: `O pagamento da fatura ${invoiceId} foi processado.`,
+            title: "Comprovante Enviado!",
+            description: `O comprovante da fatura ${selectedInvoice.id} foi enviado para análise.`,
         });
-        // In a real app, you would update the invoice status here.
+        
+        setUploadDialog(false);
+        setSelectedInvoice(null);
     };
 
     const copyToClipboard = (text: string, fieldName: string) => {
@@ -66,10 +84,19 @@ export default function InvoicesPage() {
         holder: "PECU'S INTERMEDIATE LTDA",
         cnpj: "12.345.678/0001-99"
     };
+    
+    const getBadgeClass = (status: "Paga" | "Pendente" | "Em Análise") => {
+        switch(status) {
+            case "Paga": return "bg-green-100 text-green-800";
+            case "Pendente": return "bg-yellow-100 text-yellow-800";
+            case "Em Análise": return "bg-blue-100 text-blue-800";
+            default: return "";
+        }
+    }
 
     return (
         <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-5xl">
-             <Dialog>
+            <Dialog open={isPaymentDialog} onOpenChange={setPaymentDialog}>
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-4">
@@ -97,7 +124,7 @@ export default function InvoicesPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {placeholderInvoices.map((invoice) => (
+                                {invoices.map((invoice) => (
                                     <TableRow key={invoice.id}>
                                         <TableCell className="font-medium">{invoice.id}</TableCell>
                                         <TableCell className="text-muted-foreground">{invoice.description}</TableCell>
@@ -105,7 +132,7 @@ export default function InvoicesPage() {
                                         <TableCell>
                                             <Badge
                                                 variant={invoice.status === "Paga" ? "secondary" : "default"}
-                                                className={cn(invoice.status === "Paga" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")}
+                                                className={cn(getBadgeClass(invoice.status))}
                                             >
                                                 {invoice.status}
                                             </Badge>
@@ -126,12 +153,8 @@ export default function InvoicesPage() {
                                                 <DropdownMenuContent align="end">
                                                     {invoice.status === "Pendente" && (
                                                         <>
-                                                            <DropdownMenuItem onClick={() => handlePay(invoice.id)}>
-                                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                                Confirmar Pagamento
-                                                            </DropdownMenuItem>
                                                             <DialogTrigger asChild>
-                                                                <DropdownMenuItem>
+                                                                <DropdownMenuItem onSelect={() => setPaymentDialog(true)}>
                                                                      <Banknote className="mr-2 h-4 w-4" />
                                                                     Métodos de Pagamento
                                                                 </DropdownMenuItem>
@@ -148,6 +171,15 @@ export default function InvoicesPage() {
                                                         <Download className="mr-2 h-4 w-4" />
                                                         Baixar PDF da Fatura
                                                     </DropdownMenuItem>
+                                                    {invoice.status !== 'Paga' && (
+                                                        <>
+                                                        <DropdownMenuSeparator/>
+                                                        <DropdownMenuItem onSelect={() => { setSelectedInvoice(invoice); setUploadDialog(true); }}>
+                                                            <DollarSign className="mr-2 h-4 w-4" />
+                                                            Confirmar Pagamento
+                                                        </DropdownMenuItem>
+                                                        </>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -157,7 +189,7 @@ export default function InvoicesPage() {
                         </Table>
                     </CardContent>
                     <CardFooter className="text-sm text-muted-foreground">
-                        Mostrando {placeholderInvoices.length} faturas.
+                        Mostrando {invoices.length} faturas.
                     </CardFooter>
                 </Card>
                 <DialogContent className="sm:max-w-md">
@@ -184,7 +216,37 @@ export default function InvoicesPage() {
                             </div>
                         </CardContent>
                     </Card>
-                     <p className="text-xs text-center text-muted-foreground pt-4">Após o pagamento, clique em "Confirmar Pagamento" na fatura correspondente.</p>
+                     <Alert variant="destructive" className="bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-900">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Próximo Passo</AlertTitle>
+                        <AlertDescription>
+                            Após o pagamento, clique em "Confirmar Pagamento" no menu da fatura e anexe o comprovante para análise.
+                        </AlertDescription>
+                    </Alert>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isUploadDialog} onOpenChange={setUploadDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Anexar Comprovante</DialogTitle>
+                        <DialogDescription>
+                            Faça o upload do comprovante de pagamento para a fatura {selectedInvoice?.id}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload do comprovante</p>
+                            <Input type="file" className="hidden" />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogClose>
+                        <Button onClick={handleUploadConfirmation}>Enviar para Análise</Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

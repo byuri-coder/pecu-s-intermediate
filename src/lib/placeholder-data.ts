@@ -274,6 +274,6 @@ export const placeholderInvoices: Invoice[] = [
     description: 'Taxa de serviço - Venda da Fazenda Rio Claro',
     dueDate: '2024-06-25',
     value: 50000.00,
-    status: 'Pendente',
+    status: 'Em Análise',
   },
 ];

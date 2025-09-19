@@ -72,5 +72,5 @@ export type Invoice = {
   description: string;
   dueDate: string;
   value: number;
-  status: 'Paga' | 'Pendente';
+  status: 'Paga' | 'Pendente' | 'Em Análise';
 };
