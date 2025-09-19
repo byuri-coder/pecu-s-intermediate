@@ -37,22 +37,23 @@ export default function AdjustmentPage({ params, searchParams }: { params: { id:
 export async function generateStaticParams() {
   const carbonParams = placeholderCredits.map((credit) => ({
     id: credit.id,
-    type: 'carbon-credit',
   }));
 
   const taxParams = placeholderTaxCredits.map((credit) => ({
     id: credit.id,
-    type: 'tax-credit',
   }));
 
   const ruralLandParams = placeholderRuralLands.map((land) => ({
     id: land.id,
-    type: 'rural-land',
   }));
 
   const allParams = [...carbonParams, ...taxParams, ...ruralLandParams];
   
   // Create a structure that matches what generateStaticParams expects for the 'ajuste' route
-  return allParams.map(p => ({ id: p.id }));
+  // We only need to provide the 'id' part of the slug. The searchParams are not part of it.
+  // Also, we need to avoid duplicates if IDs are shared across asset types.
+  const uniqueIds = [...new Set(allParams.map(p => p.id))];
+
+  return uniqueIds.map(id => ({ id }));
 }
     
