@@ -149,7 +149,7 @@ export default async function NegotiationPage({ params, searchParams }: { params
                      <div className="space-x-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href={`/negociacao/${params.id}/ajuste?type=${assetType}`}>
-                                <Edit className="mr-2 h-4 w-4"/> Ajustar
+                                <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
                             </Link>
                         </Button>
                     </div>
