@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -133,6 +133,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerAgrees, setSellerAgrees] = React.useState(false);
   const [buyerAgrees, setBuyerAgrees] = React.useState(false);
   const [isFinalized, setFinalized] = React.useState(false);
+  const [isTransactionComplete, setTransactionComplete] = React.useState(false);
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
@@ -225,6 +226,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         toast({ title: "Download do DOC iniciado!" });
     }
 
+    const handleFinishTransaction = () => {
+        // Here you would typically save all data and files to your backend.
+        setTransactionComplete(true);
+        toast({
+            title: "Transação Finalizada e Salva!",
+            description: "Todos os documentos foram salvos. Você será redirecionado.",
+        });
+        setTimeout(() => {
+            router.push('/dashboard?tab=history');
+        }, 2000);
+    }
+
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -271,7 +284,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                         </span>
                     </div>
-                    <RadioGroup value={costSplit} onValueChange={setCostSplit}>
+                    <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
                         <Label>Divisão do Custo</Label>
                         <div className="space-y-2 pt-2">
                              <div className="flex items-center space-x-2">
@@ -298,14 +311,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 <CardContent className="space-y-4">
                     <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} />
+                            <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
                             <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
                         </div>
                         {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                     </div>
                     <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} />
+                            <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
                             <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
                         </div>
                         {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
@@ -318,7 +331,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 disabled={!sellerAgrees || !buyerAgrees || isFinalized}
                 onClick={handleFinalize}
             >
-                {sellerAgrees && buyerAgrees ? <CheckCircle className="mr-2 h-5 w-5"/> : null}
+                {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
                 {isFinalized ? 'Contrato Assinado' : 'Aceitar e Assinar Contrato'}
             </Button>
           </div>
@@ -408,11 +421,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     </CardContent>
                 </Card>
             </div>
+            <div className="flex justify-end">
+                <Button 
+                    size="lg"
+                    disabled={!buyerProofFile || !sellerProofFile || isTransactionComplete}
+                    onClick={handleFinishTransaction}
+                >
+                    {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação'}
+                </Button>
+            </div>
         </div>
       )}
 
     </div>
   );
 }
-
-    

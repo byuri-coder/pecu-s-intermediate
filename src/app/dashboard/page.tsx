@@ -6,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MovementsChart } from './movements-chart';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const StatusBadge = ({ status }: { status: CarbonCredit['status'] }) => {
   const variant = {
@@ -86,9 +87,18 @@ export default function DashboardPage({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem>Editar</DropdownMenuItem>
-                              <DropdownMenuItem>Pausar</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive focus:text-destructive">Remover</DropdownMenuItem>
+                              {credit.status === 'Vendido' ? (
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/negociacao/${credit.id}/ajuste?type=carbon-credit`}>Dados da Negociação</Link>
+                                </DropdownMenuItem>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem>Editar</DropdownMenuItem>
+                                  <DropdownMenuItem>Pausar</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive focus:text-destructive">Remover</DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
