@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator } from './financial-calculators';
-import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
+import { TaxRegimeComparator, EmployeeCostCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
 
@@ -70,11 +70,11 @@ const calculators = [
         component: DifalCalculator
     },
     {
-        title: 'Calculadora para PJ',
-        description: 'Compare regimes tributários (Simples, Presumido, Real).',
+        title: 'Comparador de Regimes (PJ)',
+        description: 'Compare os regimes Simples Nacional e Lucro Presumido.',
         icon: Briefcase,
         href: '/agente-de-assistencia/pj',
-        component: PJCalculator,
+        component: TaxRegimeComparator,
     },
     {
         title: 'Custos de Funcionário',
@@ -252,3 +252,5 @@ export default function CalculatorHubPage() {
     </div>
   );
 }
+
+    

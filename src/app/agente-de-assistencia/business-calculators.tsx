@@ -17,33 +17,69 @@ const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-// 1. Calculadora para PJ
-export function PJCalculator() {
+// Tabelas do Simples Nacional (Receita Bruta em 12 meses)
+const simplesTables = {
+    'anexo-i': { // Comércio
+        name: "Anexo I (Comércio)",
+        ranges: [
+            { limit: 180000, rate: 0.04, deduction: 0 },
+            { limit: 360000, rate: 0.073, deduction: 5940 },
+            { limit: 720000, rate: 0.095, deduction: 13860 },
+            { limit: 1800000, rate: 0.107, deduction: 22500 },
+            { limit: 3600000, rate: 0.143, deduction: 87300 },
+            { limit: 4800000, rate: 0.19, deduction: 378000 },
+        ]
+    },
+    'anexo-iii': { // Serviços
+        name: "Anexo III (Serviços)",
+        ranges: [
+            { limit: 180000, rate: 0.06, deduction: 0 },
+            { limit: 360000, rate: 0.112, deduction: 9360 },
+            { limit: 720000, rate: 0.135, deduction: 17640 },
+            { limit: 1800000, rate: 0.16, deduction: 35640 },
+            { limit: 3600000, rate: 0.21, deduction: 125640 },
+            { limit: 4800000, rate: 0.33, deduction: 648000 },
+        ]
+    },
+    // Outros anexos podem ser adicionados aqui
+};
+
+// 1. Calculadora para PJ (Comparador de Regimes)
+export function TaxRegimeComparator() {
     const [revenue, setRevenue] = useState('');
+    const [simplesAnexo, setSimplesAnexo] = useState('anexo-iii');
+    const [presumptionRate, setPresumptionRate] = useState('32');
     const [pisCofinsRate, setPisCofinsRate] = useState('3.65');
     const [issRate, setIssRate] = useState('5');
-    const [presumptionRate, setPresumptionRate] = useState('32');
     
-    const [result, setResult] = useState<{ simples: number; presumido: { [key: string]: number } } | null>(null);
+    const [result, setResult] = useState<{ simples: { tax: number; effectiveRate: number; }; presumido: { [key: string]: number } } | null>(null);
 
     const handleCalculate = () => {
         const monthlyRevenue = parseFloat(revenue);
+        const presuncao = parseFloat(presumptionRate) / 100;
         const pisCofins = parseFloat(pisCofinsRate) / 100;
         const iss = parseFloat(issRate) / 100;
-        const presuncao = parseFloat(presumptionRate) / 100;
-
+        
         if(!isNaN(monthlyRevenue) && monthlyRevenue > 0) {
             const annualRevenue = monthlyRevenue * 12;
             
-            // Simplificação para Simples Nacional (Anexo III - Serviços)
-            let simplesRate = 0.06; // Alíquota inicial
-            if (annualRevenue > 180000) simplesRate = 0.112;
-            if (annualRevenue > 360000) simplesRate = 0.135;
-            // ... outras faixas podem ser adicionadas
+            // --- Cálculo Simples Nacional ---
+            const table = simplesTables[simplesAnexo as keyof typeof simplesTables];
+            const range = table.ranges.find(r => annualRevenue <= r.limit);
+            
+            let simplesTax = 0;
+            let effectiveRate = 0;
 
-            const simplesTax = monthlyRevenue * simplesRate;
+            if(range) {
+                const calculatedRate = ((annualRevenue * range.rate) - range.deduction) / annualRevenue;
+                effectiveRate = calculatedRate > 0 ? calculatedRate : 0;
+                simplesTax = monthlyRevenue * effectiveRate;
+            } else {
+                // Fora do limite do Simples
+                simplesTax = Infinity;
+            }
 
-            // Detalhamento para Lucro Presumido (Serviços)
+            // --- Cálculo Lucro Presumido (Serviços) ---
             const pisCofinsTax = monthlyRevenue * pisCofins;
             const issTax = monthlyRevenue * iss;
             
@@ -54,7 +90,7 @@ export function PJCalculator() {
             const presumidoTotal = pisCofinsTax + issTax + irpjTax + csllTax;
 
             setResult({ 
-                simples: simplesTax, 
+                simples: { tax: simplesTax, effectiveRate: effectiveRate * 100 }, 
                 presumido: {
                     baseCalculo: irpjCsllBase,
                     irpj: irpjTax,
@@ -75,21 +111,35 @@ export function PJCalculator() {
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="revenuePJ">Faturamento Mensal (Serviços)</Label>
+                    <Label htmlFor="revenuePJ">Faturamento Mensal Bruto</Label>
                     <Input id="revenuePJ" type="number" placeholder="Ex: 15000" value={revenue} onChange={e => setRevenue(e.target.value)} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="presumptionRate">Base Presunção (%)</Label>
-                        <Input id="presumptionRate" type="number" value={presumptionRate} onChange={e => setPresumptionRate(e.target.value)} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="pisCofinsRate">PIS/COFINS (%)</Label>
-                        <Input id="pisCofinsRate" type="number" value={pisCofinsRate} onChange={e => setPisCofinsRate(e.target.value)} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="issRate">ISS (%)</Label>
-                        <Input id="issRate" type="number" value={issRate} onChange={e => setIssRate(e.target.value)} />
+                 <div className="space-y-2">
+                    <Label>Anexo do Simples Nacional</Label>
+                     <Select value={simplesAnexo} onValueChange={setSimplesAnexo}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="anexo-i">{simplesTables['anexo-i'].name}</SelectItem>
+                            <SelectItem value="anexo-iii">{simplesTables['anexo-iii'].name}</SelectItem>
+                            {/* Adicionar outros anexos aqui */}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                     <h4 className="text-sm font-medium text-muted-foreground mb-2 mt-4">Parâmetros do Lucro Presumido (Serviços)</h4>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="presumptionRate">Base Presunção (%)</Label>
+                            <Input id="presumptionRate" type="number" value={presumptionRate} onChange={e => setPresumptionRate(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pisCofinsRate">PIS/COFINS (%)</Label>
+                            <Input id="pisCofinsRate" type="number" value={pisCofinsRate} onChange={e => setPisCofinsRate(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="issRate">ISS (%)</Label>
+                            <Input id="issRate" type="number" value={issRate} onChange={e => setIssRate(e.target.value)} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,8 +149,11 @@ export function PJCalculator() {
                     <CardHeader className="p-4"><CardTitle className="text-lg text-center">Estimativa Mensal de Impostos</CardTitle></CardHeader>
                     <CardContent className="p-4 pt-0 space-y-4">
                          <div className="flex justify-between items-center bg-background p-3 rounded-md">
-                            <span className="text-muted-foreground">Simples Nacional (Estimado)</span>
-                            <span className="font-bold text-primary text-lg">{formatCurrency(result.simples)}</span>
+                            <div>
+                                <span className="text-muted-foreground">Simples Nacional</span>
+                                <p className="text-xs">Alíquota Efetiva: {result.simples.effectiveRate.toFixed(2)}%</p>
+                            </div>
+                            <span className="font-bold text-primary text-lg">{isFinite(result.simples.tax) ? formatCurrency(result.simples.tax) : "Fora do Limite"}</span>
                         </div>
                         
                         <div>
@@ -248,3 +301,5 @@ export function EmployeeCostCalculator() {
         </div>
     )
 }
+
+    
