@@ -45,7 +45,7 @@ function getAssetTypeRoute(type: AssetType) {
 }
 
 
-export default function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
+export default async function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
   const assetType = searchParams.type || 'carbon-credit';
   const asset = getAssetDetails(params.id, assetType);
   
