@@ -8,44 +8,63 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
         {...props}
     >
         <defs>
-            <radialGradient id="gold-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                <stop offset="0%" style={{ stopColor: "#FFEDB3" }} />
-                <stop offset="50%" style={{ stopColor: "#FFD700" }} />
-                <stop offset="100%" style={{ stopColor: "#B8860B" }} />
+            <radialGradient id="gold-metal" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                <stop offset="0%" style={{ stopColor: "#FFFDE4" }} />
+                <stop offset="40%" style={{ stopColor: "#FFD700" }} />
+                <stop offset="80%" style={{ stopColor: "#B8860B" }} />
+                <stop offset="100%" style={{ stopColor: "#8B6914" }} />
             </radialGradient>
+            <filter id="relief-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="0.5" result="blur" />
+                <feOffset in="blur" dx="0.5" dy="0.5" result="offsetBlur" />
+                <feSpecularLighting in="blur" surfaceScale="5" specularConstant=".75" specularExponent="20" lightingColor="#FFD700" result="specOut">
+                    <fePointLight x="-5000" y="-10000" z="20000" />
+                </feSpecularLighting>
+                <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" />
+                <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint" />
+                <feMerge>
+                    <feMergeNode in="offsetBlur" />
+                    <feMergeNode in="litPaint" />
+                </feMerge>
+            </filter>
         </defs>
-        <circle cx="32" cy="32" r="30" fill="url(#gold-gradient)" />
-        <circle cx="32" cy="32" r="28" fill="none" stroke="#B8860B" strokeWidth="1.5" />
-        <circle cx="32" cy="32" r="30" fill="none" stroke="#B8860B" strokeWidth="2" strokeOpacity="0.5" />
+        
+        {/* Coin Body */}
+        <circle cx="32" cy="32" r="30" fill="url(#gold-metal)" />
+        <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(139, 105, 20, 0.5)" strokeWidth="1.5" />
+        <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(100, 70, 0, 0.7)" strokeWidth="2.5" />
+        <circle cx="32" cy="32" r="31" fill="none" stroke="rgba(255, 237, 179, 0.3)" strokeWidth="1" />
 
-        <text
-            x="50%"
-            y="53%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-            fill="#000"
-            fontSize="38"
-            fontFamily="Georgia, serif"
-            fontWeight="bold"
-            opacity="0.2"
-            transform="translate(1 1)"
-        >
-            P
-        </text>
-        <text
-            x="50%"
-            y="52%"
-            dominantBaseline="middle"
-            textAnchor="middle"
-            fill="#FFFFFF"
-            fontSize="38"
-            fontFamily="Georgia, serif"
-            fontWeight="bold"
-            stroke="#B8860B"
-            strokeWidth="0.5"
-            strokeOpacity="0.8"
-        >
-            P
-        </text>
+        {/* Embossed 'P' */}
+        <g style={{ filter: "url(#relief-shadow)" }}>
+            <text
+                x="50%"
+                y="54%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#B8860B"
+                fontSize="38"
+                fontFamily="Georgia, serif"
+                fontWeight="bold"
+                opacity="0.6"
+            >
+                P
+            </text>
+            <text
+                x="50%"
+                y="52%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#FFD700"
+                fontSize="38"
+                fontFamily="Georgia, serif"
+                fontWeight="bold"
+                stroke="#FFFDE4"
+                strokeWidth="0.5"
+                strokeOpacity="0.5"
+            >
+                P
+            </text>
+        </g>
     </svg>
 );
