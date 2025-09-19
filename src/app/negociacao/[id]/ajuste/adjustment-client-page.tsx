@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
@@ -99,6 +102,35 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             title: `${fieldName} copiado!`,
             description: `O valor foi copiado para a área de transferência.`
         });
+    }
+
+    const handleDownloadPdf = () => {
+        try {
+            const doc = new jsPDF('p', 'pt', 'a4');
+            const margin = 40;
+            const contentWidth = doc.internal.pageSize.getWidth() - margin * 2;
+            const splitText = doc.splitTextToSize(finalContractText, contentWidth);
+            doc.text(splitText, margin, margin);
+            doc.save('contrato_assinado.pdf');
+        } catch (error) {
+            console.error("Failed to generate PDF", error);
+            toast({ title: "Erro ao Gerar PDF", variant: "destructive" });
+        }
+    }
+
+    const handleDownloadDocx = () => {
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Contrato</title></head><body>";
+        const footer = "</body></html>";
+        const sourceHTML = header + '<pre>' + finalContractText + '</pre>' + footer;
+        
+        const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        const fileDownload = document.createElement("a");
+        document.body.appendChild(fileDownload);
+        fileDownload.href = source;
+        fileDownload.download = 'contrato_assinado.doc';
+        fileDownload.click();
+        document.body.removeChild(fileDownload);
+        toast({ title: "Download do DOC iniciado!" });
     }
 
   return (
@@ -202,31 +234,60 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       </Card>
       
       {isFinalized && (
-        <Alert className="mt-8 border-green-600 bg-green-50 text-green-900">
-            <Banknote className="h-4 w-4 !text-green-900" />
-            <AlertTitle>Ação Necessária: Pagamento</AlertTitle>
-            <AlertDescription>
-                <p>O contrato foi assinado! Para concluir a transação, o comprador deve agora realizar a transferência no valor de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}</strong> para o vendedor utilizando os dados abaixo. Após a confirmação, o ativo será transferido.</p>
-                <Card className="mt-4 bg-white/70">
-                    <CardHeader>
-                        <CardTitle className="text-base">Dados para Pagamento - {paymentInfo.holder}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center"><span><strong>Banco:</strong> {paymentInfo.bank}</span></div>
-                        <div className="flex justify-between items-center"><span><strong>Agência:</strong> {paymentInfo.agency}</span></div>
-                        <div className="flex justify-between items-center"><span><strong>Conta:</strong> {paymentInfo.account}</span></div>
-                        <div className="flex justify-between items-center">
-                            <span><strong>Chave PIX:</strong> {paymentInfo.pixKey}</span>
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(paymentInfo.pixKey, 'Chave PIX')}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
+        <div className="mt-8 space-y-6">
+            <Alert className="border-green-600 bg-green-50 text-green-900">
+                <Banknote className="h-4 w-4 !text-green-900" />
+                <AlertTitle>Ação Necessária: Pagamento</AlertTitle>
+                <AlertDescription>
+                    <p>O contrato foi assinado! Para concluir a transação, o comprador deve agora realizar a transferência no valor de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}</strong> para o vendedor utilizando os dados abaixo. Após a confirmação, o ativo será transferido.</p>
+                    <Card className="mt-4 bg-white/70">
+                        <CardHeader>
+                            <CardTitle className="text-base">Dados para Pagamento - {paymentInfo.holder}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center"><span><strong>Banco:</strong> {paymentInfo.bank}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Agência:</strong> {paymentInfo.agency}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Conta:</strong> {paymentInfo.account}</span></div>
+                            <div className="flex justify-between items-center">
+                                <span><strong>Chave PIX:</strong> {paymentInfo.pixKey}</span>
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(paymentInfo.pixKey, 'Chave PIX')}>
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </AlertDescription>
+            </Alert>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Contrato Definitivo</CardTitle>
+                    <CardDescription>Este é o contrato final assinado digitalmente via ICP-Brasil.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm relative">
+                        {finalContractText}
+                        <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 p-2 rounded-md border border-green-300 text-xs font-semibold">
+                            ✓ Assinado Digitalmente (ICP-Brasil)
                         </div>
-                    </CardContent>
-                </Card>
-            </AlertDescription>
-        </Alert>
+                    </div>
+                </CardContent>
+                <CardContent>
+                    <div className="flex gap-2">
+                        <Button onClick={handleDownloadPdf}>
+                            <Download className="mr-2 h-4 w-4" /> Baixar PDF
+                        </Button>
+                         <Button variant="outline" onClick={handleDownloadDocx}>
+                            <FileText className="mr-2 h-4 w-4" /> Baixar DOCX
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       )}
 
     </div>
   );
 }
+
+    
