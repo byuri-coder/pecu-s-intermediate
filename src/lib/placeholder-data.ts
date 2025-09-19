@@ -1,4 +1,4 @@
-import type { CarbonCredit, TaxCredit, RuralLand, Operation, Petition } from '@/lib/types';
+import type { CarbonCredit, TaxCredit, RuralLand, Operation, Petition, Invoice } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
   {
@@ -248,5 +248,32 @@ export const placeholderPetitions: Petition[] = [
     title: 'Modelo Padrão IPI',
     status: 'rascunho',
     updatedAt: '2024-05-15T09:00:00Z',
+  },
+];
+
+export const placeholderInvoices: Invoice[] = [
+  {
+    id: 'FAT-001',
+    transactionId: 'op-001',
+    description: 'Taxa de serviço - Venda de 1.000 créditos (proj-amazon-reforestation)',
+    dueDate: '2024-06-15',
+    value: 155.00,
+    status: 'Paga',
+  },
+  {
+    id: 'FAT-002',
+    transactionId: 'op-002',
+    description: 'Taxa de serviço - Aquisição de saldo credor de ICMS (tax-icms-01)',
+    dueDate: '2024-06-22',
+    value: 1455.00,
+    status: 'Pendente',
+  },
+   {
+    id: 'FAT-003',
+    transactionId: 'op-003',
+    description: 'Taxa de serviço - Venda da Fazenda Rio Claro',
+    dueDate: '2024-06-25',
+    value: 50000.00,
+    status: 'Pendente',
   },
 ];

@@ -65,3 +65,12 @@ export type Petition = {
     tipoOperacao?: string;
     dataPeticao?: Date;
 };
+
+export type Invoice = {
+  id: string;
+  transactionId: string;
+  description: string;
+  dueDate: string;
+  value: number;
+  status: 'Paga' | 'Pendente';
+};
