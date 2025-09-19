@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,12 +52,16 @@ const FileUploadDisplay = ({
   onClear,
   acceptedTypes,
   maxSize,
+  isReadOnly = false,
+  label,
 }: {
   file: File | null;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
   acceptedTypes: string;
   maxSize: string;
+  isReadOnly?: boolean;
+  label: string;
 }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   
@@ -87,7 +91,7 @@ const FileUploadDisplay = ({
         <div className="flex items-center gap-3 overflow-hidden">
           <FileText className="h-6 w-6 text-primary flex-shrink-0" />
           <p className="font-semibold text-sm truncate" title={file.name}>
-            {file.name}
+            {label}
           </p>
         </div>
         <div className="flex items-center">
@@ -97,12 +101,22 @@ const FileUploadDisplay = ({
             <Button variant="ghost" size="icon" onClick={handleDownload} className="h-7 w-7 text-muted-foreground">
                 <Download className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
-                <X className="h-4 w-4" />
-            </Button>
+            {!isReadOnly && (
+                <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
         </div>
       </div>
     );
+  }
+
+  if (isReadOnly) {
+    return (
+        <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30 text-muted-foreground">
+             <p className="font-semibold text-sm truncate">Nenhum documento anexado.</p>
+        </div>
+    )
   }
 
   return (
@@ -127,16 +141,24 @@ const FileUploadDisplay = ({
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [costSplit, setCostSplit] = React.useState('50/50');
-  const [sellerAgrees, setSellerAgrees] = React.useState(false);
-  const [buyerAgrees, setBuyerAgrees] = React.useState(false);
-  const [isFinalized, setFinalized] = React.useState(false);
-  const [isTransactionComplete, setTransactionComplete] = React.useState(false);
+  const isArchiveView = searchParams.get('view') === 'archive';
 
-  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
-  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
+  const [costSplit, setCostSplit] = React.useState('50/50');
+  const [sellerAgrees, setSellerAgrees] = React.useState(isArchiveView);
+  const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
+  const [isFinalized, setFinalized] = React.useState(isArchiveView);
+  const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
+
+  // For archive view, we can use placeholder file objects. In a real app, these would be fetched.
+  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
+    isArchiveView ? new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" }) : null
+  );
+  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(
+    isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
+  );
 
   const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -237,7 +259,90 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             router.push('/dashboard?tab=history');
         }, 2000);
     }
+    
+    // RENDER FOR ARCHIVE VIEW
+    if (isArchiveView) {
+        return (
+             <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
+                <div className="mb-6">
+                    <Button variant="outline" asChild>
+                        <Link href="/dashboard">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Voltar para o Gerenciamento
+                        </Link>
+                    </Button>
+                </div>
+                 <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-2xl font-bold font-headline flex items-center gap-3">
+                        <FileSignature className="h-7 w-7" />
+                        Arquivo da Negociação: {asset.id}
+                      </CardTitle>
+                      <CardDescription>
+                        Esta é uma visualização dos documentos finais da negociação concluída.
+                      </CardDescription>
+                    </CardHeader>
+                </Card>
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Contrato Definitivo</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm relative">
+                                {finalContractText}
+                                <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 p-2 rounded-md border border-green-300 text-xs font-semibold">
+                                    ✓ Assinado Digitalmente (ICP-Brasil)
+                                </div>
+                            </div>
+                             <div className="flex gap-2 mt-4">
+                                <Button onClick={handleDownloadPdf}>
+                                    <Download className="mr-2 h-4 w-4" /> Baixar PDF
+                                </Button>
+                                <Button variant="outline" onClick={handleDownloadDocx}>
+                                    <FileText className="mr-2 h-4 w-4" /> Baixar DOCX
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
 
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Documentos Comprobatórios</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="font-semibold mb-2">Comprovação do Comprador</h3>
+                                <FileUploadDisplay
+                                    file={buyerProofFile}
+                                    label="comprovante_pagamento.pdf"
+                                    onFileChange={() => {}}
+                                    onClear={() => {}}
+                                    acceptedTypes=""
+                                    maxSize=""
+                                    isReadOnly={true}
+                                />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold mb-2">Comprovação do Vendedor</h3>
+                                <FileUploadDisplay
+                                    file={sellerProofFile}
+                                    label="doc_transferencia_ativo.pdf"
+                                    onFileChange={() => {}}
+                                    onClear={() => {}}
+                                    acceptedTypes=""
+                                    maxSize=""
+                                    isReadOnly={true}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+             </div>
+        )
+    }
+
+  // RENDER FOR ACTIVE ADJUSTMENT
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -398,6 +503,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     <CardContent>
                        <FileUploadDisplay
                             file={buyerProofFile}
+                            label="comprovante_pagamento.pdf"
                             onFileChange={handleFileChange(setBuyerProofFile)}
                             onClear={() => setBuyerProofFile(null)}
                             acceptedTypes="PDF, JPG, PNG"
@@ -413,6 +519,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     <CardContent>
                         <FileUploadDisplay
                             file={sellerProofFile}
+                            label="doc_transferencia_ativo.pdf"
                             onFileChange={handleFileChange(setSellerProofFile)}
                             onClear={() => setSellerProofFile(null)}
                             acceptedTypes="PDF, DOCX, ZIP"

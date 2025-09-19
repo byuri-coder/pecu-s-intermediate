@@ -89,7 +89,7 @@ export default function DashboardPage({
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
                               {credit.status === 'Vendido' ? (
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/negociacao/${credit.id}/ajuste?type=carbon-credit`}>Dados da Negociação</Link>
+                                  <Link href={`/negociacao/${credit.id}/ajuste?type=carbon-credit&view=archive`}>Dados da Negociação</Link>
                                 </DropdownMenuItem>
                               ) : (
                                 <>
