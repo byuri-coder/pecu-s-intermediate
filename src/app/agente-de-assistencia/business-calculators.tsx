@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Trash2, PlusCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 // Helper to format currency
@@ -302,4 +304,161 @@ export function EmployeeCostCalculator() {
     )
 }
 
+type CashFlowItem = {
+    id: number;
+    description: string;
+    value: number;
+};
+
+type OneOffItem = CashFlowItem & { month: number };
+
+type ProjectionRow = {
+    month: number;
+    initialBalance: number;
+    totalRevenue: number;
+    totalExpense: number;
+    grossResult: number;
+    taxes: number;
+    netResult: number;
+    finalBalance: number;
+}
+
+// 3. Calculadora de Fluxo de Caixa Projetado
+export function ProjectedCashFlowCalculator() {
+    const [initialBalance, setInitialBalance] = useState('');
+    const [projectionMonths, setProjectionMonths] = useState('12');
+    const [taxRate, setTaxRate] = useState('10');
+
+    const [revenues, setRevenues] = useState<CashFlowItem[]>([{ id: 1, description: 'Vendas de Produtos', value: 25000 }]);
+    const [expenses, setExpenses] = useState<CashFlowItem[]>([{ id: 1, description: 'Aluguel', value: 4000 }]);
+    const [oneOffs, setOneOffs] = useState<OneOffItem[]>([]);
+
+    const [result, setResult] = useState<ProjectionRow[] | null>(null);
+
+    // Funções para manipular as listas
+    const addItem = (list: any, setList: any) => setList([...list, { id: Date.now(), description: '', value: 0, ...(list === oneOffs && { month: 1 }) }]);
+    const updateItem = (list: any, setList: any, id: number, field: string, value: any) => setList(list.map((item: any) => item.id === id ? { ...item, [field]: value } : item));
+    const deleteItem = (list: any, setList: any, id: number) => setList(list.filter((item: any) => item.id !== id));
+
+    const handleCalculate = () => {
+        const iBalance = parseFloat(initialBalance) || 0;
+        const months = parseInt(projectionMonths);
+        const tax = parseFloat(taxRate) / 100;
+
+        if (isNaN(months) || months <= 0) {
+            alert("Por favor, insira um período de projeção válido.");
+            return;
+        }
+
+        const monthlyRecurringRevenue = revenues.reduce((acc, item) => acc + (item.value || 0), 0);
+        const monthlyRecurringExpense = expenses.reduce((acc, item) => acc + (item.value || 0), 0);
+        
+        let projection: ProjectionRow[] = [];
+        let currentBalance = iBalance;
+
+        for (let m = 1; m <= months; m++) {
+            const oneOffRevenue = oneOffs.filter(i => i.month === m).reduce((acc, item) => acc + (item.value > 0 ? item.value : 0), 0);
+            const oneOffExpense = oneOffs.filter(i => i.month === m).reduce((acc, item) => acc + (item.value < 0 ? item.value : 0), 0);
+
+            const totalRevenue = monthlyRecurringRevenue + oneOffRevenue;
+            const totalExpense = monthlyRecurringExpense - oneOffExpense;
+            
+            const grossResult = totalRevenue - totalExpense;
+            const taxes = grossResult > 0 ? grossResult * tax : 0;
+            const netResult = grossResult - taxes;
+            const finalBalance = currentBalance + netResult;
+
+            projection.push({
+                month: m,
+                initialBalance: currentBalance,
+                totalRevenue,
+                totalExpense,
+                grossResult,
+                taxes,
+                netResult,
+                finalBalance
+            });
+
+            currentBalance = finalBalance;
+        }
+
+        setResult(projection);
+    }
+    
+    const renderList = (title: string, items: any[], setItems: any, isOneOff = false) => (
+        <div className="space-y-2">
+            <h4 className="font-medium text-muted-foreground">{title}</h4>
+            {items.map(item => (
+                <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
+                    <Input className="col-span-6" placeholder="Descrição" value={item.description} onChange={e => updateItem(items, setItems, item.id, 'description', e.target.value)} />
+                    <Input className="col-span-3" type="number" placeholder="Valor" value={item.value} onChange={e => updateItem(items, setItems, item.id, 'value', parseFloat(e.target.value))} />
+                    {isOneOff && <Input className="col-span-2" type="number" placeholder="Mês" value={item.month} onChange={e => updateItem(items, setItems, item.id, 'month', parseInt(e.target.value))} />}
+                    <Button variant="ghost" size="icon" className="col-span-1 text-destructive" onClick={() => deleteItem(items, setItems, item.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+            ))}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => addItem(items, setItems)}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
+        </div>
+    );
+
+    return (
+         <div className="space-y-6">
+            <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="initialBalance">Saldo Inicial (R$)</Label>
+                        <Input id="initialBalance" type="number" value={initialBalance} onChange={e => setInitialBalance(e.target.value)} placeholder="10000" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="projectionMonths">Período (Meses)</Label>
+                        <Input id="projectionMonths" type="number" value={projectionMonths} onChange={e => setProjectionMonths(e.target.value)} placeholder="12" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="taxRate">Alíquota Impostos (%)</Label>
+                        <Input id="taxRate" type="number" value={taxRate} onChange={e => setTaxRate(e.target.value)} placeholder="10" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderList('Receitas Mensais Recorrentes', revenues, setRevenues)}
+                    {renderList('Despesas Mensais Recorrentes', expenses, setExpenses)}
+                </div>
+                 {renderList('Receitas e Despesas Pontuais', oneOffs, setOneOffs, true)}
+            </div>
+            
+            <Button onClick={handleCalculate} className="w-full">Projetar Fluxo de Caixa</Button>
+
+            {result && (
+                <Card className="bg-secondary/30 border-primary/20">
+                    <CardHeader className="p-4"><CardTitle className="text-lg text-center">Projeção do Fluxo de Caixa</CardTitle></CardHeader>
+                    <CardContent className="p-4 pt-0">
+                         <ScrollArea className="h-96 w-full">
+                            <Table>
+                                <TableHeader className="sticky top-0 bg-secondary/50">
+                                    <TableRow>
+                                        <TableHead>Mês</TableHead>
+                                        <TableHead>Receitas</TableHead>
+                                        <TableHead>Despesas</TableHead>
+                                        <TableHead>Resultado Líquido</TableHead>
+                                        <TableHead className="text-right">Saldo Final</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {result.map(row => (
+                                        <TableRow key={row.month}>
+                                            <TableCell className="font-medium">{row.month}</TableCell>
+                                            <TableCell className="text-green-600">{formatCurrency(row.totalRevenue)}</TableCell>
+                                            <TableCell className="text-red-600">{formatCurrency(row.totalExpense)}</TableCell>
+                                            <TableCell className={row.netResult >= 0 ? "text-green-700" : "text-red-700"}>{formatCurrency(row.netResult)}</TableCell>
+                                            <TableCell className="text-right font-bold text-primary">{formatCurrency(row.finalBalance)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                         </ScrollArea>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    )
+}
     

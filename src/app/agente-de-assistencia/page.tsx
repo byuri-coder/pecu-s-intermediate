@@ -3,12 +3,12 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table, Banknote } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator } from './financial-calculators';
-import { TaxRegimeComparator, EmployeeCostCalculator } from './business-calculators';
+import { TaxRegimeComparator, EmployeeCostCalculator, ProjectedCashFlowCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
 
@@ -82,6 +82,13 @@ const calculators = [
         icon: Users,
         href: '/agente-de-assistencia/custo-funcionario',
         component: EmployeeCostCalculator,
+    },
+    {
+        title: 'Fluxo de Caixa Projetado',
+        description: 'Projete seu fluxo de caixa incluindo receitas, despesas e impostos.',
+        icon: Banknote,
+        href: '/agente-de-assistencia/fluxo-caixa',
+        component: ProjectedCashFlowCalculator,
     },
 ];
 
