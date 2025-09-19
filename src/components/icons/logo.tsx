@@ -7,35 +7,45 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
         fill="none"
         {...props}
     >
-        <g>
-            {/* Main hexagon P-shape */}
-            <path 
-                d="M32 2 L58 18 L58 50 L32 66 L6 50 L6 18 L32 2 Z M18 26 V42 H32 C42 42 42 26 32 26 H18 Z" 
-                fill="hsl(var(--primary))" 
-                stroke="none"
-            />
-            {/* Gold border for the P */}
-            <path 
-                d="M18 28 V40 H32 C40 40 40 28 32 28 H18 Z" 
-                stroke="hsl(45, 100%, 51%)"
-                strokeWidth="2.5"
-                fill="none"
-            />
-            {/* Arrows pointing up */}
-            <path 
-                d="M28 36 L32 32 L36 36"
-                stroke="hsl(var(--primary-foreground))"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path 
-                d="M28 31 L32 27 L36 31"
-                stroke="hsl(var(--primary-foreground))"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </g>
+        <defs>
+            <radialGradient id="gold-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" style={{ stopColor: "#FFEDB3" }} />
+                <stop offset="50%" style={{ stopColor: "#FFD700" }} />
+                <stop offset="100%" style={{ stopColor: "#B8860B" }} />
+            </radialGradient>
+        </defs>
+        <circle cx="32" cy="32" r="30" fill="url(#gold-gradient)" />
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#B8860B" strokeWidth="1.5" />
+        <circle cx="32" cy="32" r="30" fill="none" stroke="#B8860B" strokeWidth="2" strokeOpacity="0.5" />
+
+        <text
+            x="50%"
+            y="53%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fill="#000"
+            fontSize="38"
+            fontFamily="Georgia, serif"
+            fontWeight="bold"
+            opacity="0.2"
+            transform="translate(1 1)"
+        >
+            P
+        </text>
+        <text
+            x="50%"
+            y="52%"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fill="#FFFFFF"
+            fontSize="38"
+            fontFamily="Georgia, serif"
+            fontWeight="bold"
+            stroke="#B8860B"
+            strokeWidth="0.5"
+            strokeOpacity="0.8"
+        >
+            P
+        </text>
     </svg>
 );
