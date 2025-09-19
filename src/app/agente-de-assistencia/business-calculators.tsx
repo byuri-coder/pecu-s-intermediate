@@ -3,13 +3,13 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, PlusCircle } from 'lucide-react';
+import { Trash2, PlusCircle, BadgePercent } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 
@@ -461,4 +461,107 @@ export function ProjectedCashFlowCalculator() {
         </div>
     )
 }
+
+// 4. Calculadora de Margem de Lucro
+export function ProfitMarginCalculator() {
+    const [revenue, setRevenue] = useState('');
+    const [cogs, setCogs] = useState('');
+    const [operatingExpenses, setOperatingExpenses] = useState('');
+    const [taxRate, setTaxRate] = useState('');
+
+    type Result = {
+        grossProfit: number;
+        grossMargin: number;
+        netProfit: number;
+        netMargin: number;
+        taxes: number;
+    }
+    const [result, setResult] = useState<Result | null>(null);
+
+    const handleCalculate = () => {
+        const rev = parseFloat(revenue);
+        const cost = parseFloat(cogs);
+        const opEx = parseFloat(operatingExpenses);
+        const tax = parseFloat(taxRate) / 100;
+
+        if (isNaN(rev) || isNaN(cost) || isNaN(opEx) || isNaN(tax) || rev <= 0) {
+            setResult(null);
+            alert("Por favor, preencha todos os campos com valores válidos. A receita deve ser maior que zero.");
+            return;
+        }
+
+        const grossProfit = rev - cost;
+        const grossMargin = (grossProfit / rev) * 100;
+        
+        const operatingProfit = grossProfit - opEx;
+        const taxes = operatingProfit > 0 ? operatingProfit * tax : 0;
+        const netProfit = operatingProfit - taxes;
+        const netMargin = (netProfit / rev) * 100;
+        
+        setResult({ grossProfit, grossMargin, netProfit, netMargin, taxes });
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="revenueMargin">Receita Bruta Total</Label>
+                        <Input id="revenueMargin" type="number" placeholder="Ex: 50000" value={revenue} onChange={e => setRevenue(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="cogs">Custo dos Produtos/Serviços (CPV/CSV)</Label>
+                        <Input id="cogs" type="number" placeholder="Ex: 20000" value={cogs} onChange={e => setCogs(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="opEx">Despesas Operacionais</Label>
+                        <Input id="opEx" type="number" placeholder="Ex: 10000" value={operatingExpenses} onChange={e => setOperatingExpenses(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="taxRateMargin">Carga Tributária Média (%)</Label>
+                        <Input id="taxRateMargin" type="number" placeholder="Ex: 15" value={taxRate} onChange={e => setTaxRate(e.target.value)} />
+                    </div>
+                </div>
+            </div>
+            <Button onClick={handleCalculate} className="w-full">Analisar Margens</Button>
+            {result && (
+                <Card className="bg-secondary/30 border-primary/20">
+                     <CardHeader className="p-4">
+                        <CardTitle className="text-lg text-center">Análise da Margem de Lucro</CardTitle>
+                    </CardHeader>
+                     <CardContent className="p-4 pt-0 space-y-3">
+                         <div className="p-3 rounded-md bg-background">
+                            <p className="text-muted-foreground">Lucro Bruto</p>
+                            <div className="flex justify-between items-baseline">
+                               <span className="font-bold text-lg">{formatCurrency(result.grossProfit)}</span>
+                                <span className="font-bold text-primary text-lg flex items-center gap-1">
+                                    <BadgePercent className="h-5 w-5"/>
+                                    {result.grossMargin.toFixed(2)}%
+                                </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">(Receita - Custos Diretos)</p>
+                         </div>
+                         <div className="p-3 rounded-md bg-background">
+                            <p className="text-muted-foreground">Impostos Estimados</p>
+                            <span className="font-bold text-lg">{formatCurrency(result.taxes)}</span>
+                            <p className="text-xs text-muted-foreground mt-1">(sobre o Lucro Operacional)</p>
+                         </div>
+                         <div className="p-3 rounded-md bg-background border-t-2 border-primary/20">
+                            <p className="text-muted-foreground">Lucro Líquido</p>
+                            <div className="flex justify-between items-baseline">
+                               <span className="font-bold text-primary text-xl">{formatCurrency(result.netProfit)}</span>
+                                <span className="font-bold text-primary text-xl flex items-center gap-1">
+                                    <BadgePercent className="h-5 w-5"/>
+                                    {result.netMargin.toFixed(2)}%
+                                </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">(Lucro Bruto - Despesas - Impostos)</p>
+                         </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    )
+}
     
+

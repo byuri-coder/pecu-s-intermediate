@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
 import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator } from './financial-calculators';
-import { TaxRegimeComparator, EmployeeCostCalculator, ProjectedCashFlowCalculator } from './business-calculators';
+import { TaxRegimeComparator, EmployeeCostCalculator, ProjectedCashFlowCalculator, ProfitMarginCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
 
@@ -89,6 +89,13 @@ const calculators = [
         icon: Banknote,
         href: '/agente-de-assistencia/fluxo-caixa',
         component: ProjectedCashFlowCalculator,
+    },
+    {
+        title: 'Análise de Margem de Lucro',
+        description: 'Analise sua margem de lucro bruta e líquida após impostos.',
+        icon: Scale,
+        href: '/agente-de-assistencia/margem-lucro',
+        component: ProfitMarginCalculator,
     },
 ];
 
