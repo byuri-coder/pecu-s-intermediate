@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -60,6 +60,26 @@ const FileUploadDisplay = ({
   maxSize: string;
 }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  
+  const handleDownload = () => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleView = () => {
+     if (file) {
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+    }
+  }
 
   if (file) {
     return (
@@ -70,9 +90,17 @@ const FileUploadDisplay = ({
             {file.name}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={handleView} className="h-7 w-7 text-muted-foreground">
+                <Eye className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleDownload} className="h-7 w-7 text-muted-foreground">
+                <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
       </div>
     );
   }
