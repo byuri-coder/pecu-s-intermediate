@@ -263,3 +263,112 @@ export function IcmsStCalculator() {
     );
 }
 
+// 5. Simulador de Parcelamento Tributário
+export function TaxInstallmentSimulator() {
+    const [principal, setPrincipal] = useState('');
+    const [charges, setCharges] = useState('');
+    const [discount, setDiscount] = useState('');
+    const [downPayment, setDownPayment] = useState('');
+    const [installments, setInstallments] = useState('');
+    const [interestRate, setInterestRate] = useState('');
+
+    const [result, setResult] = useState<{ consolidatedDebt: number; installmentValue: number; totalPaid: number} | null>(null);
+    
+    const handleCalculate = () => {
+        const p = parseFloat(principal);
+        const c = parseFloat(charges) || 0;
+        const d = parseFloat(discount) / 100 || 0;
+        const dp = parseFloat(downPayment) || 0;
+        const n = parseInt(installments);
+        const i = parseFloat(interestRate) / 100 || 0; // Monthly interest rate
+
+        if(isNaN(p) || p <= 0 || isNaN(n) || n <= 0) {
+            alert("Por favor, preencha o Valor Principal e o Número de Parcelas com valores positivos.");
+            setResult(null);
+            return;
+        }
+
+        const discountedCharges = c * (1 - d);
+        const consolidatedDebt = p + discountedCharges;
+        const financedAmount = consolidatedDebt - dp;
+
+        if(financedAmount < 0) {
+            alert("O valor da entrada não pode ser maior que a dívida consolidada.");
+            setResult(null);
+            return;
+        }
+
+        if(financedAmount === 0) {
+             setResult({ consolidatedDebt, installmentValue: 0, totalPaid: dp });
+             return;
+        }
+
+        let installmentValue;
+        if(i > 0) {
+            // Price Table calculation for installment value
+            installmentValue = financedAmount * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1);
+        } else {
+            // No interest on installments
+            installmentValue = financedAmount / n;
+        }
+
+        const totalPaid = (installmentValue * n) + dp;
+
+        setResult({ consolidatedDebt, installmentValue, totalPaid });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="principalDebt">Valor Principal da Dívida (R$)</Label>
+                        <Input id="principalDebt" type="number" value={principal} onChange={e => setPrincipal(e.target.value)} placeholder="Ex: 50000" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="charges">Juros e Multas (R$)</Label>
+                        <Input id="charges" type="number" value={charges} onChange={e => setCharges(e.target.value)} placeholder="Ex: 15000" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="discount">Desconto sobre Juros/Multas (%)</Label>
+                        <Input id="discount" type="number" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="Ex: 90" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="downPayment">Valor da Entrada (%)</Label>
+                        <Input id="downPayment" type="number" value={downPayment} onChange={e => setDownPayment(e.target.value)} placeholder="Ex: 20" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="installmentsTax">Número de Parcelas</Label>
+                        <Input id="installmentsTax" type="number" value={installments} onChange={e => setInstallments(e.target.value)} placeholder="Ex: 60" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="interestRateTax">Taxa de Juros do Parcelamento (% a.m.)</Label>
+                        <Input id="interestRateTax" type="number" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="Ex: 1 (SELIC)" />
+                    </div>
+                </div>
+            </div>
+            <Button onClick={handleCalculate} className="w-full">Simular Parcelamento</Button>
+             {result && (
+                 <Card className="bg-secondary/30 border-primary/20">
+                    <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado da Simulação</CardTitle></CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Dívida Consolidada com Desconto</span>
+                            <span className="font-bold text-lg">{formatCurrency(result.consolidatedDebt)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Valor da Parcela Mensal</span>
+                             <span className="font-bold text-lg">{formatCurrency(result.installmentValue)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md border-t border-primary/20 pt-3">
+                            <span className="text-muted-foreground">Custo Total do Parcelamento</span>
+                            <span className="font-bold text-primary text-lg">{formatCurrency(result.totalPaid)}</span>
+                        </div>
+                         <p className="text-xs text-muted-foreground pt-2 text-center">Cálculo da parcela baseado na Tabela Price. A taxa de juros pode variar (ex: SELIC). Consulte a legislação do programa específico.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+}
+

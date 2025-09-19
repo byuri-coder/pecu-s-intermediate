@@ -3,11 +3,11 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table, Banknote } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table, Banknote, Handshake } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
-import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator } from './financial-calculators';
+import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator, TaxInstallmentSimulator } from './financial-calculators';
 import { TaxRegimeComparator, EmployeeCostCalculator, ProjectedCashFlowCalculator, ProfitMarginCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
@@ -68,6 +68,13 @@ const calculators = [
         icon: Plus,
         href: '/agente-de-assistencia/difal',
         component: DifalCalculator
+    },
+    {
+        title: 'Simulação de Parcelamento Tributário',
+        description: 'Simule a adesão a programas como REFIS, PERT, etc.',
+        icon: Handshake,
+        href: '/agente-de-assistencia/parcelamento-tributario',
+        component: TaxInstallmentSimulator,
     },
     {
         title: 'Comparador de Regimes (PJ)',
