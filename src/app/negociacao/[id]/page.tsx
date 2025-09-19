@@ -147,7 +147,6 @@ export default async function NegotiationPage({ params, searchParams }: { params
                         </SheetContent>
                     </Sheet>
                      <div className="space-x-2">
-                        <Button variant="outline" size="sm" className="bg-green-100 hover:bg-green-200 text-green-800 border-green-300"><ThumbsUp className="mr-2 h-4 w-4"/> Aceitar</Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href={`/negociacao/${params.id}/ajuste?type=${assetType}`}>
                                 <Edit className="mr-2 h-4 w-4"/> Ajustar
