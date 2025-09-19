@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -45,6 +45,58 @@ Cláusula 5ª - Ambas as partes declaram, sob as penas da lei, que concordam com
 E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma.
 `;
 
+// Helper component for file upload display
+const FileUploadDisplay = ({
+  file,
+  onFileChange,
+  onClear,
+  acceptedTypes,
+  maxSize,
+}: {
+  file: File | null;
+  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+  acceptedTypes: string;
+  maxSize: string;
+}) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  if (file) {
+    return (
+      <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <FileText className="h-6 w-6 text-primary flex-shrink-0" />
+          <p className="font-semibold text-sm truncate" title={file.name}>
+            {file.name}
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+      onClick={() => inputRef.current?.click()}
+    >
+      <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+      <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
+      <p className="text-xs text-muted-foreground/70">{acceptedTypes} (máx. {maxSize})</p>
+      <Input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        onChange={onFileChange}
+        accept={acceptedTypes}
+      />
+    </div>
+  );
+};
+
+
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -53,6 +105,17 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerAgrees, setSellerAgrees] = React.useState(false);
   const [buyerAgrees, setBuyerAgrees] = React.useState(false);
   const [isFinalized, setFinalized] = React.useState(false);
+
+  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
+  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
+
+  const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setter(event.target.files[0]);
+       toast({ title: "Arquivo anexado!", description: event.target.files[0].name });
+    }
+  };
+
 
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
@@ -292,12 +355,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <CardDescription>Anexe o comprovante de pagamento para o vendedor liberar o ativo.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
-                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
-                            <p className="text-xs text-muted-foreground/70">PDF, JPG, PNG (máx. 10MB)</p>
-                            <Input type="file" className="hidden" />
-                        </div>
+                       <FileUploadDisplay
+                            file={buyerProofFile}
+                            onFileChange={handleFileChange(setBuyerProofFile)}
+                            onClear={() => setBuyerProofFile(null)}
+                            acceptedTypes="PDF, JPG, PNG"
+                            maxSize="10MB"
+                        />
                     </CardContent>
                 </Card>
                 <Card>
@@ -306,12 +370,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <CardDescription>Anexe o documento que comprova a transferência da titularidade do ativo.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
-                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
-                            <p className="text-xs text-muted-foreground/70">PDF, DOCX, ZIP (máx. 25MB)</p>
-                            <Input type="file" className="hidden" />
-                        </div>
+                        <FileUploadDisplay
+                            file={sellerProofFile}
+                            onFileChange={handleFileChange(setSellerProofFile)}
+                            onClear={() => setSellerProofFile(null)}
+                            acceptedTypes="PDF, DOCX, ZIP"
+                            maxSize="25MB"
+                        />
                     </CardContent>
                 </Card>
             </div>
