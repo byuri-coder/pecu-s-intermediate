@@ -164,3 +164,102 @@ export function DifalCalculator() {
     );
 }
 
+// 4. Calculadora de ICMS-ST
+export function IcmsStCalculator() {
+    const [productValue, setProductValue] = useState('');
+    const [otherExpenses, setOtherExpenses] = useState('');
+    const [ipiRate, setIpiRate] = useState('');
+    const [mvaRate, setMvaRate] = useState('');
+    const [internalRate, setInternalRate] = useState('');
+    const [interstateRate, setInterstateRate] = useState('');
+
+    const [result, setResult] = useState<{ icmsProprio: number; baseSt: number; icmsStTotal: number; icmsStRetido: number } | null>(null);
+
+    const handleCalculate = () => {
+        const valProd = parseFloat(productValue);
+        const valDesp = parseFloat(otherExpenses) || 0;
+        const valIpi = (parseFloat(ipiRate) / 100) * valProd || 0;
+        const aliqMva = parseFloat(mvaRate) / 100;
+        const aliqInterna = parseFloat(internalRate) / 100;
+        const aliqInter = parseFloat(interstateRate) / 100;
+
+        if (isNaN(valProd) || isNaN(aliqMva) || isNaN(aliqInterna) || isNaN(aliqInter) || valProd <= 0 || aliqMva < 0 || aliqInterna <= 0 || aliqInter <= 0) {
+            setResult(null);
+            alert("Por favor, preencha o valor do produto e as alíquotas (MVA, Interna, Interestadual) com valores válidos.");
+            return;
+        }
+
+        const baseIcmsProprio = valProd + valDesp;
+        const icmsProprio = baseIcmsProprio * aliqInter;
+
+        const baseSt = (valProd + valIpi + valDesp) * (1 + aliqMva);
+        const icmsStTotal = baseSt * aliqInterna;
+        const icmsStRetido = icmsStTotal - icmsProprio;
+
+        setResult({
+            icmsProprio,
+            baseSt,
+            icmsStTotal,
+            icmsStRetido: icmsStRetido > 0 ? icmsStRetido : 0
+        });
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="productValue">Valor do Produto (R$)</Label>
+                        <Input id="productValue" type="number" placeholder="1000" value={productValue} onChange={e => setProductValue(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="otherExpenses">Frete/Seguro/Outros (R$)</Label>
+                        <Input id="otherExpenses" type="number" placeholder="100" value={otherExpenses} onChange={e => setOtherExpenses(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="ipiRate">Alíquota IPI (%)</Label>
+                        <Input id="ipiRate" type="number" placeholder="10" value={ipiRate} onChange={e => setIpiRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="mvaRate">MVA/IVA-ST (%)</Label>
+                        <Input id="mvaRate" type="number" placeholder="40" value={mvaRate} onChange={e => setMvaRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="interstateRate">Alíquota ICMS Interestadual (%)</Label>
+                        <Input id="interstateRate" type="number" placeholder="12" value={interstateRate} onChange={e => setInterstateRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="internalRate">Alíquota ICMS Interna (Destino) (%)</Label>
+                        <Input id="internalRate" type="number" placeholder="18" value={internalRate} onChange={e => setInternalRate(e.target.value)} />
+                    </div>
+                </div>
+            </div>
+            <Button onClick={handleCalculate} className="w-full">Calcular ICMS-ST</Button>
+            {result && (
+                <Card className="bg-secondary/30 border-primary/20">
+                    <CardHeader className="p-4"><CardTitle className="text-lg text-center">Resultado do Cálculo de ICMS-ST</CardTitle></CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">ICMS Próprio (Crédito na Origem)</span>
+                            <span className="font-bold text-lg">{formatCurrency(result.icmsProprio)}</span>
+                        </div>
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">Base de Cálculo ICMS-ST</span>
+                            <span className="font-bold text-lg">{formatCurrency(result.baseSt)}</span>
+                        </div>
+                         <div className="flex justify-between items-center bg-background p-3 rounded-md">
+                            <span className="text-muted-foreground">ICMS Total na UF Destino</span>
+                            <span className="font-bold text-lg">{formatCurrency(result.icmsStTotal)}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-md border-t-2 border-primary/20 pt-3">
+                            <span className="text-muted-foreground">ICMS-ST a ser Retido/Pago</span>
+                            <span className="font-bold text-primary text-lg">{formatCurrency(result.icmsStRetido)}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground pt-2 text-center">Nota: Este é um cálculo simplificado. Fatores como FCP e benefícios fiscais não estão incluídos.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+}
+

@@ -7,7 +7,7 @@ import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus,
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
-import { IcmsCalculator, PisCofinsCalculator, DifalCalculator } from './financial-calculators';
+import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator } from './financial-calculators';
 import { PJCalculator, EmployeeCostCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
@@ -47,6 +47,13 @@ const calculators = [
         icon: Landmark,
         href: '/agente-de-assistencia/icms',
         component: IcmsCalculator
+    },
+    {
+        title: 'Calculadora ICMS-ST',
+        description: 'Simule a retenção e o repasse da Substituição Tributária.',
+        icon: ReceiptText,
+        href: '/agente-de-assistencia/icms-st',
+        component: IcmsStCalculator,
     },
     {
         title: 'Calculadora PIS/COFINS',
