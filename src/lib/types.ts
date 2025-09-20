@@ -1,4 +1,5 @@
 
+
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -63,7 +64,8 @@ export type Petition = {
     attachments?: { type: string; url: string }[];
     periodoApuracao?: string;
     tipoOperacao?: string;
-    dataPeticao?: Date;
+    petitionDate?: Date;
+    negotiatedValue?: number;
 };
 
 export type Invoice = {

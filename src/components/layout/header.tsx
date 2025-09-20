@@ -1,7 +1,13 @@
+"use client"
+
+import * as React from 'react';
 import Link from 'next/link';
+import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { app } from '@/lib/firebase';
+
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, Bot } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,6 +19,9 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 );
 
 export function Header() {
+  const [user, setUser] = React.useState<FirebaseUser | null>(null);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+
   const navItems = [
     { href: '/tributos', label: 'Tributos' },
     { href: '/terras-rurais', label: 'Terras Rurais' },
@@ -20,8 +29,27 @@ export function Header() {
     { href: '/agente-de-assistencia', label: 'Calculadora e Simuladores', icon: Calculator },
   ];
 
-  // Placeholder for user authentication state
-  const isLoggedIn = true;
+  React.useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        // Check for admin claim
+        firebaseUser.getIdTokenResult().then((idTokenResult) => {
+          const userIsAdmin = idTokenResult.claims.admin === true;
+          setIsAdmin(userIsAdmin);
+        });
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  const isLoggedIn = !!user;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -88,7 +116,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://picsum.photos/seed/avatar1/36/36" alt="User Avatar" />
+                    <AvatarImage src={user.photoURL || "https://picsum.photos/seed/avatar1/36/36"} alt="User Avatar" />
                     <AvatarFallback>
                         <UserCircle className="h-6 w-6" />
                     </AvatarFallback>
@@ -98,9 +126,9 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Usuário Logado</p>
+                    <p className="text-sm font-medium leading-none">{user.displayName || 'Usuário'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      usuario@email.com
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -126,11 +154,13 @@ export function Header() {
                    <DropdownMenuItem asChild>
                     <Link href="/peticoes"><FileSignature className="mr-2 h-4 w-4" /><span>Minhas Petições</span></Link>
                   </DropdownMenuItem>
-                   <DropdownMenuItem asChild>
-                    <Link href="/admin"><Shield className="mr-2 h-4 w-4" /><span>Área do Admin</span></Link>
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin"><Shield className="mr-2 h-4 w-4" /><span>Área do Admin</span></Link>
+                    </DropdownMenuItem>
+                  )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => getAuth(app).signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

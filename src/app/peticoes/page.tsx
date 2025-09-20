@@ -45,7 +45,7 @@ export default function PetitionsPage() {
   const [isFormOpen, setFormOpen] = React.useState(false);
   const [selectedPetition, setSelectedPetition] = React.useState<Petition | null>(null);
 
-  const petitions = placeholderPetitions.map(p => ({...p, updatedAt: new Date(p.updatedAt)}));
+  const petitions = placeholderPetitions.map(p => ({...p, updatedAt: new Date(p.updatedAt), petitionDate: new Date(p.petitionDate || p.updatedAt)}));
 
   const handleEdit = (petition: Petition) => {
     setSelectedPetition(petition);
@@ -104,7 +104,7 @@ export default function PetitionsPage() {
                             {petition.status === 'finalizado' ? 'Finalizado' : 'Rascunho'}
                            </Badge>
                            <p className="text-sm text-muted-foreground">
-                            Atualizado em: {petition.updatedAt.toLocaleDateString('pt-BR')}
+                            Atualizado em: {new Date(petition.updatedAt).toLocaleDateString('pt-BR')}
                            </p>
                         </div>
                       </div>

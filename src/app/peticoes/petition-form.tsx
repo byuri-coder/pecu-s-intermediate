@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -155,6 +154,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
         ...petition,
         creditBalance: petition.creditBalance || 0,
         petitionDate: petition.petitionDate ? new Date(petition.petitionDate) : new Date(),
+        negotiatedValue: petition.negotiatedValue || 0,
     } : {
       title: 'Nova Petição',
       customHeader: '',

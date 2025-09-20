@@ -236,18 +236,24 @@ export const placeholderPetitions: Petition[] = [
     title: 'Petição de Transferência ICMS - Lote A',
     status: 'finalizado',
     updatedAt: '2024-05-20T10:00:00Z',
+    petitionDate: new Date('2024-05-20T10:00:00Z'),
+    representativeState: 'SP'
   },
   {
     id: 'pet-002',
     title: 'Rascunho Petição PIS/COFINS',
     status: 'rascunho',
     updatedAt: '2024-05-18T14:30:00Z',
+    petitionDate: new Date('2024-05-18T14:30:00Z'),
+    representativeState: 'RJ'
   },
    {
     id: 'pet-003',
     title: 'Modelo Padrão IPI',
     status: 'rascunho',
     updatedAt: '2024-05-15T09:00:00Z',
+    petitionDate: new Date('2024-05-15T09:00:00Z'),
+    representativeState: 'MG'
   },
 ];
 
