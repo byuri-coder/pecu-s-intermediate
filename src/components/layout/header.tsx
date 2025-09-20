@@ -18,7 +18,6 @@ export function Header() {
     { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
     { href: '/agente-de-assistencia', label: 'Calculadora e Simuladores', icon: Calculator },
-    { href: '/agente-financeiro', label: 'Agente com IA', icon: Bot },
   ];
 
   // Placeholder for user authentication state
