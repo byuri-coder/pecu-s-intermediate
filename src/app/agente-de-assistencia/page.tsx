@@ -106,18 +106,13 @@ const calculators = [
     },
 ];
 
-const CalculatorCard = ({ title, description, icon: Icon, href, ComingSoon }: { title: string; description: string; icon: React.ElementType; href: string; ComingSoon?: boolean }) => (
+const CalculatorCard = ({ title, description, icon: Icon, href }: { title: string; description: string; icon: React.ElementType; href: string; }) => (
     <div className="relative">
         <Card className="h-full flex flex-col items-center justify-center text-center p-6 hover:shadow-lg hover:border-primary transition-all duration-300">
             <Icon className="h-10 w-10 mb-4 text-primary" />
             <h3 className="font-semibold text-lg">{title}</h3>
             <p className="text-sm text-muted-foreground mt-1">{description}</p>
         </Card>
-        {ComingSoon && (
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                <span className="font-bold text-primary">Em Breve</span>
-            </div>
-        )}
     </div>
 );
 
@@ -242,7 +237,6 @@ export default function CalculatorHubPage() {
                                 description={calc.description} 
                                 icon={calc.icon}
                                 href={calc.href}
-                                ComingSoon={!calc.component}
                             />
                          </div>
                     ))}
@@ -273,5 +267,3 @@ export default function CalculatorHubPage() {
     </div>
   );
 }
-
-    
