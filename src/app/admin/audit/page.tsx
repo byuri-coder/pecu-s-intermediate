@@ -22,10 +22,10 @@ import {
 import { Input } from "@/components/ui/input"
 
 const mockAuditLogs = [
-  { id: "LOG-001", user: "admin@master.com", ip: "187.55.123.10", action: "Acesso ao painel", timestamp: "2024-05-21 10:00:15" },
-  { id: "LOG-002", user: "admin@master.com", ip: "187.55.123.10", action: "Exportou relatório de transações", timestamp: "2024-05-21 10:05:22" },
+  { id: "LOG-001", user: "admin@example.com", ip: "187.55.123.10", action: "Acesso ao painel", timestamp: "2024-05-21 10:00:15" },
+  { id: "LOG-002", user: "admin@example.com", ip: "187.55.123.10", action: "Exportou relatório de transações", timestamp: "2024-05-21 10:05:22" },
   { id: "LOG-003", user: "user1@test.com", ip: "200.10.20.30", action: "Alterou senha", timestamp: "2024-05-21 11:30:00" },
-  { id: "LOG-004", user: "admin@master.com", ip: "187.55.123.10", action: "Visualizou log de auditoria", timestamp: "2024-05-21 11:35:00" },
+  { id: "LOG-004", user: "admin@example.com", ip: "187.55.123.10", action: "Visualizou log de auditoria", timestamp: "2024-05-21 11:35:00" },
 ]
 
 export default function AuditPage() {

@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { ShieldAlert } from "lucide-react"
-
-// Senha para o protótipo. Em um app real, isso deve ser mais seguro.
-const ADMIN_PASSWORD = "admin"
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { app } from "@/lib/firebase";
 
 export default function AdminLoginPage() {
-  const [password, setPassword] = React.useState("")
+  const [email, setEmail] = React.useState("admin@example.com")
+  const [password, setPassword] = React.useState("password")
   const [error, setError] = React.useState("")
   const [isPending, startTransition] = React.useTransition()
   const router = useRouter()
@@ -23,18 +23,34 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setError("")
 
-    startTransition(() => {
-      if (password === ADMIN_PASSWORD) {
-        toast({
-          title: "Acesso autorizado!",
-          description: "Bem-vindo à Área do Administrador.",
-        })
-        // Em um app real, um token JWT ou sessão segura seria usado.
-        // Para prototipagem, sessionStorage é suficiente.
-        sessionStorage.setItem("adminAuthenticated", "true")
-        router.replace("/admin/dashboard")
-      } else {
-        setError("Senha incorreta. Tente novamente.")
+    startTransition(async () => {
+      const auth = getAuth(app);
+      try {
+        await setPersistence(auth, browserSessionPersistence)
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const idTokenResult = await userCredential.user.getIdTokenResult();
+
+        if (idTokenResult.claims.admin) {
+          toast({
+            title: "Acesso autorizado!",
+            description: "Bem-vindo à Área do Administrador.",
+          })
+          router.replace("/admin/dashboard")
+        } else {
+          setError("Acesso negado. Você não é um administrador.")
+          auth.signOut();
+        }
+      } catch (error: any) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+             setError("Email ou senha incorretos. Tente novamente.")
+             break;
+          default:
+            setError("Ocorreu um erro inesperado. Tente novamente mais tarde.")
+            console.error(error);
+        }
       }
     })
   }
@@ -48,13 +64,24 @@ export default function AdminLoginPage() {
             </div>
           <CardTitle>Acesso Restrito</CardTitle>
           <CardDescription>
-            Esta área é exclusiva para administradores. Por favor, insira a senha de acesso.
+            Esta área é exclusiva para administradores.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Senha de Administrador</Label>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                required
+              />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"

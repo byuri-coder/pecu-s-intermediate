@@ -39,6 +39,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Logo } from "@/components/icons/logo"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { app } from "@/lib/firebase";
 
 const navItems = [
     { href: "/admin/dashboard", label: "Dashboard", icon: Home },
@@ -71,17 +73,25 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
   React.useEffect(() => {
-    // Em um app real, isso seria validado com um token seguro, não sessionStorage.
-    const adminSession = sessionStorage.getItem('adminAuthenticated');
-    if (adminSession !== 'true') {
-      router.replace('/admin/login');
-    } else {
-      setIsAuthenticated(true);
-    }
+    // Em um app real, isso viria da verificação de token do Firebase
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const idTokenResult = await user.getIdTokenResult();
+            if (idTokenResult.claims.admin) {
+                setIsAuthenticated(true);
+            } else {
+                router.replace('/admin/login');
+            }
+        } else {
+            router.replace('/admin/login');
+        }
+    });
+
+    return () => unsubscribe();
   }, [router]);
 
   if (!isAuthenticated) {
-    // Renderiza um loader ou nada enquanto a verificação acontece
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Verificando autorização...</p>
@@ -148,7 +158,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Suporte</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Sair</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => getAuth(app).signOut()}>Sair</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
