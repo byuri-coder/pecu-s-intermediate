@@ -1,16 +1,24 @@
 // setAdminClaim.js
-const admin = require("firebase-admin");
+const admin = require('firebase-admin');
 
-// caminho pro seu serviceAccount JSON (ajuste conforme local)
-// Lembre-se: Este arquivo é sensível e não deve ser enviado para o controle de versão.
-// Obtenha-o no seu console do Firebase em Configurações do Projeto > Contas de serviço.
-const serviceAccount = require("./serviceAccountKey.json");
+// Este script espera que a chave da conta de serviço esteja em um arquivo serviceAccountKey.json
+// na mesma pasta. Lembre-se que este arquivo é sensível e não deve ir para o controle de versão.
+try {
+  const serviceAccount = require('./serviceAccountKey.json');
+  
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+} catch (e) {
+  console.error("Erro ao carregar 'serviceAccountKey.json'. Certifique-se de que o arquivo existe no mesmo diretório.");
+  process.exit(1);
+}
 
-const uid = process.argv[2]; // passar UID como argumento
+
+const uid = process.argv[2]; // passar UID como argumento na linha de comando
 
 if (!uid) {
   console.error("Uso: node setAdminClaim.js <UID_DO_USUARIO>");
