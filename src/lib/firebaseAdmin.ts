@@ -4,8 +4,8 @@ import admin from 'firebase-admin';
 // GOOGLE_APPLICATION_CREDENTIALS ou FIREBASE_CONFIG estão configuradas no ambiente de servidor.
 // Em um ambiente de desenvolvimento local, você pode precisar apontar para a chave de serviço.
 
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
+const serviceAccountKey = process.env.FIREBASE_KEY
+  ? JSON.parse(process.env.FIREBASE_KEY)
   : undefined; // Em produção, use variáveis de ambiente.
 
 if (!admin.apps.length) {
