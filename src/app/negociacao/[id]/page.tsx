@@ -168,24 +168,24 @@ export default async function NegotiationPage({ params, searchParams }: { params
   );
 }
 export async function generateStaticParams() {
-    const params: { id: string; type: AssetType }[] = [];
-  
-    // Créditos de Carbono
-    placeholderCredits.forEach(credit => {
-      params.push({ id: credit.id, type: 'carbon-credit' });
-    });
-  
-    // Créditos Tributários
-    placeholderTaxCredits.forEach(taxCredit => {
-      params.push({ id: taxCredit.id, type: 'tax-credit' });
-    });
-  
-    // Terras Rurais
-    placeholderRuralLands.forEach(ruralLand => {
-      params.push({ id: ruralLand.id, type: 'rural-land' });
-    });
-  
-    return params;
-  }
+  const carbonParams = placeholderCredits.map((credit) => ({
+    id: credit.id,
+  }));
 
+  const taxParams = placeholderTaxCredits.map((credit) => ({
+    id: credit.id,
+  }));
+
+  const ruralLandParams = placeholderRuralLands.map((land) => ({
+    id: land.id,
+  }));
+
+  // Combine all IDs and remove duplicates
+  const allIds = [...new Set([...carbonParams.map(p => p.id), ...taxParams.map(p => p.id), ...ruralLandParams.map(p => p.id)])];
+
+  return allIds.map(id => ({
+    id: id,
+  }));
+}
     
+
