@@ -11,7 +11,7 @@ const serviceAccountKey = process.env.FIREBASE_KEY
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: serviceAccountKey
-      ? admin.credential.cert(serviceAccountKey)
+      ? admin.credential.cert(serviceAccountKey as admin.ServiceAccount)
       : admin.credential.applicationDefault(), // Usa as credenciais padrão do ambiente
   });
 }
