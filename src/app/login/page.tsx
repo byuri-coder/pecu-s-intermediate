@@ -12,7 +12,7 @@ export default function LoginPage() {
             </div>
           <CardTitle className="text-3xl font-bold font-headline">Acessar Plataforma</CardTitle>
           <CardDescription>
-            Use suas credenciais para entrar na sua conta.
+            Use seu email e senha para entrar na sua conta.
           </CardDescription>
         </CardHeader>
         <CardContent>

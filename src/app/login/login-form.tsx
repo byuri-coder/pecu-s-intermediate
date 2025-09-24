@@ -3,8 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition } from 'react';
+import React, { useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,54 +19,63 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 const loginSchema = z.object({
-  cpfCnpj: z.string().min(1, 'CPF ou CNPJ é obrigatório'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(1, 'Senha é obrigatória'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = React.useState('');
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      cpfCnpj: '',
       email: '',
       password: '',
     },
   });
 
   const onSubmit = (data: LoginFormValues) => {
+    setError('');
     startTransition(async () => {
-      // Here you would typically authenticate the user
-      console.log(data);
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const auth = getAuth(app);
+      try {
+        await setPersistence(auth, browserSessionPersistence);
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+        
+        toast({
+          title: "Login bem-sucedido!",
+          description: "Você será redirecionado para o painel.",
+        });
+        
+        router.push('/dashboard');
 
-      toast({
-        title: "Login bem-sucedido!",
-        description: "Você será redirecionado para o painel.",
-      });
-      
-      // router.push('/dashboard');
+      } catch (error: any) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+             setError("Email ou senha incorretos. Tente novamente.")
+             break;
+          default:
+            setError("Ocorreu um erro inesperado. Tente novamente mais tarde.")
+            console.error(error);
+        }
+      }
     });
   };
 
   return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField name="cpfCnpj" control={form.control} render={({ field }) => (
-            <FormItem>
-              <FormLabel>CPF ou CNPJ</FormLabel>
-              <FormControl><Input {...field} placeholder="Seu CPF ou CNPJ" /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
           <FormField name="email" control={form.control} render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
@@ -81,6 +91,7 @@ export function LoginForm() {
             </FormItem>
           )} />
 
+          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           <Button type="submit" className="w-full text-lg" size="lg" disabled={isPending}>
             {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             Entrar

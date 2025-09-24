@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 const registrationSchema = z.object({
   fullName: z.string().min(3, 'Nome completo é obrigatório'),
@@ -49,7 +52,9 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
 export function RegistrationForm() {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = React.useState('');
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -77,17 +82,36 @@ export function RegistrationForm() {
 
 
   const onSubmit = (data: RegistrationFormValues) => {
+    setError('');
     startTransition(async () => {
-      // Here you would typically send the data to your backend
-      console.log(data);
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const auth = getAuth(app);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        
+        await updateProfile(userCredential.user, {
+            displayName: data.fullName
+        });
 
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Sua conta foi criada. Você já pode negociar na plataforma.",
-      });
-      form.reset();
+        toast({
+            title: "Cadastro realizado com sucesso!",
+            description: "Sua conta foi criada. Você será redirecionado.",
+        });
+        
+        router.push('/dashboard');
+
+      } catch (error: any) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            setError("Este email já está em uso por outra conta.");
+            break;
+          case 'auth/weak-password':
+            setError("A senha é muito fraca. Tente uma mais forte.");
+            break;
+          default:
+            setError("Ocorreu um erro inesperado durante o cadastro.");
+            console.error(error);
+        }
+      }
     });
   };
 
@@ -189,6 +213,7 @@ export function RegistrationForm() {
               )} />
           </section>
 
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           <Button type="submit" className="w-full text-lg" size="lg" disabled={isPending}>
             {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             Criar Minha Conta
