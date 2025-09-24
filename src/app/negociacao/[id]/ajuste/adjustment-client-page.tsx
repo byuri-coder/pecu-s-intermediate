@@ -4,8 +4,8 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card';
-import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,7 +16,7 @@ import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Input } from '../../../../components/ui/input';
+import { Input } from '@/components/ui/input';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';

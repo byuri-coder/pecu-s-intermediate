@@ -3,8 +3,6 @@
     "baseUrl": "src",
     "paths": {
       "@/*": ["*"]
-    },
-    // ... outras opções
-  },
-  // ... resto do arquivo
+    }
+  }
 }

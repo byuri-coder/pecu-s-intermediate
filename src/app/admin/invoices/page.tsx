@@ -3,7 +3,7 @@
 import { File, ListFilter, MoreHorizontal, PlusCircle, UploadCloud } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "../../../components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card"
+} from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,7 +28,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components/ui/table"
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "../../../components/ui/input"
+import { Input } from "@/components/ui/input"
 
 const mockInvoices = [
   { id: "NF-001", user: "Empresa A", value: 150.00, date: "2024-05-01", status: "Emitida", xmlUrl: "#", pdfUrl: "#" },

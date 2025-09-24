@@ -2,9 +2,9 @@ import { placeholderRuralLands } from '@/lib/placeholder-data';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '../../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare } from 'lucide-react';
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
