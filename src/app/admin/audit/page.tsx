@@ -2,7 +2,7 @@
 
 import { File, ListFilter } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "../../../components/ui/button"
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "../../../components/ui/card"
 import {
   Table,
   TableBody,
@@ -18,8 +18,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+} from "../../../components/ui/table"
+import { Input } from "../../../components/ui/input"
 
 const mockAuditLogs = [
   { id: "LOG-001", user: "admin@example.com", ip: "187.55.123.10", action: "Acesso ao painel", timestamp: "2024-05-21 10:00:15" },

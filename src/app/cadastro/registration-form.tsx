@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '../../components/ui/button';
 import {
   Form,
   FormControl,
@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, MapPin } from 'lucide-react';

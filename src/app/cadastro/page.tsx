@@ -1,5 +1,5 @@
 import { RegistrationForm } from './registration-form';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { UserPlus } from 'lucide-react';
 
 export default function RegistrationPage() {

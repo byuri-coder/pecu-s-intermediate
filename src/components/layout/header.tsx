@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt } from 'lucide-react';
 import { Logo } from '../icons/logo';

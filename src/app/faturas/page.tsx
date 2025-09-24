@@ -7,7 +7,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
+} from "../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -15,9 +15,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, Landmark, UploadCloud, Info } from "lucide-react";
 import {
     DropdownMenu,
@@ -41,7 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import * as React from "react";
-import { Input } from "@/components/ui/input";
+import { Input } from "../../components/ui/input";
 
 export default function InvoicesPage() {
     const { toast } = useToast();

@@ -1,5 +1,5 @@
 import { LoginForm } from './login-form';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { LogIn } from 'lucide-react';
 
 export default function LoginPage() {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Calendar, TrendingUp, TrendingDown, Leaf, Landmark, Mountain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { placeholderOperations } from '@/lib/placeholder-data';

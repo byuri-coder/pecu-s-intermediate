@@ -2,12 +2,12 @@
 import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
-import { Input } from '@/components/ui/input';
+import { Input } from '../../components/ui/input';
 import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

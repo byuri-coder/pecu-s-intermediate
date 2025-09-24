@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { User } from 'lucide-react';
 import { ProfileForm } from './profile-form';
 

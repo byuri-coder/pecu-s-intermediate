@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card } from '@/components/ui/card';
+import { Card } from '../../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';

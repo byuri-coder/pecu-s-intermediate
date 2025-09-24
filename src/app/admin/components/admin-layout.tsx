@@ -18,14 +18,14 @@ import {
 import * as React from 'react';
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button } from "../../../components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "../../../components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { Input } from "../../../components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Logo } from "@/components/icons/logo"
 import { usePathname, useRouter } from "next/navigation"

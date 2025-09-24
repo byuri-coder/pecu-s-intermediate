@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { RuralLand } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe } from 'lucide-react';
 import Image from 'next/image';
