@@ -12,7 +12,9 @@ if (!admin.apps.length) {
   admin.initializeApp({
     credential: serviceAccountKey
       ? admin.credential.cert(serviceAccountKey as admin.ServiceAccount)
-      : admin.credential.applicationDefault(), // Usa as credenciais padrão do ambiente
+      // A linha abaixo causava erro em ambientes que não tem as credenciais default.
+      // Foi removida para forçar o uso da variável de ambiente.
+      : undefined,
   });
 }
 

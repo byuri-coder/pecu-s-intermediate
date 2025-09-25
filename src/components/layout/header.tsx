@@ -34,11 +34,8 @@ export function Header() {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Check for admin claim
-        firebaseUser.getIdTokenResult().then((idTokenResult) => {
-          const userIsAdmin = idTokenResult.claims.admin === true;
-          setIsAdmin(userIsAdmin);
-        });
+        // Check if the user is the specific admin email
+        setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
       } else {
         setUser(null);
         setIsAdmin(false);
