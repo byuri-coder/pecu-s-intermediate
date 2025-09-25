@@ -12,12 +12,13 @@ import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPers
 import { app } from "@/lib/firebase";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = React.useState("admin@example.com")
+  const [email, setEmail] = React.useState("byuripaulo@gmail.com")
   const [password, setPassword] = React.useState("password")
   const [error, setError] = React.useState("")
   const [isPending, startTransition] = React.useTransition()
   const router = useRouter()
   const { toast } = useToast()
+  const adminEmail = "byuripaulo@gmail.com";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,16 +29,15 @@ export default function AdminLoginPage() {
       try {
         await setPersistence(auth, browserSessionPersistence)
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idTokenResult = await userCredential.user.getIdTokenResult();
-
-        if (idTokenResult.claims.admin) {
+        
+        if (userCredential.user.email === adminEmail) {
           toast({
             title: "Acesso autorizado!",
             description: "Bem-vindo à Área do Administrador.",
           })
           router.replace("/admin/dashboard")
         } else {
-          setError("Acesso negado. Você não é um administrador.")
+          setError("Acesso negado. Este e-mail não tem permissão de administrador.")
           auth.signOut();
         }
       } catch (error: any) {

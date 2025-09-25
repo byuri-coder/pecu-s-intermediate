@@ -71,18 +71,13 @@ function NavLink({ item, isMobile = false }: { item: typeof navItems[0], isMobil
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const adminEmail = "byuripaulo@gmail.com";
 
   React.useEffect(() => {
-    // Em um app real, isso viria da verificação de token do Firebase
     const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const idTokenResult = await user.getIdTokenResult();
-            if (idTokenResult.claims.admin) {
-                setIsAuthenticated(true);
-            } else {
-                router.replace('/admin/login');
-            }
+        if (user && user.email === adminEmail) {
+            setIsAuthenticated(true);
         } else {
             router.replace('/admin/login');
         }
