@@ -123,7 +123,7 @@ Cláusula 9ª – Da Legislação e Foro
 O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
 
 Cláusula 10ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR] pelo VENDEDOR e [PERCENTUAL_COMPRADOR] pelo COMPRADOR.
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR]% pelo VENDEDOR e [PERCENTUAL_COMPRADOR]% pelo COMPRADOR.
 
 E por estarem assim justas e contratadas, firmam o presente contrato em [vias_contrato] vias de igual teor e forma, na presença de testemunhas.
 
@@ -203,6 +203,66 @@ ARRENDADOR: ___________________________________________
 
 ARRENDATÁRIO: _________________________________________
 [ARRENDATARIO_NOME]
+
+TESTEMUNHAS:
+
+Nome: __________________________ CPF: _________________
+
+Nome: __________________________ CPF: _________________
+`;
+
+const ruralLandPermutaContractTemplate = `CONTRATO DE PERMUTA
+
+PERMUTANTE 1: [PERMUTANTE1_NOME], [nacionalidade1], [estado_civil1], [profissao1], portador do RG nº [rg1] e CPF/CNPJ nº [cpf_cnpj1], residente e domiciliado/sediado em [endereco1].
+
+PERMUTANTE 2: [PERMUTANTE2_NOME], [nacionalidade2], [estado_civil2], [profissao2], portador do RG nº [rg2] e CPF/CNPJ nº [cpf_cnpj2], residente e domiciliado/sediado em [endereco2].
+
+OBJETO: Permuta de [descrever bens, serviços, créditos ou ativos permutados], conforme detalhamento abaixo.
+
+DATA: [DATA_CONTRATO].
+
+CLÁUSULAS CONTRATUAIS
+
+Cláusula 1ª – Do Objeto
+As partes acima qualificadas acordam em realizar a permuta, mediante a troca dos seguintes bens/ativos/serviços:
+
+PERMUTANTE 1 entrega: [ENTREGA1].
+
+PERMUTANTE 2 entrega: [ENTREGA2].
+
+Cláusula 2ª – Da Equivalência e Avaliação
+As partes reconhecem que os bens/serviços/ativos objeto da permuta são de valor equivalente, ajustado em comum acordo, não havendo saldo a pagar em dinheiro, salvo disposição expressa em cláusula complementar.
+
+Cláusula 3ª – Da Eventual Torna
+Caso se apure diferença de valores entre os bens/serviços permutados, a parte que recebeu maior vantagem compensará a outra mediante pagamento em espécie de R$ [VALOR_TORNA], no prazo de [PRAZO_TORNA] dias, após assinatura do presente contrato.
+
+Cláusula 4ª – Das Obrigações do PERMUTANTE 1
+O PERMUTANTE 1 se obriga a entregar ao PERMUTANTE 2 os bens/serviços/ativos descritos na Cláusula 1, livres de quaisquer ônus, no prazo de [PRAZO_ENTREGA1] dias, contados da assinatura deste contrato.
+
+Cláusula 5ª – Das Obrigações do PERMUTANTE 2
+O PERMUTANTE 2 se obriga a entregar ao PERMUTANTE 1 os bens/serviços/ativos descritos na Cláusula 1, livres de quaisquer ônus, no prazo de [PRAZO_ENTREGA2] dias, contados da assinatura deste contrato.
+
+Cláusula 6ª – Da Garantia e Responsabilidade
+As partes declaram que possuem plena titularidade sobre os bens/serviços/ativos permutados, respondendo pela evicção de direito e por eventuais vícios ou defeitos ocultos que venham a prejudicar a outra parte.
+
+Cláusula 7ª – Da Rescisão
+O presente contrato poderá ser rescindido por descumprimento de quaisquer de suas cláusulas, assegurado à parte inocente o direito de exigir perdas e danos, caso cabíveis.
+
+Cláusula 8ª – Dos Custos da Plataforma
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total da permuta, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_PERMUTANTE1]% pelo PERMUTANTE 1 e [PERCENTUAL_PERMUTANTE2]% pelo PERMUTANTE 2.
+
+Cláusula 9ª – Do Foro
+Fica eleito o foro da Comarca de [FORO_COMARCA], com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir quaisquer dúvidas oriundas deste contrato.
+
+E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma, juntamente com as testemunhas abaixo.
+
+[LOCAL_ASSINATURA], [DATA_EXTENSO].
+
+PERMUTANTE 1: ___________________________________________
+[PERMUTANTE1_NOME]
+
+PERMUTANTE 2: ___________________________________________
+[PERMUTANTE2_NOME]
 
 TESTEMUNHAS:
 
@@ -372,6 +432,37 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       dia_pagamento_arrendamento: '10',
   });
   
+  const [permutaContractFields, setPermutaContractFields] = React.useState({
+    // Permutante 1 (Vendedor)
+    nacionalidade1: 'Brasileiro(a)',
+    estado_civil1: 'Casado(a)',
+    profissao1: 'Empresário(a)',
+    rg1: '',
+    cpf_cnpj1: '',
+    endereco1: '',
+    entrega1: `Imóvel Rural: ${asset.id}`,
+    prazo_entrega1: '15',
+    // Permutante 2 (Comprador)
+    permutante2_nome: 'PERMUTANTE 2 EXEMPLO',
+    nacionalidade2: 'Brasileira',
+    estado_civil2: '',
+    profissao2: 'Investidor',
+    rg2: '',
+    cpf_cnpj2: '22.222.222/0001-22',
+    endereco2: 'Av. Teste, 789',
+    entrega2: 'Imóvel Urbano, Matrícula 98765, situado em São Paulo, SP.',
+    prazo_entrega2: '15',
+    // Cláusulas
+    objeto_permuta: 'Imóvel Rural por Imóvel Urbano',
+    valor_torna: '0',
+    prazo_torna: '0',
+    foro_comarca: 'São Paulo, SP'
+  });
+
+  const handlePermutaFieldChange = (field: keyof typeof permutaContractFields, value: string) => {
+    setPermutaContractFields(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSaleContractFieldChange = (field: keyof typeof saleContractFields, value: string) => {
     if (field === 'percentual_multa') {
         const numValue = parseInt(value, 10);
@@ -422,6 +513,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     if (assetType === 'rural-land' && 'businessType' in asset) {
         if(asset.businessType === 'Venda') return ruralLandSaleContractTemplate;
         if(asset.businessType === 'Arrendamento') return ruralLandLeaseContractTemplate;
+        if(asset.businessType === 'Permuta') return ruralLandPermutaContractTemplate;
     }
     return carbonCreditContractTemplate;
   }
@@ -432,6 +524,41 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const formattedDate = currentDate.toLocaleDateString('pt-BR');
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
+     if (currentTemplate === ruralLandPermutaContractTemplate && 'title' in asset) {
+      const land = asset as RuralLand;
+      const [municipio] = land.location.split(',').map(s => s.trim());
+
+      return ruralLandPermutaContractTemplate
+        .replace(/\[PERMUTANTE1_NOME\]/g, land.owner)
+        .replace(/\[nacionalidade1\]/g, permutaContractFields.nacionalidade1 || '[...]')
+        .replace(/\[estado_civil1\]/g, permutaContractFields.estado_civil1 || '[...]')
+        .replace(/\[profissao1\]/g, permutaContractFields.profissao1 || '[...]')
+        .replace(/\[rg1\]/g, permutaContractFields.rg1 || '[]')
+        .replace(/\[cpf_cnpj1\]/g, permutaContractFields.cpf_cnpj1 || '[]')
+        .replace(/\[endereco1\]/g, permutaContractFields.endereco1 || '[...]')
+        .replace(/\[PERMUTANTE2_NOME\]/g, permutaContractFields.permutante2_nome || '[...]')
+        .replace(/\[nacionalidade2\]/g, permutaContractFields.nacionalidade2 || '[...]')
+        .replace(/\[estado_civil2\]/g, permutaContractFields.estado_civil2 || '[...]')
+        .replace(/\[profissao2\]/g, permutaContractFields.profissao2 || '[...]')
+        .replace(/\[rg2\]/g, permutaContractFields.rg2 || '[]')
+        .replace(/\[cpf_cnpj2\]/g, permutaContractFields.cpf_cnpj2 || '[]')
+        .replace(/\[endereco2\]/g, permutaContractFields.endereco2 || '[...]')
+        .replace(/\[descrever bens, serviços, créditos ou ativos permutados\]/g, permutaContractFields.objeto_permuta || '[...]')
+        .replace(/\[DATA_CONTRATO\]/g, formattedDate)
+        .replace(/\[ENTREGA1\]/g, permutaContractFields.entrega1)
+        .replace(/\[ENTREGA2\]/g, permutaContractFields.entrega2)
+        .replace(/\[VALOR_TORNA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(permutaContractFields.valor_torna)))
+        .replace(/\[PRAZO_TORNA\]/g, permutaContractFields.prazo_torna)
+        .replace(/\[PRAZO_ENTREGA1\]/g, permutaContractFields.prazo_entrega1)
+        .replace(/\[PRAZO_ENTREGA2\]/g, permutaContractFields.prazo_entrega2)
+        .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+        .replace(/\[PERCENTUAL_PERMUTANTE1\]/g, getCostSplitPercentages().seller)
+        .replace(/\[PERCENTUAL_PERMUTANTE2\]/g, getCostSplitPercentages().buyer)
+        .replace(/\[FORO_COMARCA\]/g, permutaContractFields.foro_comarca || '[...]')
+        .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
+        .replace(/\[DATA_EXTENSO\]/g, extendedDate);
+    }
+    
     if (currentTemplate === ruralLandLeaseContractTemplate && 'title' in asset) {
       const land = asset as RuralLand;
       const [municipio] = land.location.split(',').map(s => s.trim());
@@ -701,6 +828,43 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Coluna de Edição */}
                 <div className="space-y-6">
+                     {assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Permuta' && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato (Permuta)</CardTitle>
+                                <CardDescription>Preencha os detalhes da permuta.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <h3 className="font-semibold text-md">Dados do Permutante 1 (Vendedor)</h3>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nacionalidade</Label><Input value={permutaContractFields.nacionalidade1} onChange={(e) => handlePermutaFieldChange('nacionalidade1', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Estado Civil</Label><Input value={permutaContractFields.estado_civil1} onChange={(e) => handlePermutaFieldChange('estado_civil1', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj1} onChange={(e) => handlePermutaFieldChange('cpf_cnpj1', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco1} onChange={(e) => handlePermutaFieldChange('endereco1', e.target.value)} /></div>
+                                </div>
+                                <h3 className="font-semibold text-md pt-4">Dados do Permutante 2 (Comprador)</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={permutaContractFields.permutante2_nome} onChange={(e) => handlePermutaFieldChange('permutante2_nome', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj2} onChange={(e) => handlePermutaFieldChange('cpf_cnpj2', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco2} onChange={(e) => handlePermutaFieldChange('endereco2', e.target.value)} /></div>
+                                </div>
+                                <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
+                                <div className="space-y-4">
+                                    <div className="space-y-1"><Label>Cl. 1: Objeto da Permuta</Label><Input value={permutaContractFields.objeto_permuta} onChange={(e) => handlePermutaFieldChange('objeto_permuta', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1: O que o Permutante 1 entrega</Label><Textarea value={permutaContractFields.entrega1} onChange={(e) => handlePermutaFieldChange('entrega1', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1: O que o Permutante 2 entrega</Label><Textarea value={permutaContractFields.entrega2} onChange={(e) => handlePermutaFieldChange('entrega2', e.target.value)} rows={2} /></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-1"><Label>Cl. 3: Valor da Torna (R$)</Label><Input type="number" value={permutaContractFields.valor_torna} onChange={(e) => handlePermutaFieldChange('valor_torna', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 3: Prazo Torna (dias)</Label><Input type="number" value={permutaContractFields.prazo_torna} onChange={(e) => handlePermutaFieldChange('prazo_torna', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 4: Prazo Entrega Perm. 1 (dias)</Label><Input type="number" value={permutaContractFields.prazo_entrega1} onChange={(e) => handlePermutaFieldChange('prazo_entrega1', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 5: Prazo Entrega Perm. 2 (dias)</Label><Input type="number" value={permutaContractFields.prazo_entrega2} onChange={(e) => handlePermutaFieldChange('prazo_entrega2', e.target.value)} /></div>
+                                    </div>
+                                    <div className="space-y-1"><Label>Cl. 9: Foro</Label><Input value={permutaContractFields.foro_comarca} onChange={(e) => handlePermutaFieldChange('foro_comarca', e.target.value)} /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Venda' && (
                         <Card>
                              <CardHeader>
