@@ -42,7 +42,7 @@ Cláusula 2ª – Da Cessão
 O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
 
 Cláusula 3ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
+Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA] ([PERCENTUAL_TAXA]%), serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
 
 Cláusula 4ª – Do Pagamento
 O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
@@ -179,6 +179,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
+  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(10);
+
 
   // For archive view, we can use placeholder file objects. In a real app, these would be fetched.
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
@@ -199,7 +201,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : asset.price) : 50000;
-  const platformCost = negotiatedValue * 0.10;
+  const platformCost = negotiatedValue * (platformFeePercentage / 100);
 
   // Mock payment data - in a real app, this would be fetched from the seller's profile
   const paymentInfo = {
@@ -235,6 +237,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     .replace(/\[ID_ATIVO\]/g, asset.id)
     .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
     .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
+    .replace(/\[PERCENTUAL_TAXA\]/g, platformFeePercentage.toString())
     .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
     .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
     .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
@@ -426,10 +429,24 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
-                        <span className="font-medium text-secondary-foreground">Custo (10%)</span>
+                        <span className="font-medium text-secondary-foreground">Custo ({platformFeePercentage}%)</span>
                         <span className="text-2xl font-bold text-primary">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                         </span>
+                    </div>
+                     <div className="space-y-2 pt-2">
+                        <Label htmlFor="platform-fee">Ajustar Percentual da Taxa (%)</Label>
+                        <Input 
+                            id="platform-fee"
+                            type="number"
+                            value={platformFeePercentage}
+                            onChange={(e) => setPlatformFeePercentage(parseFloat(e.target.value) || 0)}
+                            placeholder="Ex: 10"
+                            disabled={isFinalized}
+                            min="0"
+                            max="100"
+                            step="0.1"
+                        />
                     </div>
                     <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
                         <Label>Divisão do Custo</Label>
