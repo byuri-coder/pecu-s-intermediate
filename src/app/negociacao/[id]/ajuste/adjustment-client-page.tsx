@@ -240,6 +240,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  
+  // This simulates identifying the current user. In a real app, this would come from an auth context.
+  // For this demonstration, we'll assume the current user is the 'buyer'.
+  const currentUserRole = 'buyer';
 
   const isArchiveView = searchParams.get('view') === 'archive';
   
@@ -347,7 +351,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[profissão\]/g, contractFields.profissao || '[profissão]')
             .replace(/\[rg\]/g, contractFields.rg || '[]')
             .replace(/\[cpf\]/g, contractFields.cpf || '[]')
-            .replace(/\[endereço completo\]/g, contractFields.endereco_completo || '[endereço completo]')
+            .replace(/\[endereco completo\]/g, contractFields.endereco_completo || '[endereço completo]')
             .replace(/\[COMPRADOR_NOME\]/g, contractFields.comprador_nome || '[NOME DO COMPRADOR]')
             .replace(/\[nacionalidade_comprador\]/g, contractFields.nacionalidade_comprador || '[nacionalidade_comprador]')
             .replace(/\[estado_civil_comprador\]/g, contractFields.estado_civil_comprador || '[estado_civil_comprador]')
@@ -644,14 +648,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <CardContent className="space-y-4">
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized || currentUserRole === 'buyer'} />
                                     <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
                                 </div>
                                 {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                             </div>
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized || currentUserRole === 'seller'} />
                                     <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
                                 </div>
                                 {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
