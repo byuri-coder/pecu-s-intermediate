@@ -199,7 +199,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : asset.price) : 50000;
-  const platformCost = negotiatedValue * 0.01;
+  const platformCost = negotiatedValue * 0.10;
 
   // Mock payment data - in a real app, this would be fetched from the seller's profile
   const paymentInfo = {
@@ -426,7 +426,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
-                        <span className="font-medium text-secondary-foreground">Custo (1%)</span>
+                        <span className="font-medium text-secondary-foreground">Custo (10%)</span>
                         <span className="text-2xl font-bold text-primary">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                         </span>
