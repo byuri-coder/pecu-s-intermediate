@@ -23,7 +23,7 @@ type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 
-const contractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
+const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
 
 CEDENTE: [NOME/RAZÃO SOCIAL DO CEDENTE], inscrito no [CNPJ/CPF nº DO CEDENTE], com sede/endereço em [ENDERECO DO CEDENTE], neste ato representado por [REPRESENTANTE DO CEDENTE].
 
@@ -72,6 +72,64 @@ Nome: _____________________ – CPF: _______________
 
 Nome: _____________________ – CPF: _______________
 `;
+
+const ruralLandContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
+
+VENDEDOR(ES): [VENDEDOR_NOME], [VENDEDOR_NACIONALIDADE], [VENDEDOR_ESTADO_CIVIL], [VENDEDOR_PROFISSAO], portador do RG nº [VENDEDOR_RG] e CPF nº [VENDEDOR_CPF], residente e domiciliado em [VENDEDOR_ENDERECO].
+
+COMPRADOR(ES): [COMPRADOR_NOME], [COMPRADOR_NACIONALIDADE], [COMPRADOR_ESTADO_CIVIL], [COMPRADOR_PROFISSAO], portador do RG nº [COMPRADOR_RG] e CPF nº [COMPRADOR_CPF], residente e domiciliado em [COMPRADOR_ENDERECO].
+
+As partes acima identificadas têm entre si justo e contratado o presente Contrato Particular de Compra e Venda de Imóvel Rural, que se regerá pelas cláusulas e condições seguintes:
+
+CLÁUSULAS
+
+Cláusula 1ª – Do Objeto
+O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado [PROPRIEDADE_NOME], localizado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
+
+Cláusula 2ª – Do Preço e Forma de Pagamento
+O preço certo e ajustado para a presente venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará ao VENDEDOR da seguinte forma:
+a) [CONDICAO_PAGAMENTO];
+b) [DETALHES_PAGAMENTO].
+
+Cláusula 3ª – Da Imissão na Posse
+A posse do imóvel será transmitida ao COMPRADOR a partir de [DATA_POSSE], ficando este autorizado a explorar e usufruir do bem conforme sua destinação rural.
+
+Cláusula 4ª – Das Obrigações do Vendedor
+O VENDEDOR obriga-se a:
+a) entregar o imóvel livre e desembaraçado de quaisquer ônus reais, dívidas, penhoras, hipotecas, arrendamentos ou litígios;
+b) fornecer toda a documentação necessária para a lavratura da escritura pública definitiva.
+
+Cláusula 5ª – Das Obrigações do Comprador
+O COMPRADOR obriga-se a:
+a) efetuar o pagamento do preço ajustado nos prazos e condições estipulados;
+b) arcar com as despesas de escritura, registro e tributos incidentes sobre a transmissão do imóvel (ITR, ITBI, custas cartorárias, etc.), salvo disposição diversa ajustada pelas partes.
+
+Cláusula 6ª – Da Escritura Definitiva
+Após o cumprimento integral das obrigações previstas, as partes comparecerão perante o Cartório de Notas competente para a lavratura da escritura pública de compra e venda, bem como para o registro do imóvel em nome do COMPRADOR.
+
+Cláusula 7ª – Da Rescisão e Multa
+Em caso de inadimplemento de qualquer das partes, poderá o contrato ser rescindido, mediante notificação prévia, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [MULTA_PERCENTUAL]% do valor do contrato, sem prejuízo de perdas e danos.
+
+Cláusula 8ª – Da Legislação e Foro
+Este contrato é regido pelas disposições do Código Civil Brasileiro. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias decorrentes deste instrumento.
+
+E por estarem assim justas e contratadas, firmam o presente contrato em 2 vias de igual teor e forma, na presença de testemunhas.
+
+[LOCAL_ASSINATURA], [DATA_EXTENSO].
+
+VENDEDOR(ES): __________________________________
+[VENDEDOR_NOME]
+
+COMPRADOR(ES): __________________________________
+[COMPRADOR_NOME]
+
+TESTEMUNHAS:
+
+Nome: _____________________ – CPF: _______________
+
+Nome: _____________________ – CPF: _______________
+`;
+
 
 // Helper component for file upload display
 const FileUploadDisplay = ({
@@ -197,10 +255,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
   };
 
-
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
-  const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : asset.price) : 50000;
+  const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : (asset.price || 0)) : 50000;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
 
   // Mock payment data - in a real app, this would be fetched from the seller's profile
@@ -222,30 +279,82 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
   };
   
-  const finalContractText = contractTemplate
-    .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-    .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00') // Placeholder
-    .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF') // Placeholder
-    .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente') // Placeholder
-    .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, 'Comprador Exemplo S.A.')
-    .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11') // Placeholder
-    .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF') // Placeholder
-    .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras') // Placeholder
-    .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-    .replace(/\[DATA_CONTRATO\]/g, new Date().toLocaleDateString('pt-BR'))
-    .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : 'N/A')
-    .replace(/\[ID_ATIVO\]/g, asset.id)
-    .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
-    .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
-    .replace(/\[PERCENTUAL_TAXA\]/g, platformFeePercentage.toString())
-    .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
-    .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-    .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
-    .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)') // Placeholder
-    .replace(/\[FORO_COMARCA\]/g, 'São Paulo/SP') // Placeholder
-    .replace(/\[LOCAL_ASSINATURA\]/g, 'São Paulo') // Placeholder
-    .replace(/\[DATA_EXTENSO\]/g, new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }));
+  const getContractTemplate = () => {
+    if (assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Venda') {
+      return ruralLandContractTemplate;
+    }
+    // Default to carbon credit template for other rural-land types and tax credits as well
+    return carbonCreditContractTemplate;
+  }
 
+  const getFinalContractText = () => {
+    const currentTemplate = getContractTemplate();
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('pt-BR');
+    const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    if (currentTemplate === ruralLandContractTemplate && 'title' in asset) { // It's a RuralLand asset
+      const land = asset as RuralLand;
+      const [municipio, estado] = land.location.split(',').map(s => s.trim());
+      
+      return ruralLandContractTemplate
+        .replace(/\[VENDEDOR_NOME\]/g, land.owner)
+        .replace(/\[VENDEDOR_NACIONALIDADE\]/g, 'Brasileiro(a)')
+        .replace(/\[VENDEDOR_ESTADO_CIVIL\]/g, 'Casado(a)')
+        .replace(/\[VENDEDOR_PROFISSAO\]/g, 'Produtor Rural')
+        .replace(/\[VENDEDOR_RG\]/g, '00.000.000-0')
+        .replace(/\[VENDEDOR_CPF\]/g, '000.000.000-00')
+        .replace(/\[VENDEDOR_ENDERECO\]/g, 'Endereço Fictício do Vendedor, 123')
+        .replace(/\[COMPRADOR_NOME\]/g, 'Comprador Exemplo S.A.')
+        .replace(/\[COMPRADOR_NACIONALIDADE\]/g, 'Brasileira')
+        .replace(/\[COMPRADOR_ESTADO_CIVIL\]/g, 'Pessoa Jurídica')
+        .replace(/\[COMPRADOR_PROFISSAO\]/g, 'Investidor')
+        .replace(/\[COMPRADOR_RG\]/g, 'N/A')
+        .replace(/\[COMPRADOR_CPF\]/g, '11.111.111/0001-11')
+        .replace(/\[COMPRADOR_ENDERECO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF')
+        .replace(/\[PROPRIEDADE_NOME\]/g, land.title)
+        .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || 'N/A')
+        .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || 'N/A')
+        .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
+        .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || 'N/A')
+        .replace(/\[PROPRIEDADE_MATRICULA\]/g, land.registration)
+        .replace(/\[VALOR_NEGOCIADO_NUM\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
+        .replace(/\[CONDICAO_PAGAMENTO\]/g, 'À vista, mediante TED ou PIX.')
+        .replace(/\[DETALHES_PAGAMENTO\]/g, 'O pagamento total deverá ser efetuado na conta do VENDEDOR informada na plataforma.')
+        .replace(/\[DATA_POSSE\]/g, `na data de assinatura deste contrato`)
+        .replace(/\[MULTA_PERCENTUAL\]/g, '10')
+        .replace(/\[FORO_COMARCA\]/g, land.location)
+        .replace(/\[LOCAL_ASSINATURA\]/g, land.location.split(',')[0])
+        .replace(/\[DATA_EXTENSO\]/g, extendedDate);
+    }
+    
+    // Default to Carbon Credit / Other contract
+    return carbonCreditContractTemplate
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00') // Placeholder
+      .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF') // Placeholder
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente') // Placeholder
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, 'Comprador Exemplo S.A.')
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11') // Placeholder
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF') // Placeholder
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras') // Placeholder
+      .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
+      .replace(/\[DATA_CONTRATO\]/g, formattedDate)
+      .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : 'N/A')
+      .replace(/\[ID_ATIVO\]/g, asset.id)
+      .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
+      .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
+      .replace(/\[PERCENTUAL_TAXA\]/g, platformFeePercentage.toString())
+      .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
+      .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
+      .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)') // Placeholder
+      .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location : 'São Paulo/SP')
+      .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : 'São Paulo')
+      .replace(/\[DATA_EXTENSO\]/g, extendedDate);
+  }
+
+  const finalContractText = getFinalContractText();
 
     const handleFinalize = () => {
         toast({
