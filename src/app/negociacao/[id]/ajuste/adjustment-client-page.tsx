@@ -23,26 +23,54 @@ type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 
-const contractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS
+const contractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
 
-CEDENTE: [VENDEDOR]
-CESSIONÁRIO: [COMPRADOR]
-OBJETO: Cessão de [TIPO_ATIVO] no valor de [VALOR_NEGOCIADO].
-DATA: ${new Date().toLocaleDateString('pt-BR')}
+CEDENTE: [NOME/RAZÃO SOCIAL DO CEDENTE], inscrito no [CNPJ/CPF nº DO CEDENTE], com sede/endereço em [ENDERECO DO CEDENTE], neste ato representado por [REPRESENTANTE DO CEDENTE].
 
-Pelo presente instrumento particular, as partes acima qualificadas resolvem celebrar o presente Contrato de Cessão de Créditos, que se regerá pelas seguintes cláusulas e condições:
+CESSIONÁRIO: [NOME/RAZÃO SOCIAL DO CESSIONÁRIO], inscrito no [CNPJ/CPF nº DO CESSIONÁRIO], com sede/endereço em [ENDERECO DO CESSIONÁRIO], neste ato representado por [REPRESENTANTE DO CESSIONÁRIO].
 
-Cláusula 1ª - O CEDENTE declara ser o legítimo titular e possuidor do ativo [TIPO_ATIVO], com ID [ID_ATIVO], no valor total de [VALOR_ATIVO].
+OBJETO: Cessão de Créditos de Carbono no valor de R$ [VALOR_NEGOCIADO].
 
-Cláusula 2ª - O CEDENTE cede e transfere ao CESSIONÁRIO a totalidade do referido crédito, pelo valor negociado de [VALOR_NEGOCIADO].
+DATA: [DATA_CONTRATO].
 
-Cláusula 3ª - Os custos da plataforma, no valor de [CUSTO_PLATAFORMA], serão divididos da seguinte forma: [DIVISAO_CUSTOS].
+CLÁUSULAS E CONDIÇÕES
 
-Cláusula 4ª - O CESSIONÁRIO efetuará o pagamento do valor negociado em até 5 (cinco) dias úteis após a assinatura deste contrato.
+Cláusula 1ª – Da Titularidade
+O CEDENTE declara ser o legítimo titular e possuidor dos créditos de carbono descritos no sistema [PLATAFORMA_PROJETO], identificados pelo código [ID_ATIVO], cujo valor total corresponde a R$ [VALOR_TOTAL_ATIVO].
 
-Cláusula 5ª - Ambas as partes declaram, sob as penas da lei, que concordam com todos os termos aqui presentes.
+Cláusula 2ª – Da Cessão
+O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
 
-E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma.
+Cláusula 3ª – Dos Custos da Plataforma
+Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
+
+Cláusula 4ª – Do Pagamento
+O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
+
+Cláusula 5ª – Das Declarações
+As partes declaram que:
+a) possuem capacidade legal e poderes necessários para celebrar o presente contrato;
+b) estão cientes da natureza e condições dos créditos objeto da cessão;
+c) concordam expressamente com todos os termos e obrigações aqui previstos.
+
+Cláusula 6ª – Da Legislação Aplicável e Foro
+Este contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais conflitos decorrentes deste instrumento.
+
+E por estarem justas e contratadas, as partes assinam o presente contrato em 2 vias de igual teor e forma, na presença de testemunhas.
+
+[LOCAL_ASSINATURA], [DATA_EXTENSO].
+
+CEDENTE: ____________________________________
+[NOME/RAZÃO SOCIAL DO CEDENTE]
+
+CESSIONÁRIO: __________________________________
+[NOME/RAZÃO SOCIAL DO CESSIONÁRIO]
+
+TESTEMUNHAS:
+
+Nome: _____________________ – CPF: _______________
+
+Nome: _____________________ – CPF: _______________
 `;
 
 // Helper component for file upload display
@@ -183,24 +211,38 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
 
 
-  const getDivisionDescription = () => {
-    switch(costSplit) {
-        case '50/50': return '50% para o Vendedor, 50% para o Comprador';
-        case 'seller': return '100% para o Vendedor';
-        case 'buyer': return '100% para o Comprador';
-        default: return '';
+  const getCostSplitPercentages = () => {
+    switch (costSplit) {
+      case '50/50': return { seller: '50%', buyer: '50%' };
+      case 'seller': return { seller: '100%', buyer: '0%' };
+      case 'buyer': return { seller: '0%', buyer: '100%' };
+      default: return { seller: '50%', buyer: '50%' };
     }
-  }
+  };
   
   const finalContractText = contractTemplate
-    .replace('[VENDEDOR]', sellerName)
-    .replace('[COMPRADOR]', 'Comprador Exemplo S.A.')
-    .replace(/\[TIPO_ATIVO\]/g, assetType === 'carbon-credit' ? 'Crédito de Carbono' : assetType === 'tax-credit' ? 'Crédito Tributário' : 'Terra Rural')
+    .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
+    .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00') // Placeholder
+    .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF') // Placeholder
+    .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente') // Placeholder
+    .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, 'Comprador Exemplo S.A.')
+    .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11') // Placeholder
+    .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF') // Placeholder
+    .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras') // Placeholder
     .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-    .replace('[ID_ATIVO]', asset.id)
-    .replace('[VALOR_ATIVO]', new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
-    .replace('[CUSTO_PLATAFORMA]', new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
-    .replace('[DIVISAO_CUSTOS]', getDivisionDescription());
+    .replace(/\[DATA_CONTRATO\]/g, new Date().toLocaleDateString('pt-BR'))
+    .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : 'N/A')
+    .replace(/\[ID_ATIVO\]/g, asset.id)
+    .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
+    .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
+    .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
+    .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
+    .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
+    .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)') // Placeholder
+    .replace(/\[FORO_COMARCA\]/g, 'São Paulo/SP') // Placeholder
+    .replace(/\[LOCAL_ASSINATURA\]/g, 'São Paulo') // Placeholder
+    .replace(/\[DATA_EXTENSO\]/g, new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }));
+
 
     const handleFinalize = () => {
         toast({
