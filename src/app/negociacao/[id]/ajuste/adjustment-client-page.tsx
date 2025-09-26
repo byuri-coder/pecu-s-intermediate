@@ -303,28 +303,26 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
     if (currentTemplate === ruralLandContractTemplate && 'title' in asset) { // It's a RuralLand asset
-      const land = asset as RuralLand;
-      const [municipio, estado] = land.location.split(',').map(s => s.trim());
-      
-      return ruralLandContractTemplate
-        .replace(/\[VENDEDOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/, `VENDEDOR(ES): ${land.owner}, brasileiro(a), casado(a), produtor(a) rural, portador(a) do RG nº [RG DO VENDEDOR] e CPF nº [CPF DO VENDEDOR], residente e domiciliado(a) em [ENDEREÇO DO VENDEDOR].`)
-        .replace(/\[COMPRADOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/, `COMPRADOR(ES): [NOME DO COMPRADOR], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO COMPRADOR] e CPF nº [CPF DO COMPRADOR], residente e domiciliado(a) em [ENDEREÇO DO COMPRADOR].`)
-        .replace(/\[denominação da propriedade\]/g, land.title)
-        .replace(/\[situado no município de \[]/, `situado no município de ${municipio || '[]'}`)
-        .replace(/\[Estado de \[]/, `Estado de ${estado || '[]'}`)
-        .replace(/\[___ hectares\]/g, land.sizeHa.toLocaleString('pt-BR'))
-        .replace(/\[Cartório de Registro de Imóveis da Comarca de \[]/, `Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}`)
-        .replace(/\[matrícula nº \[\]\]/g, `matrícula nº ${land.registration}`)
-        .replace(/\[preço certo e ajustado da venda é de R\$ \[__________\]\]/, `preço certo e ajustado da venda é de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}`)
-        .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
-        .replace(/\[detalhar condições de parcelas, datas, correção monetária e juros, se houver\]\./g, 'O pagamento será realizado via transferência bancária (TED ou PIX) para a conta do VENDEDOR informada na plataforma.')
-        .replace(/\[A posse será transmitida ao COMPRADOR na data de \[__________\]\]/, `A posse será transmitida ao COMPRADOR na data de assinatura deste instrumento`)
-        .replace(/\[___ hectares de área de reserva legal \/ APP \/ área produtiva\]/g, '[INSERIR DADOS DO CAR] hectares de área de reserva legal')
-        .replace(/\[multa equivalente a \[___%\] do valor do contrato\]/, `multa equivalente a 10% do valor do contrato`)
-        .replace(/\[foro da comarca de \[__________\]\]/g, `foro da comarca de ${municipio || '[]'}`)
-        .replace(/\[Cidade\], \[____ de __________ de ____\]\./g, `${municipio || '[Cidade]'}, ${extendedDate}.`)
-        .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
-        .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`);
+        const land = asset as RuralLand;
+        const [municipio, estado] = land.location.split(',').map(s => s.trim());
+
+        return ruralLandContractTemplate
+            .replace(/\[VENDEDOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/g, `VENDEDOR(ES): ${land.owner}, [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO VENDEDOR] e CPF nº [CPF DO VENDEDOR], residente e domiciliado(a) em [ENDEREÇO DO VENDEDOR].`)
+            .replace(/\[COMPRADOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/g, 'COMPRADOR(ES): [NOME DO COMPRADOR], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO COMPRADOR] e CPF nº [CPF DO COMPRADOR], residente e domiciliado(a) em [ENDEREÇO DO COMPRADOR].')
+            .replace(/\[denominação da propriedade\]/g, land.title)
+            .replace(/, situado no município de \[], Estado de \[]/g, `, situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
+            .replace(/\[___ hectares\]/g, land.sizeHa.toLocaleString('pt-BR'))
+            .replace(/, registrado no Cartório de Registro de Imóveis da Comarca de \[], sob a matrícula nº \[]/g, `, registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
+            .replace(/R\$ \[__________\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
+            .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
+            .replace(/\[detalhar condições de parcelas, datas, correção monetária e juros, se houver\]/g, 'O pagamento será realizado via transferência bancária (TED ou PIX) para a conta do VENDEDOR informada na plataforma.')
+            .replace(/na data de \[__________\]/g, 'na data de assinatura deste instrumento')
+            .replace(/\[___ hectares de área de reserva legal \/ APP \/ área produtiva\]/g, '[INSERIR DADOS DO CAR] hectares de área de reserva legal')
+            .replace(/multa equivalente a \[___%\] do valor do contrato/g, 'multa equivalente a 10% do valor do contrato')
+            .replace(/\[__________\]/g, municipio || '[]')
+            .replace(/\[Cidade\], \[____ de __________ de ____\]/g, `${municipio || '[Cidade]'}, ${extendedDate}`)
+            .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
+            .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`);
     }
     
     // Default to Carbon Credit / Other contract
@@ -696,3 +694,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
