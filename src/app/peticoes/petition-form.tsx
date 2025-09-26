@@ -96,7 +96,8 @@ Para instruir o presente pedido, acompanham-se todos os documentos exigidos pela
 
 II — DO DIREITO
 
-O presente pedido funda-se na legislação federal e estadual aplicável, notadamente na Lei Complementar nº 87/1996 (Lei Kandir) e nos dispositivos legais e normativos estaduais que tratam da transferência de créditos acumulados de ICMS, conforme [NORMATIVA_ESTADUAL — inserir Portaria/Decreto/Norma do Estado/UF].
+O presente pedido funda-se na legislação federal e estadual aplicável, notadamente na Lei Complementar nº 87/1996 (Lei Kandir). No âmbito do Estado de São Paulo, a matéria encontra-se regulada pela Lei Estadual nº 6.374/1989, especialmente em seu art. 71, bem como pelo Regulamento do ICMS, aprovado pelo Decreto nº 45.490/2000, em seus arts. 71 a 84, que disciplinam a sistemática de apuração e utilização do crédito acumulado.
+Ademais, a Portaria CAT nº 26/2010 estabelece, de forma específica, os requisitos e procedimentos para a transferência de crédito acumulado de ICMS a terceiros, em conjunto com a Portaria CAT nº 83/2009 e a Portaria CAT nº 207/2009, que regulamentam a utilização do sistema eletrônico da Secretaria da Fazenda e Planejamento – o e-CredAc.
 
 Requer-se a prática dos atos administrativos cabíveis para que seja homologada a cessão/transferência do crédito indicado, com a inscrição e o lançamento do crédito na conta fiscal do cessionário, na forma e condições previstas na regulamentação estadual.
 
