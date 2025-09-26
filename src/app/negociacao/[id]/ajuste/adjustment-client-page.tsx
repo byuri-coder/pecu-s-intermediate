@@ -126,7 +126,7 @@ Cláusula 9ª – Da Legislação e Foro
 O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
 
 Cláusula 10ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR] pelo VENDEDOR e [PERCENTUAL_COMPRADOR] pelo COMPRADOR.
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR] pelo VENDEDOR e [PERCENTUAL_COMPRADOR] pelo COMPRADOR.
 
 E por estarem assim justas e contratadas, firmam o presente contrato em [___] vias de igual teor e forma, na presença de testemunhas.
 
@@ -259,7 +259,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
 
-  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(1); // Default 1%
+  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(1);
 
   const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -315,7 +315,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[COMPRADOR_NOME\]/g, '[NOME DO COMPRADOR]')
             .replace(/\[denominação da propriedade\]/g, land.title)
             .replace(/, situado no município de \[\], Estado de \[\]/g, `, situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
-            .replace(/\[___ hectares\]/g, land.sizeHa.toLocaleString('pt-BR'))
+            .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
             .replace(/, registrado no Cartório de Registro de Imóveis da Comarca de \[\], sob a matrícula nº \[\]/g, `, registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
             .replace(/R\$ \[__________\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
             .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
@@ -328,7 +328,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
             .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`)
             .replace(/\[PERCENTUAL_VENDEDOR\]/g, getCostSplitPercentages().seller)
-            .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer);
+            .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer)
+            .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     }
     
     // Default to Carbon Credit / Other contract
