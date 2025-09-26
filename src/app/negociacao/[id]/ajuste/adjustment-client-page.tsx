@@ -42,7 +42,7 @@ Cláusula 2ª – Da Cessão
 O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
 
 Cláusula 3ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_CEDENTE] pelo CEDENTE e [PERCENTUAL_CESSIONARIO] pelo CESSIONÁRIO.
+Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] pelo CEDENTE e [PERCENTUAL_CESSIONARIO] pelo CESSIONÁRIO.
 
 Cláusula 4ª – Do Pagamento
 O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
@@ -73,7 +73,7 @@ Nome: _____________________ – CPF: _______________
 Nome: _____________________ – CPF: _______________
 `;
 
-const ruralLandContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
+const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
 
 VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [rg] e CPF nº [cpf], residente e domiciliado em [endereco completo].
 
@@ -141,6 +141,76 @@ Nome: _____________________ – CPF: _______________
 
 Nome: _____________________ – CPF: _______________
 `;
+
+const ruralLandLeaseContractTemplate = `CONTRATO DE ARRENDAMENTO RURAL
+
+ARRENDADOR: [ARRENDADOR_NOME], [nacionalidade_arrendador], [estado_civil_arrendador], [profissao_arrendador], portador do RG nº [rg_arrendador] e CPF nº [cpf_arrendador], residente e domiciliado em [endereco_arrendador].
+
+ARRENDATÁRIO: [ARRENDATARIO_NOME], [nacionalidade_arrendatario], [estado_civil_arrendatario], [profissao_arrendatario], portador do RG nº [rg_arrendatario] e CPF nº [cpf_arrendatario], residente e domiciliado em [endereco_arrendatario].
+
+IMÓVEL: Área rural situada em [localizacao_completa], registrada sob a matrícula nº [matricula_imovel], do Cartório de Registro de Imóveis da Comarca de [comarca_imovel], com área total de [area_total] hectares.
+
+OBJETO: Arrendamento do imóvel rural para fins de [finalidade_arrendamento], com uso autorizado de todas as benfeitorias, instalações e acessões existentes.
+
+VALOR: R$ [VALOR_NEGOCIADO].
+
+DATA: [DATA_CONTRATO].
+
+CLÁUSULAS CONTRATUAIS
+
+Cláusula 1ª – Objeto
+O ARRENDADOR cede ao ARRENDATÁRIO, em caráter temporário e oneroso, o uso e gozo do imóvel rural descrito, para exploração de [finalidade_arrendamento], pelo prazo de [prazo_arrendamento] anos, contados da assinatura deste contrato.
+
+Cláusula 2ª – Legitimidade e Situação do Imóvel
+O ARRENDADOR declara ser legítimo proprietário do imóvel, livre e desembaraçado de quaisquer ônus que impeçam o arrendamento, responsabilizando-se pela evicção de direito, se houver.
+
+Cláusula 3ª – Preço e Forma de Pagamento
+O preço do arrendamento é de R$ [VALOR_NEGOCIADO], a ser pago pelo ARRENDATÁRIO ao ARRENDADOR da seguinte forma: [forma_pagamento_arrendamento], até o dia [dia_pagamento_arrendamento] de cada mês/período.
+
+Cláusula 4ª – Obrigações do ARRENDADOR
+O ARRENDADOR se obriga a:
+a) garantir ao ARRENDATÁRIO o uso pacífico do imóvel durante todo o prazo do contrato;
+b) entregar o imóvel em condições de uso compatíveis com sua finalidade.
+
+Cláusula 5ª – Obrigações do ARRENDATÁRIO
+O ARRENDATÁRIO se compromete a:
+a) utilizar o imóvel de acordo com a finalidade estabelecida neste contrato;
+b) conservar as benfeitorias existentes, responsabilizando-se por danos que der causa;
+c) pagar pontualmente o valor do arrendamento;
+d) restituir o imóvel ao término do contrato, no estado em que recebeu, ressalvado o desgaste natural pelo uso normal.
+
+Cláusula 6ª – Benfeitorias
+As benfeitorias necessárias introduzidas pelo ARRENDATÁRIO serão indenizadas pelo ARRENDADOR. As úteis ou voluptuárias dependerão de prévia autorização por escrito do ARRENDADOR, que poderá ou não indenizá-las ao final do contrato.
+
+Cláusula 7ª – Rescisão
+O contrato poderá ser rescindido por:
+a) inadimplemento de qualquer cláusula contratual;
+b) uso diverso da finalidade ajustada;
+c) descumprimento de normas ambientais ou legais.
+
+Cláusula 8ª – Dos Custos da Plataforma
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_ARRENDADOR]% pelo ARRENDADOR e [PERCENTUAL_ARRENDATARIO]% pelo ARRENDATÁRIO.
+
+Cláusula 9ª – Foro
+Fica eleito o foro da Comarca de [comarca_imovel], com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir eventuais questões oriundas deste contrato.
+
+E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma, juntamente com as testemunhas abaixo.
+
+[LOCAL_ASSINATURA], [DATA_EXTENSO].
+
+ARRENDADOR: ___________________________________________
+[ARRENDADOR_NOME]
+
+ARRENDATÁRIO: _________________________________________
+[ARRENDATARIO_NOME]
+
+TESTEMUNHAS:
+
+Nome: __________________________ CPF: _________________
+
+Nome: __________________________ CPF: _________________
+`;
+
 
 // Helper component for file upload display
 const FileUploadDisplay = ({
@@ -241,8 +311,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
-  // This simulates identifying the current user. In a real app, this would come from an auth context.
-  // For this demonstration, we'll assume the current user is the 'buyer'.
   const currentUserRole = 'buyer';
 
   const isArchiveView = searchParams.get('view') === 'archive';
@@ -260,10 +328,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
 
-  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(1);
+  const platformFeePercentage = 1;
   
-  // States for rural land contract fields
-  const [contractFields, setContractFields] = React.useState({
+  const [saleContractFields, setSaleContractFields] = React.useState({
       nacionalidade: 'Brasileiro(a)',
       estado_civil: 'Casado(a)',
       profissao: 'Empresário(a)',
@@ -284,17 +351,41 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       percentual_multa: '10',
       vias_contrato: '2 (duas)'
   });
+
+  const [leaseContractFields, setLeaseContractFields] = React.useState({
+      nacionalidade_arrendador: 'Brasileiro(a)',
+      estado_civil_arrendador: 'Casado(a)',
+      profissao_arrendador: 'Empresário(a)',
+      rg_arrendador: '',
+      cpf_arrendador: '',
+      endereco_arrendador: '',
+      arrendatario_nome: 'ARRENDATÁRIO EXEMPLO LTDA',
+      nacionalidade_arrendatario: 'Brasileira',
+      estado_civil_arrendatario: '',
+      profissao_arrendatario: 'Empresa',
+      rg_arrendatario: '',
+      cpf_arrendatario: '11.111.111/0001-11',
+      endereco_arrendatario: 'Avenida Exemplo, 456',
+      finalidade_arrendamento: 'Pecuária',
+      prazo_arrendamento: '5',
+      forma_pagamento_arrendamento: 'Anual',
+      dia_pagamento_arrendamento: '10',
+  });
   
-  const handleContractFieldChange = (field: keyof typeof contractFields, value: string) => {
+  const handleSaleContractFieldChange = (field: keyof typeof saleContractFields, value: string) => {
     if (field === 'percentual_multa') {
         const numValue = parseInt(value, 10);
         if (numValue > 25) {
             toast({ title: "Valor Inválido", description: "A multa por rescisão não pode exceder 25%.", variant: "destructive"});
-            setContractFields(prev => ({ ...prev, [field]: '25' }));
+            setSaleContractFields(prev => ({ ...prev, [field]: '25' }));
             return;
         }
     }
-      setContractFields(prev => ({ ...prev, [field]: value }));
+      setSaleContractFields(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLeaseContractFieldChange = (field: keyof typeof leaseContractFields, value: string) => {
+    setLeaseContractFields(prev => ({ ...prev, [field]: value }));
   };
 
   const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,16 +411,17 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const getCostSplitPercentages = () => {
     switch (costSplit) {
-      case '50/50': return { seller: '50%', buyer: '50%' };
-      case 'seller': return { seller: '100%', buyer: '0%' };
-      case 'buyer': return { seller: '0%', buyer: '100%' };
-      default: return { seller: '50%', buyer: '50%' };
+      case '50/50': return { seller: '50', buyer: '50' };
+      case 'seller': return { seller: '100', buyer: '0' };
+      case 'buyer': return { seller: '0', buyer: '100' };
+      default: return { seller: '50', buyer: '50' };
     }
   };
   
   const getContractTemplate = () => {
-    if (assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Venda') {
-      return ruralLandContractTemplate;
+    if (assetType === 'rural-land' && 'businessType' in asset) {
+        if(asset.businessType === 'Venda') return ruralLandSaleContractTemplate;
+        if(asset.businessType === 'Arrendamento') return ruralLandLeaseContractTemplate;
     }
     return carbonCreditContractTemplate;
   }
@@ -340,25 +432,61 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const formattedDate = currentDate.toLocaleDateString('pt-BR');
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    if (currentTemplate === ruralLandContractTemplate && 'title' in asset) {
+    if (currentTemplate === ruralLandLeaseContractTemplate && 'title' in asset) {
+      const land = asset as RuralLand;
+      const [municipio] = land.location.split(',').map(s => s.trim());
+      
+      return ruralLandLeaseContractTemplate
+          .replace(/\[ARRENDADOR_NOME\]/g, land.owner)
+          .replace(/\[nacionalidade_arrendador\]/g, leaseContractFields.nacionalidade_arrendador || '[...]')
+          .replace(/\[estado_civil_arrendador\]/g, leaseContractFields.estado_civil_arrendador || '[...]')
+          .replace(/\[profissao_arrendador\]/g, leaseContractFields.profissao_arrendador || '[...]')
+          .replace(/\[rg_arrendador\]/g, leaseContractFields.rg_arrendador || '[]')
+          .replace(/\[cpf_arrendador\]/g, leaseContractFields.cpf_arrendador || '[]')
+          .replace(/\[endereco_arrendador\]/g, leaseContractFields.endereco_arrendador || '[...]')
+          .replace(/\[ARRENDATARIO_NOME\]/g, leaseContractFields.arrendatario_nome || '[...]')
+          .replace(/\[nacionalidade_arrendatario\]/g, leaseContractFields.nacionalidade_arrendatario || '[...]')
+          .replace(/\[estado_civil_arrendatario\]/g, leaseContractFields.estado_civil_arrendatario || '[...]')
+          .replace(/\[profissao_arrendatario\]/g, leaseContractFields.profissao_arrendatario || '[...]')
+          .replace(/\[rg_arrendatario\]/g, leaseContractFields.rg_arrendatario || '[]')
+          .replace(/\[cpf_arrendatario\]/g, leaseContractFields.cpf_arrendatario || '[]')
+          .replace(/\[endereco_arrendatario\]/g, leaseContractFields.endereco_arrendatario || '[...]')
+          .replace(/\[localizacao_completa\]/g, land.location)
+          .replace(/\[matricula_imovel\]/g, land.registration)
+          .replace(/\[comarca_imovel\]/g, municipio || '[...]')
+          .replace(/\[area_total\]/g, land.sizeHa.toLocaleString('pt-BR'))
+          .replace(/\[finalidade_arrendamento\]/g, leaseContractFields.finalidade_arrendamento || '[...]')
+          .replace(/\[prazo_arrendamento\]/g, leaseContractFields.prazo_arrendamento || '[...]')
+          .replace(/\[forma_pagamento_arrendamento\]/g, leaseContractFields.forma_pagamento_arrendamento || '[...]')
+          .replace(/\[dia_pagamento_arrendamento\]/g, leaseContractFields.dia_pagamento_arrendamento || '[...]')
+          .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
+          .replace(/\[DATA_CONTRATO\]/g, formattedDate)
+          .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+          .replace(/\[PERCENTUAL_ARRENDADOR\]/g, getCostSplitPercentages().seller)
+          .replace(/\[PERCENTUAL_ARRENDATARIO\]/g, getCostSplitPercentages().buyer)
+          .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
+          .replace(/\[DATA_EXTENSO\]/g, extendedDate);
+    }
+    
+    if (currentTemplate === ruralLandSaleContractTemplate && 'title' in asset) {
         const land = asset as RuralLand;
         const [municipio, estado] = land.location.split(',').map(s => s.trim());
         
-        return ruralLandContractTemplate
+        return ruralLandSaleContractTemplate
             .replace(/\[VENDEDOR_NOME\]/g, land.owner)
-            .replace(/\[nacionalidade\]/g, contractFields.nacionalidade || '[nacionalidade]')
-            .replace(/\[estado civil\]/g, contractFields.estado_civil || '[estado civil]')
-            .replace(/\[profissão\]/g, contractFields.profissao || '[profissão]')
-            .replace(/\[rg\]/g, contractFields.rg || '[]')
-            .replace(/\[cpf\]/g, contractFields.cpf || '[]')
-            .replace(/\[endereco completo\]/g, contractFields.endereco_completo || '[endereço completo]')
-            .replace(/\[COMPRADOR_NOME\]/g, contractFields.comprador_nome || '[NOME DO COMPRADOR]')
-            .replace(/\[nacionalidade_comprador\]/g, contractFields.nacionalidade_comprador || '[nacionalidade_comprador]')
-            .replace(/\[estado_civil_comprador\]/g, contractFields.estado_civil_comprador || '[estado_civil_comprador]')
-            .replace(/\[profissao_comprador\]/g, contractFields.profissao_comprador || '[profissao_comprador]')
-            .replace(/\[rg_comprador\]/g, contractFields.rg_comprador || '[]')
-            .replace(/\[cpf_comprador\]/g, contractFields.cpf_comprador || '[]')
-            .replace(/\[endereco_comprador\]/g, contractFields.endereco_comprador || '[endereco_comprador]')
+            .replace(/\[nacionalidade\]/g, saleContractFields.nacionalidade || '[...]')
+            .replace(/\[estado civil\]/g, saleContractFields.estado_civil || '[...]')
+            .replace(/\[profissão\]/g, saleContractFields.profissao || '[...]')
+            .replace(/\[rg\]/g, saleContractFields.rg || '[]')
+            .replace(/\[cpf\]/g, saleContractFields.cpf || '[]')
+            .replace(/\[endereco completo\]/g, saleContractFields.endereco_completo || '[...]')
+            .replace(/\[COMPRADOR_NOME\]/g, saleContractFields.comprador_nome || '[...]')
+            .replace(/\[nacionalidade_comprador\]/g, saleContractFields.nacionalidade_comprador || '[...]')
+            .replace(/\[estado_civil_comprador\]/g, saleContractFields.estado_civil_comprador || '[...]')
+            .replace(/\[profissao_comprador\]/g, saleContractFields.profissao_comprador || '[...]')
+            .replace(/\[rg_comprador\]/g, saleContractFields.rg_comprador || '[]')
+            .replace(/\[cpf_comprador\]/g, saleContractFields.cpf_comprador || '[]')
+            .replace(/\[endereco_comprador\]/g, saleContractFields.endereco_comprador || '[...]')
             .replace(/\[denominação da propriedade\]/g, land.title)
             .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || '[]')
             .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || '[]')
@@ -366,13 +494,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || '[]')
             .replace(/\[PROPRIEDADE_MATRICULA\]/g, land.registration)
             .replace(/\[VALOR_NEGOCIADO_NUM\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-            .replace(/\[condicao_pagamento\]/g, contractFields.condicao_pagamento || '[]')
-            .replace(/\[detalhes_pagamento\]/g, contractFields.detalhes_pagamento || '[]')
-            .replace(/\[data_posse\]/g, contractFields.data_posse || '[]')
-            .replace(/\[detalhes_area_ambiental\]/g, contractFields.detalhes_area_ambiental || '[___ hectares de área de reserva legal / APP / área produtiva]')
-            .replace(/\[percentual_multa\]/g, contractFields.percentual_multa || '[]')
+            .replace(/\[condicao_pagamento\]/g, saleContractFields.condicao_pagamento || '[]')
+            .replace(/\[detalhes_pagamento\]/g, saleContractFields.detalhes_pagamento || '[]')
+            .replace(/\[data_posse\]/g, saleContractFields.data_posse || '[]')
+            .replace(/\[detalhes_area_ambiental\]/g, saleContractFields.detalhes_area_ambiental || '[...]')
+            .replace(/\[percentual_multa\]/g, saleContractFields.percentual_multa || '[]')
             .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
-            .replace(/\[vias_contrato\]/g, contractFields.vias_contrato || '[___]')
+            .replace(/\[vias_contrato\]/g, saleContractFields.vias_contrato || '[...]')
             .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
             .replace(/\[DATA_EXTENSO\]/g, extendedDate)
             .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
@@ -383,13 +511,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     // Default to Carbon Credit / Other contract
     return carbonCreditContractTemplate
       .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[CNPJ/CPF nº DO CEDENTE]')
-      .replace(/\[ENDERECO DO CEDENTE\]/g, '[ENDERECO DO CEDENTE]')
-      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[REPRESENTANTE DO CEDENTE]')
-      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[NOME/RAZÃO SOCIAL DO CESSIONÁRIO]')
-      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[CNPJ/CPF nº DO CESSIONÁRIO]')
-      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[ENDERECO DO CESSIONÁRIO]')
-      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[REPRESENTANTE DO CESSIONÁRIO]')
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[...]')
+      .replace(/\[ENDERECO DO CEDENTE\]/g, '[...]')
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[...]')
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[...]')
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[...]')
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[...]')
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[...]')
       .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
       .replace(/\[DATA_CONTRATO\]/g, formattedDate)
       .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : '[plataforma/projeto]')
@@ -398,8 +526,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-      .replace(/\[PRAZO_PAGAMENTO\]/g, '[_____]')
-      .replace(/\[FORMA_PAGAMENTO\]/g, '[forma de pagamento]')
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '[...]')
+      .replace(/\[FORMA_PAGAMENTO\]/g, '[...]')
       .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade/UF]')
       .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade]')
       .replace(/\[DATA_EXTENSO\]/g, extendedDate);
@@ -573,73 +701,104 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Coluna de Edição */}
                 <div className="space-y-6">
-                    {assetType === 'rural-land' ? (
+                    {assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Venda' && (
                         <Card>
                              <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato</CardTitle>
-                                <CardDescription>Preencha as informações que não estão na plataforma. Os campos entre parênteses (...) não são editáveis.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato (Venda)</CardTitle>
+                                <CardDescription>Preencha as informações que não estão na plataforma.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <h3 className="font-semibold text-md">Dados do Vendedor</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1"><Label>Nacionalidade</Label><Input value={contractFields.nacionalidade} onChange={(e) => handleContractFieldChange('nacionalidade', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Estado Civil</Label><Input value={contractFields.estado_civil} onChange={(e) => handleContractFieldChange('estado_civil', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Profissão</Label><Input value={contractFields.profissao} onChange={(e) => handleContractFieldChange('profissao', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>RG</Label><Input value={contractFields.rg} onChange={(e) => handleContractFieldChange('rg', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>CPF</Label><Input value={contractFields.cpf} onChange={(e) => handleContractFieldChange('cpf', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Endereço Completo</Label><Input value={contractFields.endereco_completo} onChange={(e) => handleContractFieldChange('endereco_completo', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Nacionalidade</Label><Input value={saleContractFields.nacionalidade} onChange={(e) => handleSaleContractFieldChange('nacionalidade', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Estado Civil</Label><Input value={saleContractFields.estado_civil} onChange={(e) => handleSaleContractFieldChange('estado_civil', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Profissão</Label><Input value={saleContractFields.profissao} onChange={(e) => handleSaleContractFieldChange('profissao', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>RG</Label><Input value={saleContractFields.rg} onChange={(e) => handleSaleContractFieldChange('rg', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF</Label><Input value={saleContractFields.cpf} onChange={(e) => handleSaleContractFieldChange('cpf', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_completo} onChange={(e) => handleSaleContractFieldChange('endereco_completo', e.target.value)} /></div>
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Dados do Comprador</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={contractFields.comprador_nome} onChange={(e) => handleContractFieldChange('comprador_nome', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={contractFields.cpf_comprador} onChange={(e) => handleContractFieldChange('cpf_comprador', e.target.value)} /></div>
-                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={contractFields.endereco_comprador} onChange={(e) => handleContractFieldChange('endereco_comprador', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={saleContractFields.comprador_nome} onChange={(e) => handleSaleContractFieldChange('comprador_nome', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={saleContractFields.cpf_comprador} onChange={(e) => handleSaleContractFieldChange('cpf_comprador', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_comprador} onChange={(e) => handleSaleContractFieldChange('endereco_comprador', e.target.value)} /></div>
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
                                 <div className="space-y-4">
-                                    <div className="space-y-1"><Label>Cl. 2a: Condição de Pagamento</Label><Textarea value={contractFields.condicao_pagamento} onChange={(e) => handleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
-                                    <div className="space-y-1"><Label>Cl. 2b: Detalhes Pagamento</Label><Textarea value={contractFields.detalhes_pagamento} onChange={(e) => handleContractFieldChange('detalhes_pagamento', e.target.value)} rows={2} /></div>
-                                    <div className="space-y-1"><Label>Cl. 3: Data de Imissão na Posse</Label><Input value={contractFields.data_posse} onChange={(e) => handleContractFieldChange('data_posse', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 7: Detalhes Área Ambiental</Label><Input value={contractFields.detalhes_area_ambiental} onChange={(e) => handleContractFieldChange('detalhes_area_ambiental', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" max="25" value={contractFields.percentual_multa} onChange={(e) => handleContractFieldChange('percentual_multa', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2a: Condição de Pagamento</Label><Textarea value={saleContractFields.condicao_pagamento} onChange={(e) => handleSaleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2b: Detalhes Pagamento</Label><Textarea value={saleContractFields.detalhes_pagamento} onChange={(e) => handleSaleContractFieldChange('detalhes_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3: Data de Imissão na Posse</Label><Input value={saleContractFields.data_posse} onChange={(e) => handleSaleContractFieldChange('data_posse', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 7: Detalhes Área Ambiental</Label><Input value={saleContractFields.detalhes_area_ambiental} onChange={(e) => handleSaleContractFieldChange('detalhes_area_ambiental', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" max="25" value={saleContractFields.percentual_multa} onChange={(e) => handleSaleContractFieldChange('percentual_multa', e.target.value)} /></div>
                                 </div>
                             </CardContent>
                         </Card>
-                    ) : (
+                    )}
+
+                    {assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Arrendamento' && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Custos da Plataforma</CardTitle>
-                                <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato (Arrendamento)</CardTitle>
+                                <CardDescription>Preencha as informações que não estão na plataforma.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
-                                    <span className="font-medium text-secondary-foreground">Custo (1%)</span>
-                                    <span className="text-2xl font-bold text-primary">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
-                                    </span>
+                                <h3 className="font-semibold text-md">Dados do Arrendador (Vendedor)</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nacionalidade</Label><Input value={leaseContractFields.nacionalidade_arrendador} onChange={(e) => handleLeaseContractFieldChange('nacionalidade_arrendador', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Estado Civil</Label><Input value={leaseContractFields.estado_civil_arrendador} onChange={(e) => handleLeaseContractFieldChange('estado_civil_arrendador', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF</Label><Input value={leaseContractFields.cpf_arrendador} onChange={(e) => handleLeaseContractFieldChange('cpf_arrendador', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendador} onChange={(e) => handleLeaseContractFieldChange('endereco_arrendador', e.target.value)} /></div>
                                 </div>
-
-                                <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
-                                    <Label>Divisão do Custo</Label>
-                                    <div className="space-y-2 pt-2">
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="50/50" id="50-50" />
-                                            <Label htmlFor="50-50">50% / 50%</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="seller" id="seller" />
-                                            <Label htmlFor="seller">Vendedor 100%</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="buyer" id="buyer" />
-                                            <Label htmlFor="buyer">Comprador 100%</Label>
-                                        </div>
-                                    </div>
-                                </RadioGroup>
+                                <h3 className="font-semibold text-md pt-4">Dados do Arrendatário (Comprador)</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={leaseContractFields.arrendatario_nome} onChange={(e) => handleLeaseContractFieldChange('arrendatario_nome', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={leaseContractFields.cpf_arrendatario} onChange={(e) => handleLeaseContractFieldChange('cpf_arrendatario', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendatario} onChange={(e) => handleLeaseContractFieldChange('endereco_arrendatario', e.target.value)} /></div>
+                                </div>
+                                <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Cl. 1: Finalidade da Exploração</Label><Input value={leaseContractFields.finalidade_arrendamento} onChange={(e) => handleLeaseContractFieldChange('finalidade_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1: Prazo do Contrato (anos)</Label><Input type="number" value={leaseContractFields.prazo_arrendamento} onChange={(e) => handleLeaseContractFieldChange('prazo_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3: Forma de Pagamento</Label><Input value={leaseContractFields.forma_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('forma_pagamento_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3: Dia do Pagamento</Label><Input value={leaseContractFields.dia_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('dia_pagamento_arrendamento', e.target.value)} /></div>
+                                </div>
                             </CardContent>
                         </Card>
                     )}
                     
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Custos da Plataforma</CardTitle>
+                            <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
+                                <span className="font-medium text-secondary-foreground">Custo ({platformFeePercentage}%)</span>
+                                <span className="text-2xl font-bold text-primary">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
+                                </span>
+                            </div>
+
+                            <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
+                                <Label>Divisão do Custo</Label>
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="50/50" id="50-50" />
+                                        <Label htmlFor="50-50">50% / 50%</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="seller" id="seller" />
+                                        <Label htmlFor="seller">Vendedor 100%</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="buyer" id="buyer" />
+                                        <Label htmlFor="buyer">Comprador 100%</Label>
+                                    </div>
+                                </div>
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+
                      <Card>
                         <CardHeader>
                             <CardTitle>Acordo Mútuo</CardTitle>
