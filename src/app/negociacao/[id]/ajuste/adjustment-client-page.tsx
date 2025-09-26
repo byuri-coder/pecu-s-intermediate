@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -42,7 +43,7 @@ Cláusula 2ª – Da Cessão
 O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
 
 Cláusula 3ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA] ([PERCENTUAL_TAXA]%), serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
 
 Cláusula 4ª – Do Pagamento
 O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
@@ -123,6 +124,9 @@ O inadimplemento de qualquer das partes ensejará a rescisão contratual, median
 
 Cláusula 9ª – Da Legislação e Foro
 O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
+
+Cláusula 10ª – Dos Custos da Plataforma
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR] pelo VENDEDOR e [PERCENTUAL_COMPRADOR] pelo COMPRADOR.
 
 E por estarem assim justas e contratadas, firmam o presente contrato em [___] vias de igual teor e forma, na presença de testemunhas.
 
@@ -240,14 +244,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const { toast } = useToast();
 
   const isArchiveView = searchParams.get('view') === 'archive';
-  const platformFeePercentage = 1; // Fixed 1% platform fee
-
+  
   const [costSplit, setCostSplit] = React.useState('50/50');
   const [sellerAgrees, setSellerAgrees] = React.useState(isArchiveView);
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
-
 
   // For archive view, we can use placeholder file objects. In a real app, these would be fetched.
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
@@ -256,6 +258,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
+
+  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(1); // Default 1%
 
   const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -307,22 +311,24 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         const [municipio, estado] = land.location.split(',').map(s => s.trim());
 
         return ruralLandContractTemplate
-            .replace(/\[VENDEDOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/g, `VENDEDOR(ES): ${land.owner}, [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO VENDEDOR] e CPF nº [CPF DO VENDEDOR], residente e domiciliado(a) em [ENDEREÇO DO VENDEDOR].`)
-            .replace(/\[COMPRADOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/g, 'COMPRADOR(ES): [NOME DO COMPRADOR], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO COMPRADOR] e CPF nº [CPF DO COMPRADOR], residente e domiciliado(a) em [ENDEREÇO DO COMPRADOR].')
+            .replace(/\[VENDEDOR_NOME\]/g, land.owner)
+            .replace(/\[COMPRADOR_NOME\]/g, '[NOME DO COMPRADOR]')
             .replace(/\[denominação da propriedade\]/g, land.title)
-            .replace(/, situado no município de \[], Estado de \[]/g, `, situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
+            .replace(/, situado no município de \[\], Estado de \[\]/g, `, situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
             .replace(/\[___ hectares\]/g, land.sizeHa.toLocaleString('pt-BR'))
-            .replace(/, registrado no Cartório de Registro de Imóveis da Comarca de \[], sob a matrícula nº \[]/g, `, registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
+            .replace(/, registrado no Cartório de Registro de Imóveis da Comarca de \[\], sob a matrícula nº \[\]/g, `, registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
             .replace(/R\$ \[__________\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
             .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
             .replace(/\[detalhar condições de parcelas, datas, correção monetária e juros, se houver\]/g, 'O pagamento será realizado via transferência bancária (TED ou PIX) para a conta do VENDEDOR informada na plataforma.')
             .replace(/na data de \[__________\]/g, 'na data de assinatura deste instrumento')
             .replace(/\[___ hectares de área de reserva legal \/ APP \/ área produtiva\]/g, '[INSERIR DADOS DO CAR] hectares de área de reserva legal')
             .replace(/multa equivalente a \[___%\] do valor do contrato/g, 'multa equivalente a 10% do valor do contrato')
-            .replace(/\[__________\]/g, municipio || '[]')
-            .replace(/\[Cidade\], \[____ de __________ de ____\]/g, `${municipio || '[Cidade]'}, ${extendedDate}`)
+            .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
+            .replace(/\[LOCAL_ASSINATURA\], \[DATA_EXTENSO\]/g, `${municipio || '[Cidade]'}, ${extendedDate}`)
             .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
-            .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`);
+            .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`)
+            .replace(/\[PERCENTUAL_VENDEDOR\]/g, getCostSplitPercentages().seller)
+            .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer);
     }
     
     // Default to Carbon Credit / Other contract
@@ -341,7 +347,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       .replace(/\[ID_ATIVO\]/g, asset.id)
       .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
       .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
-      .replace(/\[PERCENTUAL_TAXA\]/g, platformFeePercentage.toString())
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
       .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
@@ -534,12 +539,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
+                    <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
                         <span className="font-medium text-secondary-foreground">Custo ({platformFeePercentage}%)</span>
                         <span className="text-2xl font-bold text-primary">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                         </span>
                     </div>
+
                     <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
                         <Label>Divisão do Custo</Label>
                         <div className="space-y-2 pt-2">
@@ -694,5 +700,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
 
     
