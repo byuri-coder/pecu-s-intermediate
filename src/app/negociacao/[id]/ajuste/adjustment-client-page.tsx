@@ -42,7 +42,7 @@ Cláusula 2ª – Da Cessão
 O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
 
 Cláusula 3ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] para o CEDENTE e [PERCENTUAL_CESSIONARIO] para o CESSIONÁRIO.
+Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_CEDENTE] pelo CEDENTE e [PERCENTUAL_CESSIONARIO] pelo CESSIONÁRIO.
 
 Cláusula 4ª – Do Pagamento
 O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
@@ -75,7 +75,7 @@ Nome: _____________________ – CPF: _______________
 
 const ruralLandContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
 
-VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [rg] e CPF nº [cpf], residente e domiciliado em [endereço completo].
+VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [rg] e CPF nº [cpf], residente e domiciliado em [endereco completo].
 
 COMPRADOR(ES): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_civil_comprador], [profissao_comprador], portador do RG nº [rg_comprador] e CPF nº [cpf_comprador], residente e domiciliado em [endereco_comprador].
 
@@ -276,12 +276,20 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       condicao_pagamento: 'À vista, mediante transferência bancária (TED ou PIX).',
       detalhes_pagamento: 'O pagamento será realizado em conta de titularidade do VENDEDOR, informada na plataforma.',
       data_posse: 'data da assinatura deste instrumento',
-      detalhes_area_ambiental: '___ hectares de área de reserva legal / APP / área produtiva',
+      detalhes_area_ambiental: '[___ hectares de área de reserva legal / APP / área produtiva]',
       percentual_multa: '10',
       vias_contrato: '2 (duas)'
   });
   
   const handleContractFieldChange = (field: keyof typeof contractFields, value: string) => {
+    if (field === 'percentual_multa') {
+        const numValue = parseInt(value, 10);
+        if (numValue > 25) {
+            toast({ title: "Valor Inválido", description: "A multa por rescisão não pode exceder 25%.", variant: "destructive"});
+            setContractFields(prev => ({ ...prev, [field]: '25' }));
+            return;
+        }
+    }
       setContractFields(prev => ({ ...prev, [field]: value }));
   };
 
@@ -348,10 +356,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[cpf_comprador\]/g, contractFields.cpf_comprador || '[]')
             .replace(/\[endereco_comprador\]/g, contractFields.endereco_comprador || '[endereco_comprador]')
             .replace(/\[denominação da propriedade\]/g, land.title)
-            .replace(/situado no município de \[\], Estado de \[\]/g, `situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
+            .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || '[]')
+            .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || '[]')
             .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
-            .replace(/registrado no Cartório de Registro de Imóveis da Comarca de \[\], sob a matrícula nº \[\]/g, `registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
-            .replace(/R\$ \[__________\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
+            .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || '[]')
+            .replace(/\[PROPRIEDADE_MATRICULA\]/g, land.registration)
+            .replace(/\[VALOR_NEGOCIADO_NUM\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
             .replace(/\[condicao_pagamento\]/g, contractFields.condicao_pagamento || '[]')
             .replace(/\[detalhes_pagamento\]/g, contractFields.detalhes_pagamento || '[]')
             .replace(/\[data_posse\]/g, contractFields.data_posse || '[]')
@@ -359,7 +369,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[percentual_multa\]/g, contractFields.percentual_multa || '[]')
             .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
             .replace(/\[vias_contrato\]/g, contractFields.vias_contrato || '[___]')
-            .replace(/\[LOCAL_ASSINATURA\], \[DATA_EXTENSO\]/g, `${municipio || '[Cidade]'}, ${extendedDate}`)
+            .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
+            .replace(/\[DATA_EXTENSO\]/g, extendedDate)
             .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
             .replace(/\[PERCENTUAL_VENDEDOR\]/g, getCostSplitPercentages().seller)
             .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer);
@@ -368,24 +379,25 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     // Default to Carbon Credit / Other contract
     return carbonCreditContractTemplate
       .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00')
-      .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF')
-      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente')
-      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, 'Comprador Exemplo S.A.')
-      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11')
-      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF')
-      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras')
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[CNPJ/CPF nº DO CEDENTE]')
+      .replace(/\[ENDERECO DO CEDENTE\]/g, '[ENDERECO DO CEDENTE]')
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[REPRESENTANTE DO CEDENTE]')
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[NOME/RAZÃO SOCIAL DO CESSIONÁRIO]')
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[CNPJ/CPF nº DO CESSIONÁRIO]')
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[ENDERECO DO CESSIONÁRIO]')
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[REPRESENTANTE DO CESSIONÁRIO]')
       .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
       .replace(/\[DATA_CONTRATO\]/g, formattedDate)
-      .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : 'N/A')
+      .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : '[plataforma/projeto]')
       .replace(/\[ID_ATIVO\]/g, asset.id)
       .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
+      .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-      .replace(/\[PRAZO_PAGAMENTO\]/g, '5')
-      .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)')
-      .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location : 'São Paulo/SP')
-      .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : 'São Paulo')
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '[_____]')
+      .replace(/\[FORMA_PAGAMENTO\]/g, '[forma de pagamento]')
+      .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade/UF]')
+      .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade]')
       .replace(/\[DATA_EXTENSO\]/g, extendedDate);
   }
 
@@ -561,7 +573,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <Card>
                              <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato</CardTitle>
-                                <CardDescription>Preencha as informações que não estão na plataforma.</CardDescription>
+                                <CardDescription>Preencha as informações que não estão na plataforma. Os campos entre parênteses (...) não são editáveis.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <h3 className="font-semibold text-md">Dados do Vendedor</h3>
@@ -581,9 +593,11 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
                                 <div className="space-y-4">
-                                    <div className="space-y-1"><Label>Cl. 2: Condição de Pagamento</Label><Textarea value={contractFields.condicao_pagamento} onChange={(e) => handleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2a: Condição de Pagamento</Label><Textarea value={contractFields.condicao_pagamento} onChange={(e) => handleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2b: Detalhes Pagamento</Label><Textarea value={contractFields.detalhes_pagamento} onChange={(e) => handleContractFieldChange('detalhes_pagamento', e.target.value)} rows={2} /></div>
                                     <div className="space-y-1"><Label>Cl. 3: Data de Imissão na Posse</Label><Input value={contractFields.data_posse} onChange={(e) => handleContractFieldChange('data_posse', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" value={contractFields.percentual_multa} onChange={(e) => handleContractFieldChange('percentual_multa', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 7: Detalhes Área Ambiental</Label><Input value={contractFields.detalhes_area_ambiental} onChange={(e) => handleContractFieldChange('detalhes_area_ambiental', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" max="25" value={contractFields.percentual_multa} onChange={(e) => handleContractFieldChange('percentual_multa', e.target.value)} /></div>
                                 </div>
                             </CardContent>
                         </Card>
