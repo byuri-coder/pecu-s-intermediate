@@ -173,13 +173,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const { toast } = useToast();
 
   const isArchiveView = searchParams.get('view') === 'archive';
+  const platformFeePercentage = 1; // Fixed 1% platform fee
 
   const [costSplit, setCostSplit] = React.useState('50/50');
   const [sellerAgrees, setSellerAgrees] = React.useState(isArchiveView);
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
-  const [platformFeePercentage, setPlatformFeePercentage] = React.useState(10);
 
 
   // For archive view, we can use placeholder file objects. In a real app, these would be fetched.
@@ -433,20 +433,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <span className="text-2xl font-bold text-primary">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                         </span>
-                    </div>
-                     <div className="space-y-2 pt-2">
-                        <Label htmlFor="platform-fee">Ajustar Percentual da Taxa (%)</Label>
-                        <Input 
-                            id="platform-fee"
-                            type="number"
-                            value={platformFeePercentage}
-                            onChange={(e) => setPlatformFeePercentage(parseFloat(e.target.value) || 0)}
-                            placeholder="Ex: 10"
-                            disabled={isFinalized}
-                            min="0"
-                            max="100"
-                            step="0.1"
-                        />
                     </div>
                     <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
                         <Label>Divisão do Custo</Label>
