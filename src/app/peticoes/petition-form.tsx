@@ -68,10 +68,10 @@ interface PetitionFormProps {
   onSuccess: () => void;
 }
 
-const defaultPetitionBodyTemplate = `AO(À)
-Ilmo.(a) Sr.(a) Secretário(a) da Fazenda do Estado de [UF]
+const defaultPetitionBodyTemplate = `À SECRETARIA DA FAZENDA DO ESTADO DE [UF]
+Coordenadoria de Administração Tributária – CAT
 
-Ref.: Requerimento de transferência de crédito acumulado de ICMS — Pedido de homologação
+Ref.: REQUERIMENTO DE TRANSFERÊNCIA DE CRÉDITO ACUMULADO DE ICMS — PEDIDO DE HOMOLOGAÇÃO
 
 Requerente (Cedente):
 Razão Social: [RAZAO_SOCIAL_CEDENTE]
@@ -194,7 +194,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
     let updatedBody = defaultPetitionBodyTemplate;
 
     const replacements = {
-        '\\[UF\\]': watchedFields.representativeState || '[UF]',
+        '\\[UF\\]': watchedFields.representativeState ? 'DE SÃO PAULO' : '[UF]',
         '\\[RAZAO_SOCIAL_CEDENTE\\]': cedente.razaoSocial,
         '\\[CNPJ_CEDENTE\\]': watchedFields.partyCnpj || '[CNPJ_CEDENTE]',
         '\\[IE_CEDENTE\\]': cedente.ie,
@@ -281,15 +281,19 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
                 }
                 
                 let isBold = false;
-                let isCentered = false;
                 let align: "left" | "center" | "justify" = 'justify';
                 let fontSize = 12;
                 let text = paragraph;
                 const firstLineIndent = 35.4; // 1.25 cm
 
                 // Simple formatting rules based on content
-                if (text.startsWith('AO(À)') || text.startsWith('Ilmo.(a)')) {
+                if (text.startsWith('À SECRETARIA')) {
                     align = 'center';
+                    text = text.toUpperCase();
+                } else if (text.startsWith('Ref.:')) {
+                    align = 'center';
+                    isBold = true;
+                    text = text.toUpperCase();
                 } else if (text.startsWith('I —') || text.startsWith('II —') || text.startsWith('III —') || text.startsWith('IV —') || text.startsWith('V —') || text.startsWith('VI —')) {
                     isBold = true;
                     fontSize = 14;
@@ -311,12 +315,15 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
                 lines.forEach((line: string, index: number) => {
                     checkAndAddPage();
                     let xPos = margin.left;
-                    if(align === 'justify' && index === 0) {
-                        xPos += firstLineIndent;
-                    }
                     
                     const options: { align?: "left" | "center" | "justify", baseline?: "top" | "middle" | "bottom" } = {};
-                    if(align === 'justify') options.align = 'justify';
+                    if(align === 'justify') {
+                        options.align = 'justify';
+                        if (index === 0) xPos += firstLineIndent;
+                    } else if (align === 'center') {
+                        xPos = pageWidth / 2;
+                        options.align = 'center';
+                    }
 
                     if (text.match(/^\s*\[LOCAL\],/)) {
                         doc.text(line, pageWidth - margin.right, cursorY, { align: 'right' });
