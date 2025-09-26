@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -10,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -18,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -76,9 +75,9 @@ Nome: _____________________ – CPF: _______________
 
 const ruralLandContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
 
-VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [] e CPF nº [], residente e domiciliado em [endereço completo].
+VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [rg] e CPF nº [cpf], residente e domiciliado em [endereço completo].
 
-COMPRADOR(ES): [COMPRADOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [] e CPF nº [], residente e domiciliado em [endereço completo].
+COMPRADOR(ES): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_civil_comprador], [profissao_comprador], portador do RG nº [rg_comprador] e CPF nº [cpf_comprador], residente e domiciliado em [endereco_comprador].
 
 As partes acima qualificadas têm entre si justo e contratado o presente Contrato Particular de Compra e Venda de Imóvel Rural, que se regerá pelas cláusulas e condições seguintes:
 
@@ -88,12 +87,12 @@ Cláusula 1ª – Do Objeto
 O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado [denominação da propriedade], situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
 
 Cláusula 2ª – Do Preço e Forma de Pagamento
-O preço certo e ajustado da venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará ao VENDEDOR da seguinte forma:
-a) [condição de pagamento: à vista / parcelado];
-b) [detalhar condições de parcelas, datas, correção monetária e juros, se houver].
+O preço certo e ajustado da venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará da seguinte forma:
+a) [condicao_pagamento];
+b) [detalhes_pagamento].
 
 Cláusula 3ª – Da Imissão na Posse
-A posse será transmitida ao COMPRADOR na data de [data/condição: assinatura, pagamento integral, etc.], desde que cumpridas as condições de pagamento previstas. A partir desta data, o imóvel poderá ser utilizado para exploração rural, respeitadas as normas ambientais e fundiárias.
+A posse será transmitida ao COMPRADOR na data de [data_posse], desde que cumpridas as condições de pagamento previstas. A partir desta data, o imóvel poderá ser utilizado para exploração rural, respeitadas as normas ambientais e fundiárias.
 
 Cláusula 4ª – Das Obrigações do Vendedor
 O VENDEDOR declara e garante que:
@@ -113,14 +112,12 @@ Cláusula 6ª – Da Escritura Definitiva
 Cumpridas as obrigações contratuais, as partes comparecerão ao Cartório de Notas competente para a lavratura da escritura pública de compra e venda e posterior registro no Cartório de Registro de Imóveis.
 
 Cláusula 7ª – Da Responsabilidade Ambiental
-As partes reconhecem que o imóvel possui [___ hectares de área de reserva legal / APP / área produtiva], conforme registro no CAR.
-
+As partes reconhecem que o imóvel possui [detalhes_area_ambiental], conforme registro no CAR.
 O VENDEDOR declara que até a presente data não incorreu em infrações ambientais.
-
 O COMPRADOR assume a responsabilidade de preservar e respeitar as áreas de reserva legal e APP, nos termos do Código Florestal (Lei nº 12.651/2012).
 
 Cláusula 8ª – Da Rescisão e Multa
-O inadimplemento de qualquer das partes ensejará a rescisão contratual, mediante notificação, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [___%] do valor do contrato, além de perdas e danos.
+O inadimplemento de qualquer das partes ensejará a rescisão contratual, mediante notificação, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [percentual_multa]% do valor do contrato, além de perdas e danos.
 
 Cláusula 9ª – Da Legislação e Foro
 O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
@@ -128,13 +125,15 @@ O presente contrato será regido pela legislação brasileira. Fica eleito o for
 Cláusula 10ª – Dos Custos da Plataforma
 Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR] pelo VENDEDOR e [PERCENTUAL_COMPRADOR] pelo COMPRADOR.
 
-E por estarem assim justas e contratadas, firmam o presente contrato em [___] vias de igual teor e forma, na presença de testemunhas.
+E por estarem assim justas e contratadas, firmam o presente contrato em [vias_contrato] vias de igual teor e forma, na presença de testemunhas.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
 VENDEDOR(ES): __________________________________
+[VENDEDOR_NOME]
 
 COMPRADOR(ES): __________________________________
+[COMPRADOR_NOME]
 
 TESTEMUNHAS:
 
@@ -142,7 +141,6 @@ Nome: _____________________ – CPF: _______________
 
 Nome: _____________________ – CPF: _______________
 `;
-
 
 // Helper component for file upload display
 const FileUploadDisplay = ({
@@ -251,7 +249,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
 
-  // For archive view, we can use placeholder file objects. In a real app, these would be fetched.
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" }) : null
   );
@@ -260,6 +257,33 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   );
 
   const [platformFeePercentage, setPlatformFeePercentage] = React.useState(1);
+  
+  // States for rural land contract fields
+  const [contractFields, setContractFields] = React.useState({
+      nacionalidade: 'Brasileiro(a)',
+      estado_civil: 'Casado(a)',
+      profissao: 'Empresário(a)',
+      rg: '',
+      cpf: '',
+      endereco_completo: '',
+      comprador_nome: 'COMPRADOR EXEMPLO S.A.',
+      nacionalidade_comprador: 'Brasileira',
+      estado_civil_comprador: '',
+      profissao_comprador: 'Empresa',
+      rg_comprador: '',
+      cpf_comprador: '00.000.000/0001-00',
+      endereco_comprador: 'Rua Exemplo, 123',
+      condicao_pagamento: 'À vista, mediante transferência bancária (TED ou PIX).',
+      detalhes_pagamento: 'O pagamento será realizado em conta de titularidade do VENDEDOR, informada na plataforma.',
+      data_posse: 'data da assinatura deste instrumento',
+      detalhes_area_ambiental: '___ hectares de área de reserva legal / APP / área produtiva',
+      percentual_multa: '10',
+      vias_contrato: '2 (duas)'
+  });
+  
+  const handleContractFieldChange = (field: keyof typeof contractFields, value: string) => {
+      setContractFields(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -270,10 +294,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
-  const negotiatedValue = 'price' in asset ? ('quantity' in asset && asset.quantity ? asset.pricePerCredit * asset.quantity : (asset.price || 0)) : 50000;
+  const negotiatedValue = 'price' in asset ? (asset.price || 0) : 50000;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
 
-  // Mock payment data - in a real app, this would be fetched from the seller's profile
   const paymentInfo = {
     bank: "Banco Exemplo S.A.",
     agency: "0001",
@@ -296,7 +319,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     if (assetType === 'rural-land' && 'businessType' in asset && asset.businessType === 'Venda') {
       return ruralLandContractTemplate;
     }
-    // Default to carbon credit template for other rural-land types and tax credits as well
     return carbonCreditContractTemplate;
   }
 
@@ -306,52 +328,62 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const formattedDate = currentDate.toLocaleDateString('pt-BR');
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    if (currentTemplate === ruralLandContractTemplate && 'title' in asset) { // It's a RuralLand asset
+    if (currentTemplate === ruralLandContractTemplate && 'title' in asset) {
         const land = asset as RuralLand;
         const [municipio, estado] = land.location.split(',').map(s => s.trim());
-
+        
         return ruralLandContractTemplate
             .replace(/\[VENDEDOR_NOME\]/g, land.owner)
-            .replace(/\[COMPRADOR_NOME\]/g, '[NOME DO COMPRADOR]')
+            .replace(/\[nacionalidade\]/g, contractFields.nacionalidade || '[nacionalidade]')
+            .replace(/\[estado civil\]/g, contractFields.estado_civil || '[estado civil]')
+            .replace(/\[profissão\]/g, contractFields.profissao || '[profissão]')
+            .replace(/\[rg\]/g, contractFields.rg || '[]')
+            .replace(/\[cpf\]/g, contractFields.cpf || '[]')
+            .replace(/\[endereço completo\]/g, contractFields.endereco_completo || '[endereço completo]')
+            .replace(/\[COMPRADOR_NOME\]/g, contractFields.comprador_nome || '[NOME DO COMPRADOR]')
+            .replace(/\[nacionalidade_comprador\]/g, contractFields.nacionalidade_comprador || '[nacionalidade_comprador]')
+            .replace(/\[estado_civil_comprador\]/g, contractFields.estado_civil_comprador || '[estado_civil_comprador]')
+            .replace(/\[profissao_comprador\]/g, contractFields.profissao_comprador || '[profissao_comprador]')
+            .replace(/\[rg_comprador\]/g, contractFields.rg_comprador || '[]')
+            .replace(/\[cpf_comprador\]/g, contractFields.cpf_comprador || '[]')
+            .replace(/\[endereco_comprador\]/g, contractFields.endereco_comprador || '[endereco_comprador]')
             .replace(/\[denominação da propriedade\]/g, land.title)
-            .replace(/, situado no município de \[\], Estado de \[\]/g, `, situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
+            .replace(/situado no município de \[\], Estado de \[\]/g, `situado no município de ${municipio || '[]'}, Estado de ${estado || '[]'}`)
             .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
-            .replace(/, registrado no Cartório de Registro de Imóveis da Comarca de \[\], sob a matrícula nº \[\]/g, `, registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
+            .replace(/registrado no Cartório de Registro de Imóveis da Comarca de \[\], sob a matrícula nº \[\]/g, `registrado no Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}, sob a matrícula nº ${land.registration}`)
             .replace(/R\$ \[__________\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-            .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
-            .replace(/\[detalhar condições de parcelas, datas, correção monetária e juros, se houver\]/g, 'O pagamento será realizado via transferência bancária (TED ou PIX) para a conta do VENDEDOR informada na plataforma.')
-            .replace(/na data de \[__________\]/g, 'na data de assinatura deste instrumento')
-            .replace(/\[___ hectares de área de reserva legal \/ APP \/ área produtiva\]/g, '[INSERIR DADOS DO CAR] hectares de área de reserva legal')
-            .replace(/multa equivalente a \[___%\] do valor do contrato/g, 'multa equivalente a 10% do valor do contrato')
+            .replace(/\[condicao_pagamento\]/g, contractFields.condicao_pagamento || '[]')
+            .replace(/\[detalhes_pagamento\]/g, contractFields.detalhes_pagamento || '[]')
+            .replace(/\[data_posse\]/g, contractFields.data_posse || '[]')
+            .replace(/\[detalhes_area_ambiental\]/g, contractFields.detalhes_area_ambiental || '[___ hectares de área de reserva legal / APP / área produtiva]')
+            .replace(/\[percentual_multa\]/g, contractFields.percentual_multa || '[]')
             .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
+            .replace(/\[vias_contrato\]/g, contractFields.vias_contrato || '[___]')
             .replace(/\[LOCAL_ASSINATURA\], \[DATA_EXTENSO\]/g, `${municipio || '[Cidade]'}, ${extendedDate}`)
-            .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
-            .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`)
+            .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
             .replace(/\[PERCENTUAL_VENDEDOR\]/g, getCostSplitPercentages().seller)
-            .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer)
-            .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            .replace(/\[PERCENTUAL_COMPRADOR\]/g, getCostSplitPercentages().buyer);
     }
     
     // Default to Carbon Credit / Other contract
     return carbonCreditContractTemplate
       .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00') // Placeholder
-      .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF') // Placeholder
-      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente') // Placeholder
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '00.000.000/0001-00')
+      .replace(/\[ENDERECO DO CEDENTE\]/g, 'Rua Fictícia, 123, Cidade Exemplo, UF')
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, 'Admin da Empresa Cedente')
       .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, 'Comprador Exemplo S.A.')
-      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11') // Placeholder
-      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF') // Placeholder
-      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras') // Placeholder
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '11.111.111/0001-11')
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF')
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, 'Diretor de Compras')
       .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
       .replace(/\[DATA_CONTRATO\]/g, formattedDate)
       .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : 'N/A')
       .replace(/\[ID_ATIVO\]/g, asset.id)
       .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
-      .replace(/\[CUSTO_PLATAFORMA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost))
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-      .replace(/\[PRAZO_PAGAMENTO\]/g, '5') // Placeholder
-      .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)') // Placeholder
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '5')
+      .replace(/\[FORMA_PAGAMENTO\]/g, 'Transferência Bancária (PIX ou TED)')
       .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location : 'São Paulo/SP')
       .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : 'São Paulo')
       .replace(/\[DATA_EXTENSO\]/g, extendedDate);
@@ -406,7 +438,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
 
     const handleFinishTransaction = () => {
-        // Here you would typically save all data and files to your backend.
         setTransactionComplete(true);
         toast({
             title: "Transação Finalizada e Salva!",
@@ -510,96 +541,134 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             </Link>
         </Button>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold font-headline flex items-center gap-3">
-            <FileSignature className="h-8 w-8" />
-            Ajuste e Assinatura do Contrato
-          </CardTitle>
-          <CardDescription>
-            Revise os termos, defina os custos e finalize a negociação.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-6">
+        <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Pré-visualização do Contrato</CardTitle>
+                    <CardTitle className="text-3xl font-bold font-headline flex items-center gap-3">
+                        <FileSignature className="h-8 w-8" />
+                        Ajuste e Assinatura do Contrato
+                    </CardTitle>
+                    <CardDescription>
+                        Revise e preencha os termos, defina os custos e finalize a negociação.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="h-96 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm">
-                        {finalContractText}
-                    </div>
-                </CardContent>
             </Card>
-          </div>
-          <div className="lg:col-span-2 space-y-6">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Custos da Plataforma</CardTitle>
-                    <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
-                        <span className="font-medium text-secondary-foreground">Custo ({platformFeePercentage}%)</span>
-                        <span className="text-2xl font-bold text-primary">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
-                        </span>
-                    </div>
 
-                    <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
-                        <Label>Divisão do Custo</Label>
-                        <div className="space-y-2 pt-2">
-                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="50/50" id="50-50" />
-                                <Label htmlFor="50-50">50% / 50%</Label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Coluna de Edição */}
+                <div className="space-y-6">
+                    {assetType === 'rural-land' ? (
+                        <Card>
+                             <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Preencher Dados do Contrato</CardTitle>
+                                <CardDescription>Preencha as informações que não estão na plataforma.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <h3 className="font-semibold text-md">Dados do Vendedor</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nacionalidade</Label><Input value={contractFields.nacionalidade} onChange={(e) => handleContractFieldChange('nacionalidade', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Estado Civil</Label><Input value={contractFields.estado_civil} onChange={(e) => handleContractFieldChange('estado_civil', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Profissão</Label><Input value={contractFields.profissao} onChange={(e) => handleContractFieldChange('profissao', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>RG</Label><Input value={contractFields.rg} onChange={(e) => handleContractFieldChange('rg', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF</Label><Input value={contractFields.cpf} onChange={(e) => handleContractFieldChange('cpf', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Endereço Completo</Label><Input value={contractFields.endereco_completo} onChange={(e) => handleContractFieldChange('endereco_completo', e.target.value)} /></div>
+                                </div>
+                                <h3 className="font-semibold text-md pt-4">Dados do Comprador</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={contractFields.comprador_nome} onChange={(e) => handleContractFieldChange('comprador_nome', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={contractFields.cpf_comprador} onChange={(e) => handleContractFieldChange('cpf_comprador', e.target.value)} /></div>
+                                    <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={contractFields.endereco_comprador} onChange={(e) => handleContractFieldChange('endereco_comprador', e.target.value)} /></div>
+                                </div>
+                                <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
+                                <div className="space-y-4">
+                                    <div className="space-y-1"><Label>Cl. 2: Condição de Pagamento</Label><Textarea value={contractFields.condicao_pagamento} onChange={(e) => handleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3: Data de Imissão na Posse</Label><Input value={contractFields.data_posse} onChange={(e) => handleContractFieldChange('data_posse', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" value={contractFields.percentual_multa} onChange={(e) => handleContractFieldChange('percentual_multa', e.target.value)} /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Custos da Plataforma</CardTitle>
+                                <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
+                                    <span className="font-medium text-secondary-foreground">Custo (1%)</span>
+                                    <span className="text-2xl font-bold text-primary">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
+                                    </span>
+                                </div>
+
+                                <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
+                                    <Label>Divisão do Custo</Label>
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="50/50" id="50-50" />
+                                            <Label htmlFor="50-50">50% / 50%</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="seller" id="seller" />
+                                            <Label htmlFor="seller">Vendedor 100%</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="buyer" id="buyer" />
+                                            <Label htmlFor="buyer">Comprador 100%</Label>
+                                        </div>
+                                    </div>
+                                </RadioGroup>
+                            </CardContent>
+                        </Card>
+                    )}
+                    
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Acordo Mútuo</CardTitle>
+                            <CardDescription>Ambas as partes devem concordar com os termos para finalizar.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
+                                </div>
+                                {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="seller" id="seller" />
-                                <Label htmlFor="seller">Vendedor 100%</Label>
+                            <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
+                                </div>
+                                {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="buyer" id="buyer" />
-                                <Label htmlFor="buyer">Comprador 100%</Label>
+                        </CardContent>
+                    </Card>
+                     <Button 
+                        size="lg" 
+                        className="w-full" 
+                        disabled={!sellerAgrees || !buyerAgrees || isFinalized}
+                        onClick={handleFinalize}
+                    >
+                        {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
+                        {isFinalized ? 'Contrato Assinado' : 'Aceitar e Assinar Contrato'}
+                    </Button>
+                </div>
+                {/* Coluna de Visualização */}
+                <div>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Pré-visualização do Contrato</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-[70vh] overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm">
+                                {finalContractText}
                             </div>
-                        </div>
-                    </RadioGroup>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Acordo Mútuo</CardTitle>
-                    <CardDescription>Ambas as partes devem concordar com os termos para finalizar.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
-                            <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
-                        </div>
-                        {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
-                    </div>
-                    <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
-                            <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
-                        </div>
-                        {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
-                    </div>
-                </CardContent>
-            </Card>
-             <Button 
-                size="lg" 
-                className="w-full" 
-                disabled={!sellerAgrees || !buyerAgrees || isFinalized}
-                onClick={handleFinalize}
-            >
-                {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
-                {isFinalized ? 'Contrato Assinado' : 'Aceitar e Assinar Contrato'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
       
       {isFinalized && (
         <div className="mt-8 space-y-6">
@@ -701,7 +770,3 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
-
-    
-
-    
