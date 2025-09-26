@@ -75,53 +75,62 @@ Nome: _____________________ – CPF: _______________
 
 const ruralLandContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
 
-VENDEDOR(ES): [VENDEDOR_NOME], [VENDEDOR_NACIONALIDADE], [VENDEDOR_ESTADO_CIVIL], [VENDEDOR_PROFISSAO], portador do RG nº [VENDEDOR_RG] e CPF nº [VENDEDOR_CPF], residente e domiciliado em [VENDEDOR_ENDERECO].
+VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [] e CPF nº [], residente e domiciliado em [endereço completo].
 
-COMPRADOR(ES): [COMPRADOR_NOME], [COMPRADOR_NACIONALIDADE], [COMPRADOR_ESTADO_CIVIL], [COMPRADOR_PROFISSAO], portador do RG nº [COMPRADOR_RG] e CPF nº [COMPRADOR_CPF], residente e domiciliado em [COMPRADOR_ENDERECO].
+COMPRADOR(ES): [COMPRADOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [] e CPF nº [], residente e domiciliado em [endereço completo].
 
-As partes acima identificadas têm entre si justo e contratado o presente Contrato Particular de Compra e Venda de Imóvel Rural, que se regerá pelas cláusulas e condições seguintes:
+As partes acima qualificadas têm entre si justo e contratado o presente Contrato Particular de Compra e Venda de Imóvel Rural, que se regerá pelas cláusulas e condições seguintes:
 
 CLÁUSULAS
 
 Cláusula 1ª – Do Objeto
-O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado [PROPRIEDADE_NOME], localizado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
+O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado [denominação da propriedade], situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
 
 Cláusula 2ª – Do Preço e Forma de Pagamento
-O preço certo e ajustado para a presente venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará ao VENDEDOR da seguinte forma:
-a) [CONDICAO_PAGAMENTO];
-b) [DETALHES_PAGAMENTO].
+O preço certo e ajustado da venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará ao VENDEDOR da seguinte forma:
+a) [condição de pagamento: à vista / parcelado];
+b) [detalhar condições de parcelas, datas, correção monetária e juros, se houver].
 
 Cláusula 3ª – Da Imissão na Posse
-A posse do imóvel será transmitida ao COMPRADOR a partir de [DATA_POSSE], ficando este autorizado a explorar e usufruir do bem conforme sua destinação rural.
+A posse será transmitida ao COMPRADOR na data de [data/condição: assinatura, pagamento integral, etc.], desde que cumpridas as condições de pagamento previstas. A partir desta data, o imóvel poderá ser utilizado para exploração rural, respeitadas as normas ambientais e fundiárias.
 
 Cláusula 4ª – Das Obrigações do Vendedor
-O VENDEDOR obriga-se a:
-a) entregar o imóvel livre e desembaraçado de quaisquer ônus reais, dívidas, penhoras, hipotecas, arrendamentos ou litígios;
-b) fornecer toda a documentação necessária para a lavratura da escritura pública definitiva.
+O VENDEDOR declara e garante que:
+a) o imóvel encontra-se livre e desembaraçado de quaisquer ônus, gravames, hipotecas, arrendamentos, servidões ou litígios;
+b) está quite com o pagamento do ITR (Imposto Territorial Rural), CCIR (Certificado de Cadastro de Imóvel Rural) e demais obrigações fiscais até a data da assinatura;
+c) possui inscrição no CAR (Cadastro Ambiental Rural), a qual será transferida ao COMPRADOR juntamente com a posse do imóvel;
+d) não há passivos ambientais, embargos ou restrições legais incidentes sobre a propriedade.
 
 Cláusula 5ª – Das Obrigações do Comprador
-O COMPRADOR obriga-se a:
-a) efetuar o pagamento do preço ajustado nos prazos e condições estipulados;
-b) arcar com as despesas de escritura, registro e tributos incidentes sobre a transmissão do imóvel (ITR, ITBI, custas cartorárias, etc.), salvo disposição diversa ajustada pelas partes.
+O COMPRADOR compromete-se a:
+a) efetuar o pagamento integral do preço ajustado nas condições pactuadas;
+b) arcar com despesas de escritura, ITBI, registro e demais custos cartorários;
+c) providenciar, após a lavratura da escritura, a atualização cadastral do imóvel junto ao INCRA, Receita Federal e demais órgãos competentes;
+d) manter a exploração do imóvel em conformidade com a legislação agrária e ambiental.
 
 Cláusula 6ª – Da Escritura Definitiva
-Após o cumprimento integral das obrigações previstas, as partes comparecerão perante o Cartório de Notas competente para a lavratura da escritura pública de compra e venda, bem como para o registro do imóvel em nome do COMPRADOR.
+Cumpridas as obrigações contratuais, as partes comparecerão ao Cartório de Notas competente para a lavratura da escritura pública de compra e venda e posterior registro no Cartório de Registro de Imóveis.
 
-Cláusula 7ª – Da Rescisão e Multa
-Em caso de inadimplemento de qualquer das partes, poderá o contrato ser rescindido, mediante notificação prévia, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [MULTA_PERCENTUAL]% do valor do contrato, sem prejuízo de perdas e danos.
+Cláusula 7ª – Da Responsabilidade Ambiental
+As partes reconhecem que o imóvel possui [___ hectares de área de reserva legal / APP / área produtiva], conforme registro no CAR.
 
-Cláusula 8ª – Da Legislação e Foro
-Este contrato é regido pelas disposições do Código Civil Brasileiro. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias decorrentes deste instrumento.
+O VENDEDOR declara que até a presente data não incorreu em infrações ambientais.
 
-E por estarem assim justas e contratadas, firmam o presente contrato em 2 vias de igual teor e forma, na presença de testemunhas.
+O COMPRADOR assume a responsabilidade de preservar e respeitar as áreas de reserva legal e APP, nos termos do Código Florestal (Lei nº 12.651/2012).
+
+Cláusula 8ª – Da Rescisão e Multa
+O inadimplemento de qualquer das partes ensejará a rescisão contratual, mediante notificação, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [___%] do valor do contrato, além de perdas e danos.
+
+Cláusula 9ª – Da Legislação e Foro
+O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
+
+E por estarem assim justas e contratadas, firmam o presente contrato em [___] vias de igual teor e forma, na presença de testemunhas.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
 VENDEDOR(ES): __________________________________
-[VENDEDOR_NOME]
 
 COMPRADOR(ES): __________________________________
-[COMPRADOR_NOME]
 
 TESTEMUNHAS:
 
@@ -298,34 +307,24 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       const [municipio, estado] = land.location.split(',').map(s => s.trim());
       
       return ruralLandContractTemplate
-        .replace(/\[VENDEDOR_NOME\]/g, land.owner)
-        .replace(/\[VENDEDOR_NACIONALIDADE\]/g, 'Brasileiro(a)')
-        .replace(/\[VENDEDOR_ESTADO_CIVIL\]/g, 'Casado(a)')
-        .replace(/\[VENDEDOR_PROFISSAO\]/g, 'Produtor Rural')
-        .replace(/\[VENDEDOR_RG\]/g, '00.000.000-0')
-        .replace(/\[VENDEDOR_CPF\]/g, '000.000.000-00')
-        .replace(/\[VENDEDOR_ENDERECO\]/g, 'Endereço Fictício do Vendedor, 123')
-        .replace(/\[COMPRADOR_NOME\]/g, 'Comprador Exemplo S.A.')
-        .replace(/\[COMPRADOR_NACIONALIDADE\]/g, 'Brasileira')
-        .replace(/\[COMPRADOR_ESTADO_CIVIL\]/g, 'Pessoa Jurídica')
-        .replace(/\[COMPRADOR_PROFISSAO\]/g, 'Investidor')
-        .replace(/\[COMPRADOR_RG\]/g, 'N/A')
-        .replace(/\[COMPRADOR_CPF\]/g, '11.111.111/0001-11')
-        .replace(/\[COMPRADOR_ENDERECO\]/g, 'Avenida dos Testes, 456, Outra Cidade, UF')
-        .replace(/\[PROPRIEDADE_NOME\]/g, land.title)
-        .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || 'N/A')
-        .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || 'N/A')
-        .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
-        .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || 'N/A')
-        .replace(/\[PROPRIEDADE_MATRICULA\]/g, land.registration)
-        .replace(/\[VALOR_NEGOCIADO_NUM\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-        .replace(/\[CONDICAO_PAGAMENTO\]/g, 'À vista, mediante TED ou PIX.')
-        .replace(/\[DETALHES_PAGAMENTO\]/g, 'O pagamento total deverá ser efetuado na conta do VENDEDOR informada na plataforma.')
-        .replace(/\[DATA_POSSE\]/g, `na data de assinatura deste contrato`)
-        .replace(/\[MULTA_PERCENTUAL\]/g, '10')
-        .replace(/\[FORO_COMARCA\]/g, land.location)
-        .replace(/\[LOCAL_ASSINATURA\]/g, land.location.split(',')[0])
-        .replace(/\[DATA_EXTENSO\]/g, extendedDate);
+        .replace(/\[VENDEDOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/, `VENDEDOR(ES): ${land.owner}, brasileiro(a), casado(a), produtor(a) rural, portador(a) do RG nº [RG DO VENDEDOR] e CPF nº [CPF DO VENDEDOR], residente e domiciliado(a) em [ENDEREÇO DO VENDEDOR].`)
+        .replace(/\[COMPRADOR\(ES\): \[NOME\/RAZÃO SOCIAL\], \[nacionalidade\], \[estado civil\], \[profissão\], portador do RG nº \[] e CPF nº \[], residente e domiciliado em \[endereço completo\]\.?]/, `COMPRADOR(ES): [NOME DO COMPRADOR], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [RG DO COMPRADOR] e CPF nº [CPF DO COMPRADOR], residente e domiciliado(a) em [ENDEREÇO DO COMPRADOR].`)
+        .replace(/\[denominação da propriedade\]/g, land.title)
+        .replace(/\[situado no município de \[]/, `situado no município de ${municipio || '[]'}`)
+        .replace(/\[Estado de \[]/, `Estado de ${estado || '[]'}`)
+        .replace(/\[___ hectares\]/g, land.sizeHa.toLocaleString('pt-BR'))
+        .replace(/\[Cartório de Registro de Imóveis da Comarca de \[]/, `Cartório de Registro de Imóveis da Comarca de ${municipio || '[]'}`)
+        .replace(/\[matrícula nº \[\]\]/g, `matrícula nº ${land.registration}`)
+        .replace(/\[preço certo e ajustado da venda é de R\$ \[__________\]\]/, `preço certo e ajustado da venda é de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}`)
+        .replace(/\[condição de pagamento: à vista \/ parcelado\]/g, 'à vista')
+        .replace(/\[detalhar condições de parcelas, datas, correção monetária e juros, se houver\]\./g, 'O pagamento será realizado via transferência bancária (TED ou PIX) para a conta do VENDEDOR informada na plataforma.')
+        .replace(/\[A posse será transmitida ao COMPRADOR na data de \[__________\]\]/, `A posse será transmitida ao COMPRADOR na data de assinatura deste instrumento`)
+        .replace(/\[___ hectares de área de reserva legal \/ APP \/ área produtiva\]/g, '[INSERIR DADOS DO CAR] hectares de área de reserva legal')
+        .replace(/\[multa equivalente a \[___%\] do valor do contrato\]/, `multa equivalente a 10% do valor do contrato`)
+        .replace(/\[foro da comarca de \[__________\]\]/g, `foro da comarca de ${municipio || '[]'}`)
+        .replace(/\[Cidade\], \[____ de __________ de ____\]\./g, `${municipio || '[Cidade]'}, ${extendedDate}.`)
+        .replace(/VENDEDOR\(ES\): __________________________________/, `VENDEDOR(ES): __________________________________\n${land.owner}`)
+        .replace(/COMPRADOR\(ES\): __________________________________/, `COMPRADOR(ES): __________________________________\n[NOME DO COMPRADOR]`);
     }
     
     // Default to Carbon Credit / Other contract
