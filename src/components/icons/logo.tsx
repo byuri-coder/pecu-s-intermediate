@@ -9,11 +9,30 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
         fill="none"
         {...props}
     >
+        <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.8 }} />
+                <stop offset="100%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
+            </linearGradient>
+        </defs>
+        <path 
+            d="M50 15 L35 25 V 75 L50 85 H65 L80 75 V 45 H65 V 35 H50 V 25 H65 L80 35 V 25 L65 15 H50 Z M50 35 H65 V 45 H50 V 35 Z M50 55 V 75 H65 L70 70 V 50 L65 45 H50 V 55 Z"
+            fill="url(#gold-gradient)"
+        />
         <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M45 15C39.4772 15 35 19.4772 35 25V75C35 80.5228 39.4772 85 45 85H55C68.8071 85 80 73.8071 80 60C80 46.1929 68.8071 35 55 35H45V25C45 19.4772 40.5228 15 35 15H25C19.4772 15 15 19.4772 15 25V75C15 80.5228 19.4772 85 25 85H35V75H25V25H35V45H55C63.2843 45 70 51.7157 70 60C70 68.2843 63.2843 75 55 75H45V15Z"
-            fill="hsl(var(--primary))"
+            d="M50 25 L65 35 V 45 H50 V 25 Z"
+            fill="url(#gold-gradient)"
+            style={{ filter: 'brightness(0.9)' }}
+        />
+        <path
+            d="M50 55 V 75 H65 L70 70 V 50 L65 45 H50 V 55 Z"
+            fill="url(#gold-gradient)"
+            style={{ filter: 'brightness(1.1)' }}
+        />
+        <path
+            d="M35 25 L50 15 L65 25 L50 35 L35 25 Z"
+            fill="url(#gold-gradient)"
+            style={{ filter: 'brightness(1.2)' }}
         />
     </svg>
 );
