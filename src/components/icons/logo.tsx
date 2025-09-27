@@ -30,7 +30,9 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
 
         {/* Stylized 'P' */}
         <path 
-            d="M40 30 L40 70 L55 70 C 65 70 70 65 70 50 C 70 35 65 30 55 30 L40 30 Z M45 35 L55 35 C 62 35 65 38 65 50 C 65 62 62 65 55 65 L45 65 L45 35 Z"
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M40 30 L40 70 H 55 C 65 70 70 65 70 50 C 70 35 65 30 55 30 H 40 Z M 45 35 L 45 65 H 55 C 62.1797 65 65 62.1797 65 50 C 65 37.8203 62.1797 35 55 35 H 45 Z"
             fill="url(#inner-gold-gradient)"
         />
     </svg>
