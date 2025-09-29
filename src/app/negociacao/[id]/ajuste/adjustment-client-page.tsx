@@ -25,250 +25,252 @@ type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
 
-CEDENTE: [NOME/RAZÃO SOCIAL DO CEDENTE], inscrito no [CNPJ/CPF nº DO CEDENTE], com sede/endereço em [ENDERECO DO CEDENTE], neste ato representado por [REPRESENTANTE DO CEDENTE].
+Pelo presente instrumento particular, as partes:
 
-CESSIONÁRIO: [NOME/RAZÃO SOCIAL DO CESSIONÁRIO], inscrito no [CNPJ/CPF nº DO CESSIONÁRIO], com sede/endereço em [ENDERECO DO CESSIONÁRIO], neste ato representado por [REPRESENTANTE DO CESSIONÁRIO].
+CEDENTE: [NOME/RAZÃO SOCIAL DO CEDENTE], pessoa jurídica de direito privado, inscrita no CNPJ/CPF sob o nº [CNPJ/CPF nº DO CEDENTE], com sede em [ENDERECO DO CEDENTE], neste ato representada na forma de seu contrato social por [REPRESENTANTE DO CEDENTE].
 
-OBJETO: Cessão de Créditos de Carbono no valor de R$ [VALOR_NEGOCIADO].
+CESSIONÁRIO: [NOME/RAZÃO SOCIAL DO CESSIONÁRIO], pessoa jurídica de direito privado, inscrita no CNPJ/CPF sob o nº [CNPJ/CPF nº DO CESSIONÁRIO], com sede em [ENDERECO DO CESSIONÁRIO], neste ato representada na forma de seu contrato social por [REPRESENTANTE DO CESSIONÁRIO].
 
-DATA: [DATA_CONTRATO].
+Resolvem celebrar o presente Contrato de Cessão de Créditos de Carbono, que se regerá pelas seguintes cláusulas e condições:
 
-CLÁUSULAS E CONDIÇÕES
+CLÁUSULA PRIMEIRA - DO OBJETO
+1.1. O CEDENTE declara ser o legítimo titular e possuidor dos créditos de carbono descritos no sistema [PLATAFORMA_PROJETO], identificados pelo código [ID_ATIVO], totalizando um volume de [QUANTIDADE_ATIVO] créditos, correspondente ao valor total de R$ [VALOR_TOTAL_ATIVO].
 
-Cláusula 1ª – Da Titularidade
-O CEDENTE declara ser o legítimo titular e possuidor dos créditos de carbono descritos no sistema [PLATAFORMA_PROJETO], identificados pelo código [ID_ATIVO], cujo valor total corresponde a R$ [VALOR_TOTAL_ATIVO].
+CLÁUSULA SEGUNDA - DA CESSÃO
+2.1. O CEDENTE, neste ato e pela melhor forma de direito, cede e transfere ao CESSIONÁRIO, em caráter definitivo, irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor certo e ajustado de R$ [VALOR_NEGOCIADO].
 
-Cláusula 2ª – Da Cessão
-O CEDENTE cede e transfere ao CESSIONÁRIO, em caráter irrevogável e irretratável, a quantidade de créditos de carbono ora negociada, pelo valor de R$ [VALOR_NEGOCIADO], na forma e condições estabelecidas neste contrato.
+CLÁUSULA TERCEIRA - DO PREÇO E DA FORMA DE PAGAMENTO
+3.1. O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula Segunda no prazo de até [PRAZO_PAGAMENTO] dias úteis, contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
 
-Cláusula 3ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE] pelo CEDENTE e [PERCENTUAL_CESSIONARIO] pelo CESSIONÁRIO.
+CLÁUSULA QUARTA - DAS OBRIGAÇÕES DAS PARTES
+4.1. O CEDENTE obriga-se a fornecer toda a documentação necessária para a efetivação da transferência dos créditos e a garantir a procedência e validade dos mesmos.
+4.2. O CESSIONÁRIO obriga-se a realizar o pagamento na forma e prazo acordados.
 
-Cláusula 4ª – Do Pagamento
-O CESSIONÁRIO compromete-se a efetuar o pagamento do valor estabelecido na Cláusula 2ª no prazo de até [PRAZO_PAGAMENTO] dias úteis contados da assinatura deste contrato, mediante [FORMA_PAGAMENTO].
+CLÁUSULA QUINTA - DOS CUSTOS DA PLATAFORMA
+5.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE]% pelo CEDENTE e [PERCENTUAL_CESSIONARIO]% pelo CESSIONÁRIO.
 
-Cláusula 5ª – Das Declarações
-As partes declaram que:
-a) possuem capacidade legal e poderes necessários para celebrar o presente contrato;
-b) estão cientes da natureza e condições dos créditos objeto da cessão;
-c) concordam expressamente com todos os termos e obrigações aqui previstos.
+CLÁUSULA SEXTA - DAS DECLARAÇÕES E GARANTIAS
+6.1. As partes declaram, sob as penas da lei, que possuem capacidade legal e poderes necessários para celebrar o presente contrato e cumprir com suas obrigações.
+6.2. O CEDENTE declara que os créditos objeto desta cessão estão livres e desembaraçados de quaisquer ônus, dívidas ou litígios.
 
-Cláusula 6ª – Da Legislação Aplicável e Foro
-Este contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais conflitos decorrentes deste instrumento.
+CLÁUSULA SÉTIMA - DA LEGISLAÇÃO APLICÁVEL E FORO
+7.1. Este contrato será regido e interpretado de acordo com as leis da República Federativa do Brasil.
+7.2. Fica eleito o foro da comarca de [FORO_COMARCA], com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer conflitos ou dúvidas decorrentes deste instrumento.
 
-E por estarem justas e contratadas, as partes assinam o presente contrato em 2 vias de igual teor e forma, na presença de testemunhas.
+E por estarem justas e contratadas, as partes assinam o presente contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
-CEDENTE: ____________________________________
+
+____________________________________
 [NOME/RAZÃO SOCIAL DO CEDENTE]
+(Cedente)
 
-CESSIONÁRIO: __________________________________
+
+__________________________________
 [NOME/RAZÃO SOCIAL DO CESSIONÁRIO]
+(Cessionário)
 
-TESTEMUNHAS:
 
-Nome: _____________________ – CPF: _______________
+Testemunhas:
 
-Nome: _____________________ – CPF: _______________
+1. ___________________________
+   Nome:
+   CPF:
+
+2. ___________________________
+   Nome:
+   CPF:
 `;
 
-const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE COMPRA E VENDA DE IMÓVEL RURAL
+const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSA DE COMPRA E VENDA DE IMÓVEL RURAL
 
-VENDEDOR(ES): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador do RG nº [rg] e CPF nº [cpf], residente e domiciliado em [endereco completo].
+Pelo presente instrumento particular, as partes:
 
-COMPRADOR(ES): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_civil_comprador], [profissao_comprador], portador do RG nº [rg_comprador] e CPF nº [cpf_comprador], residente e domiciliado em [endereco_comprador].
+PROMITENTE VENDEDOR(A): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [rg] e inscrito(a) no CPF/MF sob o nº [cpf], residente e domiciliado(a) em [endereco completo], doravante denominado simplesmente VENDEDOR.
 
-As partes acima qualificadas têm entre si justo e contratado o presente Contrato Particular de Compra e Venda de Imóvel Rural, que se regerá pelas cláusulas e condições seguintes:
+PROMISSÁRIO COMPRADOR(A): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_civil_comprador], [profissao_comprador], portador(a) do RG nº [rg_comprador] e inscrito(a) no CPF/MF sob o nº [cpf_comprador], residente e domiciliado(a) em [endereco_comprador], doravante denominado simplesmente COMPRADOR.
 
-CLÁUSULAS
+Resolvem celebrar o presente Contrato Particular de Promessa de Compra e Venda de Imóvel Rural, que se regerá pelas seguintes cláusulas e condições:
 
-Cláusula 1ª – Do Objeto
-O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado [denominação da propriedade], situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
+CLÁUSULA PRIMEIRA - DO OBJETO
+1.1. O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado "[denominação da propriedade]", situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, devidamente registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
 
-Cláusula 2ª – Do Preço e Forma de Pagamento
-O preço certo e ajustado da venda é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará da seguinte forma:
+CLÁUSULA SEGUNDA - DO PREÇO E DA FORMA DE PAGAMENTO
+2.1. O preço certo e ajustado pela presente transação é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará da seguinte forma:
 a) [condicao_pagamento];
 b) [detalhes_pagamento].
 
-Cláusula 3ª – Da Imissão na Posse
-A posse será transmitida ao COMPRADOR na data de [data_posse], desde que cumpridas as condições de pagamento previstas. A partir desta data, o imóvel poderá ser utilizado para exploração rural, respeitadas as normas ambientais e fundiárias.
+CLÁUSULA TERCEIRA - DA POSSE
+3.1. A posse precária do imóvel será transmitida ao COMPRADOR na data de [data_posse], momento a partir do qual poderá nele ingressar e iniciar as atividades pretendidas, desde que cumpridas as condições de pagamento previstas.
+3.2. A posse definitiva será transmitida com a outorga da Escritura Pública Definitiva de Compra e Venda.
 
-Cláusula 4ª – Das Obrigações do Vendedor
-O VENDEDOR declara e garante que:
-a) o imóvel encontra-se livre e desembaraçado de quaisquer ônus, gravames, hipotecas, arrendamentos, servidões ou litígios;
-b) está quite com o pagamento do ITR (Imposto Territorial Rural), CCIR (Certificado de Cadastro de Imóvel Rural) e demais obrigações fiscais até a data da assinatura;
-c) possui inscrição no CAR (Cadastro Ambiental Rural), a qual será transferida ao COMPRADOR juntamente com a posse do imóvel;
-d) não há passivos ambientais, embargos ou restrições legais incidentes sobre a propriedade.
+CLÁUSULA QUARTA - DAS OBRIGAÇÕES
+4.1. Compete ao VENDEDOR:
+a) Entregar o imóvel livre e desembaraçado de quaisquer ônus, dívidas, hipotecas, arrendamentos ou litígios;
+b) Apresentar as certidões negativas de praxe e o comprovante de quitação do ITR e CCIR até a data da outorga da escritura;
+c) Responder pela evicção de direito.
 
-Cláusula 5ª – Das Obrigações do Comprador
-O COMPRADOR compromete-se a:
-a) efetuar o pagamento integral do preço ajustado nas condições pactuadas;
-b) arcar com despesas de escritura, ITBI, registro e demais custos cartorários;
-c) providenciar, após a lavratura da escritura, a atualização cadastral do imóvel junto ao INCRA, Receita Federal e demais órgãos competentes;
-d) manter a exploração do imóvel em conformidade com a legislação agrária e ambiental.
+4.2. Compete ao COMPRADOR:
+a) Efetuar o pagamento do preço nas condições pactuadas;
+b) Arcar com todas as despesas decorrentes da transmissão da propriedade, tais como ITBI, escritura, emolumentos cartorários e registro.
 
-Cláusula 6ª – Da Escritura Definitiva
-Cumpridas as obrigações contratuais, as partes comparecerão ao Cartório de Notas competente para a lavratura da escritura pública de compra e venda e posterior registro no Cartório de Registro de Imóveis.
+CLÁUSULA QUINTA - DA ESCRITURA DEFINITIVA
+5.1. Cumpridas todas as obrigações contratuais, em especial o pagamento integral do preço, o VENDEDOR se obriga a outorgar ao COMPRADOR a competente Escritura Pública Definitiva de Compra e Venda no prazo de 30 (trinta) dias.
 
-Cláusula 7ª – Da Responsabilidade Ambiental
-As partes reconhecem que o imóvel possui [detalhes_area_ambiental], conforme registro no CAR.
-O VENDEDOR declara que até a presente data não incorreu em infrações ambientais.
-O COMPRADOR assume a responsabilidade de preservar e respeitar as áreas de reserva legal e APP, nos termos do Código Florestal (Lei nº 12.651/2012).
+CLÁUSULA SEXTA - DA RESCISÃO
+6.1. O inadimplemento de qualquer cláusula por qualquer das partes ensejará a rescisão deste contrato, sujeitando a parte inadimplente ao pagamento de multa penal correspondente a [percentual_multa]% do valor total da transação, sem prejuízo da apuração de perdas e danos.
 
-Cláusula 8ª – Da Rescisão e Multa
-O inadimplemento de qualquer das partes ensejará a rescisão contratual, mediante notificação, ficando a parte inadimplente sujeita ao pagamento de multa equivalente a [percentual_multa]% do valor do contrato, além de perdas e danos.
+CLÁUSULA SÉTIMA - DOS CUSTOS DA PLATAFORMA
+7.1. Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), totalizando R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR]% pelo VENDEDOR e [PERCENTUAL_COMPRADOR]% pelo COMPRADOR.
 
-Cláusula 9ª – Da Legislação e Foro
-O presente contrato será regido pela legislação brasileira. Fica eleito o foro da comarca de [FORO_COMARCA], com renúncia a qualquer outro, para dirimir eventuais controvérsias.
+CLÁUSULA OITAVA - DO FORO
+8.1. Fica eleito o foro da comarca de [FORO_COMARCA], Estado de [PROPRIEDADE_ESTADO], para dirimir quaisquer controvérsias oriundas do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
 
-Cláusula 10ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR]% pelo VENDEDOR e [PERCENTUAL_COMPRADOR]% pelo COMPRADOR.
-
-E por estarem assim justas e contratadas, firmam o presente contrato em [vias_contrato] vias de igual teor e forma, na presença de testemunhas.
+E por estarem assim justas e contratadas, as partes assinam o presente instrumento em [vias_contrato] vias de igual teor e forma, na presença das testemunhas abaixo.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
-VENDEDOR(ES): __________________________________
+
+__________________________________
 [VENDEDOR_NOME]
+(Promitente Vendedor)
 
-COMPRADOR(ES): __________________________________
+
+__________________________________
 [COMPRADOR_NOME]
+(Promissário Comprador)
 
-TESTEMUNHAS:
 
-Nome: _____________________ – CPF: _______________
+Testemunhas:
 
-Nome: _____________________ – CPF: _______________
+1. ___________________________
+   Nome:
+   CPF:
+
+2. ___________________________
+   Nome:
+   CPF:
 `;
 
 const ruralLandLeaseContractTemplate = `CONTRATO DE ARRENDAMENTO RURAL
 
-ARRENDADOR: [ARRENDADOR_NOME], [nacionalidade_arrendador], [estado_civil_arrendador], [profissao_arrendador], portador do RG nº [rg_arrendador] e CPF nº [cpf_arrendador], residente e domiciliado em [endereco_arrendador].
+Pelo presente instrumento particular, as partes:
 
-ARRENDATÁRIO: [ARRENDATARIO_NOME], [nacionalidade_arrendatario], [estado_civil_arrendatario], [profissao_arrendatario], portador do RG nº [rg_arrendatario] e CPF nº [cpf_arrendatario], residente e domiciliado em [endereco_arrendatario].
+ARRENDADOR(A): [ARRENDADOR_NOME], [nacionalidade_arrendador], [estado_civil_arrendador], [profissao_arrendador], portador(a) do RG nº [rg_arrendador] e inscrito(a) no CPF/MF sob o nº [cpf_arrendador], residente e domiciliado(a) em [endereco_arrendador].
 
-IMÓVEL: Área rural situada em [localizacao_completa], registrada sob a matrícula nº [matricula_imovel], do Cartório de Registro de Imóveis da Comarca de [comarca_imovel], com área total de [area_total] hectares.
+ARRENDATÁRIO(A): [ARRENDATARIO_NOME], [nacionalidade_arrendatario], [estado_civil_arrendatario], [profissao_arrendatario], portador(a) do RG nº [rg_arrendatario] e inscrito(a) no CPF/MF sob o nº [cpf_arrendatario], residente e domiciliado(a) em [endereco_arrendatario].
 
-OBJETO: Arrendamento do imóvel rural para fins de [finalidade_arrendamento], com uso autorizado de todas as benfeitorias, instalações e acessões existentes.
+Resolvem celebrar o presente Contrato de Arrendamento Rural, em conformidade com o Estatuto da Terra (Lei nº 4.504/64) e seu Regulamento (Decreto nº 59.566/66), que se regerá pelas seguintes cláusulas e condições:
 
-VALOR: R$ [VALOR_NEGOCIADO].
+CLÁUSULA PRIMEIRA - DO OBJETO
+1.1. O ARRENDADOR, sendo legítimo proprietário do imóvel rural denominado "[NOME_PROPRIEDADE]", situado em [localizacao_completa], registrado sob a matrícula nº [matricula_imovel] do Cartório de Registro de Imóveis da Comarca de [comarca_imovel], com área total de [area_total] hectares, cede em arrendamento ao ARRENDATÁRIO uma área de [AREA_ARRENDADA] hectares para fins de exploração de [finalidade_arrendamento].
 
-DATA: [DATA_CONTRATO].
+CLÁUSULA SEGUNDA - DO PRAZO
+2.1. O presente contrato terá a duração de [prazo_arrendamento] anos, com início em [DATA_INICIO] e término em [DATA_TERMINO].
 
-CLÁUSULAS CONTRATUAIS
+CLÁUSULA TERCEIRA - DO PREÇO E DO PAGAMENTO
+3.1. O valor do arrendamento é fixado em R$ [VALOR_NEGOCIADO] por [PERIODO_PAGAMENTO], a ser pago pelo ARRENDATÁRIO ao ARRENDADOR da seguinte forma: [forma_pagamento_arrendamento], até o dia [dia_pagamento_arrendamento] de cada período correspondente.
 
-Cláusula 1ª – Objeto
-O ARRENDADOR cede ao ARRENDATÁRIO, em caráter temporário e oneroso, o uso e gozo do imóvel rural descrito, para exploração de [finalidade_arrendamento], pelo prazo de [prazo_arrendamento] anos, contados da assinatura deste contrato.
+CLÁUSULA QUARTA - DAS OBRIGAÇÕES DAS PARTES
+4.1. O ARRENDADOR se obriga a:
+a) Garantir ao ARRENDATÁRIO o uso pacífico do imóvel durante o prazo do contrato;
+b) Entregar o imóvel em condições de servir ao uso a que se destina.
 
-Cláusula 2ª – Legitimidade e Situação do Imóvel
-O ARRENDADOR declara ser legítimo proprietário do imóvel, livre e desembaraçado de quaisquer ônus que impeçam o arrendamento, responsabilizando-se pela evicção de direito, se houver.
+4.2. O ARRENDATÁRIO se obriga a:
+a) Utilizar o imóvel de acordo com a finalidade estabelecida, conservando os recursos naturais;
+b) Manter as benfeitorias existentes em bom estado, responsabilizando-se por danos que causar;
+c) Pagar pontualmente o valor do arrendamento;
+d) Restituir o imóvel ao término do contrato, no estado em que o recebeu, salvo desgastes naturais.
 
-Cláusula 3ª – Preço e Forma de Pagamento
-O preço do arrendamento é de R$ [VALOR_NEGOCIADO], a ser pago pelo ARRENDATÁRIO ao ARRENDADOR da seguinte forma: [forma_pagamento_arrendamento], até o dia [dia_pagamento_arrendamento] de cada mês/período.
+CLÁUSULA QUINTA - DAS BENFEITORIAS
+5.1. As benfeitorias necessárias introduzidas pelo ARRENDATÁRIO serão indenizadas. As úteis e voluptuárias dependerão de prévia autorização por escrito do ARRENDADOR para que possam ser indenizadas.
 
-Cláusula 4ª – Obrigações do ARRENDADOR
-O ARRENDADOR se obriga a:
-a) garantir ao ARRENDATÁRIO o uso pacífico do imóvel durante todo o prazo do contrato;
-b) entregar o imóvel em condições de uso compatíveis com sua finalidade.
+CLÁUSULA SEXTA - DOS CUSTOS DA PLATAFORMA
+6.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor total do contrato), serão suportados pelas partes na seguinte proporção: [PERCENTUAL_ARRENDADOR]% pelo ARRENDADOR e [PERCENTUAL_ARRENDATARIO]% pelo ARRENDATÁRIO.
 
-Cláusula 5ª – Obrigações do ARRENDATÁRIO
-O ARRENDATÁRIO se compromete a:
-a) utilizar o imóvel de acordo com a finalidade estabelecida neste contrato;
-b) conservar as benfeitorias existentes, responsabilizando-se por danos que der causa;
-c) pagar pontualmente o valor do arrendamento;
-d) restituir o imóvel ao término do contrato, no estado em que recebeu, ressalvado o desgaste natural pelo uso normal.
-
-Cláusula 6ª – Benfeitorias
-As benfeitorias necessárias introduzidas pelo ARRENDATÁRIO serão indenizadas pelo ARRENDADOR. As úteis ou voluptuárias dependerão de prévia autorização por escrito do ARRENDADOR, que poderá ou não indenizá-las ao final do contrato.
-
-Cláusula 7ª – Rescisão
-O contrato poderá ser rescindido por:
-a) inadimplemento de qualquer cláusula contratual;
-b) uso diverso da finalidade ajustada;
-c) descumprimento de normas ambientais ou legais.
-
-Cláusula 8ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total do contrato, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_ARRENDADOR]% pelo ARRENDADOR e [PERCENTUAL_ARRENDATARIO]% pelo ARRENDATÁRIO.
-
-Cláusula 9ª – Foro
-Fica eleito o foro da Comarca de [comarca_imovel], com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir eventuais questões oriundas deste contrato.
+CLÁUSULA SÉTIMA - DO FORO
+7.1. Fica eleito o foro da Comarca de [comarca_imovel] para dirimir quaisquer questões oriundas deste contrato, com renúncia a qualquer outro.
 
 E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma, juntamente com as testemunhas abaixo.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
-ARRENDADOR: ___________________________________________
+
+___________________________________________
 [ARRENDADOR_NOME]
+(Arrendador)
 
-ARRENDATÁRIO: _________________________________________
+
+_________________________________________
 [ARRENDATARIO_NOME]
+(Arrendatário)
 
-TESTEMUNHAS:
 
-Nome: __________________________ CPF: _________________
+Testemunhas:
 
-Nome: __________________________ CPF: _________________
+1. __________________________
+   Nome:
+   CPF:
+
+2. __________________________
+   Nome:
+   CPF:
 `;
 
-const ruralLandPermutaContractTemplate = `CONTRATO DE PERMUTA
+const ruralLandPermutaContractTemplate = `INSTRUMENTO PARTICULAR DE CONTRATO DE PERMUTA
 
-PERMUTANTE 1: [PERMUTANTE1_NOME], [nacionalidade1], [estado_civil1], [profissao1], portador do RG nº [rg1] e CPF/CNPJ nº [cpf_cnpj1], residente e domiciliado/sediado em [endereco1].
+Pelo presente instrumento particular, as partes:
 
-PERMUTANTE 2: [PERMUTANTE2_NOME], [nacionalidade2], [estado_civil2], [profissao2], portador do RG nº [rg2] e CPF/CNPJ nº [cpf_cnpj2], residente e domiciliado/sediado em [endereco2].
+PERMUTANTE 1: [PERMUTANTE1_NOME], [nacionalidade1], [estado_civil1], [profissao1], portador(a) do RG nº [rg1] e inscrito(a) no CPF/CNPJ sob o nº [cpf_cnpj1], residente e domiciliado(a)/sediado(a) em [endereco1].
 
-OBJETO: Permuta de [descrever bens, serviços, créditos ou ativos permutados], conforme detalhamento abaixo.
+PERMUTANTE 2: [PERMUTANTE2_NOME], [nacionalidade2], [estado_civil2], [profissao2], portador(a) do RG nº [rg2] e inscrito(a) no CPF/CNPJ sob o nº [cpf_cnpj2], residente e domiciliado(a)/sediado(a) em [endereco2].
 
-DATA: [DATA_CONTRATO].
+Resolvem celebrar o presente Contrato de Permuta, que se regerá pelas cláusulas e condições a seguir.
 
-CLÁUSULAS CONTRATUAIS
+CLÁUSULA PRIMEIRA – DO OBJETO
+1.1. As partes acordam em realizar a permuta (troca) dos seguintes bens/ativos:
+a) O PERMUTANTE 1 entrega ao PERMUTANTE 2: [ENTREGA1].
+b) O PERMUTANTE 2 entrega ao PERMUTANTE 1: [ENTREGA2].
 
-Cláusula 1ª – Do Objeto
-As partes acima qualificadas acordam em realizar a permuta, mediante a troca dos seguintes bens/ativos/serviços:
+CLÁUSULA SEGUNDA – DA AVALIAÇÃO E DA TORNA
+2.1. As partes declaram que os bens/ativos permutados são de valor equivalente, conforme avaliação mútua, não havendo, portanto, saldo a pagar (torna) em dinheiro.
+2.2. (Opcional) Caso haja diferença de valor, a parte que receber o bem de maior valor pagará à outra, a título de torna, a quantia de R$ [VALOR_TORNA], a ser paga em até [PRAZO_TORNA] dias da assinatura deste instrumento.
 
-PERMUTANTE 1 entrega: [ENTREGA1].
+CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES
+3.1. Os PERMUTANTES obrigam-se a entregar os respectivos bens/ativos descritos na Cláusula Primeira, livres e desembaraçados de quaisquer ônus, no prazo de [PRAZO_ENTREGA] dias, contados da assinatura deste contrato.
+3.2. Cada parte arcará com as despesas de transferência e registro do bem que receber.
 
-PERMUTANTE 2 entrega: [ENTREGA2].
+CLÁUSULA QUARTA - DOS CUSTOS DA PLATAFORMA
+4.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor de referência da transação), serão suportados na proporção de [PERCENTUAL_PERMUTANTE1]% pelo PERMUTANTE 1 e [PERCENTUAL_PERMUTANTE2]% pelo PERMUTANTE 2.
 
-Cláusula 2ª – Da Equivalência e Avaliação
-As partes reconhecem que os bens/serviços/ativos objeto da permuta são de valor equivalente, ajustado em comum acordo, não havendo saldo a pagar em dinheiro, salvo disposição expressa em cláusula complementar.
+CLÁUSULA QUINTA – DO FORO
+5.1. Fica eleito o foro da Comarca de [FORO_COMARCA] para dirimir quaisquer controvérsias oriundas deste contrato, com renúncia a qualquer outro.
 
-Cláusula 3ª – Da Eventual Torna
-Caso se apure diferença de valores entre os bens/serviços permutados, a parte que recebeu maior vantagem compensará a outra mediante pagamento em espécie de R$ [VALOR_TORNA], no prazo de [PRAZO_TORNA] dias, após assinatura do presente contrato.
-
-Cláusula 4ª – Das Obrigações do PERMUTANTE 1
-O PERMUTANTE 1 se obriga a entregar ao PERMUTANTE 2 os bens/serviços/ativos descritos na Cláusula 1, livres de quaisquer ônus, no prazo de [PRAZO_ENTREGA1] dias, contados da assinatura deste contrato.
-
-Cláusula 5ª – Das Obrigações do PERMUTANTE 2
-O PERMUTANTE 2 se obriga a entregar ao PERMUTANTE 1 os bens/serviços/ativos descritos na Cláusula 1, livres de quaisquer ônus, no prazo de [PRAZO_ENTREGA2] dias, contados da assinatura deste contrato.
-
-Cláusula 6ª – Da Garantia e Responsabilidade
-As partes declaram que possuem plena titularidade sobre os bens/serviços/ativos permutados, respondendo pela evicção de direito e por eventuais vícios ou defeitos ocultos que venham a prejudicar a outra parte.
-
-Cláusula 7ª – Da Rescisão
-O presente contrato poderá ser rescindido por descumprimento de quaisquer de suas cláusulas, assegurado à parte inocente o direito de exigir perdas e danos, caso cabíveis.
-
-Cláusula 8ª – Dos Custos da Plataforma
-Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento) do valor total da permuta, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_PERMUTANTE1]% pelo PERMUTANTE 1 e [PERCENTUAL_PERMUTANTE2]% pelo PERMUTANTE 2.
-
-Cláusula 9ª – Do Foro
-Fica eleito o foro da Comarca de [FORO_COMARCA], com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir quaisquer dúvidas oriundas deste contrato.
-
-E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma, juntamente com as testemunhas abaixo.
+E por estarem justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma, na presença de testemunhas.
 
 [LOCAL_ASSINATURA], [DATA_EXTENSO].
 
-PERMUTANTE 1: ___________________________________________
+
+___________________________________________
 [PERMUTANTE1_NOME]
+(Permutante 1)
 
-PERMUTANTE 2: ___________________________________________
+
+___________________________________________
 [PERMUTANTE2_NOME]
+(Permutante 2)
 
-TESTEMUNHAS:
 
-Nome: __________________________ CPF: _________________
+Testemunhas:
 
-Nome: __________________________ CPF: _________________
+1. __________________________
+   Nome:
+   CPF:
+
+2. __________________________
+   Nome:
+   CPF:
 `;
 
 
@@ -407,7 +409,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       condicao_pagamento: 'À vista, mediante transferência bancária (TED ou PIX).',
       detalhes_pagamento: 'O pagamento será realizado em conta de titularidade do VENDEDOR, informada na plataforma.',
       data_posse: 'data da assinatura deste instrumento',
-      detalhes_area_ambiental: '[___ hectares de área de reserva legal / APP / área produtiva]',
       percentual_multa: '10',
       vias_contrato: '2 (duas)'
   });
@@ -430,6 +431,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       prazo_arrendamento: '5',
       forma_pagamento_arrendamento: 'Anual',
       dia_pagamento_arrendamento: '10',
+      data_inicio: new Date().toLocaleDateString('pt-BR'),
+      data_termino: new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('pt-BR'),
+      area_arrendada: 'sizeHa' in asset ? asset.sizeHa.toString() : '0',
   });
   
   const [permutaContractFields, setPermutaContractFields] = React.useState({
@@ -441,7 +445,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     cpf_cnpj1: '',
     endereco1: '',
     entrega1: `Imóvel Rural: ${asset.id}`,
-    prazo_entrega1: '15',
     // Permutante 2 (Comprador)
     permutante2_nome: 'PERMUTANTE 2 EXEMPLO',
     nacionalidade2: 'Brasileira',
@@ -451,11 +454,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     cpf_cnpj2: '22.222.222/0001-22',
     endereco2: 'Av. Teste, 789',
     entrega2: 'Imóvel Urbano, Matrícula 98765, situado em São Paulo, SP.',
-    prazo_entrega2: '15',
     // Cláusulas
-    objeto_permuta: 'Imóvel Rural por Imóvel Urbano',
     valor_torna: '0',
     prazo_torna: '0',
+    prazo_entrega: '15',
     foro_comarca: 'São Paulo, SP'
   });
 
@@ -521,7 +523,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const getFinalContractText = () => {
     const currentTemplate = getContractTemplate();
     const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('pt-BR');
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
      if (currentTemplate === ruralLandPermutaContractTemplate && 'title' in asset) {
@@ -543,14 +544,11 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         .replace(/\[rg2\]/g, permutaContractFields.rg2 || '[]')
         .replace(/\[cpf_cnpj2\]/g, permutaContractFields.cpf_cnpj2 || '[]')
         .replace(/\[endereco2\]/g, permutaContractFields.endereco2 || '[...]')
-        .replace(/\[descrever bens, serviços, créditos ou ativos permutados\]/g, permutaContractFields.objeto_permuta || '[...]')
-        .replace(/\[DATA_CONTRATO\]/g, formattedDate)
         .replace(/\[ENTREGA1\]/g, permutaContractFields.entrega1)
         .replace(/\[ENTREGA2\]/g, permutaContractFields.entrega2)
         .replace(/\[VALOR_TORNA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(permutaContractFields.valor_torna)))
         .replace(/\[PRAZO_TORNA\]/g, permutaContractFields.prazo_torna)
-        .replace(/\[PRAZO_ENTREGA1\]/g, permutaContractFields.prazo_entrega1)
-        .replace(/\[PRAZO_ENTREGA2\]/g, permutaContractFields.prazo_entrega2)
+        .replace(/\[PRAZO_ENTREGA\]/g, permutaContractFields.prazo_entrega)
         .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         .replace(/\[PERCENTUAL_PERMUTANTE1\]/g, getCostSplitPercentages().seller)
         .replace(/\[PERCENTUAL_PERMUTANTE2\]/g, getCostSplitPercentages().buyer)
@@ -582,12 +580,16 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
           .replace(/\[matricula_imovel\]/g, land.registration)
           .replace(/\[comarca_imovel\]/g, municipio || '[...]')
           .replace(/\[area_total\]/g, land.sizeHa.toLocaleString('pt-BR'))
+          .replace(/\[AREA_ARRENDADA\]/g, leaseContractFields.area_arrendada)
+          .replace(/\[NOME_PROPRIEDADE\]/g, land.title)
+          .replace(/\[DATA_INICIO\]/g, leaseContractFields.data_inicio)
+          .replace(/\[DATA_TERMINO\]/g, leaseContractFields.data_termino)
+          .replace(/\[PERIODO_PAGAMENTO\]/g, leaseContractFields.forma_pagamento_arrendamento.toLowerCase())
           .replace(/\[finalidade_arrendamento\]/g, leaseContractFields.finalidade_arrendamento || '[...]')
           .replace(/\[prazo_arrendamento\]/g, leaseContractFields.prazo_arrendamento || '[...]')
           .replace(/\[forma_pagamento_arrendamento\]/g, leaseContractFields.forma_pagamento_arrendamento || '[...]')
           .replace(/\[dia_pagamento_arrendamento\]/g, leaseContractFields.dia_pagamento_arrendamento || '[...]')
           .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-          .replace(/\[DATA_CONTRATO\]/g, formattedDate)
           .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
           .replace(/\[PERCENTUAL_ARRENDADOR\]/g, getCostSplitPercentages().seller)
           .replace(/\[PERCENTUAL_ARRENDATARIO\]/g, getCostSplitPercentages().buyer)
@@ -624,7 +626,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             .replace(/\[condicao_pagamento\]/g, saleContractFields.condicao_pagamento || '[]')
             .replace(/\[detalhes_pagamento\]/g, saleContractFields.detalhes_pagamento || '[]')
             .replace(/\[data_posse\]/g, saleContractFields.data_posse || '[]')
-            .replace(/\[detalhes_area_ambiental\]/g, saleContractFields.detalhes_area_ambiental || '[...]')
             .replace(/\[percentual_multa\]/g, saleContractFields.percentual_multa || '[]')
             .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
             .replace(/\[vias_contrato\]/g, saleContractFields.vias_contrato || '[...]')
@@ -638,23 +639,23 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     // Default to Carbon Credit / Other contract
     return carbonCreditContractTemplate
       .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[...]')
-      .replace(/\[ENDERECO DO CEDENTE\]/g, '[...]')
-      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[...]')
-      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[...]')
-      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[...]')
-      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[...]')
-      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[...]')
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[preencher]')
+      .replace(/\[ENDERECO DO CEDENTE\]/g, '[preencher]')
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[preencher]')
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[preencher]')
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[preencher]')
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[preencher]')
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[preencher]')
       .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-      .replace(/\[DATA_CONTRATO\]/g, formattedDate)
       .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : '[plataforma/projeto]')
       .replace(/\[ID_ATIVO\]/g, asset.id)
+      .replace(/\[QUANTIDADE_ATIVO\]/g, 'quantity' in asset ? asset.quantity.toLocaleString('pt-BR') : '[N/A]')
       .replace(/\[VALOR_TOTAL_ATIVO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : 'quantity' in asset && asset.quantity ? asset.quantity * asset.pricePerCredit : negotiatedValue))
       .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-      .replace(/\[PRAZO_PAGAMENTO\]/g, '[...]')
-      .replace(/\[FORMA_PAGAMENTO\]/g, '[...]')
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '[preencher]')
+      .replace(/\[FORMA_PAGAMENTO\]/g, '[preencher]')
       .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade/UF]')
       .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade]')
       .replace(/\[DATA_EXTENSO\]/g, extendedDate);
@@ -682,11 +683,44 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const handleDownloadPdf = () => {
         try {
             const doc = new jsPDF('p', 'pt', 'a4');
-            const margin = 40;
-            const contentWidth = doc.internal.pageSize.getWidth() - margin * 2;
-            const splitText = doc.splitTextToSize(finalContractText, contentWidth);
-            doc.text(splitText, margin, margin);
+            doc.addFont('times', 'normal', 'WinAnsiEncoding');
+            doc.addFont('times', 'bold', 'WinAnsiEncoding');
+            doc.setFont('times', 'normal');
+            doc.setFontSize(12);
+
+            const margin = { top: 60, right: 60, bottom: 60, left: 60 };
+            const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
+            const pageHeight = doc.internal.pageSize.getHeight();
+            let cursorY = margin.top;
+
+            const addPageNumbers = (doc: jsPDF) => {
+                const pageCount = (doc.internal as any).getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.text(
+                        `Página ${i} de ${pageCount}`,
+                        doc.internal.pageSize.getWidth() / 2,
+                        pageHeight - margin.bottom / 2,
+                        { align: 'center' }
+                    );
+                }
+            };
+            
+            const lines = doc.splitTextToSize(finalContractText, contentWidth);
+            
+            lines.forEach((line: string) => {
+                if (cursorY + 12 * 1.5 > pageHeight - margin.bottom) {
+                    doc.addPage();
+                    cursorY = margin.top;
+                }
+                doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: 1.5 });
+                cursorY += 12 * 1.5; // Aproximadamente 1.5 de espaçamento
+            });
+
+            addPageNumbers(doc);
             doc.save('contrato_assinado.pdf');
+
         } catch (error) {
             console.error("Failed to generate PDF", error);
             toast({ title: "Erro ao Gerar PDF", variant: "destructive" });
@@ -748,7 +782,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             <CardTitle>Contrato Definitivo</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm relative">
+                             <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-serif text-sm relative" style={{textAlign: 'justify', lineHeight: '1.5'}}>
                                 {finalContractText}
                                 <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 p-2 rounded-md border border-green-300 text-xs font-semibold">
                                     ✓ Assinado Digitalmente (ICP-Brasil)
@@ -850,16 +884,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
                                 <div className="space-y-4">
-                                    <div className="space-y-1"><Label>Cl. 1: Objeto da Permuta</Label><Input value={permutaContractFields.objeto_permuta} onChange={(e) => handlePermutaFieldChange('objeto_permuta', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 1: O que o Permutante 1 entrega</Label><Textarea value={permutaContractFields.entrega1} onChange={(e) => handlePermutaFieldChange('entrega1', e.target.value)} rows={2} /></div>
-                                    <div className="space-y-1"><Label>Cl. 1: O que o Permutante 2 entrega</Label><Textarea value={permutaContractFields.entrega2} onChange={(e) => handlePermutaFieldChange('entrega2', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1a: O que o Permutante 1 entrega</Label><Textarea value={permutaContractFields.entrega1} onChange={(e) => handlePermutaFieldChange('entrega1', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1b: O que o Permutante 2 entrega</Label><Textarea value={permutaContractFields.entrega2} onChange={(e) => handlePermutaFieldChange('entrega2', e.target.value)} rows={2} /></div>
                                     <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-1"><Label>Cl. 3: Valor da Torna (R$)</Label><Input type="number" value={permutaContractFields.valor_torna} onChange={(e) => handlePermutaFieldChange('valor_torna', e.target.value)} /></div>
-                                      <div className="space-y-1"><Label>Cl. 3: Prazo Torna (dias)</Label><Input type="number" value={permutaContractFields.prazo_torna} onChange={(e) => handlePermutaFieldChange('prazo_torna', e.target.value)} /></div>
-                                      <div className="space-y-1"><Label>Cl. 4: Prazo Entrega Perm. 1 (dias)</Label><Input type="number" value={permutaContractFields.prazo_entrega1} onChange={(e) => handlePermutaFieldChange('prazo_entrega1', e.target.value)} /></div>
-                                      <div className="space-y-1"><Label>Cl. 5: Prazo Entrega Perm. 2 (dias)</Label><Input type="number" value={permutaContractFields.prazo_entrega2} onChange={(e) => handlePermutaFieldChange('prazo_entrega2', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 2.2: Valor da Torna (R$)</Label><Input type="number" value={permutaContractFields.valor_torna} onChange={(e) => handlePermutaFieldChange('valor_torna', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 2.2: Prazo Torna (dias)</Label><Input type="number" value={permutaContractFields.prazo_torna} onChange={(e) => handlePermutaFieldChange('prazo_torna', e.target.value)} /></div>
+                                      <div className="space-y-1"><Label>Cl. 3.1: Prazo de Entrega (dias)</Label><Input type="number" value={permutaContractFields.prazo_entrega} onChange={(e) => handlePermutaFieldChange('prazo_entrega', e.target.value)} /></div>
                                     </div>
-                                    <div className="space-y-1"><Label>Cl. 9: Foro</Label><Input value={permutaContractFields.foro_comarca} onChange={(e) => handlePermutaFieldChange('foro_comarca', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 5.1: Foro</Label><Input value={permutaContractFields.foro_comarca} onChange={(e) => handlePermutaFieldChange('foro_comarca', e.target.value)} /></div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -889,11 +921,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
                                 <div className="space-y-4">
-                                    <div className="space-y-1"><Label>Cl. 2a: Condição de Pagamento</Label><Textarea value={saleContractFields.condicao_pagamento} onChange={(e) => handleSaleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
-                                    <div className="space-y-1"><Label>Cl. 2b: Detalhes Pagamento</Label><Textarea value={saleContractFields.detalhes_pagamento} onChange={(e) => handleSaleContractFieldChange('detalhes_pagamento', e.target.value)} rows={2} /></div>
-                                    <div className="space-y-1"><Label>Cl. 3: Data de Imissão na Posse</Label><Input value={saleContractFields.data_posse} onChange={(e) => handleSaleContractFieldChange('data_posse', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 7: Detalhes Área Ambiental</Label><Input value={saleContractFields.detalhes_area_ambiental} onChange={(e) => handleSaleContractFieldChange('detalhes_area_ambiental', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 8: Multa por Rescisão (%)</Label><Input type="number" max="25" value={saleContractFields.percentual_multa} onChange={(e) => handleSaleContractFieldChange('percentual_multa', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2.1a: Condição de Pagamento</Label><Textarea value={saleContractFields.condicao_pagamento} onChange={(e) => handleSaleContractFieldChange('condicao_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2.1b: Detalhes Pagamento</Label><Textarea value={saleContractFields.detalhes_pagamento} onChange={(e) => handleSaleContractFieldChange('detalhes_pagamento', e.target.value)} rows={2} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3.1: Data de Imissão na Posse</Label><Input value={saleContractFields.data_posse} onChange={(e) => handleSaleContractFieldChange('data_posse', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 6.1: Multa por Rescisão (%)</Label><Input type="number" max="25" value={saleContractFields.percentual_multa} onChange={(e) => handleSaleContractFieldChange('percentual_multa', e.target.value)} /></div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -921,10 +952,11 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 </div>
                                 <h3 className="font-semibold text-md pt-4">Cláusulas do Contrato</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1"><Label>Cl. 1: Finalidade da Exploração</Label><Input value={leaseContractFields.finalidade_arrendamento} onChange={(e) => handleLeaseContractFieldChange('finalidade_arrendamento', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 1: Prazo do Contrato (anos)</Label><Input type="number" value={leaseContractFields.prazo_arrendamento} onChange={(e) => handleLeaseContractFieldChange('prazo_arrendamento', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 3: Forma de Pagamento</Label><Input value={leaseContractFields.forma_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('forma_pagamento_arrendamento', e.target.value)} /></div>
-                                    <div className="space-y-1"><Label>Cl. 3: Dia do Pagamento</Label><Input value={leaseContractFields.dia_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('dia_pagamento_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1.1: Finalidade da Exploração</Label><Input value={leaseContractFields.finalidade_arrendamento} onChange={(e) => handleLeaseContractFieldChange('finalidade_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 1.1: Área Arrendada (Ha)</Label><Input type="number" value={leaseContractFields.area_arrendada} onChange={(e) => handleLeaseContractFieldChange('area_arrendada', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 2.1: Prazo do Contrato (anos)</Label><Input type="number" value={leaseContractFields.prazo_arrendamento} onChange={(e) => handleLeaseContractFieldChange('prazo_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3.1: Forma de Pagamento</Label><Input value={leaseContractFields.forma_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('forma_pagamento_arrendamento', e.target.value)} /></div>
+                                    <div className="space-y-1"><Label>Cl. 3.1: Dia do Pagamento</Label><Input value={leaseContractFields.dia_pagamento_arrendamento} onChange={(e) => handleLeaseContractFieldChange('dia_pagamento_arrendamento', e.target.value)} /></div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -1002,7 +1034,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             <CardTitle>Pré-visualização do Contrato</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[70vh] overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm">
+                            <div className="h-[70vh] overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-serif text-sm" style={{textAlign: 'justify', lineHeight: '1.5'}}>
                                 {finalContractText}
                             </div>
                         </CardContent>
@@ -1043,7 +1075,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     <CardDescription>Este é o contrato final assinado digitalmente via ICP-Brasil.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm relative">
+                    <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-serif text-sm relative" style={{textAlign: 'justify', lineHeight: '1.5'}}>
                         {finalContractText}
                         <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 p-2 rounded-md border border-green-300 text-xs font-semibold">
                             ✓ Assinado Digitalmente (ICP-Brasil)
