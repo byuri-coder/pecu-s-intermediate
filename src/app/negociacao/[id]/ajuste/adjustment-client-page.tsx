@@ -87,7 +87,7 @@ const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSA DE COMPRA
 
 Pelo presente instrumento particular, as partes:
 
-PROMITENTE VENDEDOR(A): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [rg] e inscrito(a) no CPF/MF sob o nº [cpf], residente e domiciliado(a) em [endereco completo], doravante denominado simplesmente VENDEDOR.
+PROMITENTE VENDEDOR(A): [VENDEDOR_NOME], [nacionalidade], [estado civil], [profissao], portador(a) do RG nº [rg] e inscrito(a) no CPF/MF sob o nº [cpf], residente e domiciliado(a) em [endereco completo], doravante denominado simplesmente VENDEDOR.
 
 PROMISSÁRIO COMPRADOR(A): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_civil_comprador], [profissao_comprador], portador(a) do RG nº [rg_comprador] e inscrito(a) no CPF/MF sob o nº [cpf_comprador], residente e domiciliado(a) em [endereco_comprador], doravante denominado simplesmente COMPRADOR.
 
@@ -531,19 +531,19 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
       return ruralLandPermutaContractTemplate
         .replace(/\[PERMUTANTE1_NOME\]/g, land.owner)
-        .replace(/\[nacionalidade1\]/g, permutaContractFields.nacionalidade1 || '[...]')
-        .replace(/\[estado_civil1\]/g, permutaContractFields.estado_civil1 || '[...]')
-        .replace(/\[profissao1\]/g, permutaContractFields.profissao1 || '[...]')
-        .replace(/\[rg1\]/g, permutaContractFields.rg1 || '[]')
-        .replace(/\[cpf_cnpj1\]/g, permutaContractFields.cpf_cnpj1 || '[]')
-        .replace(/\[endereco1\]/g, permutaContractFields.endereco1 || '[...]')
-        .replace(/\[PERMUTANTE2_NOME\]/g, permutaContractFields.permutante2_nome || '[...]')
-        .replace(/\[nacionalidade2\]/g, permutaContractFields.nacionalidade2 || '[...]')
-        .replace(/\[estado_civil2\]/g, permutaContractFields.estado_civil2 || '[...]')
-        .replace(/\[profissao2\]/g, permutaContractFields.profissao2 || '[...]')
-        .replace(/\[rg2\]/g, permutaContractFields.rg2 || '[]')
-        .replace(/\[cpf_cnpj2\]/g, permutaContractFields.cpf_cnpj2 || '[]')
-        .replace(/\[endereco2\]/g, permutaContractFields.endereco2 || '[...]')
+        .replace(/\[nacionalidade1\]/g, permutaContractFields.nacionalidade1 || '[..]')
+        .replace(/\[estado_civil1\]/g, permutaContractFields.estado_civil1 || '[..]')
+        .replace(/\[profissao1\]/g, permutaContractFields.profissao1 || '[..]')
+        .replace(/\[rg1\]/g, permutaContractFields.rg1 || '[..]')
+        .replace(/\[cpf_cnpj1\]/g, permutaContractFields.cpf_cnpj1 || '[..]')
+        .replace(/\[endereco1\]/g, permutaContractFields.endereco1 || '[..]')
+        .replace(/\[PERMUTANTE2_NOME\]/g, permutaContractFields.permutante2_nome || '[..]')
+        .replace(/\[nacionalidade2\]/g, permutaContractFields.nacionalidade2 || '[..]')
+        .replace(/\[estado_civil2\]/g, permutaContractFields.estado_civil2 || '[..]')
+        .replace(/\[profissao2\]/g, permutaContractFields.profissao2 || '[..]')
+        .replace(/\[rg2\]/g, permutaContractFields.rg2 || '[..]')
+        .replace(/\[cpf_cnpj2\]/g, permutaContractFields.cpf_cnpj2 || '[..]')
+        .replace(/\[endereco2\]/g, permutaContractFields.endereco2 || '[..]')
         .replace(/\[ENTREGA1\]/g, permutaContractFields.entrega1)
         .replace(/\[ENTREGA2\]/g, permutaContractFields.entrega2)
         .replace(/\[VALOR_TORNA\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(permutaContractFields.valor_torna)))
@@ -552,7 +552,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
         .replace(/\[PERCENTUAL_PERMUTANTE1\]/g, getCostSplitPercentages().seller)
         .replace(/\[PERCENTUAL_PERMUTANTE2\]/g, getCostSplitPercentages().buyer)
-        .replace(/\[FORO_COMARCA\]/g, permutaContractFields.foro_comarca || '[...]')
+        .replace(/\[FORO_COMARCA\]/g, permutaContractFields.foro_comarca || '[..]')
         .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
         .replace(/\[DATA_EXTENSO\]/g, extendedDate);
     }
@@ -563,32 +563,32 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       
       return ruralLandLeaseContractTemplate
           .replace(/\[ARRENDADOR_NOME\]/g, land.owner)
-          .replace(/\[nacionalidade_arrendador\]/g, leaseContractFields.nacionalidade_arrendador || '[...]')
-          .replace(/\[estado_civil_arrendador\]/g, leaseContractFields.estado_civil_arrendador || '[...]')
-          .replace(/\[profissao_arrendador\]/g, leaseContractFields.profissao_arrendador || '[...]')
-          .replace(/\[rg_arrendador\]/g, leaseContractFields.rg_arrendador || '[]')
-          .replace(/\[cpf_arrendador\]/g, leaseContractFields.cpf_arrendador || '[]')
-          .replace(/\[endereco_arrendador\]/g, leaseContractFields.endereco_arrendador || '[...]')
-          .replace(/\[ARRENDATARIO_NOME\]/g, leaseContractFields.arrendatario_nome || '[...]')
-          .replace(/\[nacionalidade_arrendatario\]/g, leaseContractFields.nacionalidade_arrendatario || '[...]')
-          .replace(/\[estado_civil_arrendatario\]/g, leaseContractFields.estado_civil_arrendatario || '[...]')
-          .replace(/\[profissao_arrendatario\]/g, leaseContractFields.profissao_arrendatario || '[...]')
-          .replace(/\[rg_arrendatario\]/g, leaseContractFields.rg_arrendatario || '[]')
-          .replace(/\[cpf_arrendatario\]/g, leaseContractFields.cpf_arrendatario || '[]')
-          .replace(/\[endereco_arrendatario\]/g, leaseContractFields.endereco_arrendatario || '[...]')
+          .replace(/\[nacionalidade_arrendador\]/g, leaseContractFields.nacionalidade_arrendador || '[..]')
+          .replace(/\[estado_civil_arrendador\]/g, leaseContractFields.estado_civil_arrendador || '[..]')
+          .replace(/\[profissao_arrendador\]/g, leaseContractFields.profissao_arrendador || '[..]')
+          .replace(/\[rg_arrendador\]/g, leaseContractFields.rg_arrendador || '[..]')
+          .replace(/\[cpf_arrendador\]/g, leaseContractFields.cpf_arrendador || '[..]')
+          .replace(/\[endereco_arrendador\]/g, leaseContractFields.endereco_arrendador || '[..]')
+          .replace(/\[ARRENDATARIO_NOME\]/g, leaseContractFields.arrendatario_nome || '[..]')
+          .replace(/\[nacionalidade_arrendatario\]/g, leaseContractFields.nacionalidade_arrendatario || '[..]')
+          .replace(/\[estado_civil_arrendatario\]/g, leaseContractFields.estado_civil_arrendatario || '[..]')
+          .replace(/\[profissao_arrendatario\]/g, leaseContractFields.profissao_arrendatario || '[..]')
+          .replace(/\[rg_arrendatario\]/g, leaseContractFields.rg_arrendatario || '[..]')
+          .replace(/\[cpf_arrendatario\]/g, leaseContractFields.cpf_arrendatario || '[..]')
+          .replace(/\[endereco_arrendatario\]/g, leaseContractFields.endereco_arrendatario || '[..]')
           .replace(/\[localizacao_completa\]/g, land.location)
           .replace(/\[matricula_imovel\]/g, land.registration)
-          .replace(/\[comarca_imovel\]/g, municipio || '[...]')
+          .replace(/\[comarca_imovel\]/g, municipio || '[..]')
           .replace(/\[area_total\]/g, land.sizeHa.toLocaleString('pt-BR'))
           .replace(/\[AREA_ARRENDADA\]/g, leaseContractFields.area_arrendada)
           .replace(/\[NOME_PROPRIEDADE\]/g, land.title)
           .replace(/\[DATA_INICIO\]/g, leaseContractFields.data_inicio)
           .replace(/\[DATA_TERMINO\]/g, leaseContractFields.data_termino)
           .replace(/\[PERIODO_PAGAMENTO\]/g, leaseContractFields.forma_pagamento_arrendamento.toLowerCase())
-          .replace(/\[finalidade_arrendamento\]/g, leaseContractFields.finalidade_arrendamento || '[...]')
-          .replace(/\[prazo_arrendamento\]/g, leaseContractFields.prazo_arrendamento || '[...]')
-          .replace(/\[forma_pagamento_arrendamento\]/g, leaseContractFields.forma_pagamento_arrendamento || '[...]')
-          .replace(/\[dia_pagamento_arrendamento\]/g, leaseContractFields.dia_pagamento_arrendamento || '[...]')
+          .replace(/\[finalidade_arrendamento\]/g, leaseContractFields.finalidade_arrendamento || '[..]')
+          .replace(/\[prazo_arrendamento\]/g, leaseContractFields.prazo_arrendamento || '[..]')
+          .replace(/\[forma_pagamento_arrendamento\]/g, leaseContractFields.forma_pagamento_arrendamento || '[..]')
+          .replace(/\[dia_pagamento_arrendamento\]/g, leaseContractFields.dia_pagamento_arrendamento || '[..]')
           .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
           .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
           .replace(/\[PERCENTUAL_ARRENDADOR\]/g, getCostSplitPercentages().seller)
@@ -603,32 +603,32 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         
         return ruralLandSaleContractTemplate
             .replace(/\[VENDEDOR_NOME\]/g, land.owner)
-            .replace(/\[nacionalidade\]/g, saleContractFields.nacionalidade || '[...]')
-            .replace(/\[estado civil\]/g, saleContractFields.estado_civil || '[...]')
-            .replace(/\[profissão\]/g, saleContractFields.profissao || '[...]')
-            .replace(/\[rg\]/g, saleContractFields.rg || '[]')
-            .replace(/\[cpf\]/g, saleContractFields.cpf || '[]')
-            .replace(/\[endereco completo\]/g, saleContractFields.endereco_completo || '[...]')
-            .replace(/\[COMPRADOR_NOME\]/g, saleContractFields.comprador_nome || '[...]')
-            .replace(/\[nacionalidade_comprador\]/g, saleContractFields.nacionalidade_comprador || '[...]')
-            .replace(/\[estado_civil_comprador\]/g, saleContractFields.estado_civil_comprador || '[...]')
-            .replace(/\[profissao_comprador\]/g, saleContractFields.profissao_comprador || '[...]')
-            .replace(/\[rg_comprador\]/g, saleContractFields.rg_comprador || '[]')
-            .replace(/\[cpf_comprador\]/g, saleContractFields.cpf_comprador || '[]')
-            .replace(/\[endereco_comprador\]/g, saleContractFields.endereco_comprador || '[...]')
+            .replace(/\[nacionalidade\]/g, saleContractFields.nacionalidade || '[..]')
+            .replace(/\[estado civil\]/g, saleContractFields.estado_civil || '[..]')
+            .replace(/\[profissao\]/g, saleContractFields.profissao || '[..]')
+            .replace(/\[rg\]/g, saleContractFields.rg || '[..]')
+            .replace(/\[cpf\]/g, saleContractFields.cpf || '[..]')
+            .replace(/\[endereco completo\]/g, saleContractFields.endereco_completo || '[..]')
+            .replace(/\[COMPRADOR_NOME\]/g, saleContractFields.comprador_nome || '[..]')
+            .replace(/\[nacionalidade_comprador\]/g, saleContractFields.nacionalidade_comprador || '[..]')
+            .replace(/\[estado_civil_comprador\]/g, saleContractFields.estado_civil_comprador || '[..]')
+            .replace(/\[profissao_comprador\]/g, saleContractFields.profissao_comprador || '[..]')
+            .replace(/\[rg_comprador\]/g, saleContractFields.rg_comprador || '[..]')
+            .replace(/\[cpf_comprador\]/g, saleContractFields.cpf_comprador || '[..]')
+            .replace(/\[endereco_comprador\]/g, saleContractFields.endereco_comprador || '[..]')
             .replace(/\[denominação da propriedade\]/g, land.title)
-            .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || '[]')
-            .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || '[]')
+            .replace(/\[PROPRIEDADE_MUNICIPIO\]/g, municipio || '[..]')
+            .replace(/\[PROPRIEDADE_ESTADO\]/g, estado || '[..]')
             .replace(/\[PROPRIEDADE_AREA\]/g, land.sizeHa.toLocaleString('pt-BR'))
-            .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || '[]')
+            .replace(/\[PROPRIEDADE_COMARCA\]/g, municipio || '[..]')
             .replace(/\[PROPRIEDADE_MATRICULA\]/g, land.registration)
             .replace(/\[VALOR_NEGOCIADO_NUM\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
-            .replace(/\[condicao_pagamento\]/g, saleContractFields.condicao_pagamento || '[]')
-            .replace(/\[detalhes_pagamento\]/g, saleContractFields.detalhes_pagamento || '[]')
-            .replace(/\[data_posse\]/g, saleContractFields.data_posse || '[]')
-            .replace(/\[percentual_multa\]/g, saleContractFields.percentual_multa || '[]')
-            .replace(/\[FORO_COMARCA\]/g, municipio || '[]')
-            .replace(/\[vias_contrato\]/g, saleContractFields.vias_contrato || '[...]')
+            .replace(/\[condicao_pagamento\]/g, saleContractFields.condicao_pagamento || '[..]')
+            .replace(/\[detalhes_pagamento\]/g, saleContractFields.detalhes_pagamento || '[..]')
+            .replace(/\[data_posse\]/g, saleContractFields.data_posse || '[..]')
+            .replace(/\[percentual_multa\]/g, saleContractFields.percentual_multa || '[..]')
+            .replace(/\[FORO_COMARCA\]/g, municipio || '[..]')
+            .replace(/\[vias_contrato\]/g, saleContractFields.vias_contrato || '[..]')
             .replace(/\[LOCAL_ASSINATURA\]/g, municipio || '[Cidade]')
             .replace(/\[DATA_EXTENSO\]/g, extendedDate)
             .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
@@ -639,13 +639,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     // Default to Carbon Credit / Other contract
     return carbonCreditContractTemplate
       .replace(/\[NOME\/RAZÃO SOCIAL DO CEDENTE\]/g, sellerName)
-      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[preencher]')
-      .replace(/\[ENDERECO DO CEDENTE\]/g, '[preencher]')
-      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[preencher]')
-      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[preencher]')
-      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[preencher]')
-      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[preencher]')
-      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[preencher]')
+      .replace(/\[CNPJ\/CPF nº DO CEDENTE\]/g, '[..]')
+      .replace(/\[ENDERECO DO CEDENTE\]/g, '[..]')
+      .replace(/\[REPRESENTANTE DO CEDENTE\]/g, '[..]')
+      .replace(/\[NOME\/RAZÃO SOCIAL DO CESSIONÁRIO\]/g, '[..]')
+      .replace(/\[CNPJ\/CPF nº DO CESSIONÁRIO\]/g, '[..]')
+      .replace(/\[ENDERECO DO CESSIONÁRIO\]/g, '[..]')
+      .replace(/\[REPRESENTANTE DO CESSIONÁRIO\]/g, '[..]')
       .replace(/\[VALOR_NEGOCIADO\]/g, new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue))
       .replace(/\[PLATAFORMA_PROJETO\]/g, 'standard' in asset ? asset.standard : '[plataforma/projeto]')
       .replace(/\[ID_ATIVO\]/g, asset.id)
@@ -654,8 +654,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       .replace(/\[CUSTO_PLATAFORMA_VALOR\]/g, platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
       .replace(/\[PERCENTUAL_CEDENTE\]/g, getCostSplitPercentages().seller)
       .replace(/\[PERCENTUAL_CESSIONARIO\]/g, getCostSplitPercentages().buyer)
-      .replace(/\[PRAZO_PAGAMENTO\]/g, '[preencher]')
-      .replace(/\[FORMA_PAGAMENTO\]/g, '[preencher]')
+      .replace(/\[PRAZO_PAGAMENTO\]/g, '[..]')
+      .replace(/\[FORMA_PAGAMENTO\]/g, '[..]')
       .replace(/\[FORO_COMARCA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade/UF]')
       .replace(/\[LOCAL_ASSINATURA\]/g, 'location' in asset ? asset.location.split(',')[0] : '[Cidade]')
       .replace(/\[DATA_EXTENSO\]/g, extendedDate);
@@ -683,6 +683,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const handleDownloadPdf = () => {
         try {
             const doc = new jsPDF('p', 'pt', 'a4');
+            
             doc.addFont('times', 'normal', 'WinAnsiEncoding');
             doc.addFont('times', 'bold', 'WinAnsiEncoding');
             doc.setFont('times', 'normal');
@@ -730,7 +731,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const handleDownloadDocx = () => {
         const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Contrato</title></head><body>";
         const footer = "</body></html>";
-        const sourceHTML = header + '<pre>' + finalContractText + '</pre>' + footer;
+        const sourceHTML = header + '<pre style="font-family: \'Times New Roman\', Times, serif; font-size: 12pt; text-align: justify; white-space: pre-wrap; line-height: 1.5;">' + finalContractText + '</pre>' + footer;
         
         const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
         const fileDownload = document.createElement("a");
