@@ -17,6 +17,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { getAuth, sendEmailVerification } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -393,29 +395,29 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const platformFeePercentage = 1;
   
   const [genericContractFields, setGenericContractFields] = React.useState({
-    cnpj_cpf_cedente: '[PREENCHER_CNPJ_CPF_CEDENTE]',
-    endereco_cedente: '[PREENCHER_ENDERECO_CEDENTE]',
-    representante_cedente: '[PREENCHER_REPRESENTANTE_CEDENTE]',
-    nome_razao_social_cessionario: '[PREENCHER_NOME_RAZAO_SOCIAL_CESSIONARIO]',
-    cnpj_cpf_cessionario: '[PREENCHER_CNPJ_CPF_CESSIONARIO]',
-    endereco_cessionario: '[PREENCHER_ENDERECO_CESSIONARIO]',
-    representante_cessionario: '[PREENCHER_REPRESENTANTE_CESSIONARIO]',
+    cnpj_cpf_cedente: '11.111.111/0001-11',
+    endereco_cedente: 'Rua do Cedente, 123, Cidade, Estado',
+    representante_cedente: 'Nome Representante Cedente',
+    nome_razao_social_cessionario: 'Empresa Cessionária LTDA',
+    cnpj_cpf_cessionario: '22.222.222/0001-22',
+    endereco_cessionario: 'Avenida do Cessionário, 456, Cidade, Estado',
+    representante_cessionario: 'Nome Representante Cessionário',
     prazo_pagamento: '5',
     forma_pagamento: 'Transferência Bancária (TED/PIX)',
   });
 
   const [saleContractFields, setSaleContractFields] = React.useState({
-      nacionalidade: '[PREENCHER]',
-      estado_civil: '[PREENCHER]',
-      profissao: '[PREENCHER]',
-      rg: '[PREENCHER]',
-      cpf: '[PREENCHER]',
-      endereco_completo: '[PREENCHER]',
+      nacionalidade: '',
+      estado_civil: '',
+      profissao: '',
+      rg: '',
+      cpf: '',
+      endereco_completo: '',
       comprador_nome: 'COMPRADOR EXEMPLO S.A.',
       nacionalidade_comprador: 'Brasileira',
       estado_civil_comprador: '',
       profissao_comprador: 'Empresa',
-      rg_comprador: '[PREENCHER]',
+      rg_comprador: '',
       cpf_comprador: '00.000.000/0001-00',
       endereco_comprador: 'Rua Exemplo, 123, São Paulo - SP',
       condicao_pagamento: 'À vista, mediante transferência bancária (TED ou PIX).',
@@ -426,17 +428,17 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   });
 
   const [leaseContractFields, setLeaseContractFields] = React.useState({
-      nacionalidade_arrendador: '[PREENCHER]',
-      estado_civil_arrendador: '[PREENCHER]',
-      profissao_arrendador: '[PREENCHER]',
-      rg_arrendador: '[PREENCHER]',
-      cpf_arrendador: '[PREENCHER]',
-      endereco_arrendador: '[PREENCHER]',
+      nacionalidade_arrendador: '',
+      estado_civil_arrendador: '',
+      profissao_arrendador: '',
+      rg_arrendador: '',
+      cpf_arrendador: '',
+      endereco_arrendador: '',
       arrendatario_nome: 'ARRENDATÁRIO EXEMPLO LTDA',
       nacionalidade_arrendatario: 'Brasileira',
       estado_civil_arrendatario: '',
       profissao_arrendatario: 'Empresa',
-      rg_arrendatario: '[PREENCHER]',
+      rg_arrendatario: '',
       cpf_arrendatario: '11.111.111/0001-11',
       endereco_arrendatario: 'Avenida Exemplo, 456, Belo Horizonte - MG',
       finalidade_arrendamento: 'Pecuária',
@@ -449,18 +451,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   });
   
   const [permutaContractFields, setPermutaContractFields] = React.useState({
-    nacionalidade1: '[PREENCHER]',
-    estado_civil1: '[PREENCHER]',
-    profissao1: '[PREENCHER]',
-    rg1: '[PREENCHER]',
-    cpf_cnpj1: '[PREENCHER]',
-    endereco1: '[PREENCHER]',
+    nacionalidade1: '',
+    estado_civil1: '',
+    profissao1: '',
+    rg1: '',
+    cpf_cnpj1: '',
+    endereco1: '',
     entrega1: `Imóvel Rural: ${asset.id}`,
     permutante2_nome: 'PERMUTANTE 2 EXEMPLO',
     nacionalidade2: 'Brasileira',
     estado_civil2: '',
     profissao2: 'Investidor',
-    rg2: '[PREENCHER]',
+    rg2: '',
     cpf_cnpj2: '22.222.222/0001-22',
     endereco2: 'Av. Teste, 789, Curitiba - PR',
     entrega2: 'Imóvel Urbano, Matrícula 98765, situado em São Paulo, SP.',
@@ -521,7 +523,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
      let text = contractTemplate;
 
-     const replacements: { [key: string]: string } = {
+     const replacements: { [key: string]: string | undefined } = {
         'VALOR_NEGOCIADO_NUM': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue),
         'VALOR_NEGOCIADO': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue),
         'CUSTO_PLATAFORMA_VALOR': platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -567,13 +569,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             'ID_ATIVO': asset.id,
             'QUANTIDADE_ATIVO': 'quantity' in asset ? asset.quantity.toLocaleString('pt-BR') : 'N/A',
             'VALOR_TOTAL_ATIVO': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : ('quantity' in asset && 'pricePerCredit' in asset) ? asset.quantity * asset.pricePerCredit : negotiatedValue),
-            'FORO_COMARCA': 'location' in asset ? asset.location.split(',')[0] : '[PREENCHER]',
-            'LOCAL_ASSINATURA': 'location' in asset ? asset.location.split(',')[0] : '[PREENCHER]',
+            'FORO_COMARCA': 'location' in asset ? asset.location.split(',')[0] : '[]',
+            'LOCAL_ASSINATURA': 'location' in asset ? asset.location.split(',')[0] : '[]',
         });
     }
     
     for (const [key, value] of Object.entries(replacements)) {
-        text = text.replace(new RegExp(`\\[${key}\\]`, 'g'), value || `[${key}]`);
+        text = text.replace(new RegExp(`\\[${key}\\]`, 'g'), value || `[]`);
     }
 
     return text;
@@ -581,14 +583,49 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const finalContractText = getFinalContractText();
 
-    const handleFinalize = () => {
+  const handleFinalize = async () => {
+    const auth = getAuth(app);
+    const user = auth.currentUser;
+
+    if (!user) {
         toast({
-            title: "Contrato Finalizado!",
-            description: "O contrato foi assinado e a negociação concluída.",
+            title: "Erro de Autenticação",
+            description: "Você precisa estar logado para finalizar o contrato.",
+            variant: "destructive",
         });
-        setFinalized(true);
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        return;
     }
+
+    // Recarrega o estado do usuário para garantir que 'emailVerified' esteja atualizado
+    await user.reload();
+
+    if (!user.emailVerified) {
+        try {
+            await sendEmailVerification(user);
+            toast({
+                title: "Verificação de E-mail Necessária",
+                description: "Enviamos um e-mail de verificação para você. Por favor, confirme seu e-mail e tente novamente.",
+                duration: 10000,
+            });
+        } catch (error) {
+            console.error("Erro ao enviar verificação de e-mail:", error);
+            toast({
+                title: "Erro",
+                description: "Não foi possível enviar o e-mail de verificação. Tente novamente mais tarde.",
+                variant: "destructive",
+            });
+        }
+        return;
+    }
+
+    // Se o e-mail já está verificado, procede com a finalização
+    toast({
+        title: "Contrato Finalizado!",
+        description: "O contrato foi assinado e a negociação concluída.",
+    });
+    setFinalized(true);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
     
     const copyToClipboard = (text: string, fieldName: string) => {
         navigator.clipboard.writeText(text);
