@@ -125,7 +125,7 @@ export default function InvoicesPage() {
         agency: process.env.PAYMENT_AGENCY,
         account: process.env.PAYMENT_ACCOUNT,
         pixKey: process.env.PAYMENT_PIX_KEY,
-        holder: "PECU'S INTERMEDIATE",
+        holder: process.env.PAYMENT_HOLDER,
         cnpj: process.env.PAYMENT_CNPJ
     };
     
@@ -263,7 +263,7 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> PECU'S INTERMEDIATE</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
                             <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
