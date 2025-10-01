@@ -258,28 +258,5 @@ export const placeholderPetitions: Petition[] = [
 ];
 
 export const placeholderInvoices: Invoice[] = [
-  {
-    id: 'FAT-001',
-    transactionId: 'op-001',
-    description: 'Taxa de serviço - Venda de 1.000 créditos (proj-amazon-reforestation)',
-    dueDate: '2024-06-15',
-    value: 155.00,
-    status: 'Paga',
-  },
-  {
-    id: 'FAT-002',
-    transactionId: 'op-002',
-    description: 'Taxa de serviço - Aquisição de saldo credor de ICMS (tax-icms-01)',
-    dueDate: '2024-06-22',
-    value: 1455.00,
-    status: 'Pendente',
-  },
-   {
-    id: 'FAT-003',
-    transactionId: 'op-003',
-    description: 'Taxa de serviço - Venda da Fazenda Rio Claro',
-    dueDate: '2024-06-25',
-    value: 50000.00,
-    status: 'Em Análise',
-  },
+  // This data is now generated dynamically and this is just for reference.
 ];

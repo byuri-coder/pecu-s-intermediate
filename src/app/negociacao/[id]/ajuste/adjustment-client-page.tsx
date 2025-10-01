@@ -5,9 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -384,7 +383,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const isArchiveView = searchParams.get('view') === 'archive';
   
-  const [costSplit, setCostSplit] = React.useState('50/50');
   const [sellerAgrees, setSellerAgrees] = React.useState(isArchiveView);
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
@@ -397,7 +395,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
   
-  const [docuSealPdf, setDocuSealPdf] = React.useState<string | null>(null);
   
   const [genericContractFields, setGenericContractFields] = React.useState({
     cnpj_cpf_cedente: '11.111.111/0001-11',
@@ -503,15 +500,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     holder: sellerName,
   };
 
-
-  const getCostSplitPercentages = () => {
-    switch (costSplit) {
-      case '50/50': return { seller: '50', buyer: '50' };
-      case 'seller': return { seller: '100', buyer: '0' };
-      case 'buyer': return { seller: '0', buyer: '100' };
-      default: return { seller: '50', buyer: '50' };
-    }
-  };
   
   const getContractTemplateInfo = () => {
     if (assetType === 'rural-land' && 'businessType' in asset) {
@@ -533,14 +521,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
      const replacements: { [key: string]: string | undefined } = {
         'VALOR_NEGOCIADO_NUM': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue),
         'VALOR_NEGOCIADO': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue),
-        'CUSTO_PLATAFORMA_VALOR': platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        'PERCENTUAL_CEDENTE': getCostSplitPercentages().seller,
-        'PERCENTUAL_CESSIONARIO': getCostSplitPercentages().buyer,
-        'PERCENTUAL_VENDEDOR': getCostSplitPercentages().seller,
-        'PERCENTUAL_ARRENDADOR': getCostSplitPercentages().seller,
-        'PERCENTUAL_ARRENDATARIO': getCostSplitPercentages().buyer,
-        'PERCENTUAL_PERMUTANTE1': getCostSplitPercentages().seller,
-        'PERCENTUAL_PERMUTANTE2': getCostSplitPercentages().buyer,
         'DATA_EXTENSO': extendedDate,
         ...genericContractFields
     };
@@ -587,7 +567,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     return text;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asset, contractTemplate, genericContractFields, leaseContractFields, negotiatedValue, permutaContractFields, platformCost, saleContractFields, sellerName]);
+  }, [asset, contractTemplate, genericContractFields, leaseContractFields, negotiatedValue, permutaContractFields, saleContractFields, sellerName]);
 
   const finalContractText = getFinalContractText();
 
@@ -599,55 +579,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     return hashHex;
   }
-
-  const generatePdfForDocuSeal = React.useCallback(async () => {
-    try {
-        const doc = new jsPDF('p', 'pt', 'a4');
-        doc.addFont('times', 'normal', 'WinAnsiEncoding');
-        doc.addFont('times', 'bold', 'WinAnsiEncoding');
-        doc.setFont('times', 'normal');
-        doc.setFontSize(12);
-
-        const margin = { top: 85.05, right: 56.7, bottom: 56.7, left: 85.05 };
-        const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let cursorY = margin.top;
-        const lineHeight = 1.5;
-
-        const addPageNumbers = () => {
-            const pageCount = (doc.internal as any).getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.text(`Página ${i} de ${pageCount}`, pageHeight - margin.bottom, doc.internal.pageSize.getWidth() / 2, { align: 'center' }, 90);
-            }
-        };
-
-        const lines = doc.splitTextToSize(getFinalContractText(), contentWidth);
-        
-        lines.forEach((line: string) => {
-            if (cursorY + (12 * lineHeight) > pageHeight - margin.bottom) {
-                doc.addPage();
-                cursorY = margin.top;
-            }
-
-            if (line.startsWith('CLÁUSULA') || line.startsWith('CONTRATO')) {
-                doc.setFont('times', 'bold');
-            } else {
-                doc.setFont('times', 'normal');
-            }
-
-            doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: lineHeight });
-            cursorY += (12 * lineHeight);
-        });
-
-        addPageNumbers();
-        const pdfOutput = doc.output('datauristring');
-        setDocuSealPdf(pdfOutput);
-    } catch (error) {
-        console.error("Failed to generate PDF for DocuSeal", error);
-        toast({ title: "Erro ao Preparar Contrato", description: "Não foi possível gerar o PDF para assinatura.", variant: "destructive" });
-    }
-  }, [getFinalContractText, toast]);
 
   const handleFinalize = async () => {
     const auth = getAuth(app);
@@ -698,7 +629,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             description: "O contrato foi bloqueado para edições. Prossiga para a assinatura.",
         });
         setFinalized(true);
-        // generatePdfForDocuSeal(); // This line is commented out as DocuSeal is not used
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
     } catch (error) {
@@ -791,12 +721,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const handleFinishTransaction = () => {
         setTransactionComplete(true);
         toast({
-            title: "Transação Finalizada e Salva!",
-            description: "Todos os documentos foram salvos. Você será redirecionado.",
+            title: "Transação Finalizada!",
+            description: "A fatura foi gerada e os documentos salvos. Você será redirecionado.",
         });
         setTimeout(() => {
-            router.push('/dashboard?tab=history');
-        }, 2000);
+            router.push('/faturas');
+        }, 3000);
     }
     
     // RENDER FOR ARCHIVE VIEW
@@ -1125,7 +1055,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     disabled={!buyerProofFile || !sellerProofFile || isTransactionComplete}
                     onClick={handleFinishTransaction}
                 >
-                    {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação'}
+                    {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação e Gerar Fatura'}
                 </Button>
             </div>
         </div>

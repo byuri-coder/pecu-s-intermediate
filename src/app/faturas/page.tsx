@@ -111,83 +111,90 @@ export default function InvoicesPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                <TableHead>Fatura</TableHead>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead>Vencimento</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Valor</TableHead>
-                                <TableHead>
-                                    <span className="sr-only">Ações</span>
-                                </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {invoices.map((invoice) => (
-                                    <TableRow key={invoice.id}>
-                                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                                        <TableCell className="text-muted-foreground">{invoice.description}</TableCell>
-                                        <TableCell>{invoice.dueDate}</TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant={invoice.status === "Paga" ? "secondary" : "default"}
-                                                className={cn(getBadgeClass(invoice.status))}
-                                            >
-                                                {invoice.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                            {new Intl.NumberFormat("pt-BR", {
-                                                style: "currency",
-                                                currency: "BRL",
-                                            }).format(invoice.value)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    {invoice.status === "Pendente" && (
-                                                        <>
-                                                            <DialogTrigger asChild>
-                                                                <DropdownMenuItem onSelect={() => setPaymentDialog(true)}>
-                                                                     <Banknote className="mr-2 h-4 w-4" />
-                                                                    Pagar Plataforma
-                                                                </DropdownMenuItem>
-                                                            </DialogTrigger>
-                                                        </>
-                                                    )}
-                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/negociacao/${invoice.transactionId}/ajuste?view=archive`}>
-                                                            <FileText className="mr-2 h-4 w-4" />
-                                                            <span>Contrato</span>
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        <Download className="mr-2 h-4 w-4" />
-                                                        Baixar PDF da Fatura
-                                                    </DropdownMenuItem>
-                                                    {invoice.status !== 'Paga' && (
-                                                        <>
-                                                        <DropdownMenuSeparator/>
-                                                        <DropdownMenuItem onSelect={() => { setSelectedInvoice(invoice); setUploadDialog(true); }}>
-                                                            <DollarSign className="mr-2 h-4 w-4" />
-                                                            Anexar Comprovante
-                                                        </DropdownMenuItem>
-                                                        </>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                        {invoices.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead>Fatura</TableHead>
+                                    <TableHead>Descrição</TableHead>
+                                    <TableHead>Vencimento</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Valor</TableHead>
+                                    <TableHead>
+                                        <span className="sr-only">Ações</span>
+                                    </TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {invoices.map((invoice) => (
+                                        <TableRow key={invoice.id}>
+                                            <TableCell className="font-medium">{invoice.id}</TableCell>
+                                            <TableCell className="text-muted-foreground">{invoice.description}</TableCell>
+                                            <TableCell>{invoice.dueDate}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={invoice.status === "Paga" ? "secondary" : "default"}
+                                                    className={cn(getBadgeClass(invoice.status))}
+                                                >
+                                                    {invoice.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold">
+                                                {new Intl.NumberFormat("pt-BR", {
+                                                    style: "currency",
+                                                    currency: "BRL",
+                                                }).format(invoice.value)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        {invoice.status === "Pendente" && (
+                                                            <>
+                                                                <DialogTrigger asChild>
+                                                                    <DropdownMenuItem onSelect={() => setPaymentDialog(true)}>
+                                                                        <Banknote className="mr-2 h-4 w-4" />
+                                                                        Pagar Plataforma
+                                                                    </DropdownMenuItem>
+                                                                </DialogTrigger>
+                                                            </>
+                                                        )}
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/negociacao/${invoice.transactionId}/ajuste?view=archive`}>
+                                                                <FileText className="mr-2 h-4 w-4" />
+                                                                <span>Contrato</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem>
+                                                            <Download className="mr-2 h-4 w-4" />
+                                                            Baixar PDF da Fatura
+                                                        </DropdownMenuItem>
+                                                        {invoice.status !== 'Paga' && (
+                                                            <>
+                                                            <DropdownMenuSeparator/>
+                                                            <DropdownMenuItem onSelect={() => { setSelectedInvoice(invoice); setUploadDialog(true); }}>
+                                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                                Anexar Comprovante
+                                                            </DropdownMenuItem>
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">Nenhuma fatura encontrada.</p>
+                                <p className="text-sm text-muted-foreground mt-2">As faturas são geradas automaticamente após a finalização de uma transação.</p>
+                            </div>
+                        )}
                     </CardContent>
                     <CardFooter className="text-sm text-muted-foreground flex justify-center text-center">
                         Atenção: Faturas não pagas até o vencimento estão sujeitas a multa de 2% e juros de mora de 1% a.m. (pro rata die).
