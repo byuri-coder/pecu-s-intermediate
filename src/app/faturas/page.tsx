@@ -68,9 +68,11 @@ export default function InvoicesPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Normalize today's date
 
-        const updatedInvoices = invoices.map(inv => {
-            if (inv.status !== 'Pendente') {
-                return { ...inv, displayValue: inv.value };
+        const updatedInvoices = initialInvoices.map(inv => {
+            const currentStatus = (inv.status || 'Pendente') as InvoiceStatus;
+            
+            if (currentStatus !== 'Pendente') {
+                return { ...inv, displayValue: inv.value, status: currentStatus };
             }
 
             const [day, month, year] = inv.dueDate.split('/').map(Number);
@@ -78,7 +80,7 @@ export default function InvoicesPage() {
             dueDate.setHours(0, 0, 0, 0); // Normalize due date
 
             if (today <= dueDate) {
-                return { ...inv, displayValue: inv.value };
+                return { ...inv, displayValue: inv.value, status: currentStatus };
             }
 
             const timeDiff = today.getTime() - dueDate.getTime();
@@ -88,7 +90,7 @@ export default function InvoicesPage() {
             const interest = inv.value * (0.01 / 30) * daysOverdue; // 1% per month, daily
             const displayValue = inv.value + penalty + interest;
 
-            return { ...inv, displayValue, penalty, interest };
+            return { ...inv, displayValue, penalty, interest, status: currentStatus };
         });
 
         setInvoices(updatedInvoices);
@@ -263,7 +265,7 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> <b>{platformPaymentInfo.holder}</b></CardTitle>
                             <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
