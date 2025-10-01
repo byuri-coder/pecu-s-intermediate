@@ -257,6 +257,37 @@ export const placeholderPetitions: Petition[] = [
   },
 ];
 
-export const placeholderInvoices: Invoice[] = [
-  // This data is now generated dynamically and this is just for reference.
+const yesterday = new Date();
+yesterday.setDate(yesterday.getDate() - 1);
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+const nextMonth = new Date();
+nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+
+export const initialInvoices: Invoice[] = [
+    { 
+        id: 'FAT-001', 
+        transactionId: 'proj-cerrado-conservation',
+        description: 'Taxa de serviço - Venda Crédito Carbono',
+        dueDate: thirtyDaysAgo.toLocaleDateString('pt-BR'),
+        value: 594, // 1.5% de 39600
+        status: 'Pendente'
+    },
+    { 
+        id: 'FAT-002', 
+        transactionId: 'op-002',
+        description: 'Taxa de serviço - Compra Crédito Tributário',
+        dueDate: yesterday.toLocaleDateString('pt-BR'),
+        value: 1455, // 1% de 145500
+        status: 'Pendente'
+    },
+     { 
+        id: 'FAT-003', 
+        transactionId: 'op-004',
+        description: 'Taxa de serviço - Venda Crédito Carbono',
+        dueDate: nextMonth.toLocaleDateString('pt-BR'),
+        value: 1100, // 1% de 110000
+        status: 'Pendente'
+    }
 ];

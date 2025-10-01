@@ -36,7 +36,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { placeholderInvoices } from "@/lib/placeholder-data";
+import { initialInvoices } from "@/lib/placeholder-data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -44,12 +44,49 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
+type InvoiceWithOptionalCharges = (typeof initialInvoices)[0] & {
+    displayValue?: number;
+    penalty?: number;
+    interest?: number;
+};
+
+
 export default function InvoicesPage() {
     const { toast } = useToast();
-    const [invoices, setInvoices] = React.useState(placeholderInvoices);
+    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(initialInvoices);
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<typeof invoices[0] | null>(null);
+
+    React.useEffect(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date
+
+        const updatedInvoices = initialInvoices.map(inv => {
+            if (inv.status !== 'Pendente') {
+                return { ...inv, displayValue: inv.value };
+            }
+
+            const [day, month, year] = inv.dueDate.split('/').map(Number);
+            const dueDate = new Date(year, month - 1, day);
+            dueDate.setHours(0, 0, 0, 0); // Normalize due date
+
+            if (today <= dueDate) {
+                return { ...inv, displayValue: inv.value };
+            }
+
+            const timeDiff = today.getTime() - dueDate.getTime();
+            const daysOverdue = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            const penalty = inv.value * 0.02; // 2% fixed penalty
+            const interest = inv.value * (0.01 / 30) * daysOverdue; // 1% per month, daily
+            const displayValue = inv.value + penalty + interest;
+
+            return { ...inv, displayValue, penalty, interest };
+        });
+
+        setInvoices(updatedInvoices);
+    }, []);
 
 
     const handleUploadConfirmation = () => {
@@ -143,7 +180,7 @@ export default function InvoicesPage() {
                                                 {new Intl.NumberFormat("pt-BR", {
                                                     style: "currency",
                                                     currency: "BRL",
-                                                }).format(invoice.value)}
+                                                }).format(invoice.displayValue || invoice.value)}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
@@ -267,5 +304,3 @@ export default function InvoicesPage() {
 
     
 }
-
-    
