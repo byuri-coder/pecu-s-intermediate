@@ -49,9 +49,9 @@ CLÁUSULA QUARTA - DAS OBRIGAÇÕES DAS PARTES
 4.1. O CEDENTE obriga-se a fornecer toda a documentação necessária para a efetivação da transferência dos créditos e a garantir a procedência e validade dos mesmos.
 4.2. O CESSIONÁRIO obriga-se a realizar o pagamento na forma e prazo acordados.
 
-CLÁUSULA QUINTA - DOS CUSTOS DA PLATAFORMA
-5.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE]% pelo CEDENTE e [PERCENTUAL_CESSIONARIO]% pelo CESSIONÁRIO.
-5.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
+CLÁUSULA QUINTA - DOS CUSTOS E ENCARGOS DA PLATAFORMA
+5.1. Os custos operacionais da plataforma, correspondentes a uma taxa de serviço calculada sobre o valor negociado, serão divididos igualmente entre as partes, sendo 50% (cinquenta por cento) devido pelo CEDENTE e 50% (cinquenta por cento) pelo CESSIONÁRIO. O valor exato será detalhado na fatura de serviço emitida pela plataforma.
+5.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die a partir do dia seguinte ao do vencimento.
 
 CLÁUSULA SEXTA - DAS DECLARAÇÕES E GARANTIAS
 6.1. As partes declaram, sob as penas da lei, que possuem capacidade legal e poderes necessários para celebrar o presente contrato e cumprir com suas obrigações.
@@ -125,9 +125,9 @@ CLÁUSULA QUINTA - DA ESCRITURA DEFINITIVA
 CLÁUSULA SEXTA - DA RESCISÃO
 6.1. O inadimplemento de qualquer cláusula por qualquer das partes ensejará a rescisão deste contrato, sujeitando a parte inadimplente ao pagamento de multa penal correspondente a [percentual_multa]% do valor total da transação, sem prejuízo da apuração de perdas e danos.
 
-CLÁUSULA SÉTIMA - DOS CUSTOS DA PLATAFORMA
-7.1. Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), totalizando R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR]% pelo VENDEDOR e [PERCENTUAL_COMPRADOR]% pelo COMPRADOR.
-7.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
+CLÁUSULA SÉTIMA - DOS CUSTOS E ENCARGOS DA PLATAFORMA
+7.1. Os custos operacionais da plataforma, correspondentes a uma taxa de serviço calculada sobre o valor negociado, serão divididos igualmente entre as partes, sendo 50% (cinquenta por cento) devido pelo VENDEDOR e 50% (cinquenta por cento) pelo COMPRADOR. O valor exato será detalhado na fatura de serviço emitida pela plataforma.
+7.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die a partir do dia seguinte ao do vencimento.
 
 CLÁUSULA OITAVA - DO FORO
 8.1. Fica eleito o foro da comarca de [FORO_COMARCA], Estado de [PROPRIEDADE_ESTADO], para dirimir quaisquer controvérsias oriundas do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
@@ -191,9 +191,9 @@ d) Restituir o imóvel ao término do contrato, no estado em que o recebeu, salv
 CLÁUSULA QUINTA - DAS BENFEITORIAS
 5.1. As benfeitorias necessárias introduzidas pelo ARRENDATÁRIO serão indenizadas. As úteis e voluptuárias dependerão de prévia autorização por escrito do ARRENDADOR para que possam ser indenizadas.
 
-CLÁUSULA SEXTA - DOS CUSTOS DA PLATAFORMA
-6.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor total do contrato), serão suportados pelas partes na seguinte proporção: [PERCENTUAL_ARRENDADOR]% pelo ARRENDADOR e [PERCENTUAL_ARRENDATARIO]% pelo ARRENDATÁRIO.
-6.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
+CLÁUSULA SEXTA - DOS CUSTOS E ENCARGOS DA PLATAFORMA
+6.1. Os custos operacionais da plataforma, correspondentes a uma taxa de serviço calculada sobre o valor do contrato, serão divididos igualmente entre as partes, sendo 50% (cinquenta por cento) devido pelo ARRENDADOR e 50% (cinquenta por cento) pelo ARRENDATÁRIO. O valor exato será detalhado na fatura de serviço emitida pela plataforma.
+6.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die a partir do dia seguinte ao do vencimento.
 
 CLÁUSULA SÉTIMA - DO FORO
 7.1. Fica eleito o foro da Comarca de [comarca_imovel] para dirimir quaisquer questões oriundas deste contrato, com renúncia a qualquer outro.
@@ -247,9 +247,9 @@ CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES
 3.1. Os PERMUTANTES obrigam-se a entregar os respectivos bens/ativos descritos na Cláusula Primeira, livres e desembaraçados de quaisquer ônus, no prazo de [PRAZO_ENTREGA] dias, contados da assinatura deste contrato.
 3.2. Cada parte arcará com as despesas de transferência e registro do bem que receber.
 
-CLÁUSULA QUARTA - DOS CUSTOS DA PLATAFORMA
-4.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor de referência da transação), serão suportados na proporção de [PERCENTUAL_PERMUTANTE1]% pelo PERMUTANTE 1 e [PERCENTUAL_PERMUTANTE2]% pelo PERMUTANTE 2.
-4.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
+CLÁUSULA QUARTA - DOS CUSTOS E ENCARGOS DA PLATAFORMA
+4.1. Os custos operacionais da plataforma, correspondentes a uma taxa de serviço calculada sobre o valor de referência da transação, serão divididos igualmente entre as partes, sendo 50% (cinquenta por cento) devido pelo PERMUTANTE 1 e 50% (cinquenta por cento) pelo PERMUTANTE 2. O valor exato será detalhado na fatura de serviço emitida pela plataforma.
+4.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die a partir do dia seguinte ao do vencimento.
 
 CLÁUSULA QUINTA – DO FORO
 5.1. Fica eleito o foro da Comarca de [FORO_COMARCA] para dirimir quaisquer controvérsias oriundas deste contrato, com renúncia a qualquer outro.
@@ -992,36 +992,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         </CardContent>
                     </Card>
                     
-                    <Card>
+                     <Card>
                         <CardHeader>
                             <CardTitle>Custos da Plataforma</CardTitle>
-                            <CardDescription>Defina como os custos da transação serão divididos.</CardDescription>
+                            <CardDescription>A taxa de serviço é dividida igualmente (50/50) entre as partes.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent>
                             <div className="flex justify-between items-center bg-secondary p-4 rounded-md">
-                                <span className="font-medium text-secondary-foreground">Custo ({platformFeePercentage}%)</span>
+                                <span className="font-medium text-secondary-foreground">Taxa de Serviço ({platformFeePercentage.toFixed(1)}%)</span>
                                 <span className="text-2xl font-bold text-primary">
                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(platformCost)}
                                 </span>
                             </div>
-
-                            <RadioGroup value={costSplit} onValueChange={setCostSplit} disabled={isFinalized}>
-                                <Label>Divisão do Custo</Label>
-                                <div className="space-y-2 pt-2">
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="50/50" id="50-50" />
-                                        <Label htmlFor="50-50">50% / 50%</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="seller" id="seller" />
-                                        <Label htmlFor="seller">Vendedor 100%</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="buyer" id="buyer" />
-                                        <Label htmlFor="buyer">Comprador 100%</Label>
-                                    </div>
-                                </div>
-                            </RadioGroup>
                         </CardContent>
                     </Card>
 
