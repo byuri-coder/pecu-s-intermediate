@@ -43,6 +43,10 @@ export function RegisterTaxCreditForm() {
 
   const form = useForm<RegisterTaxCreditFormValues>({
     resolver: zodResolver(registerTaxCreditSchema),
+    defaultValues: {
+        taxType: 'ICMS',
+        location: 'São Paulo, SP'
+    }
   });
 
   const onSubmit = (data: RegisterTaxCreditFormValues) => {
@@ -73,7 +77,7 @@ export function RegisterTaxCreditForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <section>
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Detalhes do Crédito Tributário</h3>
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Detalhes do Crédito Tributário de ICMS (SP)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField name="sellerName" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Nome do Vendedor (Cedente)</FormLabel><FormControl><Input {...field} placeholder="Razão Social da empresa" /></FormControl><FormMessage /></FormItem>
@@ -81,16 +85,9 @@ export function RegisterTaxCreditForm() {
             <FormField name="taxType" control={form.control} render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Tributo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o tributo" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    <SelectItem value="ICMS">ICMS</SelectItem>
-                    <SelectItem value="ISS">ISS</SelectItem>
-                    <SelectItem value="PIS/COFINS">PIS/COFINS</SelectItem>
-                    <SelectItem value="IPI">IPI</SelectItem>
-                    <SelectItem value="Outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
+                 <FormControl>
+                    <Input {...field} readOnly disabled />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -101,7 +98,11 @@ export function RegisterTaxCreditForm() {
               <FormItem><FormLabel>Preço de Venda (BRL)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormDescription>O deságio será calculado automaticamente.</FormDescription><FormMessage /></FormItem>
             )} />
              <FormField name="location" control={form.control} render={({ field }) => (
-              <FormItem className="md:col-span-2"><FormLabel>Localização (Estado de Origem do Crédito)</FormLabel><FormControl><Input {...field} placeholder="Ex: São Paulo, SP" /></FormControl><FormMessage /></FormItem>
+              <FormItem className="md:col-span-2"><FormLabel>Localização (Estado de Origem do Crédito)</FormLabel>
+                <FormControl>
+                    <Input {...field} readOnly disabled />
+                </FormControl>
+              <FormMessage /></FormItem>
             )} />
             <FormField name="details" control={form.control} render={({ field }) => (
               <FormItem className="md:col-span-2"><FormLabel>Origem e Detalhes do Crédito</FormLabel><FormControl><Textarea {...field} rows={4} placeholder="Descreva brevemente a origem do crédito (ex: decisão judicial transitada em julgado, saldo credor acumulado, etc.)." /></FormControl><FormMessage /></FormItem>
