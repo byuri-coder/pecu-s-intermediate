@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Menu,
+  FileCheck,
 } from "lucide-react"
 import * as React from 'react';
 
@@ -47,6 +48,7 @@ const navItems = [
     { href: "/admin/reports", label: "Relatórios", icon: LineChart },
     { href: "/admin/invoices", label: "NF-e/NFS-e", icon: FileDigit },
     { href: "/admin/audit", label: "Auditoria", icon: ShieldCheck },
+    { href: "/admin/receipts", label: "Comprovantes", icon: FileCheck },
 ]
 
 function NavLink({ item, isMobile = false }: { item: typeof navItems[0], isMobile?: boolean }) {
