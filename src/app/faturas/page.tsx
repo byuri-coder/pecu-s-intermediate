@@ -82,8 +82,8 @@ export default function InvoicesPage() {
         agency: "0001",
         account: "98765-4",
         pixKey: "financeiro@pecus.com.br",
-        holder: "PECU'S INTERMEDIATE LTDA",
-        cnpj: "12.345.678/0001-99"
+        holder: "YURI BARBOSA PAULO",
+        cnpj: "YURI BARBOSA PAULO"
     };
     
     const getBadgeClass = (status: "Paga" | "Pendente" | "Em Análise") => {
@@ -203,7 +203,7 @@ export default function InvoicesPage() {
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
-                            <CardDescription>CNPJ: {platformPaymentInfo.cnpj}</CardDescription>
+                            <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
@@ -257,5 +257,8 @@ export default function InvoicesPage() {
             </Dialog>
         </div>
     );
+
+    
+}
 
     
