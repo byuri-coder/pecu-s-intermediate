@@ -51,6 +51,7 @@ CLÁUSULA QUARTA - DAS OBRIGAÇÕES DAS PARTES
 
 CLÁUSULA QUINTA - DOS CUSTOS DA PLATAFORMA
 5.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na proporção de [PERCENTUAL_CEDENTE]% pelo CEDENTE e [PERCENTUAL_CESSIONARIO]% pelo CESSIONÁRIO.
+5.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
 
 CLÁUSULA SEXTA - DAS DECLARAÇÕES E GARANTIAS
 6.1. As partes declaram, sob as penas da lei, que possuem capacidade legal e poderes necessários para celebrar o presente contrato e cumprir com suas obrigações.
@@ -86,7 +87,7 @@ Testemunhas:
    CPF:
 `;
 
-const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSa DE COMPRA E VENDA DE IMÓVEL RURAL
+const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSA DE COMPRA E VENDA DE IMÓVEL RURAL
 
 Pelo presente instrumento particular, as partes:
 
@@ -126,6 +127,7 @@ CLÁUSULA SEXTA - DA RESCISÃO
 
 CLÁUSULA SÉTIMA - DOS CUSTOS DA PLATAFORMA
 7.1. Os custos operacionais da plataforma, no valor correspondente a 1% (um por cento), totalizando R$ [CUSTO_PLATAFORMA_VALOR], serão suportados pelas partes na seguinte proporção: [PERCENTUAL_VENDEDOR]% pelo VENDEDOR e [PERCENTUAL_COMPRADOR]% pelo COMPRADOR.
+7.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
 
 CLÁUSULA OITAVA - DO FORO
 8.1. Fica eleito o foro da comarca de [FORO_COMARCA], Estado de [PROPRIEDADE_ESTADO], para dirimir quaisquer controvérsias oriundas do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
@@ -191,6 +193,7 @@ CLÁUSULA QUINTA - DAS BENFEITORIAS
 
 CLÁUSULA SEXTA - DOS CUSTOS DA PLATAFORMA
 6.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor total do contrato), serão suportados pelas partes na seguinte proporção: [PERCENTUAL_ARRENDADOR]% pelo ARRENDADOR e [PERCENTUAL_ARRENDATARIO]% pelo ARRENDATÁRIO.
+6.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
 
 CLÁUSULA SÉTIMA - DO FORO
 7.1. Fica eleito o foro da Comarca de [comarca_imovel] para dirimir quaisquer questões oriundas deste contrato, com renúncia a qualquer outro.
@@ -246,6 +249,7 @@ CLÁUSULA TERCEIRA – DAS OBRIGAÇÕES
 
 CLÁUSULA QUARTA - DOS CUSTOS DA PLATAFORMA
 4.1. Os custos operacionais da plataforma, no valor de R$ [CUSTO_PLATAFORMA_VALOR] (correspondente a 1% do valor de referência da transação), serão suportados na proporção de [PERCENTUAL_PERMUTANTE1]% pelo PERMUTANTE 1 e [PERCENTUAL_PERMUTANTE2]% pelo PERMUTANTE 2.
+4.2. Em caso de atraso no pagamento da fatura de serviços da plataforma, incidirá multa de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.
 
 CLÁUSULA QUINTA – DO FORO
 5.1. Fica eleito o foro da Comarca de [FORO_COMARCA] para dirimir quaisquer controvérsias oriundas deste contrato, com renúncia a qualquer outro.
@@ -531,7 +535,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         'VALOR_NEGOCIADO': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue),
         'CUSTO_PLATAFORMA_VALOR': platformCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         'PERCENTUAL_CEDENTE': getCostSplitPercentages().seller,
-        'PERCENTUAL_COMPRADOR': getCostSplitPercentages().buyer,
+        'PERCENTUAL_CESSIONARIO': getCostSplitPercentages().buyer,
         'PERCENTUAL_VENDEDOR': getCostSplitPercentages().seller,
         'PERCENTUAL_ARRENDADOR': getCostSplitPercentages().seller,
         'PERCENTUAL_ARRENDATARIO': getCostSplitPercentages().buyer,

@@ -189,8 +189,8 @@ export default function InvoicesPage() {
                             </TableBody>
                         </Table>
                     </CardContent>
-                    <CardFooter className="text-sm text-muted-foreground">
-                        Mostrando {invoices.length} faturas.
+                    <CardFooter className="text-sm text-muted-foreground flex justify-center text-center">
+                        Atenção: Faturas não pagas até o vencimento estão sujeitas a multa de 2% e juros de mora de 1% a.m. (pro rata die).
                     </CardFooter>
                 </Card>
                 <DialogContent className="sm:max-w-md">
@@ -202,7 +202,7 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> PECU'S INTERMEDIATE</CardTitle>
                             <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
