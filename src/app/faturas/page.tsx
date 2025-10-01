@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import * as React from "react";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 export default function InvoicesPage() {
     const { toast } = useToast();
@@ -240,7 +241,7 @@ export default function InvoicesPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor:pointer hover:bg-secondary transition-colors">
                             <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                             <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload do comprovante</p>
                             <Input type="file" className="hidden" />
@@ -256,4 +257,5 @@ export default function InvoicesPage() {
             </Dialog>
         </div>
     );
-}
+
+    
