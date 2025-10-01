@@ -57,9 +57,7 @@ type InvoiceWithOptionalCharges = (typeof initialInvoices)[0] & {
 
 export default function InvoicesPage() {
     const { toast } = useToast();
-    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(() => 
-        initialInvoices.map(inv => ({...inv, status: inv.status as InvoiceStatus}))
-    );
+    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>([]);
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
@@ -123,12 +121,12 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: process.env.PAYMENT_BANK,
-        agency: process.env.PAYMENT_AGENCY,
-        account: process.env.PAYMENT_ACCOUNT,
-        pixKey: process.env.PAYMENT_PIX_KEY,
-        holder: process.env.PAYMENT_HOLDER,
-        cnpj: process.env.PAYMENT_CNPJ
+        bank: process.env.PAYMENT_BANK || "Nu Pagamentos S.A. - Instituição de Pagamento",
+        agency: process.env.PAYMENT_AGENCY || "0001",
+        account: process.env.PAYMENT_ACCOUNT || "527075729-7",
+        pixKey: process.env.PAYMENT_PIX_KEY || "e8e04450-cba4-4cfd-9f37-92359def4af0",
+        holder: process.env.PAYMENT_HOLDER || "PECU'S INTERMEDIATE",
+        cnpj: process.env.PAYMENT_CNPJ || "12.345.678/0001-99"
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -246,7 +244,6 @@ export default function InvoicesPage() {
                         ) : (
                             <div className="text-center py-12 border-2 border-dashed rounded-lg">
                                 <p className="text-muted-foreground">Nenhuma fatura encontrada.</p>
-                                <p className="text-sm text-muted-foreground mt-2">As faturas são geradas automaticamente após a finalização de uma transação.</p>
                             </div>
                         )}
                     </CardContent>
@@ -275,7 +272,7 @@ export default function InvoicesPage() {
                             <Separator />
                             <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
-                                <span><strong>Chave PIX (E-mail):</strong> {platformPaymentInfo.pixKey}</span>
+                                <span><strong>Chave PIX (Aleatória):</strong> {platformPaymentInfo.pixKey}</span>
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey || '', 'Chave PIX')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
