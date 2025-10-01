@@ -394,8 +394,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   );
   
   const [docuSealPdf, setDocuSealPdf] = React.useState<string | null>(null);
-
-  const platformFeePercentage = 1;
   
   const [genericContractFields, setGenericContractFields] = React.useState({
     cnpj_cpf_cedente: '11.111.111/0001-11',
@@ -489,6 +487,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const id = asset.id;
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
+  
+  const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
 
   const paymentInfo = {
