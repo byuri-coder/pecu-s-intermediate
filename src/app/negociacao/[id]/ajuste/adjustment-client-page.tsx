@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getAuth, sendEmailVerification } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import { logContractSignature } from './actions';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -569,8 +570,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             'ID_ATIVO': asset.id,
             'QUANTIDADE_ATIVO': 'quantity' in asset ? asset.quantity.toLocaleString('pt-BR') : 'N/A',
             'VALOR_TOTAL_ATIVO': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format('amount' in asset && asset.amount ? asset.amount : ('quantity' in asset && 'pricePerCredit' in asset) ? asset.quantity * asset.pricePerCredit : negotiatedValue),
-            'FORO_COMARCA': 'location' in asset ? asset.location.split(',')[0] : '[]',
-            'LOCAL_ASSINATURA': 'location' in asset ? asset.location.split(',')[0] : '[]',
+            'FORO_COMARCA': 'location' in asset ? asset.location.split(',')[0] : '',
+            'LOCAL_ASSINATURA': 'location' in asset ? asset.location.split(',')[0] : '',
         });
     }
     
@@ -582,6 +583,15 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   }
 
   const finalContractText = getFinalContractText();
+
+  // Helper function to create SHA-256 hash
+  async function sha256(message: string) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  }
 
   const handleFinalize = async () => {
     const auth = getAuth(app);
@@ -596,7 +606,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         return;
     }
 
-    // Recarrega o estado do usuário para garantir que 'emailVerified' esteja atualizado
     await user.reload();
 
     if (!user.emailVerified) {
@@ -618,14 +627,32 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         return;
     }
 
-    // Se o e-mail já está verificado, procede com a finalização
-    toast({
-        title: "Contrato Finalizado!",
-        description: "O contrato foi assinado e a negociação concluída.",
-    });
-    setFinalized(true);
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-};
+    try {
+        const contractHash = await sha256(finalContractText);
+        
+        await logContractSignature({
+            userId: user.uid,
+            userEmail: user.email || 'N/A',
+            contractHash: contractHash,
+            assetId: asset.id,
+        });
+
+        toast({
+            title: "Contrato Finalizado!",
+            description: "O contrato foi assinado e a negociação concluída. O registro de integridade foi salvo.",
+        });
+        setFinalized(true);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+    } catch (error) {
+        console.error("Erro ao finalizar contrato e registrar hash:", error);
+        toast({
+            title: "Erro na Finalização",
+            description: "Não foi possível salvar a prova de integridade do contrato. Tente novamente.",
+            variant: "destructive",
+        });
+    }
+  };
     
     const copyToClipboard = (text: string, fieldName: string) => {
         navigator.clipboard.writeText(text);
@@ -642,12 +669,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             doc.addFont('times', 'normal', 'WinAnsiEncoding');
             doc.addFont('times', 'bold', 'WinAnsiEncoding');
             doc.setFont('times', 'normal');
-            doc.setFontSize(12);
 
-            const margin = { top: 60, right: 60, bottom: 60, left: 60 };
+            const margin = { top: 85, right: 57, bottom: 57, left: 85 }; // A4, 3cm top/left, 2cm bottom/right
             const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
             const pageHeight = doc.internal.pageSize.getHeight();
             let cursorY = margin.top;
+            const lineHeight = 1.5;
 
             const addPageNumbers = (doc: jsPDF) => {
                 const pageCount = (doc.internal as any).getNumberOfPages();
@@ -666,12 +693,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const lines = doc.splitTextToSize(finalContractText, contentWidth);
             
             lines.forEach((line: string) => {
-                if (cursorY + 12 * 1.5 > pageHeight - margin.bottom) {
+                if (cursorY + 12 * lineHeight > pageHeight - margin.bottom) {
                     doc.addPage();
                     cursorY = margin.top;
                 }
-                doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: 1.5 });
-                cursorY += 12 * 1.5;
+                doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: lineHeight });
+                cursorY += 12 * lineHeight;
             });
 
             addPageNumbers(doc);

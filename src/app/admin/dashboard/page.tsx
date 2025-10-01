@@ -11,6 +11,7 @@ import {
   Search,
   Users,
   LineChart,
+  ShieldAlert,
 } from "lucide-react"
 
 import {
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table"
 import Link from "next/link"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 
 const transactionsData = [
@@ -79,6 +81,14 @@ const revenueData = [
 export default function Dashboard() {
   return (
     <>
+       <Alert variant="destructive" className="mb-4">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Alerta 001: Auditoria de Contratos</AlertTitle>
+        <AlertDescription>
+          Existem novos contratos finalizados pendentes de verificação de integridade. 
+          <Link href="/admin/audit" className="font-bold underline ml-2">Verificar Agora</Link>
+        </AlertDescription>
+      </Alert>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
