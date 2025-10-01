@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAuth, sendEmailVerification } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
+import { DocuSealForm } from '@docuseal/react';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -86,7 +87,7 @@ Testemunhas:
    CPF:
 `;
 
-const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSA DE COMPRA E VENDA DE IMÓVEL RURAL
+const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSa DE COMPRA E VENDA DE IMÓVEL RURAL
 
 Pelo presente instrumento particular, as partes:
 
@@ -392,6 +393,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
+  
+  const [docuSealPdf, setDocuSealPdf] = React.useState<string | null>(null);
 
   const platformFeePercentage = 1;
   
@@ -408,12 +411,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   });
 
   const [saleContractFields, setSaleContractFields] = React.useState({
-      nacionalidade: '',
-      estado_civil: '',
-      profissao: '',
-      rg: '',
-      cpf: '',
-      endereco_completo: '',
+      nacionalidade: 'Brasileiro(a)',
+      estado_civil: 'Casado(a)',
+      profissao: 'Empresário(a)',
+      rg: '11.111.111-1',
+      cpf: '111.111.111-11',
+      endereco_completo: 'Rua do Vendedor, 123, São Paulo, SP',
       comprador_nome: 'COMPRADOR EXEMPLO S.A.',
       nacionalidade_comprador: 'Brasileira',
       estado_civil_comprador: '',
@@ -429,12 +432,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   });
 
   const [leaseContractFields, setLeaseContractFields] = React.useState({
-      nacionalidade_arrendador: '',
-      estado_civil_arrendador: '',
-      profissao_arrendador: '',
-      rg_arrendador: '',
-      cpf_arrendador: '',
-      endereco_arrendador: '',
+      nacionalidade_arrendador: 'Brasileiro(a)',
+      estado_civil_arrendador: 'Solteiro(a)',
+      profissao_arrendador: 'Produtor Rural',
+      rg_arrendador: '22.222.222-2',
+      cpf_arrendador: '222.222.222-22',
+      endereco_arrendador: 'Rua do Arrendador, 456, Cuiabá, MT',
       arrendatario_nome: 'ARRENDATÁRIO EXEMPLO LTDA',
       nacionalidade_arrendatario: 'Brasileira',
       estado_civil_arrendatario: '',
@@ -452,12 +455,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   });
   
   const [permutaContractFields, setPermutaContractFields] = React.useState({
-    nacionalidade1: '',
-    estado_civil1: '',
-    profissao1: '',
-    rg1: '',
-    cpf_cnpj1: '',
-    endereco1: '',
+    nacionalidade1: 'Brasileiro(a)',
+    estado_civil1: 'Divorciado(a)',
+    profissao1: 'Investidor(a)',
+    rg1: '33.333.333-3',
+    cpf_cnpj1: '333.333.333-33',
+    endereco1: 'Alameda dos Investidores, 789, Goiânia, GO',
     entrega1: `Imóvel Rural: ${asset.id}`,
     permutante2_nome: 'PERMUTANTE 2 EXEMPLO',
     nacionalidade2: 'Brasileira',
@@ -518,7 +521,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const { template: contractTemplate, title: contractTitle } = getContractTemplateInfo();
 
-  const getFinalContractText = () => {
+  const getFinalContractText = React.useCallback(() => {
     const currentDate = new Date();
     const extendedDate = currentDate.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -576,11 +579,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
     
     for (const [key, value] of Object.entries(replacements)) {
-        text = text.replace(new RegExp(`\\[${key}\\]`, 'g'), value || `[]`);
+        text = text.replace(new RegExp(`\\[${key}\\]`, 'g'), value || '[]');
     }
 
     return text;
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asset, contractTemplate, genericContractFields, leaseContractFields, negotiatedValue, permutaContractFields, platformCost, saleContractFields, sellerName]);
 
   const finalContractText = getFinalContractText();
 
@@ -592,6 +596,55 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     return hashHex;
   }
+
+  const generatePdfForDocuSeal = React.useCallback(async () => {
+    try {
+        const doc = new jsPDF('p', 'pt', 'a4');
+        doc.addFont('times', 'normal', 'WinAnsiEncoding');
+        doc.addFont('times', 'bold', 'WinAnsiEncoding');
+        doc.setFont('times', 'normal');
+        doc.setFontSize(12);
+
+        const margin = { top: 85.05, right: 56.7, bottom: 56.7, left: 85.05 };
+        const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let cursorY = margin.top;
+        const lineHeight = 1.5;
+
+        const addPageNumbers = () => {
+            const pageCount = (doc.internal as any).getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.text(`Página ${i} de ${pageCount}`, pageHeight - margin.bottom, doc.internal.pageSize.getWidth() / 2, { align: 'center' }, 90);
+            }
+        };
+
+        const lines = doc.splitTextToSize(getFinalContractText(), contentWidth);
+        
+        lines.forEach((line: string) => {
+            if (cursorY + (12 * lineHeight) > pageHeight - margin.bottom) {
+                doc.addPage();
+                cursorY = margin.top;
+            }
+
+            if (line.startsWith('CLÁUSULA') || line.startsWith('CONTRATO')) {
+                doc.setFont('times', 'bold');
+            } else {
+                doc.setFont('times', 'normal');
+            }
+
+            doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: lineHeight });
+            cursorY += (12 * lineHeight);
+        });
+
+        addPageNumbers();
+        const pdfOutput = doc.output('datauristring');
+        setDocuSealPdf(pdfOutput);
+    } catch (error) {
+        console.error("Failed to generate PDF for DocuSeal", error);
+        toast({ title: "Erro ao Preparar Contrato", description: "Não foi possível gerar o PDF para assinatura.", variant: "destructive" });
+    }
+  }, [getFinalContractText, toast]);
 
   const handleFinalize = async () => {
     const auth = getAuth(app);
@@ -639,9 +692,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
         toast({
             title: "Contrato Finalizado!",
-            description: "O contrato foi assinado e a negociação concluída. O registro de integridade foi salvo.",
+            description: "O contrato foi bloqueado para edições. Prossiga para a assinatura.",
         });
         setFinalized(true);
+        generatePdfForDocuSeal(); // Generate PDF for DocuSeal
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
     } catch (error) {
@@ -673,6 +727,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
             const margin = { top: 85.05, right: 56.7, bottom: 56.7, left: 85.05 }; // 3cm e 2cm
             const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
+            const pageHeight = doc.internal.pageSize.getHeight();
             let cursorY = margin.top;
             const lineHeight = 1.5;
 
@@ -682,9 +737,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     doc.setPage(i);
                     doc.text(
                         `Página ${i} de ${pageCount}`,
-                        doc.internal.pageSize.getWidth() / 2,
-                        doc.internal.pageSize.getHeight() - 30,
-                        { align: 'center' }
+                        pageHeight - margin.bottom, doc.internal.pageSize.getWidth() / 2, { align: 'center'}, 90
                     );
                 }
             };
@@ -692,7 +745,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const lines = doc.splitTextToSize(finalContractText, contentWidth);
             
             lines.forEach((line: string) => {
-                if (cursorY + (12 * lineHeight) > doc.internal.pageSize.getHeight() - margin.bottom) {
+                if (cursorY + (12 * lineHeight) > pageHeight - margin.bottom) {
                     doc.addPage();
                     cursorY = margin.top;
                 }
@@ -998,7 +1051,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         onClick={handleFinalize}
                     >
                         {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
-                        {isFinalized ? 'Contrato Assinado' : 'Aceitar e Assinar Contrato'}
+                        {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
                     </Button>
                 </div>
                 {/* Coluna de Visualização */}
@@ -1020,53 +1073,40 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       {isFinalized && (
         <div className="mt-8 space-y-6">
             <Alert className="border-green-600 bg-green-50 text-green-900">
-                <Banknote className="h-4 w-4 !text-green-900" />
-                <AlertTitle>Ação Necessária: Pagamento</AlertTitle>
+                <FileSignature className="h-4 w-4 !text-green-900" />
+                <AlertTitle>Ação Necessária: Assinatura Digital</AlertTitle>
                 <AlertDescription>
-                    <p>O contrato foi assinado! Para concluir a transação, o comprador deve agora realizar a transferência no valor de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(negotiatedValue)}</strong> para o vendedor utilizando os dados abaixo. Após a confirmação, o ativo será transferido.</p>
-                    <Card className="mt-4 bg-white/70">
-                        <CardHeader>
-                            <CardTitle className="text-base">Dados para Pagamento - {paymentInfo.holder}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            <div className="flex justify-between items-center"><span><strong>Banco:</strong> {paymentInfo.bank}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>Agência:</strong> {paymentInfo.agency}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>Conta:</strong> {paymentInfo.account}</span></div>
-                            <div className="flex justify-between items-center">
-                                <span><strong>Chave PIX:</strong> {paymentInfo.pixKey}</span>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(paymentInfo.pixKey, 'Chave PIX')}>
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    O contrato foi finalizado e está pronto para ser assinado. Utilize a plataforma DocuSeal abaixo para coletar as assinaturas eletrônicas.
                 </AlertDescription>
             </Alert>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Contrato Definitivo</CardTitle>
-                    <CardDescription>Este é o contrato final assinado digitalmente via ICP-Brasil.</CardDescription>
+                    <CardTitle>Coleta de Assinaturas com DocuSeal</CardTitle>
+                    <CardDescription>Envie o convite para a outra parte assinar e assine o documento.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-80 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-serif text-sm relative" style={{textAlign: 'justify', lineHeight: '1.5'}}>
-                        {finalContractText}
-                        <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 p-2 rounded-md border border-green-300 text-xs font-semibold">
-                            ✓ Assinado Digitalmente (ICP-Brasil)
+                    {docuSealPdf ? (
+                        <DocuSealForm
+                           host="https://docuseal.co"
+                           // Este é um exemplo, substitua pela URL real do seu template DocuSeal
+                           src={`https://docuseal.co/d/f-AbcDeFg123?token=SEU_TOKEN_DE_ENVIO&document=${encodeURIComponent(docuSealPdf)}`}
+                        />
+                    ) : (
+                        <div className="text-center p-8">
+                            <p>Gerando PDF para assinatura...</p>
                         </div>
-                    </div>
-                </CardContent>
-                <CardContent>
-                    <div className="flex gap-2">
-                        <Button onClick={handleDownloadPdf}>
-                            <Download className="mr-2 h-4 w-4" /> Baixar PDF
-                        </Button>
-                         <Button variant="outline" onClick={handleDownloadDocx}>
-                            <FileText className="mr-2 h-4 w-4" /> Baixar DOCX
-                        </Button>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
+
+            <Alert className="border-blue-600 bg-blue-50 text-blue-900">
+                <Banknote className="h-4 w-4 !text-blue-900" />
+                <AlertTitle>Próximo Passo: Pagamento</AlertTitle>
+                <AlertDescription>
+                    <p>Após as assinaturas serem coletadas, o comprador deverá realizar a transferência para o vendedor e anexar o comprovante.</p>
+                </AlertDescription>
+            </Alert>
 
             <div className="grid md:grid-cols-2 gap-6">
                 <Card>
