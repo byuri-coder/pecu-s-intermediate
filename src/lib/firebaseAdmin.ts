@@ -1,21 +1,20 @@
 import admin from 'firebase-admin';
 
-// Esta configuração de inicialização presume que as variáveis de ambiente
-// GOOGLE_APPLICATION_CREDENTIALS ou FIREBASE_CONFIG estão configuradas no ambiente de servidor.
+// Esta configuração de inicialização presume que a variável de ambiente
+// FIREBASE_KEY (como uma string JSON) está configurada no ambiente do servidor.
 // Em um ambiente de desenvolvimento local, você pode precisar apontar para a chave de serviço.
 
-const serviceAccountKey = process.env.FIREBASE_KEY
-  ? JSON.parse(process.env.FIREBASE_KEY)
-  : undefined; // Em produção, use variáveis de ambiente.
+const serviceAccountKeyString = process.env.FIREBASE_KEY;
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: serviceAccountKey
-      ? admin.credential.cert(serviceAccountKey as admin.ServiceAccount)
-      // A linha abaixo causava erro em ambientes que não tem as credenciais default.
-      // Foi removida para forçar o uso da variável de ambiente.
-      : undefined,
-  });
+if (serviceAccountKeyString && !admin.apps.length) {
+  try {
+    const serviceAccount = JSON.parse(serviceAccountKeyString);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    });
+  } catch (e) {
+    console.error("Failed to parse FIREBASE_KEY or initialize Firebase Admin", e);
+  }
 }
 
 export const firebaseAdmin = admin;
