@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, Landmark, UploadCloud, Info } from "lucide-react";
+import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -156,7 +156,7 @@ export default function InvoicesPage() {
                                                             <DialogTrigger asChild>
                                                                 <DropdownMenuItem onSelect={() => setPaymentDialog(true)}>
                                                                      <Banknote className="mr-2 h-4 w-4" />
-                                                                    Métodos de Pagamento
+                                                                    Pagar Plataforma
                                                                 </DropdownMenuItem>
                                                             </DialogTrigger>
                                                         </>
@@ -176,7 +176,7 @@ export default function InvoicesPage() {
                                                         <DropdownMenuSeparator/>
                                                         <DropdownMenuItem onSelect={() => { setSelectedInvoice(invoice); setUploadDialog(true); }}>
                                                             <DollarSign className="mr-2 h-4 w-4" />
-                                                            Confirmar Pagamento
+                                                            Anexar Comprovante
                                                         </DropdownMenuItem>
                                                         </>
                                                     )}
@@ -194,25 +194,30 @@ export default function InvoicesPage() {
                 </Card>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Métodos de Pagamento</DialogTitle>
+                        <DialogTitle>Pagar Plataforma</DialogTitle>
                         <DialogDescription>
                             Realize a transferência para os dados abaixo para pagar sua fatura.
                         </DialogDescription>
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Landmark className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
                             <CardDescription>CNPJ: {platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Agência:</strong> {platformPaymentInfo.agency}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Conta:</strong> {platformPaymentInfo.account}</span></div>
+                            <Separator />
+                            <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
-                                <span><strong>Chave PIX:</strong> {platformPaymentInfo.pixKey}</span>
+                                <span><strong>Chave PIX (E-mail):</strong> {platformPaymentInfo.pixKey}</span>
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey, 'Chave PIX')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
+                            </div>
+                            <div className="text-center p-4 border rounded-md bg-muted/50">
+                                <p className="text-muted-foreground">QR Code aparecerá aqui</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -220,7 +225,7 @@ export default function InvoicesPage() {
                         <Info className="h-4 w-4" />
                         <AlertTitle>Próximo Passo</AlertTitle>
                         <AlertDescription>
-                            Após o pagamento, clique em "Confirmar Pagamento" no menu da fatura e anexe o comprovante para análise.
+                            Após o pagamento, clique em "Anexar Comprovante" no menu da fatura e envie o documento para análise.
                         </AlertDescription>
                     </Alert>
                 </DialogContent>
