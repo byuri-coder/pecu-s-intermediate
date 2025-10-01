@@ -82,7 +82,7 @@ export default function InvoicesPage() {
         agency: "0001",
         account: "98765-4",
         pixKey: "financeiro@pecus.com.br",
-        holder: "YURI BARBOSA PAULO",
+        holder: "PECU'S INTERMEDIATE",
         cnpj: "YURI BARBOSA PAULO"
     };
     
