@@ -20,7 +20,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAuth, sendEmailVerification } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
-import { DocuSealForm } from '@docuseal/react';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -695,7 +694,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             description: "O contrato foi bloqueado para edições. Prossiga para a assinatura.",
         });
         setFinalized(true);
-        generatePdfForDocuSeal(); // Generate PDF for DocuSeal
+        // generatePdfForDocuSeal(); // This line is commented out as DocuSeal is not used
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
     } catch (error) {
@@ -1076,27 +1075,19 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 <FileSignature className="h-4 w-4 !text-green-900" />
                 <AlertTitle>Ação Necessária: Assinatura Digital</AlertTitle>
                 <AlertDescription>
-                    O contrato foi finalizado e está pronto para ser assinado. Utilize a plataforma DocuSeal abaixo para coletar as assinaturas eletrônicas.
+                    O contrato foi finalizado e está pronto para ser assinado.
                 </AlertDescription>
             </Alert>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Coleta de Assinaturas com DocuSeal</CardTitle>
+                    <CardTitle>Coleta de Assinaturas</CardTitle>
                     <CardDescription>Envie o convite para a outra parte assinar e assine o documento.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {docuSealPdf ? (
-                        <DocuSealForm
-                           host="https://docuseal.co"
-                           // Este é um exemplo, substitua pela URL real do seu template DocuSeal
-                           src={`https://docuseal.co/d/f-AbcDeFg123?token=SEU_TOKEN_DE_ENVIO&document=${encodeURIComponent(docuSealPdf)}`}
-                        />
-                    ) : (
-                        <div className="text-center p-8">
-                            <p>Gerando PDF para assinatura...</p>
-                        </div>
-                    )}
+                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                        <p>A integração com o serviço de assinatura digital (DocuSeal) será implementada aqui.</p>
+                    </div>
                 </CardContent>
             </Card>
 
