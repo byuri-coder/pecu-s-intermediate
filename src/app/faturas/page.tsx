@@ -36,7 +36,6 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { initialInvoices } from "@/lib/placeholder-data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -46,11 +45,25 @@ import { Separator } from "@/components/ui/separator";
 
 type InvoiceStatus = "Paga" | "Pendente" | "Em Análise" | "Negado";
 
-type InvoiceWithOptionalCharges = (typeof initialInvoices)[0] & {
+type Invoice = {
+  id: string;
+  transactionId: string;
+  description: string;
+  dueDate: string;
+  value: number;
+  status: InvoiceStatus;
+};
+
+
+const initialInvoices: Invoice[] = [
+    // Data is now dynamically calculated
+];
+
+
+type InvoiceWithOptionalCharges = Invoice & {
     displayValue?: number;
     penalty?: number;
     interest?: number;
-    status: InvoiceStatus;
     rejectionReason?: string;
 };
 
@@ -63,10 +76,39 @@ export default function InvoicesPage() {
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
 
     React.useEffect(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize today's date
+        // This would in reality be a fetch from a database.
+        // We simulate it being created by the server-side action.
+        const fetchedInvoices: Invoice[] = [
+             { 
+                id: 'FAT-001', 
+                transactionId: 'proj-cerrado-conservation',
+                description: 'Taxa de serviço - Venda Crédito Carbono',
+                dueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // 30 days ago
+                value: 594, 
+                status: 'Pendente'
+            },
+            { 
+                id: 'FAT-002', 
+                transactionId: 'op-002',
+                description: 'Taxa de serviço - Compra Crédito Tributário',
+                dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // yesterday
+                value: 1455, 
+                status: 'Pendente'
+            },
+            { 
+                id: 'FAT-003', 
+                transactionId: 'op-004',
+                description: 'Taxa de serviço - Venda Crédito Carbono',
+                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // in 30 days
+                value: 1100, 
+                status: 'Pendente'
+            }
+        ]
 
-        const updatedInvoices = initialInvoices.map(inv => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+
+        const updatedInvoices = fetchedInvoices.map(inv => {
             const currentStatus = (inv.status || 'Pendente') as InvoiceStatus;
             
             if (currentStatus !== 'Pendente') {
@@ -75,7 +117,7 @@ export default function InvoicesPage() {
 
             const [day, month, year] = inv.dueDate.split('/').map(Number);
             const dueDate = new Date(year, month - 1, day);
-            dueDate.setHours(0, 0, 0, 0); // Normalize due date
+            dueDate.setHours(0, 0, 0, 0); 
 
             if (today <= dueDate) {
                 return { ...inv, displayValue: inv.value, status: currentStatus };
@@ -121,12 +163,12 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: process.env.PAYMENT_BANK || "Nu Pagamentos S.A. - Instituição de Pagamento",
-        agency: process.env.PAYMENT_AGENCY || "0001",
-        account: process.env.PAYMENT_ACCOUNT || "527075729-7",
-        pixKey: process.env.PAYMENT_PIX_KEY || "e8e04450-cba4-4cfd-9f37-92359def4af0",
-        holder: process.env.PAYMENT_HOLDER || "PECU'S INTERMEDIATE",
-        cnpj: process.env.PAYMENT_CNPJ || "12.345.678/0001-99"
+        bank: "Nu Pagamentos S.A. - Instituição de Pagamento",
+        agency: "0001",
+        account: "527075729-7",
+        pixKey: "e8e04450-cba4-4cfd-9f37-92359def4af0",
+        holder: "YURI BARBOSA PAULO",
+        cnpj: ""
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -263,7 +305,7 @@ export default function InvoicesPage() {
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> <b>{platformPaymentInfo.holder}</b></CardTitle>
-                            <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
+                            {platformPaymentInfo.cnpj && <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>}
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
@@ -320,3 +362,5 @@ export default function InvoicesPage() {
 
     
 }
+
+    
