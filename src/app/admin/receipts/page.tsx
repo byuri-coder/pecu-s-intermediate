@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from 'react';
 import {
   Card,
   CardHeader,
@@ -18,39 +19,97 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Eye, ThumbsDown, ThumbsUp } from "lucide-react"
+import { CheckCircle, Eye, ThumbsDown, ThumbsUp, XCircle } from "lucide-react"
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-const mockReceipts = [
+
+const initialReceipts = [
   {
     id: "RCPT-001",
+    invoiceId: "FAT-001",
     userId: "user-123",
     userName: "Empresa Inovadora S.A.",
-    invoiceId: "FAT-001",
     date: "2024-05-20",
     status: "Pendente",
     fileUrl: "#",
+    rejectionReason: ""
   },
   {
     id: "RCPT-002",
+    invoiceId: "FAT-002",
     userId: "user-456",
     userName: "Comércio Varejista Brasil",
-    invoiceId: "FAT-002",
     date: "2024-05-21",
     status: "Pendente",
     fileUrl: "#",
+    rejectionReason: ""
   },
    {
     id: "RCPT-003",
+    invoiceId: "FAT-003",
     userId: "user-789",
     userName: "Soluções em TI",
-    invoiceId: "FAT-003",
     date: "2024-05-19",
     status: "Aprovado",
     fileUrl: "#",
+    rejectionReason: ""
   },
 ]
 
+type Receipt = typeof initialReceipts[0];
+
 export default function ReceiptsPage() {
+  const [receipts, setReceipts] = React.useState(initialReceipts);
+  const { toast } = useToast();
+
+  const handleUpdateStatus = (receiptId: string, newStatus: Receipt['status'], reason = "") => {
+    setReceipts(prevReceipts => 
+      prevReceipts.map(receipt => 
+        receipt.id === receiptId 
+          ? { ...receipt, status: newStatus, rejectionReason: reason } 
+          : receipt
+      )
+    );
+    // In a real app, you'd also update the corresponding invoice status
+    // For now, we'll just show a toast.
+    toast({
+      title: `Comprovante ${newStatus.toLowerCase()}`,
+      description: `O status do comprovante ${receiptId} foi atualizado.`,
+    });
+  };
+
+  const getStatusInfo = (status: Receipt['status']) => {
+    switch (status) {
+      case 'Aprovado':
+        return {
+          badge: <Badge variant="secondary" className="bg-green-100 text-green-800">Aprovado</Badge>,
+          action: (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Pagamento confirmado.</span>
+            </div>
+          ),
+        };
+      case 'Negado':
+         return {
+          badge: <Badge variant="destructive">Negado</Badge>,
+          action: (
+             <div className="flex items-center gap-2 text-sm text-destructive">
+                <XCircle className="h-4 w-4" />
+                <span>Pagamento recusado.</span>
+            </div>
+          ),
+        };
+      default: // Pendente
+        return {
+          badge: <Badge variant="outline">Pendente</Badge>,
+          action: null
+        }
+    }
+  }
+
+
   return (
     <Card>
       <CardHeader>
@@ -66,55 +125,88 @@ export default function ReceiptsPage() {
             <TableRow>
               <TableHead>Usuário</TableHead>
               <TableHead>Fatura Ref.</TableHead>
-              <TableHead>Data de Envio</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Comprovante</TableHead>
               <TableHead className="w-[30%]">Descrição / Justificativa</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockReceipts.map((receipt) => (
-              <TableRow key={receipt.id}>
-                <TableCell>
-                  <div className="font-medium">{receipt.userName}</div>
-                  <div className="text-sm text-muted-foreground">{receipt.userId}</div>
-                </TableCell>
-                <TableCell>{receipt.invoiceId}</TableCell>
-                <TableCell>{receipt.date}</TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={receipt.fileUrl} target="_blank" rel="noopener noreferrer">
-                      <Eye className="mr-2 h-4 w-4" />
-                      Visualizar
-                    </a>
-                  </Button>
-                </TableCell>
-                <TableCell>
-                    {receipt.status === 'Pendente' ? (
-                        <Textarea placeholder="Adicione uma justificativa para a recusa aqui..." />
-                    ) : (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500"/>
-                            <span>Pagamento confirmado.</span>
+            {receipts.map((receipt) => {
+                const { badge, action } = getStatusInfo(receipt.status);
+                const isPending = receipt.status === 'Pendente';
+
+                return (
+                  <TableRow key={receipt.id}>
+                    <TableCell>
+                      <div className="font-medium">{receipt.userName}</div>
+                      <div className="text-sm text-muted-foreground">{receipt.userId}</div>
+                    </TableCell>
+                    <TableCell>{receipt.invoiceId}</TableCell>
+                    <TableCell>{badge}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={receipt.fileUrl} target="_blank" rel="noopener noreferrer">
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar
+                        </a>
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                        {isPending ? (
+                            <Textarea 
+                                id={`reason-${receipt.id}`}
+                                placeholder="Adicione uma justificativa para a recusa aqui..." 
+                                disabled={!isPending}
+                            />
+                        ) : (
+                           action
+                        )}
+                        {receipt.status === 'Negado' && receipt.rejectionReason && (
+                             <p className="text-xs text-muted-foreground mt-1 italic">
+                                <strong>Justificativa:</strong> {receipt.rejectionReason}
+                            </p>
+                        )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isPending ? (
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800"
+                            onClick={() => handleUpdateStatus(receipt.id, 'Aprovado')}
+                          >
+                            <ThumbsUp className="mr-2 h-4 w-4" /> Aceitar
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => {
+                                const reasonInput = document.getElementById(`reason-${receipt.id}`) as HTMLTextAreaElement;
+                                if (!reasonInput.value) {
+                                    toast({
+                                        title: 'Justificativa necessária',
+                                        description: 'Por favor, forneça uma justificativa para negar o comprovante.',
+                                        variant: 'destructive',
+                                    });
+                                    return;
+                                }
+                                handleUpdateStatus(receipt.id, 'Negado', reasonInput.value);
+                            }}
+                          >
+                            <ThumbsDown className="mr-2 h-4 w-4" /> Negar
+                          </Button>
                         </div>
-                    )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {receipt.status === "Pendente" ? (
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800">
-                        <ThumbsUp className="mr-2 h-4 w-4" /> Aceitar
-                      </Button>
-                      <Button variant="destructive" size="sm">
-                        <ThumbsDown className="mr-2 h-4 w-4" /> Negar
-                      </Button>
-                    </div>
-                  ) : (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Aprovado</Badge>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                            Processado
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+            })}
           </TableBody>
         </Table>
       </CardContent>

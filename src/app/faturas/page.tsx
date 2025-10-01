@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info } from "lucide-react";
+import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info, AlertCircle } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -44,25 +44,31 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
+type InvoiceStatus = "Paga" | "Pendente" | "Em Análise" | "Negado";
+
 type InvoiceWithOptionalCharges = (typeof initialInvoices)[0] & {
     displayValue?: number;
     penalty?: number;
     interest?: number;
+    status: InvoiceStatus;
+    rejectionReason?: string;
 };
 
 
 export default function InvoicesPage() {
     const { toast } = useToast();
-    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(initialInvoices);
+    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(() => 
+        initialInvoices.map(inv => ({...inv, status: inv.status as InvoiceStatus}))
+    );
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
-    const [selectedInvoice, setSelectedInvoice] = React.useState<typeof invoices[0] | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
 
     React.useEffect(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Normalize today's date
 
-        const updatedInvoices = initialInvoices.map(inv => {
+        const updatedInvoices = invoices.map(inv => {
             if (inv.status !== 'Pendente') {
                 return { ...inv, displayValue: inv.value };
             }
@@ -86,13 +92,13 @@ export default function InvoicesPage() {
         });
 
         setInvoices(updatedInvoices);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
     const handleUploadConfirmation = () => {
         if (!selectedInvoice) return;
         
-        // In a real app, you would upload the file and send data to the backend.
         setInvoices(invoices.map(inv => 
             inv.id === selectedInvoice.id ? { ...inv, status: 'Em Análise' } : inv
         ));
@@ -119,15 +125,16 @@ export default function InvoicesPage() {
         agency: process.env.PAYMENT_AGENCY,
         account: process.env.PAYMENT_ACCOUNT,
         pixKey: process.env.PAYMENT_PIX_KEY,
-        holder: process.env.PAYMENT_HOLDER,
+        holder: "PECU'S INTERMEDIATE",
         cnpj: process.env.PAYMENT_CNPJ
     };
     
-    const getBadgeClass = (status: "Paga" | "Pendente" | "Em Análise") => {
+    const getBadgeClass = (status: InvoiceStatus) => {
         switch(status) {
             case "Paga": return "bg-green-100 text-green-800";
             case "Pendente": return "bg-yellow-100 text-yellow-800";
             case "Em Análise": return "bg-blue-100 text-blue-800";
+            case "Negado": return "bg-red-100 text-red-800";
             default: return "";
         }
     }
@@ -166,12 +173,20 @@ export default function InvoicesPage() {
                                     {invoices.map((invoice) => (
                                         <TableRow key={invoice.id}>
                                             <TableCell className="font-medium">{invoice.id}</TableCell>
-                                            <TableCell className="text-muted-foreground">{invoice.description}</TableCell>
+                                            <TableCell>
+                                                <p className="text-muted-foreground">{invoice.description}</p>
+                                                {invoice.status === 'Negado' && invoice.rejectionReason && (
+                                                    <div className="text-xs text-destructive italic mt-1 flex items-center gap-1">
+                                                        <AlertCircle className="h-3 w-3" />
+                                                        Justificativa: {invoice.rejectionReason}
+                                                    </div>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{invoice.dueDate}</TableCell>
                                             <TableCell>
                                                 <Badge
-                                                    variant={invoice.status === "Paga" ? "secondary" : "default"}
-                                                    className={cn(getBadgeClass(invoice.status))}
+                                                    variant={"outline"}
+                                                    className={cn("border", getBadgeClass(invoice.status))}
                                                 >
                                                     {invoice.status}
                                                 </Badge>
@@ -190,7 +205,7 @@ export default function InvoicesPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        {invoice.status === "Pendente" && (
+                                                        {(invoice.status === "Pendente" || invoice.status === "Negado") && (
                                                             <>
                                                                 <DialogTrigger asChild>
                                                                     <DropdownMenuItem onSelect={() => setPaymentDialog(true)}>
@@ -234,7 +249,9 @@ export default function InvoicesPage() {
                         )}
                     </CardContent>
                     <CardFooter className="text-sm text-muted-foreground flex justify-center text-center">
-                        Atenção: Faturas não pagas até o vencimento estão sujeitas a multa de 2% e juros de mora de 1% a.m. (pro rata die).
+                        <p className="max-w-prose">
+                         Atenção: Faturas não pagas até o vencimento estão sujeitas a multa de 2% e juros de mora de 1% a.m. (pro rata die). O status "Negado" indica que o comprovante anterior foi recusado. Por favor, realize um novo pagamento e anexe o comprovante correto.
+                        </p>
                     </CardFooter>
                 </Card>
                 <DialogContent className="sm:max-w-md">
@@ -246,7 +263,7 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> PECU'S INTERMEDIATE</CardTitle>
                             <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
@@ -285,7 +302,7 @@ export default function InvoicesPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor:pointer hover:bg-secondary transition-colors">
+                         <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
                             <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                             <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload do comprovante</p>
                             <Input type="file" className="hidden" />
