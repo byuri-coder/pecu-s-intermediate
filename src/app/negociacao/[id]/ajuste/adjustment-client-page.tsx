@@ -669,39 +669,46 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             doc.addFont('times', 'normal', 'WinAnsiEncoding');
             doc.addFont('times', 'bold', 'WinAnsiEncoding');
             doc.setFont('times', 'normal');
+            doc.setFontSize(12);
 
-            const margin = { top: 85, right: 57, bottom: 57, left: 85 }; // A4, 3cm top/left, 2cm bottom/right
+            const margin = { top: 85.05, right: 56.7, bottom: 56.7, left: 85.05 }; // 3cm e 2cm
             const contentWidth = doc.internal.pageSize.getWidth() - margin.left - margin.right;
-            const pageHeight = doc.internal.pageSize.getHeight();
             let cursorY = margin.top;
             const lineHeight = 1.5;
 
-            const addPageNumbers = (doc: jsPDF) => {
+             const addPageNumbers = () => {
                 const pageCount = (doc.internal as any).getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
-                    doc.setFontSize(10);
                     doc.text(
                         `Página ${i} de ${pageCount}`,
                         doc.internal.pageSize.getWidth() / 2,
-                        pageHeight - margin.bottom / 2,
+                        doc.internal.pageSize.getHeight() - 30,
                         { align: 'center' }
                     );
                 }
             };
-            
+
             const lines = doc.splitTextToSize(finalContractText, contentWidth);
             
             lines.forEach((line: string) => {
-                if (cursorY + 12 * lineHeight > pageHeight - margin.bottom) {
+                if (cursorY + (12 * lineHeight) > doc.internal.pageSize.getHeight() - margin.bottom) {
                     doc.addPage();
                     cursorY = margin.top;
                 }
+
+                // Check for titles to make them bold
+                if (line.startsWith('CLÁUSULA') || line.startsWith('CONTRATO')) {
+                    doc.setFont('times', 'bold');
+                } else {
+                    doc.setFont('times', 'normal');
+                }
+
                 doc.text(line, margin.left, cursorY, { align: 'justify', lineHeightFactor: lineHeight });
-                cursorY += 12 * lineHeight;
+                cursorY += (12 * lineHeight);
             });
 
-            addPageNumbers(doc);
+            addPageNumbers();
             doc.save('contrato_assinado.pdf');
 
         } catch (error) {

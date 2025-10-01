@@ -18,11 +18,12 @@ export async function logContractSignature(data: {
 
   console.log("Logging contract signature to 'Firestore'");
   console.log({
-    userId,
-    userEmail,
-    assetId,
-    contractHash,
-    signedAt: new Date().toISOString(), // Simulating serverTimestamp
+    uid: userId,
+    email: userEmail,
+    contratoId: assetId,
+    hash: contractHash,
+    'data/hora': new Date().toISOString(), // Simulating serverTimestamp
+    status: 'assinado',
   });
   
   // In a real application, you would uncomment and use the following:
@@ -31,11 +32,12 @@ export async function logContractSignature(data: {
     const db = getFirestore(app);
     const signatureCollection = collection(db, 'contract_signatures');
     await addDoc(signatureCollection, {
-      userId,
-      userEmail,
-      assetId,
-      contractHash,
-      signedAt: serverTimestamp(),
+      uid: userId,
+      email: userEmail,
+      contratoId: assetId,
+      hash: contractHash,
+      'data/hora': serverTimestamp(),
+      status: 'assinado'
     });
     return { success: true, message: "Assinatura registrada com sucesso." };
   } catch (error) {
