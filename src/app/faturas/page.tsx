@@ -115,12 +115,12 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: "PECU'S Bank S.A.",
-        agency: "0001",
-        account: "98765-4",
-        pixKey: "financeiro@pecus.com.br",
-        holder: "PECU'S INTERMEDIATE",
-        cnpj: "YURI BARBOSA PAULO"
+        bank: process.env.PAYMENT_BANK,
+        agency: process.env.PAYMENT_AGENCY,
+        account: process.env.PAYMENT_ACCOUNT,
+        pixKey: process.env.PAYMENT_PIX_KEY,
+        holder: process.env.PAYMENT_HOLDER,
+        cnpj: process.env.PAYMENT_CNPJ
     };
     
     const getBadgeClass = (status: "Paga" | "Pendente" | "Em Análise") => {
@@ -246,7 +246,7 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> PECU'S INTERMEDIATE</CardTitle>
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> {platformPaymentInfo.holder}</CardTitle>
                             <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
@@ -257,7 +257,7 @@ export default function InvoicesPage() {
                             <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
                                 <span><strong>Chave PIX (E-mail):</strong> {platformPaymentInfo.pixKey}</span>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey, 'Chave PIX')}>
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey || '', 'Chave PIX')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
                             </div>
