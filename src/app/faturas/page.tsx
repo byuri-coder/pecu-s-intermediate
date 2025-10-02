@@ -101,14 +101,14 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: "",
-        agency: "",
-        account: "",
-        cpf: "",
-        accountType: "",
-        pixKey: "",
-        holder: "YURI BARBOSA PAULO",
-        cnpj: ""
+        bank: process.env.PAYMENT_BANK,
+        agency: process.env.PAYMENT_AGENCY,
+        account: process.env.PAYMENT_ACCOUNT,
+        cpf: process.env.PAYMENT_CNPJ, // Assuming CNPJ var holds CPF/CNPJ
+        accountType: process.env.PAYMENT_ACCOUNT_TYPE,
+        pixKey: process.env.PAYMENT_PIX_KEY,
+        holder: process.env.PAYMENT_HOLDER,
+        cnpj: process.env.PAYMENT_CNPJ,
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -251,15 +251,17 @@ export default function InvoicesPage() {
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Agência:</strong> {platformPaymentInfo.agency}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Conta:</strong> {platformPaymentInfo.account}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>CPF:</strong> {platformPaymentInfo.cpf}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>CPF/CNPJ:</strong> {platformPaymentInfo.cpf}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Tipo de Conta:</strong> {platformPaymentInfo.accountType}</span></div>
                             <Separator />
                             <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
-                                <span><strong>Chave PIX (Aleatória):</strong> {platformPaymentInfo.pixKey}</span>
+                                <span><strong>Chave PIX:</strong> {platformPaymentInfo.pixKey}</span>
+                                {platformPaymentInfo.pixKey && (
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey || '', 'Chave PIX')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
+                                )}
                             </div>
                             <div className="text-center p-4 border rounded-md bg-muted/50">
                                 <p className="text-muted-foreground">QR Code aparecerá aqui</p>
