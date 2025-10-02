@@ -24,14 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const chartData = [
-  { date: '2024-01-01', carbono: 120, tributos: 80, terras: 40 },
-  { date: '2024-01-02', carbono: 140, tributos: 90, terras: 50 },
-  { date: '2024-01-03', carbono: 160, tributos: 110, terras: 60 },
-  { date: '2024-01-04', carbono: 130, tributos: 120, terras: 55 },
-  { date: '2024-01-05', carbono: 180, tributos: 100, terras: 70 },
-  { date: '2024-01-06', carbono: 220, tributos: 130, terras: 80 },
-  { date: '2024-01-07', carbono: 210, tributos: 140, terras: 90 },
+const chartData: { date: string; carbono: number; tributos: number; terras: number }[] = [
+  // Dados de teste removidos
 ];
 
 const chartConfig = {
