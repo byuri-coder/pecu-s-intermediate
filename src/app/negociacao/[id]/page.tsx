@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin, LocateFixed, Map } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
-import { ChatList } from '../chat-list';
+import { ChatList, type Conversation } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -27,9 +27,8 @@ import {
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 
 // Placeholder data for the chat
-const initialMessages: Message[] = [
-  
-];
+const initialMessages: Message[] = [];
+const initialConversations: Conversation[] = [];
 
 
 function getAssetDetails(id: string, type: AssetType) {
@@ -69,6 +68,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
+  const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
 
@@ -96,7 +96,31 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
       avatar: 'https://picsum.photos/seed/avatar1/40/40',
       ...msg
     };
+    
     setMessages(prev => [...prev, finalMessage]);
+
+    // Check if it's the first message to create a conversation
+    if (messages.length === 0) {
+        const newConversation: Conversation = {
+            id: params.id,
+            name: sellerName,
+            avatar: sellerAvatar,
+            lastMessage: finalMessage.type === 'text' ? finalMessage.content : `Anexo: ${finalMessage.type}`,
+            time: finalMessage.timestamp,
+            unread: 0,
+            type: assetType,
+        };
+        // In a real app, this state would be managed globally (e.g., via Context or Zustand)
+        // For now, we are just adding it to our local state which will be passed to ChatList.
+        // This won't persist across reloads or different pages.
+        setConversations(prevConvos => {
+            const existing = prevConvos.find(c => c.id === newConversation.id);
+            if (existing) {
+                return prevConvos.map(c => c.id === newConversation.id ? {...c, lastMessage: newConversation.lastMessage, time: newConversation.time } : c);
+            }
+            return [...prevConvos, newConversation];
+        })
+    }
   }
 
   const handleSendMessage = () => {
@@ -161,7 +185,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
         <div className="md:col-span-4 lg:col-span-3 h-full">
-             <ChatList />
+             <ChatList conversations={conversations} />
         </div>
         
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">

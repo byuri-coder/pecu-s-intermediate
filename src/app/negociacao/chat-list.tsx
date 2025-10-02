@@ -8,10 +8,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Placeholder data for chat conversations
-const conversations: any[] = [
-  
-];
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  type: string;
+}
 
 function getAssetTypeQueryParam(type: string) {
     switch(type) {
@@ -23,7 +28,7 @@ function getAssetTypeQueryParam(type: string) {
 }
 
 
-export function ChatList() {
+export function ChatList({ conversations }: { conversations: Conversation[] }) {
   const pathname = usePathname();
 
   if (conversations.length === 0) {
