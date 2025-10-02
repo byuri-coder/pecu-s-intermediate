@@ -34,8 +34,17 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
     
     const renderContent = () => {
         switch(msg.type) {
-            case 'text':
+            case 'text': {
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                if (urlRegex.test(msg.content)) {
+                    return (
+                        <a href={msg.content} target="_blank" rel="noopener noreferrer" className={cn("underline", isMe ? "hover:text-primary-foreground/80" : "text-primary hover:underline")}>
+                            {msg.content}
+                        </a>
+                    )
+                }
                 return <p>{msg.content}</p>;
+            }
             case 'pdf':
                 return (
                     <a href={msg.content} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30 hover:bg-secondary/50 transition-colors">
