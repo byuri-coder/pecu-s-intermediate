@@ -53,7 +53,7 @@ const revenueData: { name: string; receita: number; taxas: number }[] = [
 
 
 export default function Dashboard() {
-  const [showAlert, setShowAlert] = React.useState(true);
+  const [showAlert, setShowAlert] = React.useState(false);
   
   return (
     <>
