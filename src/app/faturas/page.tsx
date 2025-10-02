@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -42,7 +43,6 @@ import Link from "next/link";
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { getPaymentInfo, type PaymentInfo } from "./actions";
 
 type InvoiceStatus = "Paga" | "Pendente" | "Em Análise" | "Negado";
 
@@ -75,11 +75,6 @@ export default function InvoicesPage() {
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
-    const [paymentInfo, setPaymentInfo] = React.useState<PaymentInfo | null>(null);
-
-    React.useEffect(() => {
-        getPaymentInfo().then(setPaymentInfo);
-    }, []);
 
     const handleUploadConfirmation = () => {
         if (!selectedInvoice) return;
@@ -98,13 +93,23 @@ export default function InvoicesPage() {
     };
 
     const copyToClipboard = (text: string, fieldName: string) => {
-        if(!text) return;
         navigator.clipboard.writeText(text);
         toast({
             title: `${fieldName} copiado!`,
             description: `O valor foi copiado para a área de transferência.`
         });
     }
+
+    const platformPaymentInfo = {
+        bank: process.env.PAYMENT_BANK,
+        agency: process.env.PAYMENT_AGENCY,
+        account: process.env.PAYMENT_ACCOUNT,
+        cpf: process.env.PAYMENT_CNPJ, // Assuming CNPJ var holds CPF/CNPJ
+        accountType: process.env.PAYMENT_ACCOUNT_TYPE,
+        pixKey: process.env.PAYMENT_PIX_KEY,
+        holder: process.env.PAYMENT_HOLDER,
+        cnpj: process.env.PAYMENT_CNPJ,
+    };
     
     const getBadgeClass = (status: InvoiceStatus) => {
         switch(status) {
@@ -239,21 +244,21 @@ export default function InvoicesPage() {
                     </DialogHeader>
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> <b>{paymentInfo?.holder}</b></CardTitle>
-                            {paymentInfo?.cpf && <CardDescription>{paymentInfo?.cpf}</CardDescription>}
+                            <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> <b>{platformPaymentInfo.holder}</b></CardTitle>
+                            {platformPaymentInfo.cnpj && <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>}
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
-                            <div className="flex justify-between items-center"><span><strong>Banco:</strong> {paymentInfo?.bank}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>Agência:</strong> {paymentInfo?.agency}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>Conta:</strong> {paymentInfo?.account}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>CPF:</strong> {paymentInfo?.cpf}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>Tipo de Conta:</strong> {paymentInfo?.accountType}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Agência:</strong> {platformPaymentInfo.agency}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Conta:</strong> {platformPaymentInfo.account}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>CPF/CNPJ:</strong> {platformPaymentInfo.cpf}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Tipo de Conta:</strong> {platformPaymentInfo.accountType}</span></div>
                             <Separator />
                             <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
-                                <span><strong>Chave PIX:</strong> {paymentInfo?.pixKey}</span>
-                                {paymentInfo?.pixKey && (
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(paymentInfo.pixKey || '', 'Chave PIX')}>
+                                <span><strong>Chave PIX:</strong> {platformPaymentInfo.pixKey}</span>
+                                {platformPaymentInfo.pixKey && (
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(platformPaymentInfo.pixKey || '', 'Chave PIX')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
                                 )}
@@ -278,7 +283,7 @@ export default function InvoicesPage() {
                     <DialogHeader>
                         <DialogTitle>Anexar Comprovante</DialogTitle>
                         <DialogDescription>
-                            Faça o upload do comprovante de pagamento para a fatura {selectedInvoice?.id}.
+                            Faça o upload do comprovante de pagamento para a fatura ${selectedInvoice?.id}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
