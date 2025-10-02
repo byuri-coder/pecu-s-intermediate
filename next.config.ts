@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
     PAYMENT_ACCOUNT: process.env.PAYMENT_ACCOUNT,
     PAYMENT_PIX_KEY: process.env.PAYMENT_PIX_KEY,
     PAYMENT_HOLDER: process.env.PAYMENT_HOLDER,
-    PAYMENT_CNPJ: process.env.PAYMENT_CNPJ,
+    PAYMENT_CNPJ: process.env.PAYMENT_CPF,
     PAYMENT_ACCOUNT_TYPE: process.env.PAYMENT_ACCOUNT_TYPE,
   }
 };
