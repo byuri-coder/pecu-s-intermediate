@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
-interface Message {
+export interface Message {
   id: string;
   sender: 'me' | 'other';
   content: string;
@@ -16,16 +16,6 @@ interface Message {
   timestamp: string;
   avatar: string;
 }
-
-// Placeholder data for the chat
-const initialMessages: Message[] = [
-  { id: '1', sender: 'other', content: 'Olá! Vi que você tem interesse no meu crédito de carbono. Qual a sua proposta inicial?', type: 'text', timestamp: '10:30', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '2', sender: 'me', content: 'Olá! Gostaria de oferecer R$ 14,50 por crédito, para um lote de 2.000 unidades.', type: 'text', timestamp: '10:32', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
-  { id: '3', sender: 'other', content: 'Agradeço a proposta. Podemos fechar em R$ 15,00? Anexei a documentação de validação do projeto para sua análise.', type: 'text', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '4', sender: 'other', content: 'validacao-verra-proj-amazon.pdf', type: 'pdf', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '5', sender: 'me', content: 'Entendido. Vou analisar a documentação. Acredito que R$15,00 seja um valor justo. Segue uma imagem da nossa fazenda para referência de outro projeto nosso.', type: 'text', timestamp: '10:40', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
-  { id: '6', sender: 'me', content: 'https://picsum.photos/seed/farm-pic/400/300', type: 'image', timestamp: '10:41', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
-];
 
 const MessageBubble = ({ msg }: { msg: Message }) => {
     const isMe = msg.sender === 'me';
@@ -87,27 +77,8 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 }
 
 
-export function NegotiationChat({ onSendMessage, newMessage, setNewMessage }: { onSendMessage: () => void, newMessage: string, setNewMessage: (value: string) => void }) {
-  const [messages, setMessages] = React.useState<Message[]>(initialMessages);
+export function NegotiationChat({ messages }: { messages: Message[] }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
-
-  const handleSendMessage = () => {
-    if (newMessage.trim() === '') return;
-
-    const now = new Date();
-    const newMsg: Message = {
-        id: String(Date.now()),
-        sender: 'me',
-        content: newMessage,
-        type: 'text',
-        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
-        avatar: 'https://picsum.photos/seed/avatar1/40/40'
-    };
-
-    setMessages(prev => [...prev, newMsg]);
-    setNewMessage('');
-    onSendMessage(); 
-  };
   
   // Auto-scroll to bottom
   React.useEffect(() => {

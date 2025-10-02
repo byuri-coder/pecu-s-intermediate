@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle } from 'lucide-react';
-import { NegotiationChat } from './negotiation-chat';
+import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -17,6 +17,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
+
+// Placeholder data for the chat
+const initialMessages: Message[] = [
+  { id: '1', sender: 'other', content: 'Olá! Vi que você tem interesse no meu crédito de carbono. Qual a sua proposta inicial?', type: 'text', timestamp: '10:30', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '2', sender: 'me', content: 'Olá! Gostaria de oferecer R$ 14,50 por crédito, para um lote de 2.000 unidades.', type: 'text', timestamp: '10:32', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+  { id: '3', sender: 'other', content: 'Agradeço a proposta. Podemos fechar em R$ 15,00? Anexei a documentação de validação do projeto para sua análise.', type: 'text', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '4', sender: 'other', content: 'validacao-verra-proj-amazon.pdf', type: 'pdf', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '5', sender: 'me', content: 'Entendido. Vou analisar a documentação. Acredito que R$15,00 seja um valor justo. Segue uma imagem da nossa fazenda para referência de outro projeto nosso.', type: 'text', timestamp: '10:40', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+  { id: '6', sender: 'me', content: 'https://picsum.photos/seed/farm-pic/400/300', type: 'image', timestamp: '10:41', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+];
+
 
 function getAssetDetails(id: string, type: AssetType) {
     if (type === 'carbon-credit') {
@@ -51,7 +62,10 @@ function getAssetTypeRoute(type: AssetType) {
 export default function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
   const assetType = searchParams.type || 'carbon-credit';
   const asset = getAssetDetails(params.id, assetType);
+  
+  const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
+  
 
   if (!asset) {
     // In a real app with server components, this would be a regular notFound() call.
@@ -69,19 +83,26 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
   const handleSendMessage = () => {
-    // This function will be passed to the chat component
-    // It's called after a message is sent to clear the input
+    if (newMessage.trim() === '') return;
+
+    const now = new Date();
+    const newMsg: Message = {
+        id: String(Date.now()),
+        sender: 'me',
+        content: newMessage,
+        type: 'text',
+        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+        avatar: 'https://picsum.photos/seed/avatar1/40/40'
+    };
+
+    setMessages(prev => [...prev, newMsg]);
     setNewMessage('');
   };
   
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      // We need to find a way to trigger the send from the child...
-      // A better approach would be to manage the state and send logic here.
-      // For now, let's just log it.
-      console.log("Enter pressed, would send:", newMessage);
-      // Let's call the send logic inside the child through a ref or callback
+      handleSendMessage();
     }
   };
 
@@ -180,33 +201,16 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                    <NegotiationChat 
-                        onSendMessage={handleSendMessage}
-                        newMessage={newMessage}
-                        setNewMessage={setNewMessage}
-                    />
+                    <NegotiationChat messages={messages} />
                     <div className="mt-4 flex items-center gap-2">
                         <Button variant="ghost" size="icon"><Paperclip className="h-5 w-5" /></Button>
                         <Input 
                             placeholder="Digite sua mensagem..." 
                             value={newMessage} 
                             onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    // This is tricky. We'll need to pass a ref or a function to trigger send.
-                                    // Let's modify the chat component to handle this.
-                                    // For now, let's just log and see if we can trigger via button click.
-                                    document.getElementById('send-message-button')?.click();
-                                }
-                            }}
+                            onKeyDown={handleKeyDown}
                          />
-                        <Button id="send-message-button" onClick={() => {
-                             // This is a temporary solution to trigger the send functionality in the child
-                             // by finding the button inside the chat component (if we were to add one).
-                             // The better way is what we're doing now: lifting state up.
-                             // Let's modify the chat component to accept the send logic.
-                        }}>
+                        <Button id="send-message-button" onClick={handleSendMessage}>
                           <Send className="h-5 w-5" />
                         </Button>
                     </div>
@@ -216,30 +220,3 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
-
-// generateStaticParams is not compatible with 'use client'
-// To make this work, we'd need to extract the data fetching part to a server component
-// or fetch it in a useEffect hook. For this demo, we'll assume this page is server-rendered,
-// and the dynamic part is in the client component.
-/*
-export async function generateStaticParams() {
-  const carbonParams = placeholderCredits.map((credit) => ({
-    id: credit.id,
-  }));
-
-  const taxParams = placeholderTaxCredits.map((credit) => ({
-    id: credit.id,
-  }));
-
-  const ruralLandParams = placeholderRuralLands.map((land) => ({
-    id: land.id,
-  }));
-
-  // Combine all IDs and remove duplicates
-  const allIds = [...new Set([...carbonParams.map(p => p.id), ...taxParams.map(p => p.id), ...ruralLandParams.map(p => p.id)])];
-
-  return allIds.map(id => ({
-    id: id,
-  }));
-}
-*/
