@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   Activity,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import {
   Users,
   LineChart,
   ShieldAlert,
+  X,
 } from "lucide-react"
 
 import {
@@ -51,16 +53,29 @@ const revenueData: { name: string; receita: number; taxas: number }[] = [
 
 
 export default function Dashboard() {
+  const [showAlert, setShowAlert] = React.useState(true);
+  
   return (
     <>
-       <Alert variant="destructive" className="mb-4">
-        <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Alerta 001: Auditoria de Contratos</AlertTitle>
-        <AlertDescription>
-          Existem novos contratos finalizados pendentes de verificação de integridade. 
-          <Link href="/admin/audit" className="font-bold underline ml-2">Verificar Agora</Link>
-        </AlertDescription>
-      </Alert>
+       {showAlert && (
+        <Alert variant="destructive" className="mb-4 relative pr-12">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Alerta 001: Auditoria de Contratos</AlertTitle>
+            <AlertDescription>
+            Existem novos contratos finalizados pendentes de verificação de integridade. 
+            <Link href="/admin/audit" className="font-bold underline ml-2">Verificar Agora</Link>
+            </AlertDescription>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute top-2 right-2 h-6 w-6"
+              onClick={() => setShowAlert(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar alerta</span>
+            </Button>
+        </Alert>
+       )}
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
