@@ -105,8 +105,14 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   }
 
   const handleSendMessage = () => {
-    if (newMessage.trim() === '') return;
-    addMessage({ content: newMessage, type: 'text' });
+    const messageContent = newMessage.trim();
+    if (messageContent === '') return;
+
+    // Check if the message is a Google Maps URL
+    const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
+    const messageType = isGoogleMapsUrl ? 'location' : 'text';
+
+    addMessage({ content: messageContent, type: messageType });
     setNewMessage('');
   };
 
