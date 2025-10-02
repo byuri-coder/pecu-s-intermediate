@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -271,11 +272,9 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                                     <LocateFixed className="mr-2 h-4 w-4"/>
                                     Localização Atual
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">
-                                        <Map className="mr-2 h-4 w-4"/>
-                                        Escolher no Mapa
-                                    </a>
+                                <DropdownMenuItem onClick={handleSendLocation}>
+                                    <Map className="mr-2 h-4 w-4"/>
+                                    Escolher no Mapa
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
