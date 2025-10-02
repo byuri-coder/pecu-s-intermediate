@@ -9,43 +9,8 @@ import { usePathname } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Placeholder data for chat conversations
-const conversations = [
-  {
-    id: 'proj-amazon-reforestation',
-    type: 'carbon-credit',
-    avatar: 'https://picsum.photos/seed/avatar2/40/40',
-    name: 'Florestas Renovadas Ltda.',
-    lastMessage: 'Agradeço a proposta. Podemos fechar em R$ 15,00?',
-    time: '10:35',
-    unread: 1,
-  },
-  {
-    id: 'tax-icms-01',
-    type: 'tax-credit',
-    avatar: 'https://picsum.photos/seed/avatar3/40/40',
-    name: 'Varejista Paulista S.A.',
-    lastMessage: 'Perfeito, vou preparar a minuta do contrato.',
-    time: 'Ontem',
-    unread: 0,
-  },
-   {
-    id: 'land-004',
-    type: 'rural-land',
-    avatar: 'https://picsum.photos/seed/avatar4/40/40',
-    name: 'Carlos Pereira Investimentos',
-    lastMessage: 'Recebi a documentação dos seus imóveis, estou analisando.',
-    time: 'Terça-feira',
-    unread: 2,
-  },
-   {
-    id: 'tax-ipi-03',
-    type: 'tax-credit',
-    avatar: 'https://picsum.photos/seed/avatar5/40/40',
-    name: 'Importadora Geral Ltda.',
-    lastMessage: 'Ok, aguardo seu retorno.',
-    time: '29/04/24',
-    unread: 0,
-  },
+const conversations: any[] = [
+  
 ];
 
 function getAssetTypeQueryParam(type: string) {
@@ -61,6 +26,16 @@ function getAssetTypeQueryParam(type: string) {
 export function ChatList() {
   const pathname = usePathname();
 
+  if (conversations.length === 0) {
+    return (
+      <Card className="h-full flex items-center justify-center p-4">
+        <div className="text-center text-muted-foreground">
+          <p className="text-sm">Nenhuma conversa encontrada.</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full">
       <ScrollArea className="h-full">
@@ -75,7 +50,7 @@ export function ChatList() {
                     isActive ? 'bg-primary/10' : 'hover:bg-secondary/50'
                   )}
                 >
-                  <Avatar className="h-12 w-12 border-2', isActive ? 'border-primary' : 'border-transparent'">
+                  <Avatar className={cn("h-12 w-12 border-2", isActive ? 'border-primary' : 'border-transparent')}>
                     <AvatarImage src={convo.avatar} />
                     <AvatarFallback>{convo.name.charAt(0)}</AvatarFallback>
                   </Avatar>
