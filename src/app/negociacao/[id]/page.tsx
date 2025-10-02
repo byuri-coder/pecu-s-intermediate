@@ -65,6 +65,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
 
   if (!asset) {
@@ -97,6 +98,27 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
 
     setMessages(prev => [...prev, newMsg]);
     setNewMessage('');
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      const now = new Date();
+      
+      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+      const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
+
+      const newMsg: Message = {
+        id: String(Date.now()),
+        sender: 'me',
+        content: content,
+        type: fileType,
+        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+        avatar: 'https://picsum.photos/seed/avatar1/40/40'
+      };
+
+      setMessages(prev => [...prev, newMsg]);
+    }
   };
   
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -203,7 +225,16 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                 <CardContent className="flex-1 flex flex-col p-4 pt-0">
                     <NegotiationChat messages={messages} />
                     <div className="mt-4 flex items-center gap-2">
-                        <Button variant="ghost" size="icon"><Paperclip className="h-5 w-5" /></Button>
+                        <Input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+                            <Paperclip className="h-5 w-5" />
+                            <span className="sr-only">Anexar arquivo</span>
+                        </Button>
                         <Input 
                             placeholder="Digite sua mensagem..." 
                             value={newMessage} 
@@ -220,3 +251,5 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
+
+    
