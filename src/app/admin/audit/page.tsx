@@ -21,11 +21,8 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 
-const mockAuditLogs = [
-  { id: "LOG-001", user: "admin@example.com", ip: "187.55.123.10", action: "Acesso ao painel", timestamp: "2024-05-21 10:00:15" },
-  { id: "LOG-002", user: "admin@example.com", ip: "187.55.123.10", action: "Exportou relatório de transações", timestamp: "2024-05-21 10:05:22" },
-  { id: "LOG-003", user: "user1@test.com", ip: "200.10.20.30", action: "Alterou senha", timestamp: "2024-05-21 11:30:00" },
-  { id: "LOG-004", user: "admin@example.com", ip: "187.55.123.10", action: "Visualizou log de auditoria", timestamp: "2024-05-21 11:35:00" },
+const mockAuditLogs: { id: string; user: string; ip: string; action: string; timestamp: string }[] = [
+  // Dados de teste removidos
 ]
 
 export default function AuditPage() {
@@ -58,20 +55,24 @@ export default function AuditPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockAuditLogs.map((log) => (
+            {mockAuditLogs.length > 0 ? mockAuditLogs.map((log) => (
                 <TableRow key={log.id}>
                 <TableCell className="font-medium">{log.user}</TableCell>
                 <TableCell>{log.action}</TableCell>
                 <TableCell className="hidden md:table-cell">{log.ip}</TableCell>
                 <TableCell className="hidden md:table-cell">{log.timestamp}</TableCell>
                 </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center h-24">Nenhum log encontrado.</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Mostrando <strong>1-10</strong> de <strong>1.254</strong> logs
+          Mostrando <strong>0</strong> de <strong>0</strong> logs
         </div>
       </CardFooter>
     </Card>

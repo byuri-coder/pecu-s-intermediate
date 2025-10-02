@@ -39,10 +39,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-const mockInvoices = [
-  { id: "NF-001", user: "Empresa A", value: 150.00, date: "2024-05-01", status: "Emitida", xmlUrl: "#", pdfUrl: "#" },
-  { id: "NF-002", user: "Empresa B", value: 50.00, date: "2024-05-02", status: "Pendente", xmlUrl: "#", pdfUrl: "#" },
-  { id: "NF-003", user: "Empresa C", value: 1200.00, date: "2024-05-03", status: "Cancelada", xmlUrl: "#", pdfUrl: "#" },
+const mockInvoices: { id: string; user: string; value: number; date: string; status: string; xmlUrl: string; pdfUrl: string }[] = [
+  // Dados de teste removidos
 ]
 
 
@@ -106,7 +104,7 @@ export default function InvoicesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockInvoices.map((invoice) => (
+            {mockInvoices.length > 0 ? mockInvoices.map((invoice) => (
             <TableRow key={invoice.id}>
               <TableCell className="font-medium">{invoice.id}</TableCell>
               <TableCell>{invoice.user}</TableCell>
@@ -142,13 +140,17 @@ export default function InvoicesPage() {
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">Nenhuma nota fiscal encontrada.</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Mostrando <strong>1-10</strong> de <strong>15</strong> notas
+          Mostrando <strong>0</strong> de <strong>0</strong> notas
         </div>
       </CardFooter>
     </Card>

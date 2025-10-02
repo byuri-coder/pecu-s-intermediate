@@ -24,37 +24,17 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 
-const initialReceipts = [
-  {
-    id: "RCPT-001",
-    invoiceId: "FAT-001",
-    userId: "user-123",
-    userName: "Empresa Inovadora S.A.",
-    date: "2024-05-20",
-    status: "Pendente",
-    fileUrl: "#",
-    rejectionReason: ""
-  },
-  {
-    id: "RCPT-002",
-    invoiceId: "FAT-002",
-    userId: "user-456",
-    userName: "Comércio Varejista Brasil",
-    date: "2024-05-21",
-    status: "Pendente",
-    fileUrl: "#",
-    rejectionReason: ""
-  },
-   {
-    id: "RCPT-003",
-    invoiceId: "FAT-003",
-    userId: "user-789",
-    userName: "Soluções em TI",
-    date: "2024-05-19",
-    status: "Aprovado",
-    fileUrl: "#",
-    rejectionReason: ""
-  },
+const initialReceipts: {
+    id: string;
+    invoiceId: string;
+    userId: string;
+    userName: string;
+    date: string;
+    status: "Pendente" | "Aprovado" | "Negado";
+    fileUrl: string;
+    rejectionReason: string;
+}[] = [
+  // Dados de teste removidos
 ]
 
 type Receipt = typeof initialReceipts[0];
@@ -71,8 +51,6 @@ export default function ReceiptsPage() {
           : receipt
       )
     );
-    // In a real app, you'd also update the corresponding invoice status
-    // For now, we'll just show a toast.
     toast({
       title: `Comprovante ${newStatus.toLowerCase()}`,
       description: `O status do comprovante ${receiptId} foi atualizado.`,
@@ -132,7 +110,7 @@ export default function ReceiptsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {receipts.map((receipt) => {
+            {receipts.length > 0 ? receipts.map((receipt) => {
                 const { badge, action } = getStatusInfo(receipt.status);
                 const isPending = receipt.status === 'Pendente';
 
@@ -206,7 +184,11 @@ export default function ReceiptsPage() {
                     </TableCell>
                   </TableRow>
                 )
-            })}
+            }) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center h-24">Nenhum comprovante pendente.</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

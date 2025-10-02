@@ -36,11 +36,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-const mockTransactions = [
-  { id: "TR-001", user: "Empresa A", email: "a@test.com", type: "Crédito Tributário", value: 15000, date: "2024-05-01", status: "Concluído" },
-  { id: "TR-002", user: "Empresa B", email: "b@test.com", type: "Crédito de Carbono", value: 5000, date: "2024-05-02", status: "Pendente" },
-  { id: "TR-003", user: "Empresa C", email: "c@test.com", type: "Terra Rural", value: 1200000, date: "2024-05-03", status: "Cancelado" },
-  // Add more mock data as needed
+const mockTransactions: { id: string; user: string; email: string; type: string; value: number; date: string; status: string }[] = [
+  // Dados de teste removidos
 ]
 
 
@@ -118,7 +115,7 @@ export default function ReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockTransactions.map((tx) => (
+                {mockTransactions.length > 0 ? mockTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell className="hidden sm:table-cell">
                     {/* Placeholder for asset type icon */}
@@ -158,13 +155,17 @@ export default function ReportsPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">Nenhuma transação encontrada.</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Mostrando <strong>1-10</strong> de <strong>32</strong>{" "}
+              Mostrando <strong>0</strong> de <strong>0</strong>{" "}
               transações
             </div>
           </CardFooter>

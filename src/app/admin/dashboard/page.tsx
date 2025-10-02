@@ -41,40 +41,12 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } fro
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 
-const transactionsData = [
-  {
-    month: "Jan",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
-  {
-    month: "Fev",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
-  {
-    month: "Mar",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
-  {
-    month: "Abr",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
-  {
-    month: "Mai",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
-  {
-    month: "Jun",
-    total: Math.floor(Math.random() * 2000) + 500,
-  },
+const transactionsData: { month: string; total: number }[] = [
+  // Dados de teste removidos
 ]
 
-const revenueData = [
-  { name: 'Jan', receita: 4000, taxas: 2400 },
-  { name: 'Fev', receita: 3000, taxas: 1398 },
-  { name: 'Mar', receita: 9800, taxas: 2000 },
-  { name: 'Abr', receita: 3908, taxas: 2780 },
-  { name: 'Mai', receita: 4800, taxas: 1890 },
-  { name: 'Jun', receita: 3800, taxas: 2390 },
+const revenueData: { name: string; receita: number; taxas: number }[] = [
+    // Dados de teste removidos
 ];
 
 
@@ -98,9 +70,9 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$45.231,89</div>
+            <div className="text-2xl font-bold">R$0,00</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% em relação ao mês passado
+              +0.0% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
@@ -112,9 +84,9 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
+            <div className="text-2xl font-bold">+0</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% em relação ao mês passado
+              +0.0% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
@@ -124,9 +96,9 @@ export default function Dashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
+            <div className="text-2xl font-bold">+0</div>
             <p className="text-xs text-muted-foreground">
-              +19% em relação ao mês passado
+              +0% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
@@ -136,9 +108,9 @@ export default function Dashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">+0</div>
             <p className="text-xs text-muted-foreground">
-              +201 desde a última hora
+              +0 desde a última hora
             </p>
           </CardContent>
         </Card>
@@ -178,26 +150,8 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Liam Johnson</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      liam@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    Venda
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <Badge className="text-xs" variant="outline">
-                      Aprovado
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell lg:hidden xl:table-cell">
-                    2023-06-23
-                  </TableCell>
-                  <TableCell className="text-right">R$250.00</TableCell>
+                    <TableCell colSpan={5} className="text-center h-24">Nenhuma transação recente.</TableCell>
                 </TableRow>
-                {/* ... other rows */}
               </TableBody>
             </Table>
           </CardContent>
@@ -210,20 +164,9 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-8">
-            <div className="flex items-center gap-4">
-              <Avatar className="hidden h-9 w-9 sm:flex">
-                <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                <AvatarFallback>OM</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">Olivia Martin</p>
-                <p className="text-sm text-muted-foreground">
-                  olivia.martin@email.com
-                </p>
-              </div>
-              <div className="ml-auto font-medium">+R$1,999.00</div>
+            <div className="text-center text-muted-foreground py-8">
+                Nenhum usuário ativo.
             </div>
-             {/* ... other users */}
           </CardContent>
         </Card>
       </div>

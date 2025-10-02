@@ -76,33 +76,8 @@ export default function InvoicesPage() {
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
 
     React.useEffect(() => {
-        // This would in reality be a fetch from a database.
-        // We simulate it being created by the server-side action.
         const fetchedInvoices: Invoice[] = [
-             { 
-                id: 'FAT-001', 
-                transactionId: 'proj-cerrado-conservation',
-                description: 'Taxa de serviço - Venda Crédito Carbono',
-                dueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // 30 days ago
-                value: 594, 
-                status: 'Pendente'
-            },
-            { 
-                id: 'FAT-002', 
-                transactionId: 'op-002',
-                description: 'Taxa de serviço - Compra Crédito Tributário',
-                dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // yesterday
-                value: 1455, 
-                status: 'Pendente'
-            },
-            { 
-                id: 'FAT-003', 
-                transactionId: 'op-004',
-                description: 'Taxa de serviço - Venda Crédito Carbono',
-                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'), // in 30 days
-                value: 1100, 
-                status: 'Pendente'
-            }
+            // Dados de teste removidos
         ]
 
         const today = new Date();
@@ -362,5 +337,3 @@ export default function InvoicesPage() {
 
     
 }
-
-    

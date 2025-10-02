@@ -73,20 +73,19 @@ export function ProfileForm() {
     resolver: zodResolver(profileSchema),
     // Placeholder data for an existing user
     defaultValues: {
-      fullName: 'Usuário de Exemplo',
-      email: 'usuario@email.com',
-      stateRegistration: '123.456.789.112',
-      registrationState: 'SP',
-      address: 'Rua das Flores, 123',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '01234-567',
-      specialRegistration: 'Autorização para comercialização de créditos de carbono Verra VCS #1234.',
-      // Mocked payment data
-      bankName: 'Banco Exemplo S.A.',
-      agency: '0001',
-      account: '12345-6',
-      pixKey: 'documento@email.com'
+      fullName: '',
+      email: '',
+      stateRegistration: '',
+      registrationState: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      specialRegistration: '',
+      bankName: '',
+      agency: '',
+      account: '',
+      pixKey: ''
     },
   });
   

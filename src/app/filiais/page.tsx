@@ -26,9 +26,8 @@ import {
 import { AddBranchForm } from './add-branch-form';
 
 // Placeholder data for existing branches
-const branches = [
-  { id: 'filial-01', name: 'Filial São Paulo', cnpj: '12.345.678/0002-01', address: 'Av. Paulista, 1000, São Paulo - SP' },
-  { id: 'filial-02', name: 'Filial Rio de Janeiro', cnpj: '12.345.678/0003-02', address: 'Av. Rio Branco, 1, Rio de Janeiro - RJ' },
+const branches: { id: string; name: string; cnpj: string; address: string }[] = [
+  // Dados de teste removidos
 ];
 
 export default function BranchesPage() {
@@ -59,42 +58,48 @@ export default function BranchesPage() {
           </CardHeader>
           <CardContent>
               <div className="space-y-4">
-                  <div className="border rounded-lg">
-                      {branches.map((branch, index) => (
-                          <div key={branch.id} className={`flex items-center justify-between p-4 ${index < branches.length - 1 ? 'border-b' : ''}`}>
-                              <div>
+                  {branches.length > 0 ? (
+                    <div className="border rounded-lg">
+                        {branches.map((branch, index) => (
+                            <div key={branch.id} className={`flex items-center justify-between p-4 ${index < branches.length - 1 ? 'border-b' : ''}`}>
+                                <div>
                                 <p className="font-semibold">{branch.name}</p>
                                 <p className="text-sm text-muted-foreground">CNPJ: {branch.cnpj}</p>
                                 <p className="text-sm text-muted-foreground">{branch.address}</p>
-                              </div>
-                              <AlertDialog>
+                                </div>
+                                <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                                      <Trash2 className="h-4 w-4" />
-                                      <span className="sr-only">Excluir Filial</span>
-                                  </Button>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Excluir Filial</span>
+                                    </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
-                                  <AlertDialogHeader>
+                                    <AlertDialogHeader>
                                     <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Essa ação não pode ser desfeita. Isso irá apagar permanentemente a filial <span className="font-semibold">{branch.name}</span> dos nossos servidores.
+                                        Essa ação não pode ser desfeita. Isso irá apagar permanentemente a filial <span className="font-semibold">{branch.name}</span> dos nossos servidores.
                                     </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                     <AlertDialogAction
                                         className="bg-destructive hover:bg-destructive/90"
                                         onClick={() => console.log('delete branch', branch.id)}
                                     >
-                                      Excluir
+                                        Excluir
                                     </AlertDialogAction>
-                                  </AlertDialogFooter>
+                                    </AlertDialogFooter>
                                 </AlertDialogContent>
-                              </AlertDialog>
-                          </div>
-                      ))}
-                  </div>
+                                </AlertDialog>
+                            </div>
+                        ))}
+                    </div>
+                   ) : (
+                    <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">Nenhuma filial encontrada.</p>
+                    </div>
+                   )}
               </div>
           </CardContent>
         </Card>
