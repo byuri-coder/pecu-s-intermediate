@@ -5,8 +5,10 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Image as ImageIcon } from 'lucide-react';
+import { FileText, Image as ImageIcon, Download } from 'lucide-react';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+
 
 export interface Message {
   id: string;
@@ -20,21 +22,41 @@ export interface Message {
 const MessageBubble = ({ msg }: { msg: Message }) => {
     const isMe = msg.sender === 'me';
     
+    const handleDownload = (url: string, filename: string) => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+    
     const renderContent = () => {
         switch(msg.type) {
             case 'text':
                 return <p>{msg.content}</p>;
             case 'pdf':
                 return (
-                    <a href="#" className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                    <a href={msg.content} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30 hover:bg-secondary/50 transition-colors">
                         <FileText className="h-6 w-6 text-red-600"/>
-                        <span className="font-medium text-sm truncate">{msg.content}</span>
+                        <span className="font-medium text-sm truncate">{msg.content.split('/').pop()}</span>
                     </a>
                 )
             case 'image':
                 return (
-                     <div className="w-full aspect-video rounded-md overflow-hidden relative">
+                     <div className="w-full aspect-video rounded-md overflow-hidden relative group">
                         <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover" data-ai-hint="farm field" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button 
+                                size="icon" 
+                                variant="outline" 
+                                className="bg-background/50 hover:bg-background/80"
+                                onClick={() => handleDownload(msg.content, 'imagem_chat.png')}
+                            >
+                                <Download className="h-5 w-5" />
+                                <span className="sr-only">Baixar Imagem</span>
+                            </Button>
+                        </div>
                      </div>
                 )
             default:
@@ -58,14 +80,16 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             <div
                 className={cn(
                 'rounded-lg p-3 text-sm relative',
-                 msg.type === 'image' ? 'max-w-xl' : 'max-w-md',
+                 msg.type === 'image' ? 'w-full max-w-xl p-0' : 'max-w-md',
                 isMe
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-background border'
                 )}
             >
                 {renderContent()}
-                <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground/70", isMe ? 'text-right' : 'text-left')}>{msg.timestamp}</p>
+                {msg.type !== 'image' && (
+                    <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground/70", isMe ? 'text-right' : 'text-left')}>{msg.timestamp}</p>
+                )}
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
