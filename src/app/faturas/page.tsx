@@ -101,14 +101,14 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: process.env.PAYMENT_BANK,
-        agency: process.env.PAYMENT_AGENCY,
-        account: process.env.PAYMENT_ACCOUNT,
-        cpf: process.env.PAYMENT_CNPJ, // Assuming CNPJ var holds CPF/CNPJ
-        accountType: process.env.PAYMENT_ACCOUNT_TYPE,
-        pixKey: process.env.PAYMENT_PIX_KEY,
-        holder: process.env.PAYMENT_HOLDER,
-        cnpj: process.env.PAYMENT_CNPJ,
+        bank: process.env.NEXT_PUBLIC_PLATFORM_BANK,
+        agency: process.env.NEXT_PUBLIC_PLATFORM_AGENCY,
+        account: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT,
+        cpf: process.env.NEXT_PUBLIC_PLATFORM_CNPJ,
+        accountType: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE,
+        pixKey: process.env.NEXT_PUBLIC_PLATFORM_PIX_KEY,
+        holder: process.env.NEXT_PUBLIC_PLATFORM_HOLDER,
+        cnpj: process.env.NEXT_PUBLIC_PLATFORM_CNPJ,
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -283,7 +283,7 @@ export default function InvoicesPage() {
                     <DialogHeader>
                         <DialogTitle>Anexar Comprovante</DialogTitle>
                         <DialogDescription>
-                            Faça o upload do comprovante de pagamento para a fatura ${selectedInvoice?.id}.
+                            Faça o upload do comprovante de pagamento para a fatura {selectedInvoice?.id}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
