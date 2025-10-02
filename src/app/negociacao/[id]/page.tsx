@@ -119,7 +119,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     }
   };
 
-  const handleSendLocation = () => {
+  const handleSendCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast({
         title: "Geolocalização não suportada",
@@ -145,6 +145,10 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     );
   };
   
+  const handleChooseOnMap = () => {
+    window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -268,11 +272,11 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onClick={handleSendLocation}>
+                                <DropdownMenuItem onClick={handleSendCurrentLocation}>
                                     <LocateFixed className="mr-2 h-4 w-4"/>
                                     Localização Atual
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleSendLocation}>
+                                <DropdownMenuItem onClick={handleChooseOnMap}>
                                     <Map className="mr-2 h-4 w-4"/>
                                     Escolher no Mapa
                                 </DropdownMenuItem>
@@ -294,5 +298,3 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
-
-    
