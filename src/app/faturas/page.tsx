@@ -56,7 +56,7 @@ type Invoice = {
 
 
 const initialInvoices: Invoice[] = [
-    // Data is now dynamically calculated
+    { id: 'FAT-001', transactionId: 'TXN-73482', description: 'Taxa de serviço - Venda de Crédito de Carbono', dueDate: '15/07/2024', value: 150.00, status: 'Pendente' },
 ];
 
 
@@ -138,10 +138,10 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: "Nu Pagamentos S.A. - Instituição de Pagamento",
-        agency: "0001",
-        account: "527075729-7",
-        pixKey: "e8e04450-cba4-4cfd-9f37-92359def4af0",
+        bank: "",
+        agency: "",
+        account: "",
+        pixKey: "",
         holder: "YURI BARBOSA PAULO",
         cnpj: ""
     };
