@@ -57,7 +57,8 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             )}
             <div
                 className={cn(
-                'max-w-md rounded-lg p-3 text-sm relative',
+                'rounded-lg p-3 text-sm relative',
+                 msg.type === 'image' ? 'max-w-xl' : 'max-w-md',
                 isMe
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-background border'
