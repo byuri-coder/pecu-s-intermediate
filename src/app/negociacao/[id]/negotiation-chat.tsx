@@ -18,7 +18,7 @@ interface Message {
 }
 
 // Placeholder data for the chat
-const messages: Message[] = [
+const initialMessages: Message[] = [
   { id: '1', sender: 'other', content: 'Olá! Vi que você tem interesse no meu crédito de carbono. Qual a sua proposta inicial?', type: 'text', timestamp: '10:30', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
   { id: '2', sender: 'me', content: 'Olá! Gostaria de oferecer R$ 14,50 por crédito, para um lote de 2.000 unidades.', type: 'text', timestamp: '10:32', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
   { id: '3', sender: 'other', content: 'Agradeço a proposta. Podemos fechar em R$ 15,00? Anexei a documentação de validação do projeto para sua análise.', type: 'text', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
@@ -87,15 +87,47 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 }
 
 
-export function NegotiationChat() {
+export function NegotiationChat({ onSendMessage, newMessage, setNewMessage }: { onSendMessage: () => void, newMessage: string, setNewMessage: (value: string) => void }) {
+  const [messages, setMessages] = React.useState<Message[]>(initialMessages);
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+
+  const handleSendMessage = () => {
+    if (newMessage.trim() === '') return;
+
+    const now = new Date();
+    const newMsg: Message = {
+        id: String(Date.now()),
+        sender: 'me',
+        content: newMessage,
+        type: 'text',
+        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+        avatar: 'https://picsum.photos/seed/avatar1/40/40'
+    };
+
+    setMessages(prev => [...prev, newMsg]);
+    setNewMessage('');
+    onSendMessage(); 
+  };
+  
+  // Auto-scroll to bottom
+  React.useEffect(() => {
+    if (scrollAreaRef.current) {
+        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+        if (viewport) {
+             setTimeout(() => viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' }), 100);
+        }
+    }
+  }, [messages.length]);
 
   return (
-    <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20">
-        <div className="space-y-6">
-            {messages.map((msg) => (
-                <MessageBubble key={msg.id} msg={msg}/>
-            ))}
-        </div>
-    </ScrollArea>
+    <>
+        <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20" ref={scrollAreaRef}>
+            <div className="space-y-6">
+                {messages.map((msg) => (
+                    <MessageBubble key={msg.id} msg={msg}/>
+                ))}
+            </div>
+        </ScrollArea>
+    </>
   );
 }

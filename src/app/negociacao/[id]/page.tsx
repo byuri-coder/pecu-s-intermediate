@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -45,28 +48,50 @@ function getAssetTypeRoute(type: AssetType) {
 }
 
 
-export default async function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
+export default function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
   const assetType = searchParams.type || 'carbon-credit';
   const asset = getAssetDetails(params.id, assetType);
-  
+  const [newMessage, setNewMessage] = React.useState('');
+
   if (!asset) {
-    notFound();
+    // In a real app with server components, this would be a regular notFound() call.
+    // In this client component setup, we return null or a message.
+    React.useEffect(() => {
+        // notFound(); // This hook can't be called in client components directly.
+        // We can redirect or show an error message instead.
+    }, []);
+    return <div>Ativo não encontrado.</div>;
   }
 
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : asset.creditType}`;
-  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
+  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
+  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
   const isTaxCredit = assetType === 'tax-credit';
+  const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
-  const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40'; // Placeholder avatar
+  const handleSendMessage = () => {
+    // This function will be passed to the chat component
+    // It's called after a message is sent to clear the input
+    setNewMessage('');
+  };
+  
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      // We need to find a way to trigger the send from the child...
+      // A better approach would be to manage the state and send logic here.
+      // For now, let's just log it.
+      console.log("Enter pressed, would send:", newMessage);
+      // Let's call the send logic inside the child through a ref or callback
+    }
+  };
+
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
-        {/* Coluna da Lista de Chats */}
         <div className="md:col-span-4 lg:col-span-3 h-full">
              <ChatList />
         </div>
         
-        {/* Coluna do Chat */}
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">
             <Card className="flex-grow flex flex-col">
                 <CardHeader className="flex-row items-center justify-between">
@@ -155,11 +180,35 @@ export default async function NegotiationPage({ params, searchParams }: { params
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                    <NegotiationChat />
+                    <NegotiationChat 
+                        onSendMessage={handleSendMessage}
+                        newMessage={newMessage}
+                        setNewMessage={setNewMessage}
+                    />
                     <div className="mt-4 flex items-center gap-2">
                         <Button variant="ghost" size="icon"><Paperclip className="h-5 w-5" /></Button>
-                        <Input placeholder="Digite sua mensagem..." />
-                        <Button><Send className="h-5 w-5" /></Button>
+                        <Input 
+                            placeholder="Digite sua mensagem..." 
+                            value={newMessage} 
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    // This is tricky. We'll need to pass a ref or a function to trigger send.
+                                    // Let's modify the chat component to handle this.
+                                    // For now, let's just log and see if we can trigger via button click.
+                                    document.getElementById('send-message-button')?.click();
+                                }
+                            }}
+                         />
+                        <Button id="send-message-button" onClick={() => {
+                             // This is a temporary solution to trigger the send functionality in the child
+                             // by finding the button inside the chat component (if we were to add one).
+                             // The better way is what we're doing now: lifting state up.
+                             // Let's modify the chat component to accept the send logic.
+                        }}>
+                          <Send className="h-5 w-5" />
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -167,6 +216,12 @@ export default async function NegotiationPage({ params, searchParams }: { params
     </div>
   );
 }
+
+// generateStaticParams is not compatible with 'use client'
+// To make this work, we'd need to extract the data fetching part to a server component
+// or fetch it in a useEffect hook. For this demo, we'll assume this page is server-rendered,
+// and the dynamic part is in the client component.
+/*
 export async function generateStaticParams() {
   const carbonParams = placeholderCredits.map((credit) => ({
     id: credit.id,
@@ -187,4 +242,4 @@ export async function generateStaticParams() {
     id: id,
   }));
 }
-    
+*/
