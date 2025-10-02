@@ -8,12 +8,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle } from 'lucide-react';
+import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -62,6 +63,7 @@ function getAssetTypeRoute(type: AssetType) {
 export default function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
   const assetType = searchParams.type || 'carbon-credit';
   const asset = getAssetDetails(params.id, assetType);
+  const { toast } = useToast();
   
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
@@ -83,42 +85,57 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
   const isTaxCredit = assetType === 'tax-credit';
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
+  const addMessage = (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
+    const now = new Date();
+    const finalMessage: Message = {
+      id: String(Date.now()),
+      sender: 'me',
+      timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+      avatar: 'https://picsum.photos/seed/avatar1/40/40',
+      ...msg
+    };
+    setMessages(prev => [...prev, finalMessage]);
+  }
+
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
-
-    const now = new Date();
-    const newMsg: Message = {
-        id: String(Date.now()),
-        sender: 'me',
-        content: newMessage,
-        type: 'text',
-        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
-        avatar: 'https://picsum.photos/seed/avatar1/40/40'
-    };
-
-    setMessages(prev => [...prev, newMsg]);
+    addMessage({ content: newMessage, type: 'text' });
     setNewMessage('');
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-      const now = new Date();
-      
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
       const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
-
-      const newMsg: Message = {
-        id: String(Date.now()),
-        sender: 'me',
-        content: content,
-        type: fileType,
-        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
-        avatar: 'https://picsum.photos/seed/avatar1/40/40'
-      };
-
-      setMessages(prev => [...prev, newMsg]);
+      addMessage({ content: content, type: fileType });
     }
+  };
+
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocalização não suportada",
+        description: "Seu navegador não permite o compartilhamento de localização.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        addMessage({ content: url, type: 'location' });
+      },
+      (error) => {
+        toast({
+            title: "Erro ao obter localização",
+            description: "Não foi possível obter sua localização. Verifique as permissões do seu navegador.",
+            variant: "destructive"
+        });
+      }
+    );
   };
   
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -231,9 +248,13 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
+                         <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
                             <Paperclip className="h-5 w-5" />
                             <span className="sr-only">Anexar arquivo</span>
+                        </Button>
+                         <Button variant="ghost" size="icon" onClick={handleSendLocation}>
+                            <MapPin className="h-5 w-5" />
+                            <span className="sr-only">Enviar localização</span>
                         </Button>
                         <Input 
                             placeholder="Digite sua mensagem..." 
@@ -251,5 +272,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
+
+    
 
     

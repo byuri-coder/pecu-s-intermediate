@@ -5,16 +5,17 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Image as ImageIcon, Download } from 'lucide-react';
+import { FileText, Image as ImageIcon, Download, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 
 export interface Message {
   id: string;
   sender: 'me' | 'other';
   content: string;
-  type: 'text' | 'image' | 'pdf';
+  type: 'text' | 'image' | 'pdf' | 'location';
   timestamp: string;
   avatar: string;
 }
@@ -59,6 +60,20 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
                         </div>
                      </div>
                 )
+             case 'location':
+                return (
+                    <div className="flex flex-col items-start gap-2">
+                         <div className="flex items-center gap-2 text-sm font-medium">
+                            <MapPin className="h-5 w-5"/>
+                            Localização Compartilhada
+                         </div>
+                        <Button asChild variant="outline" size="sm" className="w-full">
+                            <Link href={msg.content} target="_blank" rel="noopener noreferrer">
+                                Ver no Mapa
+                            </Link>
+                        </Button>
+                    </div>
+                );
             default:
                 return null;
         }
@@ -127,3 +142,5 @@ export function NegotiationChat({ messages }: { messages: Message[] }) {
     </>
   );
 }
+
+    
