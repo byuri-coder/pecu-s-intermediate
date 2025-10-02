@@ -77,7 +77,7 @@ export default function InvoicesPage() {
 
     React.useEffect(() => {
         const fetchedInvoices: Invoice[] = [
-            // Dados de teste removidos
+            { id: 'FAT-001', transactionId: 'TXN-73482', description: 'Taxa de serviço - Venda de Crédito de Carbono', dueDate: '15/07/2024', value: 150.00, status: 'Pendente' },
         ]
 
         const today = new Date();
