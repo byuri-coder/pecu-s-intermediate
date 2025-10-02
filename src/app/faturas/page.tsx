@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -70,48 +71,10 @@ type InvoiceWithOptionalCharges = Invoice & {
 
 export default function InvoicesPage() {
     const { toast } = useToast();
-    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>([]);
+    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(initialInvoices);
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
-
-    React.useEffect(() => {
-        const fetchedInvoices: Invoice[] = [
-            { id: 'FAT-001', transactionId: 'TXN-73482', description: 'Taxa de serviço - Venda de Crédito de Carbono', dueDate: '15/07/2024', value: 150.00, status: 'Pendente' },
-        ]
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); 
-
-        const updatedInvoices = fetchedInvoices.map(inv => {
-            const currentStatus = (inv.status || 'Pendente') as InvoiceStatus;
-            
-            if (currentStatus !== 'Pendente') {
-                return { ...inv, displayValue: inv.value, status: currentStatus };
-            }
-
-            const [day, month, year] = inv.dueDate.split('/').map(Number);
-            const dueDate = new Date(year, month - 1, day);
-            dueDate.setHours(0, 0, 0, 0); 
-
-            if (today <= dueDate) {
-                return { ...inv, displayValue: inv.value, status: currentStatus };
-            }
-
-            const timeDiff = today.getTime() - dueDate.getTime();
-            const daysOverdue = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            
-            const penalty = inv.value * 0.02; // 2% fixed penalty
-            const interest = inv.value * (0.01 / 30) * daysOverdue; // 1% per month, daily
-            const displayValue = inv.value + penalty + interest;
-
-            return { ...inv, displayValue, penalty, interest, status: currentStatus };
-        });
-
-        setInvoices(updatedInvoices);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
 
     const handleUploadConfirmation = () => {
         if (!selectedInvoice) return;
@@ -141,6 +104,8 @@ export default function InvoicesPage() {
         bank: "",
         agency: "",
         account: "",
+        cpf: "",
+        accountType: "",
         pixKey: "",
         holder: "YURI BARBOSA PAULO",
         cnpj: ""
@@ -286,6 +251,8 @@ export default function InvoicesPage() {
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Agência:</strong> {platformPaymentInfo.agency}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Conta:</strong> {platformPaymentInfo.account}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>CPF:</strong> {platformPaymentInfo.cpf}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>Tipo de Conta:</strong> {platformPaymentInfo.accountType}</span></div>
                             <Separator />
                             <div className="font-semibold pt-2">Opção PIX</div>
                             <div className="flex justify-between items-center">
@@ -337,3 +304,5 @@ export default function InvoicesPage() {
 
     
 }
+
+    
