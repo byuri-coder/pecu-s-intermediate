@@ -104,10 +104,11 @@ export default function InvoicesPage() {
         bank: process.env.NEXT_PUBLIC_PLATFORM_BANK,
         agency: process.env.NEXT_PUBLIC_PLATFORM_AGENCY,
         account: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT,
-        cpf: process.env.NEXT_PUBLIC_PLATFORM_CPF,
+        cpf: process.env.NEXT_PUBLIC_PLATFORM_CNPJ,
         accountType: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE,
         pixKey: process.env.NEXT_PUBLIC_PLATFORM_PIX_KEY,
         holder: process.env.NEXT_PUBLIC_PLATFORM_HOLDER,
+        cnpj: process.env.NEXT_PUBLIC_PLATFORM_CNPJ,
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -244,13 +245,13 @@ export default function InvoicesPage() {
                      <Card className="mt-4 bg-white/70">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2"><Banknote className="h-5 w-5"/> <b>{platformPaymentInfo.holder}</b></CardTitle>
-                            {platformPaymentInfo.cpf && <CardDescription>{platformPaymentInfo.cpf}</CardDescription>}
+                            {platformPaymentInfo.cnpj && <CardDescription>{platformPaymentInfo.cnpj}</CardDescription>}
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between items-center"><span><strong>Banco:</strong> {platformPaymentInfo.bank}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Agência:</strong> {platformPaymentInfo.agency}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Conta:</strong> {platformPaymentInfo.account}</span></div>
-                            <div className="flex justify-between items-center"><span><strong>CPF:</strong> {platformPaymentInfo.cpf}</span></div>
+                            <div className="flex justify-between items-center"><span><strong>CPF/CNPJ:</strong> {platformPaymentInfo.cpf}</span></div>
                             <div className="flex justify-between items-center"><span><strong>Tipo de Conta:</strong> {platformPaymentInfo.accountType}</span></div>
                             <Separator />
                             <div className="font-semibold pt-2">Opção PIX</div>
