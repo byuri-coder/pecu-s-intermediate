@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -101,14 +100,14 @@ export default function InvoicesPage() {
     }
 
     const platformPaymentInfo = {
-        bank: process.env.NEXT_PUBLIC_PLATFORM_BANK ?? "-",
-        agency: process.env.NEXT_PUBLIC_PLATFORM_AGENCY ?? "-",
-        account: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT ?? "-",
-        cpf: process.env.NEXT_PUBLIC_PLATFORM_CNPJ ?? "-",
-        accountType: process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE ?? "-",
-        pixKey: process.env.NEXT_PUBLIC_PLATFORM_PIX_KEY ?? "-",
-        holder: process.env.NEXT_PUBLIC_PLATFORM_HOLDER ?? "-",
-        cnpj: process.env.NEXT_PUBLIC_PLATFORM_CNPJ ?? "-",
+      bank: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_BANK : process.env.NEXT_PUBLIC_PLATFORM_BANK,
+      agency: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_AGENCY : process.env.NEXT_PUBLIC_PLATFORM_AGENCY,
+      account: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_ACCOUNT : process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT,
+      cpf: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_CNPJ : process.env.NEXT_PUBLIC_PLATFORM_CNPJ,
+      accountType: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE : process.env.NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE,
+      pixKey: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_PIX_KEY : process.env.NEXT_PUBLIC_PLATFORM_PIX_KEY,
+      holder: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_HOLDER : process.env.NEXT_PUBLIC_PLATFORM_HOLDER,
+      cnpj: typeof platform !== "undefined" ? platform.env.NEXT_PUBLIC_PLATFORM_CNPJ : process.env.NEXT_PUBLIC_PLATFORM_CNPJ
     };
     
     const getBadgeClass = (status: InvoiceStatus) => {
@@ -283,7 +282,7 @@ export default function InvoicesPage() {
                     <DialogHeader>
                         <DialogTitle>Anexar Comprovante</DialogTitle>
                         <DialogDescription>
-                            Faça o upload do comprovante de pagamento para a fatura ${selectedInvoice?.id}.
+                            Faça o upload do comprovante de pagamento para a fatura {selectedInvoice?.id}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -306,5 +305,3 @@ export default function InvoicesPage() {
 
     
 }
-
-    
