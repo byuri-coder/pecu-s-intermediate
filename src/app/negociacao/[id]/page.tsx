@@ -8,13 +8,19 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin } from 'lucide-react';
+import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin, LocateFixed, Map } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -247,15 +253,32 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
                             ref={fileInputRef}
                             className="hidden"
                             onChange={handleFileChange}
+                            accept="image/*,application/pdf"
                         />
                          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
                             <Paperclip className="h-5 w-5" />
                             <span className="sr-only">Anexar arquivo</span>
                         </Button>
-                         <Button variant="ghost" size="icon" onClick={handleSendLocation}>
-                            <MapPin className="h-5 w-5" />
-                            <span className="sr-only">Enviar localização</span>
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MapPin className="h-5 w-5" />
+                                    <span className="sr-only">Enviar localização</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={handleSendLocation}>
+                                    <LocateFixed className="mr-2 h-4 w-4"/>
+                                    Localização Atual
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">
+                                        <Map className="mr-2 h-4 w-4"/>
+                                        Escolher no Mapa
+                                    </a>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Input 
                             placeholder="Digite sua mensagem..." 
                             value={newMessage} 
@@ -272,7 +295,5 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     </div>
   );
 }
-
-    
 
     
