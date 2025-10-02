@@ -28,12 +28,7 @@ type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 
 // Placeholder data for the chat
 const initialMessages: Message[] = [
-  { id: '1', sender: 'other', content: 'Olá! Vi que você tem interesse no meu crédito de carbono. Qual a sua proposta inicial?', type: 'text', timestamp: '10:30', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '2', sender: 'me', content: 'Olá! Gostaria de oferecer R$ 14,50 por crédito, para um lote de 2.000 unidades.', type: 'text', timestamp: '10:32', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
-  { id: '3', sender: 'other', content: 'Agradeço a proposta. Podemos fechar em R$ 15,00? Anexei a documentação de validação do projeto para sua análise.', type: 'text', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '4', sender: 'other', content: 'validacao-verra-proj-amazon.pdf', type: 'pdf', timestamp: '10:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
-  { id: '5', sender: 'me', content: 'Entendido. Vou analisar a documentação. Acredito que R$15,00 seja um valor justo. Segue uma imagem da nossa fazenda para referência de outro projeto nosso.', type: 'text', timestamp: '10:40', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
-  { id: '6', sender: 'me', content: 'https://picsum.photos/seed/farm-pic/400/300', type: 'image', timestamp: '10:41', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+  
 ];
 
 
