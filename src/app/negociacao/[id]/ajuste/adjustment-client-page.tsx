@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -395,6 +396,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
   );
+  const [signedContractBuyer, setSignedContractBuyer] = React.useState<File | null>(null);
+  const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
   
   
   const [genericContractFields, setGenericContractFields] = React.useState({
@@ -586,14 +589,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const user = auth.currentUser;
 
     if (!user) {
-        toast({
-            title: "Erro de Autenticação",
-            description: "Você precisa estar logado para finalizar o contrato.",
-            variant: "destructive",
-        });
-        return;
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para finalizar o contrato.",
+        variant: "destructive",
+      });
+      return;
     }
-
+    
     try {
         const contractHash = await sha256(finalContractText);
         
@@ -675,7 +678,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             });
 
             addPageNumbers();
-            doc.save('contrato_assinado.pdf');
+            doc.save('contrato_para_assinatura.pdf');
 
         } catch (error) {
             console.error("Failed to generate PDF", error);
@@ -692,7 +695,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         const fileDownload = document.createElement("a");
         document.body.appendChild(fileDownload);
         fileDownload.href = source;
-        fileDownload.download = 'contrato_assinado.doc';
+        fileDownload.download = 'contrato_para_assinatura.doc';
         fileDownload.click();
         document.body.removeChild(fileDownload);
         toast({ title: "Download do DOC iniciado!" });
@@ -954,10 +957,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                      <Card>
                         <CardHeader>
                             <CardTitle>Pré-visualização do Contrato</CardTitle>
+                            <CardDescription>
+                                Este documento será a base do acordo. Faça o download para assinatura.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[70vh] overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-serif text-sm" style={{textAlign: 'justify', lineHeight: '1.5'}}>
                                 {finalContractText}
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                                <Button onClick={handleDownloadPdf} disabled={isFinalized}>
+                                    <Download className="mr-2 h-4 w-4" /> Baixar PDF
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -969,70 +980,80 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         <div className="mt-8 space-y-6">
             <Alert className="border-green-600 bg-green-50 text-green-900">
                 <FileSignature className="h-4 w-4 !text-green-900" />
-                <AlertTitle>Ação Necessária: Assinatura Digital</AlertTitle>
+                <AlertTitle>Ação Necessária: Assinatura e Anexos</AlertTitle>
                 <AlertDescription>
-                    O contrato foi finalizado e está pronto para ser assinado.
+                    O contrato foi finalizado. Faça o download, assine o documento e anexe-o abaixo junto com os comprovantes.
                 </AlertDescription>
             </Alert>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Coleta de Assinaturas</CardTitle>
-                    <CardDescription>Envie o convite para a outra parte assinar e assine o documento.</CardDescription>
+                    <CardTitle>Assinaturas e Finalização</CardTitle>
+                    <CardDescription>Anexe o contrato assinado e os documentos comprobatórios para concluir a transação.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                        <p>A integração com o serviço de assinatura digital (DocuSeal) será implementada aqui.</p>
+                <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="font-semibold mb-2">Contrato Assinado pelo Comprador</h3>
+                            <FileUploadDisplay
+                                file={signedContractBuyer}
+                                label="contrato_assinado_comprador.pdf"
+                                onFileChange={handleFileChange(setSignedContractBuyer)}
+                                onClear={() => setSignedContractBuyer(null)}
+                                acceptedTypes="PDF, JPG, PNG"
+                                maxSize="10MB"
+                            />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold mb-2">Contrato Assinado pelo Vendedor</h3>
+                            <FileUploadDisplay
+                                file={signedContractSeller}
+                                label="contrato_assinado_vendedor.pdf"
+                                onFileChange={handleFileChange(setSignedContractSeller)}
+                                onClear={() => setSignedContractSeller(null)}
+                                acceptedTypes="PDF, JPG, PNG"
+                                maxSize="10MB"
+                            />
+                        </div>
+                    </div>
+                     <Alert className="border-blue-600 bg-blue-50 text-blue-900">
+                        <Banknote className="h-4 w-4 !text-blue-900" />
+                        <AlertTitle>Próximo Passo: Pagamento</AlertTitle>
+                        <AlertDescription>
+                            <p>Após as assinaturas serem coletadas, o comprador deverá realizar a transferência para o vendedor e anexar o comprovante.</p>
+                        </AlertDescription>
+                    </Alert>
+                     <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="font-semibold mb-2">Comprovação do Comprador (Pagamento)</h3>
+                            <FileUploadDisplay
+                                file={buyerProofFile}
+                                label="comprovante_pagamento.pdf"
+                                onFileChange={handleFileChange(setBuyerProofFile)}
+                                onClear={() => setBuyerProofFile(null)}
+                                acceptedTypes="PDF, JPG, PNG, ZIP"
+                                maxSize="10MB"
+                            />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold mb-2">Comprovação do Vendedor (Transferência do Ativo)</h3>
+                            <FileUploadDisplay
+                                file={sellerProofFile}
+                                label="doc_transferencia_ativo.pdf"
+                                onFileChange={handleFileChange(setSellerProofFile)}
+                                onClear={() => setSellerProofFile(null)}
+                                acceptedTypes="PDF, DOCX, ZIP"
+                                maxSize="25MB"
+                            />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
-            <Alert className="border-blue-600 bg-blue-50 text-blue-900">
-                <Banknote className="h-4 w-4 !text-blue-900" />
-                <AlertTitle>Próximo Passo: Pagamento</AlertTitle>
-                <AlertDescription>
-                    <p>Após as assinaturas serem coletadas, o comprador deverá realizar a transferência para o vendedor e anexar o comprovante.</p>
-                </AlertDescription>
-            </Alert>
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Comprovação do Comprador</CardTitle>
-                        <CardDescription>Anexe o comprovante de pagamento para o vendedor liberar o ativo.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <FileUploadDisplay
-                            file={buyerProofFile}
-                            label="comprovante_pagamento.pdf"
-                            onFileChange={handleFileChange(setBuyerProofFile)}
-                            onClear={() => setBuyerProofFile(null)}
-                            acceptedTypes="PDF, JPG, PNG"
-                            maxSize="10MB"
-                        />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Comprovação do Vendedor</CardTitle>
-                        <CardDescription>Anexe o documento que comprova a transferência da titularidade do ativo.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <FileUploadDisplay
-                            file={sellerProofFile}
-                            label="doc_transferencia_ativo.pdf"
-                            onFileChange={handleFileChange(setSellerProofFile)}
-                            onClear={() => setSellerProofFile(null)}
-                            acceptedTypes="PDF, DOCX, ZIP"
-                            maxSize="25MB"
-                        />
-                    </CardContent>
-                </Card>
-            </div>
             <div className="flex justify-end">
                 <Button 
                     size="lg"
-                    disabled={!buyerProofFile || !sellerProofFile || isTransactionComplete}
+                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete}
                     onClick={handleFinishTransaction}
                 >
                     {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação e Gerar Fatura'}
@@ -1044,5 +1065,3 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
-
-    
