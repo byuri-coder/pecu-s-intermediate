@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -389,6 +389,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
+
+  const [sellerAuthenticated, setSellerAuthenticated] = React.useState(false);
+  const [buyerAuthenticated, setBuyerAuthenticated] = React.useState(false);
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" }) : null
@@ -966,7 +969,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 {finalContractText}
                             </div>
                             <div className="flex gap-2 mt-4">
-                                <Button onClick={handleDownloadPdf} disabled={!sellerAgrees || !buyerAgrees}>
+                                <Button onClick={handleDownloadPdf} disabled={!isFinalized}>
                                     <Download className="mr-2 h-4 w-4" /> Baixar PDF
                                 </Button>
                             </div>
@@ -978,15 +981,42 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       
       {isFinalized && (
         <div className="mt-8 space-y-6">
-            <Alert className="border-green-600 bg-green-50 text-green-900">
-                <FileSignature className="h-4 w-4 !text-green-900" />
-                <AlertTitle>Ação Necessária: Assinatura e Anexos</AlertTitle>
-                <AlertDescription>
-                    O contrato foi finalizado. Faça o download, assine o documento e anexe-o abaixo junto com os comprovantes.
-                </AlertDescription>
-            </Alert>
-
             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>Autenticação de Contrato</CardTitle>
+                    <CardDescription>Para segurança de todos, confirme a autenticidade do contrato via e-mail antes de prosseguir.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className={cn("p-4 rounded-lg border", buyerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
+                            <div className="flex items-center justify-between">
+                                <p className="font-semibold">Autenticação Comprador</p>
+                                {buyerAuthenticated ? (
+                                    <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground font-medium">Pendente</span>
+                                )}
+                            </div>
+                        </div>
+                        <div className={cn("p-4 rounded-lg border", sellerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
+                            <div className="flex items-center justify-between">
+                                <p className="font-semibold">Autenticação Vendedor</p>
+                                {sellerAuthenticated ? (
+                                    <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground font-medium">Pendente</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => toast({title: "E-mail de verificação enviado!", description: "Verifique sua caixa de entrada para autenticar."})}>Enviar E-mail de Verificação</Button>
+                        <Button className="flex-1" onClick={() => { setBuyerAuthenticated(true); setSellerAuthenticated(true); toast({title: "Simulação de autenticação concluída!"})}}>Simular Autenticação de Ambos</Button>
+                     </div>
+                </CardContent>
+            </Card>
+
+            <Card className={cn("transition-opacity", !(buyerAuthenticated && sellerAuthenticated) && "opacity-50 pointer-events-none")}>
                 <CardHeader>
                     <CardTitle>Assinaturas e Finalização</CardTitle>
                     <CardDescription>Anexe o contrato assinado e os documentos comprobatórios para concluir a transação.</CardDescription>
@@ -1053,7 +1083,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <div className="flex justify-end">
                 <Button 
                     size="lg"
-                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete}
+                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete || !buyerAuthenticated || !sellerAuthenticated}
                     onClick={handleFinishTransaction}
                 >
                     {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação e Gerar Fatura'}
