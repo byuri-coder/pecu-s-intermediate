@@ -966,7 +966,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 {finalContractText}
                             </div>
                             <div className="flex gap-2 mt-4">
-                                <Button onClick={handleDownloadPdf} disabled={isFinalized}>
+                                <Button onClick={handleDownloadPdf} disabled={!sellerAgrees || !buyerAgrees}>
                                     <Download className="mr-2 h-4 w-4" /> Baixar PDF
                                 </Button>
                             </div>
