@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -383,7 +384,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const isArchiveView = searchParams.get('view') === 'archive';
   
-  const [sellerAgrees, setSellerAgrees] = React.useState(isArchiveView);
+  const [sellerAgrees, setSellerAgrees] = React.useState(true);
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
   const [isFinalized, setFinalized] = React.useState(isArchiveView);
   const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
