@@ -594,27 +594,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         return;
     }
 
-    await user.reload();
-
-    if (!user.emailVerified) {
-        try {
-            await sendEmailVerification(user);
-            toast({
-                title: "Verificação de E-mail Necessária",
-                description: "Enviamos um e-mail de verificação para você. Por favor, confirme seu e-mail e tente novamente.",
-                duration: 10000,
-            });
-        } catch (error) {
-            console.error("Erro ao enviar verificação de e-mail:", error);
-            toast({
-                title: "Erro",
-                description: "Não foi possível enviar o e-mail de verificação. Tente novamente mais tarde.",
-                variant: "destructive",
-            });
-        }
-        return;
-    }
-
     try {
         const contractHash = await sha256(finalContractText);
         
@@ -1065,3 +1044,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
