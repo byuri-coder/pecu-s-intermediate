@@ -2,17 +2,22 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 
-// This would typically be in a more secure place, like environment variables
-const EMAIL_USER = process.env.EMAIL_USER || 'your-email@example.com';
-const EMAIL_PASS = process.env.EMAIL_PASS || 'your-email-password';
+// As variáveis de ambiente são configuradas no seu arquivo .env
+const EMAIL_USER = process.env.SMTP_USER || 'your-email@example.com';
+const EMAIL_PASS = process.env.SMTP_PASS || 'your-email-password';
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
 
-// Basic SMTP transporter setup
+// Configuração robusta do transporter para SMTP, como sugerido
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Example with Gmail, use your own SMTP provider
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
+  secure: false, // false para a porta 587, que usa STARTTLS
   auth: {
     user: EMAIL_USER,
-    pass: EMAIL_PASS,
+    pass: EMAIL_PASS, // Use uma "App Password" se estiver usando Gmail com 2FA
+  },
+  tls: {
+    rejectUnauthorized: false, // Adicionado para evitar problemas de certificado com alguns provedores
   },
 });
 
@@ -24,10 +29,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'E-mail e função (role) são obrigatórios.' }, { status: 400 });
     }
 
-    // Create a JWT that expires in 24 hours
+    // Cria um JWT que expira em 24 horas
     const token = jwt.sign({ email, role }, JWT_SECRET, { expiresIn: '24h' });
 
-    // Construct the verification link
+    // Constrói o link de verificação
     const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
     const verificationLink = `${baseUrl}/api/verify-acceptance?token=${token}`;
 
