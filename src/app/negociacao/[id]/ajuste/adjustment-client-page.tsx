@@ -18,9 +18,10 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getAuth, sendEmailVerification } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
+import axios from 'axios';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -384,6 +385,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const currentUserRole = 'buyer';
 
   const isArchiveView = searchParams.get('view') === 'archive';
+  const acceptanceStatus = searchParams.get('acceptance');
   
   const [sellerAgrees, setSellerAgrees] = React.useState(true);
   const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
@@ -392,6 +394,26 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const [sellerAuthenticated, setSellerAuthenticated] = React.useState(false);
   const [buyerAuthenticated, setBuyerAuthenticated] = React.useState(false);
+  
+  const [isSendingEmail, setIsSendingEmail] = React.useState(false);
+
+
+  React.useEffect(() => {
+    if (acceptanceStatus === 'success' && currentUserRole === 'buyer') {
+        setBuyerAuthenticated(true);
+        toast({
+            title: "Verificação de e-mail bem-sucedida!",
+            description: "Seu aceite foi registrado.",
+        });
+    } else if (acceptanceStatus === 'error') {
+         toast({
+            title: "Falha na verificação",
+            description: "O link de verificação é inválido ou expirou.",
+            variant: "destructive",
+        });
+    }
+  }, [acceptanceStatus, toast, currentUserRole]);
+
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
     isArchiveView ? new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" }) : null
@@ -612,7 +634,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
         toast({
             title: "Contrato Finalizado!",
-            description: "O contrato foi bloqueado para edições. Prossiga para a assinatura.",
+            description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
         });
         setFinalized(true);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -715,6 +737,41 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }, 3000);
     }
     
+    const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
+        const auth = getAuth(app);
+        const user = auth.currentUser;
+        if (!user || !user.email) {
+            toast({
+                title: "Usuário não autenticado",
+                description: "Não foi possível encontrar o e-mail do usuário logado.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsSendingEmail(true);
+        try {
+            const response = await axios.post('/api/send-verification', { 
+                email: user.email, 
+                role: role 
+            });
+            toast({
+                title: "E-mail de verificação enviado!",
+                description: response.data.message
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Erro ao enviar e-mail",
+                description: "Não foi possível enviar o e-mail de verificação.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSendingEmail(false);
+        }
+    }
+
+
     // RENDER FOR ARCHIVE VIEW
     if (isArchiveView) {
         return (
@@ -1009,10 +1066,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             </div>
                         </div>
                     </div>
-                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => toast({title: "E-mail de verificação enviado!", description: "Verifique sua caixa de entrada para autenticar."})}>Enviar E-mail de Verificação</Button>
-                        <Button className="flex-1" onClick={() => { setBuyerAuthenticated(true); setSellerAuthenticated(true); toast({title: "Simulação de autenticação concluída!"})}}>Simular Autenticação de Ambos</Button>
-                     </div>
+                    <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => handleSendVerificationEmail(currentUserRole === 'buyer' ? 'buyer' : 'seller')}
+                        disabled={isSendingEmail || (currentUserRole === 'buyer' && buyerAuthenticated) || (currentUserRole === 'seller' && sellerAuthenticated)}
+                    >
+                        Enviar E-mail de Verificação
+                    </Button>
                 </CardContent>
             </Card>
 
