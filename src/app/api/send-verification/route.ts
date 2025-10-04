@@ -1,25 +1,10 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
+import axios from 'axios';
 
 // As variáveis de ambiente são configuradas no seu arquivo .env
-const EMAIL_USER = process.env.SMTP_USER || 'your-email@example.com';
-const EMAIL_PASS = process.env.SMTP_PASS || 'your-email-password';
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
-
-// Configuração robusta do transporter para SMTP, como sugerido
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
-  secure: false, // false para a porta 587, que usa STARTTLS
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS, // Use uma "App Password" se estiver usando Gmail com 2FA
-  },
-  tls: {
-    rejectUnauthorized: false, // Adicionado para evitar problemas de certificado com alguns provedores
-  },
-});
+const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL; // URL do seu backend no Render
 
 export async function POST(request: Request) {
   try {
@@ -29,6 +14,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'E-mail e função (role) são obrigatórios.' }, { status: 400 });
     }
 
+    if (!RENDER_EMAIL_SERVICE_URL) {
+        console.error("A URL do serviço de e-mail no Render não está configurada.");
+        return NextResponse.json({ message: 'O serviço de e-mail não está configurado corretamente no servidor.' }, { status: 500 });
+    }
+
     // Cria um JWT que expira em 24 horas
     const token = jwt.sign({ email, role }, JWT_SECRET, { expiresIn: '24h' });
 
@@ -36,11 +26,7 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
     const verificationLink = `${baseUrl}/api/verify-acceptance?token=${token}`;
 
-    const mailOptions = {
-      from: `"PECU'S INTERMEDIATE" <${EMAIL_USER}>`,
-      to: email,
-      subject: 'Confirme a autenticidade do seu contrato',
-      html: `
+    const mailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Olá!</h2>
           <p>Você está finalizando um contrato em nossa plataforma.</p>
@@ -56,15 +42,19 @@ export async function POST(request: Request) {
           <small>Este link é válido por 24 horas.</small>
           <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
         </div>
-      `,
-    };
+      `;
 
-    await transporter.sendMail(mailOptions);
+    // Delega o envio do e-mail para o serviço externo no Render
+    await axios.post(RENDER_EMAIL_SERVICE_URL, {
+        to: email,
+        subject: "Confirme a autenticidade do seu contrato",
+        html: mailHtml,
+    });
 
     return NextResponse.json({ message: 'E-mail de verificação enviado com sucesso!' });
 
-  } catch (error) {
-    console.error('Erro ao enviar e-mail:', error);
+  } catch (error: any) {
+    console.error('Erro ao chamar o serviço de e-mail externo:', error.response?.data || error.message);
     return NextResponse.json({ message: 'Ocorreu um erro no servidor ao tentar enviar o e-mail.' }, { status: 500 });
   }
 }
