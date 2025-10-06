@@ -19,8 +19,8 @@ let transporter = nodemailer.createTransport({
 
 
     let info = await transporter.sendMail({
-      from: '"Teste Plataforma" <no-reply@sua-plataforma.com>',
-      to: "seuemail@gmail.com",
+      from: '"Teste Plataforma" <noreply.pecuscontratos@gamil.com>',
+      to: "byuripaulo@gmail.com",
       subject: "Teste SMTP",
       text: "Se você recebeu este e-mail, o SMTP está OK 🚀",
     });
