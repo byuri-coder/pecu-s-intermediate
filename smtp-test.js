@@ -1,5 +1,7 @@
+import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
+dotenv.config(); // ← Isso carrega o .env
 async function main() {
   try {
     console.log("SMTP_HOST:", process.env.SMTP_HOST);
