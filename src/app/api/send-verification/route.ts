@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import axios from 'axios';
 
 // As variáveis de ambiente são configuradas no seu arquivo .env
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
@@ -12,25 +11,37 @@ const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL;
  * @param contractHtml - O corpo do e-mail em HTML.
  * @returns boolean - Retorna true se o e-mail foi enviado com sucesso, false caso contrário.
  */
-async function sendContractEmail(userEmail: string, contractHtml: string): Promise<boolean> {
+export async function sendContractEmail(userEmail: string, contractHtml: string): Promise<boolean> {
   if (!RENDER_EMAIL_SERVICE_URL) {
     console.error("A URL do serviço de e-mail no Render não está configurada.");
     return false;
   }
-  
+
   try {
-    const response = await axios.post(RENDER_EMAIL_SERVICE_URL, {
+    const response = await fetch(RENDER_EMAIL_SERVICE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         to: userEmail,
-        subject: "Confirmação de contrato - Pecu's Intermediate",
+        subject: "Confirmação de contrato - Pecu’s Intermediate",
         html: contractHtml,
+      }),
     });
 
-    if (response.status === 200 && response.data.success) {
-      console.log("✅ E-mail enviado com sucesso através do serviço externo!");
-      return true;
+    if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+            console.log("✅ E-mail enviado com sucesso!");
+            return true;
+        } else {
+            console.error("❌ Falha ao enviar e-mail:", result.error);
+            return false;
+        }
     } else {
-      console.error("❌ Falha ao enviar e-mail pelo serviço externo:", response.data.error);
-      return false;
+        console.error(`❌ Erro na resposta do servidor de e-mail: ${response.status} ${response.statusText}`);
+        return false;
     }
   } catch (err: any) {
     console.error("❌ Erro na conexão com o backend de e-mail:", err.message);
