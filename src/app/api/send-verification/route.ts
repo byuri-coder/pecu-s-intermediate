@@ -4,7 +4,40 @@ import axios from 'axios';
 
 // As variáveis de ambiente são configuradas no seu arquivo .env
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
-const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL; // URL do seu backend no Render
+const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL;
+
+/**
+ * Função para chamar o backend de e-mail no Render.
+ * @param userEmail - O e-mail do destinatário.
+ * @param contractHtml - O corpo do e-mail em HTML.
+ * @returns boolean - Retorna true se o e-mail foi enviado com sucesso, false caso contrário.
+ */
+async function sendContractEmail(userEmail: string, contractHtml: string): Promise<boolean> {
+  if (!RENDER_EMAIL_SERVICE_URL) {
+    console.error("A URL do serviço de e-mail no Render não está configurada.");
+    return false;
+  }
+  
+  try {
+    const response = await axios.post(RENDER_EMAIL_SERVICE_URL, {
+        to: userEmail,
+        subject: "Confirmação de contrato - Pecu's Intermediate",
+        html: contractHtml,
+    });
+
+    if (response.status === 200 && response.data.success) {
+      console.log("✅ E-mail enviado com sucesso através do serviço externo!");
+      return true;
+    } else {
+      console.error("❌ Falha ao enviar e-mail pelo serviço externo:", response.data.error);
+      return false;
+    }
+  } catch (err: any) {
+    console.error("❌ Erro na conexão com o backend de e-mail:", err.message);
+    return false;
+  }
+}
+
 
 export async function POST(request: Request) {
   try {
@@ -12,11 +45,6 @@ export async function POST(request: Request) {
 
     if (!email || !role) {
       return NextResponse.json({ message: 'E-mail e função (role) são obrigatórios.' }, { status: 400 });
-    }
-
-    if (!RENDER_EMAIL_SERVICE_URL) {
-        console.error("A URL do serviço de e-mail no Render não está configurada.");
-        return NextResponse.json({ message: 'O serviço de e-mail não está configurado corretamente no servidor.' }, { status: 500 });
     }
 
     // Cria um JWT que expira em 24 horas
@@ -44,17 +72,17 @@ export async function POST(request: Request) {
         </div>
       `;
 
-    // Delega o envio do e-mail para o serviço externo no Render
-    await axios.post(RENDER_EMAIL_SERVICE_URL, {
-        to: email,
-        subject: "Confirme a autenticidade do seu contrato",
-        html: mailHtml,
-    });
+    // Delega o envio do e-mail para o serviço externo usando a nova função
+    const emailSent = await sendContractEmail(email, mailHtml);
 
-    return NextResponse.json({ message: 'E-mail de verificação enviado com sucesso!' });
+    if (emailSent) {
+        return NextResponse.json({ message: 'E-mail de verificação enviado com sucesso!' });
+    } else {
+        return NextResponse.json({ message: 'Ocorreu um erro no servidor ao tentar enviar o e-mail.' }, { status: 500 });
+    }
 
   } catch (error: any) {
-    console.error('Erro ao chamar o serviço de e-mail externo:', error.response?.data || error.message);
-    return NextResponse.json({ message: 'Ocorreu um erro no servidor ao tentar enviar o e-mail.' }, { status: 500 });
+    console.error('Erro na rota /api/send-verification:', error.message);
+    return NextResponse.json({ message: 'Ocorreu um erro interno no servidor.' }, { status: 500 });
   }
 }
