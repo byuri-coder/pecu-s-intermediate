@@ -22,6 +22,7 @@ import { getAuth } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -756,13 +757,42 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
         setIsSendingEmail(true);
         try {
-            const response = await axios.post('/api/send-verification', { 
-                email: email, 
-                role: role 
+            // O JWT e o link são criados no frontend ANTES de enviar para a API
+            const token = jwt.sign({ email, role }, 'your-super-secret-jwt-key-that-should-be-in-env', { expiresIn: '24h' });
+            const baseUrl = window.location.origin;
+            const verificationLink = `${baseUrl}/api/verify-acceptance?token=${token}`;
+
+            const mailHtml = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h2>Olá!</h2>
+                <p>Você está finalizando um contrato em nossa plataforma.</p>
+                <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite.</p>
+                <a href="${verificationLink}" 
+                    style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Confirmar e Validar Contrato
+                </a>
+                <br><br>
+                <p>Se o botão não funcionar, copie e cole o seguinte link no seu navegador:</p>
+                <p><a href="${verificationLink}">${verificationLink}</a></p>
+                <br>
+                <small>Este link é válido por 24 horas.</small>
+                <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
+                </div>
+            `;
+            
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: email,
+                    subject: "Confirmação de contrato - Pecu’s Intermediate",
+                    html: mailHtml,
+                }),
             });
+
             toast({
                 title: `E-mail de verificação enviado para ${role}!`,
-                description: response.data.message
+                description: `Um link de validação foi enviado para ${email}.`
             });
         } catch (error) {
             console.error(error);
