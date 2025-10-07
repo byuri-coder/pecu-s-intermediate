@@ -1,5 +1,7 @@
+
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import axios from 'axios';
 
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
 const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL;
@@ -11,13 +13,14 @@ const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL;
  * @returns boolean - Retorna true se o e-mail foi enviado com sucesso, false caso contrário.
  */
 export async function sendContractEmail(userEmail: string, contractHtml: string): Promise<boolean> {
-  if (!RENDER_EMAIL_SERVICE_URL) {
+  const url = process.env.RENDER_EMAIL_SERVICE_URL;
+  if (!url) {
     console.error("A URL do serviço de e-mail no Render não está configurada.");
     return false;
   }
 
   try {
-    const response = await fetch(RENDER_EMAIL_SERVICE_URL, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
