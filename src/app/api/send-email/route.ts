@@ -16,6 +16,7 @@ export async function OPTIONS() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    console.log("📨 Recebendo requisição de envio de e-mail:", body);
     const { vendorEmail, buyerEmail, subject, htmlContent } = body;
 
     if (!vendorEmail || !buyerEmail || !subject || !htmlContent) {
@@ -61,8 +62,8 @@ export async function POST(req: Request) {
       console.error("Corpo da resposta:", data);
       return setCorsHeaders(NextResponse.json({ error: "Falha ao enviar o e-mail.", details: data }, { status: response.status }));
     }
-
-    console.log("✅ E-mail enviado com sucesso:", data);
+    
+    console.log("✅ Resposta do Brevo:", data);
     return setCorsHeaders(NextResponse.json({ success: true, data }));
 
   } catch (error: any) {
