@@ -55,7 +55,10 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Erro ao enviar via Brevo:", data);
+      console.error("❌ Erro ao enviar via Brevo:");
+      console.error("Status:", response.status);
+      console.error("Headers:", Object.fromEntries(response.headers.entries()));
+      console.error("Corpo da resposta:", data);
       return setCorsHeaders(NextResponse.json({ error: "Falha ao enviar o e-mail.", details: data }, { status: response.status }));
     }
 
