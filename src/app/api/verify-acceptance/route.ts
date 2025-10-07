@@ -31,16 +31,7 @@ export async function GET(request: NextRequest) {
     });
     */
 
-    // Redirect to the success page on the frontend, passing the role
-    const successUrl = new URL(`${baseUrl}/negociacao/some-id/ajuste`); // Placeholder ID
-    successUrl.searchParams.set('acceptance', 'success');
-    successUrl.searchParams.set('role', decoded.role);
-    
-    // You would typically get the negotiation ID from the token or another source
-    // to redirect to the correct negotiation page. For now, we redirect to a placeholder.
-    // In a real app, you would reconstruct the original URL:
-    // e.g., /negociacao/{asset.id}/ajuste
-
+    // Redirect to a generic success page. The frontend will handle the rest.
     return NextResponse.redirect(`${baseUrl}/aceite-sucesso`);
 
   } catch (error) {
