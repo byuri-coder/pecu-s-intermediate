@@ -28,10 +28,11 @@ const nextConfig: NextConfig = {
   experimental: {
     // This is required to allow the Next.js dev server to accept requests from the browser
     // In some Next.js versions, this is a top-level property.
+    allowedDevOrigins: [
+      "https://3000-firebase-studio-1756897439170.cluster-j6d3cbsvdbe5uxnhqrfzzeyj7i.cloudworkstations.dev",
+      "https://*.cloudworkstations.dev",
+    ],
   },
-  allowedDevOrigins: [
-    'https://*.cloudworkstations.dev',
-  ],
   env: {
     NEXT_PUBLIC_PLATFORM_BANK: process.env.PLATFORM_BANK,
     NEXT_PUBLIC_PLATFORM_AGENCY: process.env.PLATFORM_AGENCY,
