@@ -382,45 +382,50 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
-  const currentUserRole = 'buyer';
-
-  const isArchiveView = searchParams.get('view') === 'archive';
-  const acceptanceStatus = searchParams.get('acceptance');
+  const acceptanceParam = searchParams.get('acceptance');
+  const roleParam = searchParams.get('role');
   
   const [sellerAgrees, setSellerAgrees] = React.useState(true);
-  const [buyerAgrees, setBuyerAgrees] = React.useState(isArchiveView);
-  const [isFinalized, setFinalized] = React.useState(isArchiveView);
-  const [isTransactionComplete, setTransactionComplete] = React.useState(isArchiveView);
+  const [buyerAgrees, setBuyerAgrees] = React.useState(false);
+  const [isFinalized, setFinalized] = React.useState(false);
+  const [isTransactionComplete, setTransactionComplete] = React.useState(false);
 
   const [sellerAuthenticated, setSellerAuthenticated] = React.useState(false);
   const [buyerAuthenticated, setBuyerAuthenticated] = React.useState(false);
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
+  const [sellerEmail, setSellerEmail] = React.useState('');
+  const [buyerEmail, setBuyerEmail] = React.useState('');
 
   React.useEffect(() => {
-    if (acceptanceStatus === 'success' && currentUserRole === 'buyer') {
+    if (acceptanceParam === 'success') {
+      if (roleParam === 'buyer') {
         setBuyerAuthenticated(true);
         toast({
-            title: "Verificação de e-mail bem-sucedida!",
+            title: "Verificação de e-mail (Comprador) bem-sucedida!",
             description: "Seu aceite foi registrado.",
         });
-    } else if (acceptanceStatus === 'error') {
+      } else if (roleParam === 'seller') {
+        setSellerAuthenticated(true);
+        toast({
+            title: "Verificação de e-mail (Vendedor) bem-sucedida!",
+            description: "Seu aceite foi registrado.",
+        });
+      }
+    } else if (acceptanceParam === 'error') {
          toast({
             title: "Falha na verificação",
             description: "O link de verificação é inválido ou expirou.",
             variant: "destructive",
         });
     }
-  }, [acceptanceStatus, toast, currentUserRole]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceptanceParam, roleParam, toast]);
 
 
-  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(
-    isArchiveView ? new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" }) : null
-  );
-  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(
-    isArchiveView ? new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" }) : null
-  );
+  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
+  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
   const [signedContractBuyer, setSignedContractBuyer] = React.useState<File | null>(null);
   const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
   
@@ -738,12 +743,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
     
     const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
-        const auth = getAuth(app);
-        const user = auth.currentUser;
-        if (!user || !user.email) {
+        const email = role === 'buyer' ? buyerEmail : sellerEmail;
+
+        if (!email) {
             toast({
-                title: "Usuário não autenticado",
-                description: "Não foi possível encontrar o e-mail do usuário logado.",
+                title: "E-mail não fornecido",
+                description: `Por favor, insira o e-mail do ${role === 'buyer' ? 'comprador' : 'vendedor'}.`,
                 variant: "destructive"
             });
             return;
@@ -752,11 +757,11 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
         try {
             const response = await axios.post('/api/send-verification', { 
-                email: user.email, 
+                email: email, 
                 role: role 
             });
             toast({
-                title: "E-mail de verificação enviado!",
+                title: `E-mail de verificação enviado para ${role}!`,
                 description: response.data.message
             });
         } catch (error) {
@@ -773,7 +778,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
 
     // RENDER FOR ARCHIVE VIEW
-    if (isArchiveView) {
+    if (searchParams.get('view') === 'archive') {
         return (
              <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
                 <div className="mb-6">
@@ -826,7 +831,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             <div>
                                 <h3 className="font-semibold mb-2">Comprovação do Comprador</h3>
                                 <FileUploadDisplay
-                                    file={buyerProofFile}
+                                    file={new File(["comprovante"], "comprovante_pagamento.pdf", { type: "application/pdf" })}
                                     label="comprovante_pagamento.pdf"
                                     onFileChange={() => {}}
                                     onClear={() => {}}
@@ -838,7 +843,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             <div>
                                 <h3 className="font-semibold mb-2">Comprovação do Vendedor</h3>
                                 <FileUploadDisplay
-                                    file={sellerProofFile}
+                                    file={new File(["transferencia"], "doc_transferencia_ativo.pdf", { type: "application/pdf" })}
                                     label="doc_transferencia_ativo.pdf"
                                     onFileChange={() => {}}
                                     onClear={() => {}}
@@ -988,14 +993,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <CardContent className="space-y-4">
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized || currentUserRole === 'buyer'} />
+                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
                                     <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
                                 </div>
                                 {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                             </div>
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized || currentUserRole === 'seller'} />
+                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
                                     <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
                                 </div>
                                 {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
@@ -1041,39 +1046,41 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>Autenticação de Contrato</CardTitle>
-                    <CardDescription>Para segurança de todos, confirme a autenticidade do contrato via e-mail antes de prosseguir.</CardDescription>
+                    <CardDescription>Para segurança de todos, cada parte deve confirmar a autenticidade do contrato via e-mail antes de prosseguir.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
+                        {/* Comprador */}
                         <div className={cn("p-4 rounded-lg border", buyerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
-                            <div className="flex items-center justify-between">
-                                <p className="font-semibold">Autenticação Comprador</p>
+                             <div className="flex items-center justify-between mb-2">
+                                <p className="font-semibold">Comprador</p>
                                 {buyerAuthenticated ? (
                                     <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
                                 ) : (
                                     <span className="text-xs text-muted-foreground font-medium">Pendente</span>
                                 )}
                             </div>
+                            <div className="flex items-center gap-2">
+                                <Input type="email" placeholder="email.comprador@exemplo.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} disabled={buyerAuthenticated || isSendingEmail}/>
+                                <Button onClick={() => handleSendVerificationEmail('buyer')} disabled={!buyerEmail || buyerAuthenticated || isSendingEmail}>Enviar</Button>
+                            </div>
                         </div>
-                        <div className={cn("p-4 rounded-lg border", sellerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
-                            <div className="flex items-center justify-between">
-                                <p className="font-semibold">Autenticação Vendedor</p>
+                        {/* Vendedor */}
+                         <div className={cn("p-4 rounded-lg border", sellerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
+                             <div className="flex items-center justify-between mb-2">
+                                <p className="font-semibold">Vendedor</p>
                                 {sellerAuthenticated ? (
                                     <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
                                 ) : (
                                     <span className="text-xs text-muted-foreground font-medium">Pendente</span>
                                 )}
                             </div>
+                           <div className="flex items-center gap-2">
+                                <Input type="email" placeholder="email.vendedor@exemplo.com" value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} disabled={sellerAuthenticated || isSendingEmail}/>
+                                <Button onClick={() => handleSendVerificationEmail('seller')} disabled={!sellerEmail || sellerAuthenticated || isSendingEmail}>Enviar</Button>
+                            </div>
                         </div>
                     </div>
-                    <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => handleSendVerificationEmail(currentUserRole === 'buyer' ? 'buyer' : 'seller')}
-                        disabled={isSendingEmail || (currentUserRole === 'buyer' && buyerAuthenticated) || (currentUserRole === 'seller' && sellerAuthenticated)}
-                    >
-                        Enviar E-mail de Verificação
-                    </Button>
                 </CardContent>
             </Card>
 

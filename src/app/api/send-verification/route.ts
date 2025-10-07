@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-// As variáveis de ambiente são configuradas no seu arquivo .env
 const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
 const RENDER_EMAIL_SERVICE_URL = process.env.RENDER_EMAIL_SERVICE_URL;
 
@@ -41,6 +40,8 @@ export async function sendContractEmail(userEmail: string, contractHtml: string)
         }
     } else {
         console.error(`❌ Erro na resposta do servidor de e-mail: ${response.status} ${response.statusText}`);
+        const errorBody = await response.text();
+        console.error("Corpo do erro:", errorBody);
         return false;
     }
   } catch (err: any) {
