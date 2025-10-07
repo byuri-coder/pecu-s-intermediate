@@ -21,7 +21,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAuth } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
-import axios from 'axios';
 import jwt from 'jsonwebtoken';
 
 
@@ -743,28 +742,25 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }, 3000);
     }
     
-    const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
-        const email = role === 'buyer' ? buyerEmail : sellerEmail;
-
-        if (!email) {
+    const handleSendVerificationEmail = async () => {
+        if (!buyerEmail || !sellerEmail) {
             toast({
-                title: "E-mail não fornecido",
-                description: `Por favor, insira o e-mail do ${role === 'buyer' ? 'comprador' : 'vendedor'}.`,
+                title: "E-mails não fornecidos",
+                description: "Por favor, insira os e-mails do comprador e do vendedor.",
                 variant: "destructive"
             });
             return;
         }
 
         setIsSendingEmail(true);
-        try {
-            // O JWT e o link são criados no frontend ANTES de enviar para a API
-            const token = jwt.sign({ email, role }, 'your-super-secret-jwt-key-that-should-be-in-env', { expiresIn: '24h' });
-            const baseUrl = window.location.origin;
-            const verificationLink = `${baseUrl}/api/verify-acceptance?token=${token}`;
 
-            const mailHtml = `
+        const subject = "Confirmação de contrato - Pecu’s Intermediate";
+        const baseHtml = (role: 'Comprador' | 'Vendedor') => {
+             const token = jwt.sign({ email: role === 'Comprador' ? buyerEmail : sellerEmail, role: role.toLowerCase() }, 'your-super-secret-jwt-key-that-should-be-in-env', { expiresIn: '24h' });
+             const verificationLink = `${window.location.origin}/api/verify-acceptance?token=${token}`;
+             return `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <h2>Olá!</h2>
+                <h2>Olá, ${role}!</h2>
                 <p>Você está finalizando um contrato em nossa plataforma.</p>
                 <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite.</p>
                 <a href="${verificationLink}" 
@@ -779,26 +775,31 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
                 </div>
             `;
-            
-            await fetch('/api/send-email', {
+        };
+
+        try {
+            const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: email,
-                    subject: "Confirmação de contrato - Pecu’s Intermediate",
-                    html: mailHtml,
+                    vendorEmail: sellerEmail,
+                    buyerEmail: buyerEmail,
+                    subject: subject,
+                    htmlContent: baseHtml('Comprador'), // O conteúdo será o mesmo para ambos, mas o link é único
                 }),
             });
 
+            if (!response.ok) throw new Error('Falha na resposta da API');
+
             toast({
-                title: `E-mail de verificação enviado para ${role}!`,
-                description: `Um link de validação foi enviado para ${email}.`
+                title: "E-mails de verificação enviados!",
+                description: `Um link de validação foi enviado para ${buyerEmail} e ${sellerEmail}.`
             });
         } catch (error) {
             console.error(error);
             toast({
-                title: "Erro ao enviar e-mail",
-                description: "Não foi possível enviar o e-mail de verificação.",
+                title: "Erro ao enviar e-mails",
+                description: "Não foi possível enviar os e-mails de verificação.",
                 variant: "destructive"
             });
         } finally {
@@ -1092,7 +1093,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             </div>
                             <div className="flex items-center gap-2">
                                 <Input type="email" placeholder="email.comprador@exemplo.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} disabled={buyerAuthenticated || isSendingEmail}/>
-                                <Button onClick={() => handleSendVerificationEmail('buyer')} disabled={!buyerEmail || buyerAuthenticated || isSendingEmail}>Enviar</Button>
                             </div>
                         </div>
                         {/* Vendedor */}
@@ -1107,10 +1107,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             </div>
                            <div className="flex items-center gap-2">
                                 <Input type="email" placeholder="email.vendedor@exemplo.com" value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} disabled={sellerAuthenticated || isSendingEmail}/>
-                                <Button onClick={() => handleSendVerificationEmail('seller')} disabled={!sellerEmail || sellerAuthenticated || isSendingEmail}>Enviar</Button>
                             </div>
                         </div>
                     </div>
+                     <Button onClick={handleSendVerificationEmail} disabled={!buyerEmail || !sellerEmail || (buyerAuthenticated && sellerAuthenticated) || isSendingEmail} className="w-full">
+                        {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailCheck className="mr-2 h-4 w-4"/>}
+                        Enviar E-mails de Verificação
+                    </Button>
                 </CardContent>
             </Card>
 
