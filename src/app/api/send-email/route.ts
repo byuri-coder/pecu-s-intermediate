@@ -1,6 +1,5 @@
 
-import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { NextResponse } from "next/server";
 
 const setCorsHeaders = (response: NextResponse) => {
   response.headers.set('Access-Control-Allow-Origin', '*');
@@ -10,41 +9,88 @@ const setCorsHeaders = (response: NextResponse) => {
 };
 
 export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 204 });
+  let response = new NextResponse(null, { status: 204 });
   return setCorsHeaders(response);
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { to, subject, html } = await request.json();
+    const { to, subject, message, vendorEmail, buyerEmail, html } = await req.json();
 
-    if (!to || !subject || !html) {
-      return setCorsHeaders(NextResponse.json({ message: 'Campos obrigatórios (to, subject, html) ausentes.' }, { status: 400 }));
+    // ✅ Validação básica
+    if (!to && (!vendorEmail || !buyerEmail) && !html) {
+      return setCorsHeaders(NextResponse.json(
+        { error: "Destinatário(s) ou conteúdo não informado(s)." },
+        { status: 400 }
+      ));
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    // ✅ Carrega chave Brevo do Render
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: `"PECU'S INTERMEDIATE" <${process.env.SMTP_USER}>`,
-      to: to,
-      subject: subject,
-      html: html,
+    if (!apiKey || !senderEmail) {
+      return setCorsHeaders(NextResponse.json(
+        { error: "Configuração do servidor ausente (BREVO_API_KEY ou SENDER_EMAIL)." },
+        { status: 500 }
+      ));
+    }
+
+    // ✅ Monta lista de destinatários dinâmicos
+    const recipients: { email: string }[] = [];
+    if (to) recipients.push({ email: to });
+    if (vendorEmail) recipients.push({ email: vendorEmail });
+    if (buyerEmail) recipients.push({ email: buyerEmail });
+
+    // ✅ Corpo do e-mail
+    const emailData = {
+      sender: { email: senderEmail, name: "PECU'S PLATFORM" },
+      to: recipients,
+      subject: subject || "Nova mensagem da plataforma PECU'S",
+      htmlContent: html || `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2 style="color: #2c3e50;">📩 Mensagem da Plataforma PECU'S</h2>
+          <p>${message}</p>
+          <hr />
+          <p style="font-size: 13px; color: #999;">Este e-mail foi enviado automaticamente. Por favor, não responda.</p>
+        </div>
+      `
     };
 
-    await transporter.sendMail(mailOptions);
+    // ✅ Envio via Brevo API
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(emailData)
+    });
 
-    return setCorsHeaders(NextResponse.json({ success: true, message: 'E-mail enviado com sucesso!' }));
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Erro Brevo:", data);
+      return setCorsHeaders(NextResponse.json(
+        { error: "Falha ao enviar o e-mail.", details: data },
+        { status: 500 }
+      ));
+    }
+
+    console.log("✅ E-mail enviado com sucesso:", data);
+
+    return setCorsHeaders(NextResponse.json({
+      success: true,
+      message: "E-mail enviado com sucesso.",
+      brevoId: data.messageId || null
+    }));
 
   } catch (error: any) {
-    console.error('Erro no envio de e-mail:', error);
-    return setCorsHeaders(NextResponse.json({ message: 'Ocorreu um erro interno no servidor ao tentar enviar o e-mail.', error: error.message }, { status: 500 }));
+    console.error("❌ Erro geral:", error);
+    return setCorsHeaders(NextResponse.json(
+      { error: "Erro interno ao enviar o e-mail.", details: error.message },
+      { status: 500 }
+    ));
   }
 }
