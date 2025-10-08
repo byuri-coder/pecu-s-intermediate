@@ -408,8 +408,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
-  const acceptanceParam = searchParams.get('acceptance');
-  const roleParam = searchParams.get('role');
   const negotiationId = `neg_${asset.id}`;
 
   const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, true);
@@ -426,6 +424,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, '');
 
   React.useEffect(() => {
+    const acceptanceParam = searchParams.get('acceptance');
+    const roleParam = searchParams.get('role');
+
     if (acceptanceParam && roleParam) {
       if (acceptanceParam === 'success') {
         if (roleParam === 'buyer') {
@@ -448,7 +449,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acceptanceParam, roleParam, setBuyerAuthenticated, setSellerAuthenticated]);
+  }, [searchParams]);
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
