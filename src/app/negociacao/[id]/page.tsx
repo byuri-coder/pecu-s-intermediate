@@ -4,7 +4,7 @@
 
 import * as React from 'react';
 import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ const initialMessages: Message[] = [];
 const initialConversations: Conversation[] = [];
 
 
-function getAssetDetails(id: string, type: AssetType) {
+function getAssetDetails(id: string, type: AssetType | null) {
     if (type === 'carbon-credit') {
         return placeholderCredits.find((c) => c.id === id);
     }
@@ -41,7 +41,10 @@ function getAssetDetails(id: string, type: AssetType) {
     if (type === 'rural-land') {
         return placeholderRuralLands.find((c) => c.id === id);
     }
-    return null;
+    // Fallback or default search if type is not provided
+    return placeholderCredits.find((c) => c.id === id) || 
+           placeholderTaxCredits.find((c) => c.id === id) || 
+           placeholderRuralLands.find((c) => c.id === id);
 }
 
 function getAssetTypeName(type: AssetType) {
@@ -61,8 +64,9 @@ function getAssetTypeRoute(type: AssetType) {
 }
 
 
-export default function NegotiationPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
-  const assetType = searchParams.type || 'carbon-credit';
+export default function NegotiationPage({ params }: { params: { id: string } }) {
+  const searchParams = useSearchParams();
+  const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
   const asset = getAssetDetails(params.id, assetType);
   const { toast } = useToast();
   
@@ -76,8 +80,7 @@ export default function NegotiationPage({ params, searchParams }: { params: { id
     // In a real app with server components, this would be a regular notFound() call.
     // In this client component setup, we return null or a message.
     React.useEffect(() => {
-        // notFound(); // This hook can't be called in client components directly.
-        // We can redirect or show an error message instead.
+        notFound(); // This hook can be called in client components directly.
     }, []);
     return <div>Ativo não encontrado.</div>;
   }
