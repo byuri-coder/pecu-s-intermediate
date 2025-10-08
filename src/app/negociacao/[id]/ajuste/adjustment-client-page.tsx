@@ -398,26 +398,33 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [buyerEmail, setBuyerEmail] = React.useState('');
 
   React.useEffect(() => {
-    if (acceptanceParam === 'success') {
-      if (roleParam === 'buyer') {
-        setBuyerAuthenticated(true);
-        toast({
-            title: "Verificação de e-mail (Comprador) bem-sucedida!",
-            description: "Seu aceite foi registrado.",
-        });
-      } else if (roleParam === 'seller') {
-        setSellerAuthenticated(true);
-        toast({
-            title: "Verificação de e-mail (Vendedor) bem-sucedida!",
-            description: "Seu aceite foi registrado.",
-        });
+    // Only run if the params are present
+    if (acceptanceParam && roleParam) {
+      if (acceptanceParam === 'success') {
+        if (roleParam === 'buyer') {
+          setBuyerAuthenticated(true);
+          toast({
+              title: "Verificação de e-mail (Comprador) bem-sucedida!",
+              description: "Seu aceite foi registrado.",
+          });
+        } else if (roleParam === 'seller') {
+          setSellerAuthenticated(true);
+          toast({
+              title: "Verificação de e-mail (Vendedor) bem-sucedida!",
+              description: "Seu aceite foi registrado.",
+          });
+        }
+      } else if (acceptanceParam === 'error') {
+           toast({
+              title: "Falha na verificação",
+              description: "O link de verificação é inválido ou expirou.",
+              variant: "destructive",
+          });
       }
-    } else if (acceptanceParam === 'error') {
-         toast({
-            title: "Falha na verificação",
-            description: "O link de verificação é inválido ou expirou.",
-            variant: "destructive",
-        });
+      
+      // Clean up URL to avoid re-triggering on refresh
+      const newUrl = window.location.pathname;
+      window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acceptanceParam, roleParam, toast]);
@@ -754,8 +761,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
 
         const subject = "Confirmação de contrato - Pecu’s Intermediate";
-        const baseHtml = (role: 'Comprador' | 'Vendedor') => {
-             const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${role === 'Comprador' ? buyerEmail : sellerEmail}&role=${role.toLowerCase()}`;
+        const baseHtml = (role: 'Comprador' | 'Vendedor', email: string) => {
+             const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role.toLowerCase()}&assetId=${asset.id}&assetType=${assetType}`;
              return `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h2>Olá, ${role}!</h2>
@@ -783,7 +790,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     vendorEmail: sellerEmail,
                     buyerEmail: buyerEmail,
                     subject: subject,
-                    htmlContent: baseHtml('Comprador'), // O conteúdo será o mesmo para ambos, mas o link é único
+                    htmlContent: baseHtml('Comprador', buyerEmail), // O conteúdo será o mesmo para ambos, mas o link é único
                 }),
             });
 
