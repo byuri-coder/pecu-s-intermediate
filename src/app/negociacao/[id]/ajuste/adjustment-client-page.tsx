@@ -375,6 +375,33 @@ const FileUploadDisplay = ({
   );
 };
 
+// Custom hook for persisting state to localStorage
+function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const [state, setState] = React.useState<T>(() => {
+        // Prevent SSR issues
+        if (typeof window === 'undefined') {
+            return initialState;
+        }
+        try {
+            const item = window.localStorage.getItem(key);
+            return item ? JSON.parse(item) : initialState;
+        } catch (error) {
+            console.error(error);
+            return initialState;
+        }
+    });
+
+    React.useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(error);
+        }
+    }, [key, state]);
+
+    return [state, setState];
+}
+
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
@@ -383,19 +410,20 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const acceptanceParam = searchParams.get('acceptance');
   const roleParam = searchParams.get('role');
-  
-  const [sellerAgrees, setSellerAgrees] = React.useState(true);
-  const [buyerAgrees, setBuyerAgrees] = React.useState(false);
-  const [isFinalized, setFinalized] = React.useState(false);
-  const [isTransactionComplete, setTransactionComplete] = React.useState(false);
+  const negotiationId = `neg_${asset.id}`;
 
-  const [sellerAuthenticated, setSellerAuthenticated] = React.useState(false);
-  const [buyerAuthenticated, setBuyerAuthenticated] = React.useState(false);
+  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, true);
+  const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
+  const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
+  const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
+
+  const [sellerAuthenticated, setSellerAuthenticated] = usePersistentState(`${negotiationId}_sellerAuthenticated`, false);
+  const [buyerAuthenticated, setBuyerAuthenticated] = usePersistentState(`${negotiationId}_buyerAuthenticated`, false);
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
-  const [sellerEmail, setSellerEmail] = React.useState('');
-  const [buyerEmail, setBuyerEmail] = React.useState('');
+  const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, '');
+  const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, '');
 
   React.useEffect(() => {
     if (acceptanceParam && roleParam) {
@@ -420,7 +448,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acceptanceParam, roleParam]);
+  }, [acceptanceParam, roleParam, setBuyerAuthenticated, setSellerAuthenticated]);
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
@@ -429,7 +457,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
   
   
-  const [genericContractFields, setGenericContractFields] = React.useState({
+  const [genericContractFields, setGenericContractFields] = usePersistentState(`${negotiationId}_genericFields`, {
     cnpj_cpf_cedente: '11.111.111/0001-11',
     endereco_cedente: 'Rua do Cedente, 123, Cidade, Estado',
     representante_cedente: 'Nome Representante Cedente',
@@ -441,7 +469,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     forma_pagamento: 'Transferência Bancária (TED/PIX)',
   });
 
-  const [saleContractFields, setSaleContractFields] = React.useState({
+  const [saleContractFields, setSaleContractFields] = usePersistentState(`${negotiationId}_saleFields`,{
       nacionalidade: 'Brasileiro(a)',
       estado_civil: 'Casado(a)',
       profissao: 'Empresário(a)',
@@ -462,7 +490,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       vias_contrato: '2 (duas)'
   });
 
-  const [leaseContractFields, setLeaseContractFields] = React.useState({
+  const [leaseContractFields, setLeaseContractFields] = usePersistentState(`${negotiationId}_leaseFields`, {
       nacionalidade_arrendador: 'Brasileiro(a)',
       estado_civil_arrendador: 'Solteiro(a)',
       profissao_arrendador: 'Produtor Rural',
@@ -485,7 +513,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       area_arrendada: 'sizeHa' in asset ? asset.sizeHa.toString() : '0',
   });
   
-  const [permutaContractFields, setPermutaContractFields] = React.useState({
+  const [permutaContractFields, setPermutaContractFields] = usePersistentState(`${negotiationId}_permutaFields`, {
     nacionalidade1: 'Brasileiro(a)',
     estado_civil1: 'Divorciado(a)',
     profissao1: 'Investidor(a)',

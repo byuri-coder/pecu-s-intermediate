@@ -26,10 +26,31 @@ import {
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 
-// Placeholder data for the chat
-const initialMessages: Message[] = [];
-const initialConversations: Conversation[] = [];
+// Custom hook for persisting state to localStorage
+function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const [state, setState] = React.useState<T>(() => {
+        if (typeof window === 'undefined') {
+            return initialState;
+        }
+        try {
+            const item = window.localStorage.getItem(key);
+            return item ? JSON.parse(item) : initialState;
+        } catch (error) {
+            console.error(`Error reading localStorage key “${key}”:`, error);
+            return initialState;
+        }
+    });
 
+    React.useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(`Error setting localStorage key “${key}”:`, error);
+        }
+    }, [key, state]);
+
+    return [state, setState];
+}
 
 function getAssetDetails(id: string, type: AssetType | null) {
     if (type === 'carbon-credit') {
@@ -70,9 +91,10 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const asset = getAssetDetails(params.id, assetType);
   const { toast } = useToast();
   
-  const [messages, setMessages] = React.useState<Message[]>(initialMessages);
+  const negotiationId = `neg_${params.id}`;
+  const [messages, setMessages] = usePersistentState<Message[]>(`${negotiationId}_messages`, []);
   const [newMessage, setNewMessage] = React.useState('');
-  const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
 
@@ -103,27 +125,23 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     setMessages(prev => [...prev, finalMessage]);
 
     // Check if it's the first message to create a conversation
-    if (messages.length === 0) {
-        const newConversation: Conversation = {
-            id: params.id,
-            name: sellerName,
-            avatar: sellerAvatar,
-            lastMessage: finalMessage.type === 'text' ? finalMessage.content : `Anexo: ${finalMessage.type}`,
-            time: finalMessage.timestamp,
-            unread: 0,
-            type: assetType,
-        };
-        // In a real app, this state would be managed globally (e.g., via Context or Zustand)
-        // For now, we are just adding it to our local state which will be passed to ChatList.
-        // This won't persist across reloads or different pages.
-        setConversations(prevConvos => {
-            const existing = prevConvos.find(c => c.id === newConversation.id);
-            if (existing) {
-                return prevConvos.map(c => c.id === newConversation.id ? {...c, lastMessage: newConversation.lastMessage, time: newConversation.time } : c);
-            }
-            return [...prevConvos, newConversation];
-        })
-    }
+    const newConversation: Conversation = {
+        id: params.id,
+        name: sellerName,
+        avatar: sellerAvatar,
+        lastMessage: finalMessage.type === 'text' ? finalMessage.content : `Anexo: ${finalMessage.type}`,
+        time: finalMessage.timestamp,
+        unread: 0,
+        type: assetType,
+    };
+    
+    setConversations(prevConvos => {
+        const existing = prevConvos.find(c => c.id === newConversation.id);
+        if (existing) {
+            return prevConvos.map(c => c.id === newConversation.id ? {...c, lastMessage: newConversation.lastMessage, time: newConversation.time } : c);
+        }
+        return [newConversation, ...prevConvos];
+    })
   }
 
   const handleSendMessage = () => {
@@ -326,3 +344,4 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
