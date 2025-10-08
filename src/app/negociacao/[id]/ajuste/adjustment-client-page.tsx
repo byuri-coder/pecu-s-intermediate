@@ -398,7 +398,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [buyerEmail, setBuyerEmail] = React.useState('');
 
   React.useEffect(() => {
-    // Only run if the params are present
     if (acceptanceParam && roleParam) {
       if (acceptanceParam === 'success') {
         if (roleParam === 'buyer') {
@@ -414,12 +413,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
               description: "Seu aceite foi registrado.",
           });
         }
-      } else if (acceptanceParam === 'error') {
-           toast({
-              title: "Falha na verificação",
-              description: "O link de verificação é inválido ou expirou.",
-              variant: "destructive",
-          });
       }
       
       // Clean up URL to avoid re-triggering on refresh
@@ -427,7 +420,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acceptanceParam, roleParam, toast]);
+  }, [acceptanceParam, roleParam]);
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
@@ -1201,3 +1194,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
