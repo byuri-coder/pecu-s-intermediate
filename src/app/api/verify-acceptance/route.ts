@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
-import { getFirestore, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { app } from '@/lib/firebase';
 
 export async function GET(request: NextRequest) {
@@ -19,7 +19,21 @@ export async function GET(request: NextRequest) {
     console.log(`Registrando aceite no Firestore para ${email} como ${role} no ativo ${assetId}`);
     
     const db = getFirestore(app);
-    const contractRef = doc(db, "contracts", assetId);
+    // The contract is now under the user who initiated it.
+    // This is a simplification; in a real-world scenario, you'd need a way
+    // to know which user's subcollection holds the contract (e.g., buyer or seller).
+    // For this test, we assume the contract is under the email that is giving the acceptance.
+    const contractRef = doc(db, "usuarios", email, "contratos", assetId);
+
+    // Check if the document exists before trying to update it
+    const docSnap = await getDoc(contractRef);
+
+    if (!docSnap.exists()) {
+        console.error(`Contrato ${assetId} não encontrado para o usuário ${email}`);
+        // In a real app, you might need to search across users or have a centralized lookup.
+        // For now, we redirect to an error page.
+        return NextResponse.redirect(`${baseUrl}/aceite-erro`);
+    }
 
     // Update the specific role's acceptance status in Firestore
     await updateDoc(contractRef, {

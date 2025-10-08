@@ -12,19 +12,25 @@ export async function logContractSignature(data: {
   contractHash: string;
   assetId: string;
 }) {
-  const { userId, userEmail, contractHash, assetId } = data;
+  const { userEmail, contractHash, assetId } = data;
+
+  if (!userEmail) {
+    throw new Error("User email is required to log contract signature.");
+  }
 
   console.log("Logging contract signature to Firestore");
 
   try {
     const db = getFirestore(app);
-    const contractRef = doc(db, 'contracts', assetId);
+    // Use the user's email as the document ID in the 'usuarios' collection
+    // and the assetId for the contract document within the 'contratos' subcollection.
+    const contractRef = doc(db, 'usuarios', userEmail, 'contratos', assetId);
     
     // Create or merge the contract document
     await setDoc(contractRef, {
       assetId: assetId,
       contractHash: contractHash,
-      createdBy: userId,
+      createdBy: userEmail,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       status: 'pending_signatures', // Initial status
@@ -34,7 +40,7 @@ export async function logContractSignature(data: {
       }
     }, { merge: true });
 
-    console.log("Contract document initialized/updated in Firestore.");
+    console.log(`Contract document initialized/updated in Firestore at: usuarios/${userEmail}/contratos/${assetId}`);
 
   } catch (error) {
     console.error("Erro ao registrar assinatura no Firestore:", error);

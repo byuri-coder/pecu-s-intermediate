@@ -107,25 +107,25 @@
     "providers": ["email"]
   },
   "firestore": {
-    "/users/{userId}": {
+    "/usuarios/{userId}": {
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
-      "description": "Stores public profile information for each user, identified by their UID."
+      "description": "Stores public profile information for each user, identified by their email."
     },
-    "/users/{userId}/assets/{assetId}": {
+    "/usuarios/{userId}/ativos/{assetId}": {
       "schema": {
         "$ref": "#/entities/Asset"
       },
       "description": "Subcollection for assets listed by a specific user."
     },
-    "/users/{userId}/contracts/{contractId}": {
+    "/usuarios/{userId}/contratos/{contractId}": {
       "schema": {
         "$ref": "#/entities/Contract"
       },
       "description": "Subcollection for contracts related to a user."
     },
-    "/users/{userId}/auditLogs/{logId}": {
+    "/usuarios/{userId}/auditoria/{logId}": {
       "schema": {
         "$ref": "#/entities/AuditLog"
       },
