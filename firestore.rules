@@ -2,20 +2,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regra para coleções de administração: apenas administradores podem ler/escrever.
-    match /adminSettings/{docId} {
-      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    // Regras de Segurança do Firestore
+
+    // PERFIS DE USUÁRIO
+    // Permite que usuários autenticados leiam perfis públicos,
+    // mas só permite que o próprio usuário crie ou atualize seu perfil.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Regra genérica para dados sensíveis acessíveis apenas por administradores.
-    match /sensitiveData/{docId=**} {
-        allow read, write: if request.auth != null && request.auth.token.admin == true;
+    // ATIVOS (Assets)
+    // Permite que o dono do ativo crie, atualize ou delete seus próprios ativos.
+    // Qualquer usuário autenticado pode ler os ativos (para o marketplace).
+    match /users/{userId}/assets/{assetId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Adicione outras regras para coleções públicas ou de usuários aqui.
-    // Exemplo: permitir que usuários leiam/escrevam seus próprios dados.
-    // match /users/{userId} {
-    //   allow read, write: if request.auth != null && request.auth.uid == userId;
-    // }
+    // CONTRATOS
+    // Um usuário só pode ler ou modificar contratos dos quais ele faz parte (seja como comprador ou vendedor).
+    match /users/{userId}/contracts/{contractId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // LOGS DE AUDITORIA
+    // Apenas o próprio usuário (ou um admin no futuro) pode criar logs de auditoria.
+    // A leitura e a modificação devem ser restritas.
+    match /users/{userId}/auditLogs/{logId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if false; // Ninguém pode ler ou alterar logs de auditoria diretamente.
+    }
   }
 }
