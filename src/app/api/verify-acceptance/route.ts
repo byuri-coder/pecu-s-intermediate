@@ -1,41 +1,40 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'your-super-secret-jwt-key';
 
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('token');
+  const email = request.nextUrl.searchParams.get('email');
+  const role = request.nextUrl.searchParams.get('role');
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
 
-  if (!token) {
-    // Redirect to an error page on the frontend if no token is provided
+  if (!email || !role) {
+    // Redirect to a generic error page on the frontend if params are missing
     return NextResponse.redirect(`${baseUrl}/aceite-erro`);
   }
 
   try {
-    // Verify the token
-    const decoded = jwt.verify(token, JWT_SECRET) as { email: string; role: 'buyer' | 'seller' };
-
-    // Here, you would save the acceptance to your database (e.g., Firestore)
+    // In a real application, you would save the acceptance to your database.
     // For this example, we'll just log it.
-    console.log(`Aceite registrado para ${decoded.email} como ${decoded.role} em ${new Date().toISOString()}`);
+    console.log(`Aceite registrado para ${email} como ${role} em ${new Date().toISOString()}`);
+    
     /*
-    Example Firestore code:
-    import { getFirestore } from 'firebase-admin/firestore';
-    const db = getFirestore();
-    await db.collection('contract_acceptances').add({
-      email: decoded.email,
-      role: decoded.role,
+    Example database logic:
+    const acceptanceData = {
+      email,
+      role,
       acceptedAt: new Date(),
-    });
+      // You would also link this to the specific contract/negotiation ID
+    };
+    await db.collection('acceptances').add(acceptanceData);
     */
 
-    // Redirect to a generic success page. The frontend will handle the rest.
+    // Redirect to a success page. The frontend will handle the rest.
+    // We are passing the role back to the frontend so it knows which party was verified.
+    // Note: The negotiation ID would be needed here for a specific redirect.
+    // For now, we redirect to a generic success page and let the user navigate.
     return NextResponse.redirect(`${baseUrl}/aceite-sucesso`);
 
   } catch (error) {
-    console.error('Erro de verificação de token:', error);
+    console.error('Erro de registro de aceite:', error);
     // Redirect to an error page on the frontend
     return NextResponse.redirect(`${baseUrl}/aceite-erro`);
   }

@@ -21,7 +21,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAuth } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { logContractSignature } from './actions';
-import jwt from 'jsonwebtoken';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -756,8 +755,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
         const subject = "Confirmação de contrato - Pecu’s Intermediate";
         const baseHtml = (role: 'Comprador' | 'Vendedor') => {
-             const token = jwt.sign({ email: role === 'Comprador' ? buyerEmail : sellerEmail, role: role.toLowerCase() }, 'your-super-secret-jwt-key-that-should-be-in-env', { expiresIn: '24h' });
-             const verificationLink = `${window.location.origin}/api/verify-acceptance?token=${token}`;
+             const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${role === 'Comprador' ? buyerEmail : sellerEmail}&role=${role.toLowerCase()}`;
              return `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h2>Olá, ${role}!</h2>
