@@ -1,5 +1,8 @@
+
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { getFirestore, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { app } from '@/lib/firebase';
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email');
@@ -13,20 +16,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // In a real application, you would save the acceptance to your database.
-    console.log(`Aceite registrado para ${email} como ${role} em ${new Date().toISOString()}`);
+    console.log(`Registrando aceite no Firestore para ${email} como ${role} no ativo ${assetId}`);
     
-    /*
-    Example database logic:
-    await db.collection('acceptances').add({
-      email,
-      role,
-      assetId,
-      assetType,
-      acceptedAt: new Date(),
-    });
-    */
+    const db = getFirestore(app);
+    const contractRef = doc(db, "contracts", assetId);
 
+    // Update the specific role's acceptance status in Firestore
+    await updateDoc(contractRef, {
+      [`acceptances.${role}.accepted`]: true,
+      [`acceptances.${role}.email`]: email,
+      [`acceptances.${role}.acceptedAt`]: serverTimestamp(),
+      'updatedAt': serverTimestamp(),
+    });
+
+    console.log('Aceite registrado com sucesso no Firestore.');
+    
     // Redirect to the adjustment page with success parameters
     const successUrl = new URL(`${baseUrl}/negociacao/${assetId}/ajuste`);
     successUrl.searchParams.set('type', assetType);

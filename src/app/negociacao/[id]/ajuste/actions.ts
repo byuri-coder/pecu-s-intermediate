@@ -1,14 +1,11 @@
 
 'use server';
 
-// This is a placeholder for actual Firebase imports. In a real app, you would use:
-// import { getFirestore, doc, collection, addDoc, serverTimestamp } from "firebase/firestore";
-// import { app } from '@/lib/firebase';
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { app } from "@/lib/firebase";
 
-// Mock implementation to simulate Firestore
-const firestoreLog: any[] = [];
-
-// This server action is responsible for logging the contract signature details.
+// This server action is responsible for initializing the contract in Firestore
+// and logging the contract hash for integrity verification.
 export async function logContractSignature(data: {
   userId: string;
   userEmail: string;
@@ -17,44 +14,36 @@ export async function logContractSignature(data: {
 }) {
   const { userId, userEmail, contractHash, assetId } = data;
 
-  console.log("Logging contract signature to 'Firestore'");
-  const signatureData = {
-    uid: userId,
-    email: userEmail,
-    contratoId: assetId,
-    hash: contractHash,
-    'data/hora': new Date().toISOString(), // Simulating serverTimestamp
-    status: 'assinado',
-  };
-  console.log(signatureData);
-  
-  // In a real application, you would uncomment and use the following:
-  /*
+  console.log("Logging contract signature to Firestore");
+
   try {
     const db = getFirestore(app);
-    const signatureCollection = collection(db, 'contract_signatures');
-    await addDoc(signatureCollection, {
-      uid: userId,
-      email: userEmail,
-      contratoId: assetId,
-      hash: contractHash,
-      'data/hora': serverTimestamp(),
-      status: 'assinado'
-    });
+    const contractRef = doc(db, 'contracts', assetId);
+    
+    // Create or merge the contract document
+    await setDoc(contractRef, {
+      assetId: assetId,
+      contractHash: contractHash,
+      createdBy: userId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      status: 'pending_signatures', // Initial status
+      acceptances: {
+        buyer: { accepted: false, email: null, acceptedAt: null },
+        seller: { accepted: false, email: null, acceptedAt: null },
+      }
+    }, { merge: true });
+
+    console.log("Contract document initialized/updated in Firestore.");
+
   } catch (error) {
     console.error("Erro ao registrar assinatura no Firestore:", error);
     return { success: false, message: "Falha ao registrar a assinatura." };
   }
-  */
-
-  // Mocking a successful response after a short delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  firestoreLog.push({ ...data, signedAt: new Date() });
 
   // Send email notification after logging the signature
   try {
     console.log("🚀 Sending email notification...");
-    // The base URL for fetch needs to be absolute on the server side.
     const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
     await fetch(`${baseUrl}/api/send-email`, {
       method: "POST",
@@ -62,11 +51,11 @@ export async function logContractSignature(data: {
       body: JSON.stringify({
         vendorEmail: "noreply.pecuscontratos@gmail.com",
         buyerEmail: userEmail,
-        subject: "📜 Contrato assinado com sucesso!",
+        subject: "📜 Contrato Finalizado para Autenticação",
         htmlContent: `
           <h2>Olá,</h2>
-          <p>Seu contrato <strong>${assetId}</strong> foi assinado com sucesso.</p>
-          <p>Hash de verificação: <code>${contractHash}</code></p>
+          <p>O contrato para o ativo <strong>${assetId}</strong> foi gerado e está pronto para autenticação por e-mail.</p>
+          <p>Hash de verificação de integridade: <code>${contractHash}</code></p>
           <p>Data/hora: ${new Date().toLocaleString("pt-BR")}</p>
           <br/>
           <p>Atenciosamente,<br>Equipe PECU'S</p>
@@ -76,11 +65,8 @@ export async function logContractSignature(data: {
     console.log("✅ Email notification sent.");
   } catch (emailError) {
       console.error("❌ Failed to send email notification:", emailError);
-      // We don't return an error here, as the primary action (signing) was successful.
-      // In a real app, you might add this to a retry queue.
+      // We don't return an error here, as the primary action was successful.
   }
 
-  return { success: true, message: "Assinatura registrada com sucesso." };
+  return { success: true, message: "Assinatura registrada e contrato iniciado com sucesso." };
 }
-
-
