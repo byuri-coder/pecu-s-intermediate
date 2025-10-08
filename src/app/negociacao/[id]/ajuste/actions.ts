@@ -83,3 +83,4 @@ export async function logContractSignature(data: {
   return { success: true, message: "Assinatura registrada com sucesso." };
 }
 
+
