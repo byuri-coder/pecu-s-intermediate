@@ -12,7 +12,7 @@ export function Footer() {
           </p>
         </div>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
-          <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/termos-de-servico" className="text-sm text-muted-foreground hover:text-foreground">
             Termos de Serviço
           </Link>
           <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">

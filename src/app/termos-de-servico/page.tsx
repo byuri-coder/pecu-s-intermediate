@@ -1,8 +1,22 @@
+'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function TermsOfServicePage() {
+    const [lastUpdated, setLastUpdated] = useState('');
+
+    useEffect(() => {
+        setLastUpdated(new Date().toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }));
+    }, []);
+
     return (
         <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-4xl">
             <Card className="border-primary/20">
@@ -12,7 +26,7 @@ export default function TermsOfServicePage() {
                     </div>
                     <CardTitle className="text-3xl font-bold font-headline">Termos de Uso e Serviços</CardTitle>
                     <CardDescription>
-                        Última atualização: 01 de Agosto de 2024
+                        Última atualização: {lastUpdated}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="prose prose-sm sm:prose-base max-w-none text-justify">
@@ -26,7 +40,7 @@ export default function TermsOfServicePage() {
                         <li><strong>Usuário:</strong> Qualquer pessoa física ou jurídica, devidamente cadastrada, que acesse ou utilize os Serviços da Plataforma, seja como Comprador ou Vendedor.</li>
                         <li><strong>Comprador:</strong> O Usuário que adquire Produtos e/ou Serviços oferecidos por Vendedores no Marketplace.</li>
                         <li><strong>Vendedor:</strong> O Usuário, pessoa física ou jurídica, que se cadastra para ofertar e comercializar seus Produtos e/ou Serviços no Marketplace.</li>
-                        <li><strong>Marketplace:</strong> Ambiente virtual onde Vendedores podem oferecer seus Produtos e/ou Serviços e Compradores podem adquiri-los, sendo a PECU'S INTERMEDIATE mera intermediadora e não fornecedora final.</li>
+                        <li><strong>Marketplace:</strong> Ambiente virtual onde Vendedores podem oferecer seus Produtos e/ou Serviços (físicos, digitais ou serviços) e Compradores podem adquiri-los, sendo a PECU'S INTERMEDIATE mera intermediadora e não fornecedora final.</li>
                         <li><strong>Serviços Específicos:</strong> Os serviços oferecidos pela própria PECU'S INTERMEDIATE, como as Calculadoras, Simuladores Econômicos, e os modelos de Petições e Contratos.</li>
                     </ul>
 
@@ -93,6 +107,7 @@ export default function TermsOfServicePage() {
                     <p>Estes Termos de Uso e Serviços são regidos pelas leis da República Federativa do Brasil. Para dirimir quaisquer questões decorrentes deste Termo, fica eleito o Foro da Comarca da sede da PECU'S INTERMEDIATE, renunciando-se a qualquer outro, por mais privilegiado que seja.</p>
 
                     <p className="font-bold text-center mt-6">PECU'S INTERMEDIATE</p>
+                    <p className="text-center text-sm text-muted-foreground">{lastUpdated}</p>
                 </CardContent>
             </Card>
         </div>
