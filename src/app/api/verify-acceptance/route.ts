@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     console.log(`Attempting to register acceptance in Firestore for ${email} as ${role} on asset ${assetId}`);
     
     const db = getFirestore(app);
-    // The contract is stored under the user who created it.
+    // The contract is always stored under the user who created it.
     const contractRef = doc(db, "usuarios", creatorEmail, "contratos", assetId);
 
     const docSnap = await getDoc(contractRef);

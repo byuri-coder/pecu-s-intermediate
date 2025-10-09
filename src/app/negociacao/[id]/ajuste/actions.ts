@@ -7,7 +7,6 @@ import { app } from "@/lib/firebase";
 // This server action is responsible for initializing the contract in Firestore
 // and logging the contract hash for integrity verification.
 export async function logContractSignature(data: {
-  userId: string;
   userEmail: string;
   contractHash: string;
   assetId: string;
