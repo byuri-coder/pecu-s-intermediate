@@ -1,6 +1,7 @@
 
 
 
+
 'use client';
 
 import * as React from 'react';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -400,6 +401,12 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
     return [state, setState];
 }
 
+type AuthStatus = 'pendente' | 'validado' | 'negado';
+type AuthState = {
+    status: AuthStatus;
+    timestamp?: number; // Stores when the verification email was sent
+};
+
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
@@ -413,8 +420,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
 
-  const [sellerAuthenticated, setSellerAuthenticated] = usePersistentState(`${negotiationId}_sellerAuthenticated`, false);
-  const [buyerAuthenticated, setBuyerAuthenticated] = usePersistentState(`${negotiationId}_buyerAuthenticated`, false);
+  const [sellerAuthState, setSellerAuthState] = usePersistentState<AuthState>(`${negotiationId}_sellerAuth`, { status: 'pendente' });
+  const [buyerAuthState, setBuyerAuthState] = usePersistentState<AuthState>(`${negotiationId}_buyerAuth`, { status: 'pendente' });
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
@@ -428,25 +435,43 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     if (acceptanceParam === 'success' && roleParam) {
       if (roleParam === 'buyer') {
-        setBuyerAuthenticated(true);
+        setBuyerAuthState({ status: 'validado' });
         toast({
-            title: "Verificação de e-mail (Comprador) bem-sucedida!",
-            description: "Seu aceite foi registrado.",
+            title: "Contrato Validado (Comprador)!",
+            description: "Seu aceite foi registrado com sucesso.",
         });
       } else if (roleParam === 'seller') {
-        setSellerAuthenticated(true);
+        setSellerAuthState({ status: 'validado' });
         toast({
-            title: "Verificação de e-mail (Vendedor) bem-sucedida!",
-            description: "Seu aceite foi registrado.",
+            title: "Contrato Validado (Vendedor)!",
+            description: "Seu aceite foi registrado com sucesso.",
         });
       }
       
-      // Clean up URL to avoid re-triggering on refresh
       const newUrl = window.location.pathname + `?type=${assetType}`;
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // useEffect for checking expired verification links
+  React.useEffect(() => {
+    const checkExpiration = (role: 'buyer' | 'seller') => {
+        const authState = role === 'buyer' ? buyerAuthState : sellerAuthState;
+        const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
+        
+        if (authState.status === 'pendente' && authState.timestamp) {
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            if (Date.now() - authState.timestamp > twentyFourHours) {
+                setAuthState({ status: 'negado' });
+            }
+        }
+    };
+    checkExpiration('buyer');
+    checkExpiration('seller');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
@@ -773,9 +798,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
             if (!response.ok) throw new Error('Falha na resposta da API');
 
+            const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
+            setAuthState({ status: 'pendente', timestamp: Date.now() });
+
             toast({
                 title: "E-mail de verificação enviado!",
-                description: `Um link de validação foi enviado para ${email}.`
+                description: `Um link de validação foi enviado para ${email}. O link expira em 24 horas.`
             });
         } catch (error) {
             console.error(error);
@@ -789,6 +817,51 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }
     }
 
+
+    const AuthStatusIndicator = ({ role }: { role: 'buyer' | 'seller'}) => {
+        const state = role === 'buyer' ? buyerAuthState : sellerAuthState;
+        const email = role === 'buyer' ? buyerEmail : setEmail;
+        const setEmail = role === 'buyer' ? setBuyerEmail : setSellerEmail;
+        const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
+
+        const handleResend = () => {
+            setAuthState({ status: 'pendente' });
+            handleSendVerificationEmail(role);
+        }
+
+        let content;
+        switch (state.status) {
+            case 'validado':
+                content = <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Validado</span>;
+                break;
+            case 'negado':
+                content = (
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Negado (Expirado)</span>
+                        <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend}>Reenviar</Button>
+                    </div>
+                );
+                break;
+            default: // pendente
+                content = <span className="text-xs text-muted-foreground font-medium">Pendente</span>;
+                break;
+        }
+
+        return (
+             <div className={cn("p-4 rounded-lg border", state.status === 'validado' ? "bg-green-50 border-green-200" : state.status === 'negado' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
+                <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
+                    {content}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={state.status === 'validado' || isSendingEmail}/>
+                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={state.status !== 'pendente' || isSendingEmail || !email}>
+                        {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     // RENDER FOR ARCHIVE VIEW
     if (searchParams.get('view') === 'archive') {
@@ -1059,49 +1132,17 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>Autenticação de Contrato</CardTitle>
-                    <CardDescription>Para segurança de todos, cada parte deve confirmar a autenticidade do contrato via e-mail antes de prosseguir.</CardDescription>
+                    <CardDescription>Para segurança, cada parte deve confirmar a autenticidade do contrato via e-mail. O link expira em 24 horas.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
-                        {/* Comprador */}
-                        <div className={cn("p-4 rounded-lg border", buyerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
-                             <div className="flex items-center justify-between mb-2">
-                                <p className="font-semibold">Comprador</p>
-                                {buyerAuthenticated ? (
-                                    <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
-                                ) : (
-                                    <span className="text-xs text-muted-foreground font-medium">Pendente</span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Input type="email" placeholder="email.comprador@exemplo.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} disabled={buyerAuthenticated || isSendingEmail}/>
-                                <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail('buyer')} disabled={buyerAuthenticated || isSendingEmail || !buyerEmail}>
-                                    {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
-                                </Button>
-                            </div>
-                        </div>
-                        {/* Vendedor */}
-                         <div className={cn("p-4 rounded-lg border", sellerAuthenticated ? "bg-green-50 border-green-200" : "bg-secondary/30")}>
-                             <div className="flex items-center justify-between mb-2">
-                                <p className="font-semibold">Vendedor</p>
-                                {sellerAuthenticated ? (
-                                    <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Verificado</span>
-                                ) : (
-                                    <span className="text-xs text-muted-foreground font-medium">Pendente</span>
-                                )}
-                            </div>
-                           <div className="flex items-center gap-2">
-                                <Input type="email" placeholder="email.vendedor@exemplo.com" value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} disabled={sellerAuthenticated || isSendingEmail}/>
-                                <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail('seller')} disabled={sellerAuthenticated || isSendingEmail || !sellerEmail}>
-                                     {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
-                                </Button>
-                            </div>
-                        </div>
+                        <AuthStatusIndicator role="buyer" />
+                        <AuthStatusIndicator role="seller" />
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className={cn("transition-opacity", !(buyerAuthenticated && sellerAuthenticated) && "opacity-50 pointer-events-none")}>
+            <Card className={cn("transition-opacity", (buyerAuthState.status !== 'validado' || sellerAuthState.status !== 'validado') && "opacity-50 pointer-events-none")}>
                 <CardHeader>
                     <CardTitle>Assinaturas e Finalização</CardTitle>
                     <CardDescription>Anexe o contrato assinado e os documentos comprobatórios para concluir a transação.</CardDescription>
@@ -1168,7 +1209,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <div className="flex justify-end">
                 <Button 
                     size="lg"
-                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete || !buyerAuthenticated || !sellerAuthenticated}
+                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete || buyerAuthState.status !== 'validado' || sellerAuthState.status !== 'validado'}
                     onClick={handleFinishTransaction}
                 >
                     {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação e Gerar Fatura'}
