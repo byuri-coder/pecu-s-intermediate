@@ -6,6 +6,7 @@ import { z } from 'zod';
 import * as React from 'react';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const registrationSchema = z.object({
   fullName: z.string().min(3, 'Nome completo é obrigatório'),
@@ -44,6 +46,9 @@ const registrationSchema = z.object({
   zipCode: z.string().min(8, 'CEP inválido'),
   
   specialRegistration: z.string().optional(),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: "Você deve aceitar os Termos de Serviço para continuar.",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não coincidem",
     path: ["confirmPassword"],
@@ -73,6 +78,7 @@ export function RegistrationForm() {
       state: '',
       zipCode: '',
       specialRegistration: '',
+      acceptTerms: false,
     },
   });
   
@@ -213,6 +219,35 @@ export function RegistrationForm() {
                 </FormItem>
               )} />
           </section>
+          
+          {/* Terms and Conditions */}
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Aceitar Termos e Condições
+                    </FormLabel>
+                    <FormDescription>
+                      Eu li e concordo com os{' '}
+                      <Link href="/termos-de-servico" className="text-primary hover:underline" target="_blank">
+                        Termos de Uso e Serviços
+                      </Link>
+                      {' '}e com a Política de Privacidade.
+                    </FormDescription>
+                     <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
 
             {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           <Button type="submit" className="w-full text-lg" size="lg" disabled={isPending}>
