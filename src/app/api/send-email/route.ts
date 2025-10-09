@@ -16,7 +16,6 @@ export async function POST(req: Request) {
   try {
     console.log("🚀 Nova requisição recebida em /api/send-email");
 
-    // Tenta ler o corpo da requisição
     let body;
     try {
       body = await req.json();
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
 
     console.log("📨 Corpo recebido:", body);
 
-    // Agora esperamos apenas um destinatário no campo 'to'
     const { to, subject, htmlContent } = body;
 
     if (!to || !subject || !htmlContent) {
@@ -54,7 +52,7 @@ export async function POST(req: Request) {
 
     const emailData = {
       sender: { email: senderEmail, name: "PECU'S Plataforma" },
-      to: [{ email: to }], // O 'to' agora é um único e-mail
+      to: [{ email: to }],
       subject,
       htmlContent,
     };
