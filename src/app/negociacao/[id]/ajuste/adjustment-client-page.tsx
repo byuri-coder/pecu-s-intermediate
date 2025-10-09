@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import * as React from 'react';
@@ -18,9 +19,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getAuth } from 'firebase/auth';
-import { app } from '@/lib/firebase';
-import { logContractSignature } from './actions';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -423,32 +421,28 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, '');
   const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, '');
   
-  const [creatorEmail, setCreatorEmail] = usePersistentState(`${negotiationId}_creatorEmail`, '');
-
 
   React.useEffect(() => {
     const acceptanceParam = searchParams.get('acceptance');
     const roleParam = searchParams.get('role');
 
-    if (acceptanceParam && roleParam) {
-      if (acceptanceParam === 'success') {
-        if (roleParam === 'buyer') {
-          setBuyerAuthenticated(true);
-          toast({
-              title: "Verificação de e-mail (Comprador) bem-sucedida!",
-              description: "Seu aceite foi registrado.",
-          });
-        } else if (roleParam === 'seller') {
-          setSellerAuthenticated(true);
-          toast({
-              title: "Verificação de e-mail (Vendedor) bem-sucedida!",
-              description: "Seu aceite foi registrado.",
-          });
-        }
+    if (acceptanceParam === 'success' && roleParam) {
+      if (roleParam === 'buyer') {
+        setBuyerAuthenticated(true);
+        toast({
+            title: "Verificação de e-mail (Comprador) bem-sucedida!",
+            description: "Seu aceite foi registrado.",
+        });
+      } else if (roleParam === 'seller') {
+        setSellerAuthenticated(true);
+        toast({
+            title: "Verificação de e-mail (Vendedor) bem-sucedida!",
+            description: "Seu aceite foi registrado.",
+        });
       }
       
       // Clean up URL to avoid re-triggering on refresh
-      const newUrl = window.location.pathname;
+      const newUrl = window.location.pathname + `?type=${assetType}`;
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -636,54 +630,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const finalContractText = getFinalContractText();
 
-  // Helper function to create SHA-256 hash
-  async function sha256(message: string) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-  }
-
+  
   const handleFinalize = async () => {
-    const auth = getAuth(app);
-    const user = auth.currentUser;
-
-    if (!user || !user.email) {
-      toast({
-        title: "Erro de Autenticação",
-        description: "Você precisa estar logado para finalizar o contrato.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-        const contractHash = await sha256(finalContractText);
-        
-        await logContractSignature({
-            userEmail: user.email,
-            contractHash: contractHash,
-            assetId: asset.id,
-        });
-        
-        setCreatorEmail(user.email); // Save the creator's email
-
-        toast({
-            title: "Contrato Finalizado!",
-            description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
-        });
-        setFinalized(true);
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-
-    } catch (error) {
-        console.error("Erro ao finalizar contrato e registrar hash:", error);
-        toast({
-            title: "Erro na Finalização",
-            description: "Não foi possível salvar a prova de integridade do contrato. Tente novamente.",
-            variant: "destructive",
-        });
-    }
+    toast({
+        title: "Contrato Finalizado!",
+        description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
+    });
+    setFinalized(true);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   };
     
     const copyToClipboard = (text: string, fieldName: string) => {
@@ -785,20 +739,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             return;
         }
 
-        if (!creatorEmail) {
-            toast({
-                title: "Erro Interno",
-                description: "Não foi possível identificar o criador do contrato. Tente finalizar novamente.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-
         setIsSendingEmail(true);
 
         try {
-            const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role}&assetId=${asset.id}&assetType=${assetType}&creator=${creatorEmail}`;
+            const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role}&assetId=${asset.id}&assetType=${assetType}`;
             
             const response = await fetch('/api/send-email', {
                 method: 'POST',
