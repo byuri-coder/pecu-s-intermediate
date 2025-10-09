@@ -96,7 +96,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                             alt={`Imagem ${index + 1} de ${land.title}`}
                                             fill
                                             className="object-cover"
-                                            data-ai-hint="farm landscape"
+                                            data-ai-hint="brazilian farmland"
                                         />
                                     </div>
                                 </CarouselItem>

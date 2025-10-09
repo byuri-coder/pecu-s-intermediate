@@ -64,7 +64,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint="farm field"
+          data-ai-hint="aerial farmland"
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
