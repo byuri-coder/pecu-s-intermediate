@@ -1,6 +1,7 @@
 import type {Config} from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 import tailwindcssTypography from '@tailwindcss/typography';
+import {fontFamily} from 'tailwindcss/defaultTheme';
 
 const config: Config = {
   darkMode: ['class'],
@@ -12,8 +13,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['Public Sans', ...fontFamily.sans],
+        serif: ['Georgia', ...fontFamily.serif],
+        mono: ['monospace', ...fontFamily.mono],
         body: ['Public Sans', 'sans-serif'],
-        headline: ['Public Sans', 'sans-serif'],
+        headline: ['Georgia', 'serif'],
         code: ['monospace'],
       },
       colors: {
