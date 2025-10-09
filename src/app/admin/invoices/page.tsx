@@ -39,9 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-const mockInvoices: { id: string; user: string; value: number; date: string; status: string; xmlUrl: string; pdfUrl: string }[] = [
-  // Dados de teste removidos
-]
+const mockInvoices: { id: string; user: string; value: number; date: string; status: string; xmlUrl: string; pdfUrl: string }[] = []
 
 
 export default function InvoicesPage() {

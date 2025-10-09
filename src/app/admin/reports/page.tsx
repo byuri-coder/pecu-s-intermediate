@@ -36,9 +36,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-const mockTransactions: { id: string; user: string; email: string; type: string; value: number; date: string; status: string }[] = [
-  // Dados de teste removidos
-]
+const mockTransactions: { id: string; user: string; email: string; type: string; value: number; date: string; status: string }[] = []
 
 
 export default function ReportsPage() {

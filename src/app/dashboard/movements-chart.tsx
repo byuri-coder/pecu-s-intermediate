@@ -24,9 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const chartData: { date: string; carbono: number; tributos: number; terras: number }[] = [
-  // Dados de teste removidos
-];
+const chartData: { date: string; carbono: number; tributos: number; terras: number }[] = [];
 
 const chartConfig = {
   total: {

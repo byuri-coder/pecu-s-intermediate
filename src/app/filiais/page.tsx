@@ -26,9 +26,7 @@ import {
 import { AddBranchForm } from './add-branch-form';
 
 // Placeholder data for existing branches
-const branches: { id: string; name: string; cnpj: string; address: string }[] = [
-  // Dados de teste removidos
-];
+const branches: { id: string; name: string; cnpj: string; address: string }[] = [];
 
 export default function BranchesPage() {
   const [isDialogOpen, setDialogOpen] = React.useState(false);
@@ -49,7 +47,7 @@ export default function BranchesPage() {
                       </div>
                   </div>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button onClick={() => setDialogOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Adicionar Nova Filial
                     </Button>

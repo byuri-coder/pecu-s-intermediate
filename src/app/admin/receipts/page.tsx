@@ -33,9 +33,7 @@ const initialReceipts: {
     status: "Pendente" | "Aprovado" | "Negado";
     fileUrl: string;
     rejectionReason: string;
-}[] = [
-  // Dados de teste removidos
-]
+}[] = []
 
 type Receipt = typeof initialReceipts[0];
 

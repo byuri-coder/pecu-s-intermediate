@@ -43,13 +43,9 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } fro
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 
-const transactionsData: { month: string; total: number }[] = [
-  // Dados de teste removidos
-]
+const transactionsData: { month: string; total: number }[] = []
 
-const revenueData: { name: string; receita: number; taxas: number }[] = [
-    // Dados de teste removidos
-];
+const revenueData: { name: string; receita: number; taxas: number }[] = []
 
 
 export default function Dashboard() {

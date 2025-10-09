@@ -21,9 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 
-const mockAuditLogs: { id: string; user: string; ip: string; action: string; timestamp: string }[] = [
-  // Dados de teste removidos
-]
+const mockAuditLogs: { id: string; user: string; ip: string; action: string; timestamp: string }[] = []
 
 export default function AuditPage() {
   return (
