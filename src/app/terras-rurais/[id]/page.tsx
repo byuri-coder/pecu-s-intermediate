@@ -90,7 +90,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                     <Carousel className="w-full">
                         <CarouselContent>
                             {land.images.map((imgSeed, index) => {
-                                const imageUrl = `https://source.unsplash.com/1200x675/?fazenda,rural,campo&seed=${imgSeed}`;
+                                const imageUrl = `https://picsum.photos/seed/${imgSeed}/1200/675`;
                                 return (
                                     <CarouselItem key={index}>
                                         <div className="aspect-video w-full overflow-hidden rounded-lg relative">

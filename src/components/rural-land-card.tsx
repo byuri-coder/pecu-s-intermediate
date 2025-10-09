@@ -55,7 +55,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = `https://source.unsplash.com/400x225/?fazenda,rural,campo&seed=${land.images[0]}`;
+  const imageUrl = `https://picsum.photos/seed/${land.images[0]}/400/225`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
