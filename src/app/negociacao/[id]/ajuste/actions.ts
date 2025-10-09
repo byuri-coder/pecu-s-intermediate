@@ -46,33 +46,6 @@ export async function logContractSignature(data: {
     console.error("Erro ao registrar assinatura no Firestore:", error);
     return { success: false, message: "Falha ao registrar a assinatura." };
   }
-
-  // Send email notification after logging the signature
-  try {
-    console.log("🚀 Sending email notification...");
-    const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
-    await fetch(`${baseUrl}/api/send-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vendorEmail: "noreply.pecuscontratos@gmail.com",
-        buyerEmail: userEmail,
-        subject: "📜 Contrato Finalizado para Autenticação",
-        htmlContent: `
-          <h2>Olá,</h2>
-          <p>O contrato para o ativo <strong>${assetId}</strong> foi gerado e está pronto para autenticação por e-mail.</p>
-          <p>Hash de verificação de integridade: <code>${contractHash}</code></p>
-          <p>Data/hora: ${new Date().toLocaleString("pt-BR")}</p>
-          <br/>
-          <p>Atenciosamente,<br>Equipe PECU'S</p>
-        `
-      }),
-    });
-    console.log("✅ Email notification sent.");
-  } catch (emailError) {
-      console.error("❌ Failed to send email notification:", emailError);
-      // We don't return an error here, as the primary action was successful.
-  }
-
+  
   return { success: true, message: "Assinatura registrada e contrato iniciado com sucesso." };
 }

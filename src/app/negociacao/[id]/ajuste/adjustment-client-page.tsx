@@ -422,6 +422,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, '');
   const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, '');
+  
+  const [creatorEmail, setCreatorEmail] = usePersistentState(`${negotiationId}_creatorEmail`, '');
+
 
   React.useEffect(() => {
     const acceptanceParam = searchParams.get('acceptance');
@@ -449,7 +452,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, setBuyerAuthenticated, setSellerAuthenticated, toast]);
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
@@ -646,7 +649,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const auth = getAuth(app);
     const user = auth.currentUser;
 
-    if (!user) {
+    if (!user || !user.email) {
       toast({
         title: "Erro de Autenticação",
         description: "Você precisa estar logado para finalizar o contrato.",
@@ -660,10 +663,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         
         await logContractSignature({
             userId: user.uid,
-            userEmail: user.email || 'N/A',
+            userEmail: user.email,
             contractHash: contractHash,
             assetId: asset.id,
         });
+        
+        setCreatorEmail(user.email); // Save the creator's email
 
         toast({
             title: "Contrato Finalizado!",
@@ -770,63 +775,70 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }, 3000);
     }
     
-    const handleSendVerificationEmail = async () => {
-        if (!buyerEmail || !sellerEmail) {
+    const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
+        const email = role === 'buyer' ? buyerEmail : sellerEmail;
+        if (!email) {
             toast({
-                title: "E-mails não fornecidos",
-                description: "Por favor, insira os e-mails do comprador e do vendedor.",
+                title: `E-mail do ${role === 'buyer' ? 'Comprador' : 'Vendedor'} não fornecido`,
+                description: "Por favor, insira o e-mail para enviar a verificação.",
                 variant: "destructive"
             });
             return;
         }
 
+        if (!creatorEmail) {
+            toast({
+                title: "Erro Interno",
+                description: "Não foi possível identificar o criador do contrato. Tente finalizar novamente.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+
         setIsSendingEmail(true);
 
-        const subject = "Confirmação de contrato - Pecu’s Intermediate";
-        const baseHtml = (role: 'Comprador' | 'Vendedor', email: string) => {
-             const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role.toLowerCase()}&assetId=${asset.id}&assetType=${assetType}`;
-             return `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <h2>Olá, ${role}!</h2>
-                <p>Você está finalizando um contrato em nossa plataforma.</p>
-                <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite.</p>
-                <a href="${verificationLink}" 
-                    style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                    Confirmar e Validar Contrato
-                </a>
-                <br><br>
-                <p>Se o botão não funcionar, copie e cole o seguinte link no seu navegador:</p>
-                <p><a href="${verificationLink}">${verificationLink}</a></p>
-                <br>
-                <small>Este link é válido por 24 horas.</small>
-                <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
-                </div>
-            `;
-        };
-
         try {
+            const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role}&assetId=${asset.id}&assetType=${assetType}&creator=${creatorEmail}`;
+            
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    vendorEmail: sellerEmail,
-                    buyerEmail: buyerEmail,
-                    subject: subject,
-                    htmlContent: baseHtml('Comprador', buyerEmail), // O conteúdo será o mesmo para ambos, mas o link é único
+                    vendorEmail: "noreply.pecuscontratos@gmail.com", // This should be a generic sender
+                    buyerEmail: email, // Send only to the specific role
+                    subject: "Confirmação de contrato - Pecu’s Intermediate",
+                    htmlContent: `
+                        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                        <h2>Olá!</h2>
+                        <p>Você está finalizando um contrato em nossa plataforma.</p>
+                        <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite.</p>
+                        <a href="${verificationLink}" 
+                            style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Confirmar e Validar Contrato
+                        </a>
+                        <br><br>
+                        <p>Se o botão não funcionar, copie e cole o seguinte link no seu navegador:</p>
+                        <p><a href="${verificationLink}">${verificationLink}</a></p>
+                        <br>
+                        <small>Este link é válido por 24 horas.</small>
+                        <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
+                        </div>
+                    `,
                 }),
             });
 
             if (!response.ok) throw new Error('Falha na resposta da API');
 
             toast({
-                title: "E-mails de verificação enviados!",
-                description: `Um link de validação foi enviado para ${buyerEmail} e ${sellerEmail}.`
+                title: "E-mail de verificação enviado!",
+                description: `Um link de validação foi enviado para ${email}.`
             });
         } catch (error) {
             console.error(error);
             toast({
-                title: "Erro ao enviar e-mails",
-                description: "Não foi possível enviar os e-mails de verificação.",
+                title: "Erro ao enviar e-mail",
+                description: "Não foi possível enviar o e-mail de verificação.",
                 variant: "destructive"
             });
         } finally {
@@ -1120,6 +1132,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             </div>
                             <div className="flex items-center gap-2">
                                 <Input type="email" placeholder="email.comprador@exemplo.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} disabled={buyerAuthenticated || isSendingEmail}/>
+                                <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail('buyer')} disabled={buyerAuthenticated || isSendingEmail || !buyerEmail}>
+                                    {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                                </Button>
                             </div>
                         </div>
                         {/* Vendedor */}
@@ -1134,13 +1149,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             </div>
                            <div className="flex items-center gap-2">
                                 <Input type="email" placeholder="email.vendedor@exemplo.com" value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} disabled={sellerAuthenticated || isSendingEmail}/>
+                                <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail('seller')} disabled={sellerAuthenticated || isSendingEmail || !sellerEmail}>
+                                     {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                                </Button>
                             </div>
                         </div>
                     </div>
-                     <Button onClick={handleSendVerificationEmail} disabled={!buyerEmail || !sellerEmail || (buyerAuthenticated && sellerAuthenticated) || isSendingEmail} className="w-full">
-                        {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailCheck className="mr-2 h-4 w-4"/>}
-                        Enviar E-mails de Verificação
-                    </Button>
                 </CardContent>
             </Card>
 

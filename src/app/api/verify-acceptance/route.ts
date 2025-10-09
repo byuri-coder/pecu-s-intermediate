@@ -9,29 +9,26 @@ export async function GET(request: NextRequest) {
   const role = request.nextUrl.searchParams.get('role');
   const assetId = request.nextUrl.searchParams.get('assetId');
   const assetType = request.nextUrl.searchParams.get('assetType');
+  const creatorEmail = request.nextUrl.searchParams.get('creator');
+  
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
 
-  if (!email || !role || !assetId || !assetType) {
+  if (!email || !role || !assetId || !assetType || !creatorEmail) {
+    console.error('Missing required query parameters for acceptance verification.', { email, role, assetId, assetType, creatorEmail });
     return NextResponse.redirect(`${baseUrl}/aceite-erro`);
   }
 
   try {
-    console.log(`Registrando aceite no Firestore para ${email} como ${role} no ativo ${assetId}`);
+    console.log(`Attempting to register acceptance in Firestore for ${email} as ${role} on asset ${assetId}`);
     
     const db = getFirestore(app);
-    // The contract is now under the user who initiated it.
-    // This is a simplification; in a real-world scenario, you'd need a way
-    // to know which user's subcollection holds the contract (e.g., buyer or seller).
-    // For this test, we assume the contract is under the email that is giving the acceptance.
-    const contractRef = doc(db, "usuarios", email, "contratos", assetId);
+    // The contract is stored under the user who created it.
+    const contractRef = doc(db, "usuarios", creatorEmail, "contratos", assetId);
 
-    // Check if the document exists before trying to update it
     const docSnap = await getDoc(contractRef);
 
     if (!docSnap.exists()) {
-        console.error(`Contrato ${assetId} não encontrado para o usuário ${email}`);
-        // In a real app, you might need to search across users or have a centralized lookup.
-        // For now, we redirect to an error page.
+        console.error(`Contract ${assetId} not found for creator user ${creatorEmail}. Redirecting to error page.`);
         return NextResponse.redirect(`${baseUrl}/aceite-erro`);
     }
 
@@ -43,7 +40,7 @@ export async function GET(request: NextRequest) {
       'updatedAt': serverTimestamp(),
     });
 
-    console.log('Aceite registrado com sucesso no Firestore.');
+    console.log('Acceptance successfully registered in Firestore.');
     
     // Redirect to the adjustment page with success parameters
     const successUrl = new URL(`${baseUrl}/negociacao/${assetId}/ajuste`);
@@ -54,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(successUrl);
 
   } catch (error) {
-    console.error('Erro de registro de aceite:', error);
+    console.error('Error registering acceptance in Firestore:', error);
     return NextResponse.redirect(`${baseUrl}/aceite-erro`);
   }
 }
