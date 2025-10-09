@@ -452,7 +452,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, setBuyerAuthenticated, setSellerAuthenticated, toast]);
+  }, [searchParams]);
 
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
