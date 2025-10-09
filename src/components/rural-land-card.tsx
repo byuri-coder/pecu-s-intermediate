@@ -55,7 +55,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = `https://picsum.photos/seed/${land.images[0]}/400/225`;
+  const imageUrl = `https://images.unsplash.com/photo-1597516827827-531421031a96?q=80&w=400&h=225&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&seed=${land.images[0]}`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
@@ -65,7 +65,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint={"fazenda"}
+          data-ai-hint="fazenda"
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
