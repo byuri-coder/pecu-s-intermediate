@@ -18,9 +18,9 @@ export function Footer() {
           <Link href="/politica-de-privacidade" className="text-sm text-muted-foreground hover:text-foreground">
             Política de Privacidade
           </Link>
-          <a href="mailto:negotiation.pecus@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="mailto:negotiation.pecus@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">
             Contato
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>
