@@ -57,6 +57,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
 
   // Use a hash of the land ID to pick a consistent image from the list
   const imageSeed = land.images[0] || land.id;
+  const imageHint = land.id === 'land-001' ? 'drone soybean' : 'fazenda';
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
@@ -66,7 +67,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint="fazenda"
+          data-ai-hint={imageHint}
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />

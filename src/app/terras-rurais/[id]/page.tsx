@@ -65,6 +65,8 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
+  const imageHint = land.id === 'land-001' ? 'drone soybean' : 'fazenda';
+
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
@@ -97,7 +99,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                             alt={`Imagem ${index + 1} de ${land.title}`}
                                             fill
                                             className="object-cover"
-                                            data-ai-hint="fazenda"
+                                            data-ai-hint={imageHint}
                                         />
                                     </div>
                                 </CarouselItem>
