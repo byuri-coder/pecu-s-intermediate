@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 'use client';
 
 import * as React from 'react';
@@ -471,8 +465,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     };
     checkExpiration('buyer');
     checkExpiration('seller');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [buyerAuthState, sellerAuthState, setBuyerAuthState, setSellerAuthState]);
 
 
 
@@ -769,13 +762,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
 
         try {
-            const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${email}&role=${role}&assetId=${asset.id}&assetType=${assetType}`;
+            const verificationLink = `${window.location.origin}/api/verify-acceptance?email=${encodeURIComponent(email)}&role=${role}&assetId=${asset.id}&assetType=${assetType}`;
             
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: email, // Envia o email apenas para o destinatário específico
+                    to: email,
                     subject: "Confirmação de contrato - Pecu’s Intermediate",
                     htmlContent: `
                         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -1222,3 +1215,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
