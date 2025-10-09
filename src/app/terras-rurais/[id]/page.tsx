@@ -65,6 +65,12 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
+  const carouselImages = Array.from({ length: 3 }, (_, i) => ({
+    src: `https://picsum.photos/seed/${land.id}${i + 1}/1200/675`,
+    alt: `Imagem ${i + 1} de ${land.title}`,
+  }));
+
+
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
@@ -89,15 +95,15 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                 <CardContent className="p-4">
                     <Carousel className="w-full">
                         <CarouselContent>
-                            {land.images.map((imageUrl, index) => (
+                            {carouselImages.map((image, index) => (
                                 <CarouselItem key={index}>
                                     <div className="aspect-video w-full overflow-hidden rounded-lg relative">
                                         <Image
-                                            src={imageUrl}
-                                            alt={`Imagem ${index + 1} de ${land.title}`}
+                                            src={image.src}
+                                            alt={image.alt}
                                             fill
                                             className="object-cover"
-                                            data-ai-hint="fazenda campo"
+                                            data-ai-hint="fazenda"
                                         />
                                     </div>
                                 </CarouselItem>

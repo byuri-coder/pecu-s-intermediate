@@ -55,8 +55,8 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = land.images[0];
-  const dataAiHint = 'fazenda campo';
+  const imageUrl = `https://picsum.photos/seed/${land.id}/400/225`;
+  const dataAiHint = 'fazenda';
 
 
   return (
