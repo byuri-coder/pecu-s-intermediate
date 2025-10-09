@@ -55,7 +55,13 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = `https://images.unsplash.com/photo-1597516827827-531421031a96?q=80&w=400&h=225&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&seed=${land.images[0]}`;
+  const isSitioDasAguas = land.id === 'land-002';
+  const imageUrl = isSitioDasAguas 
+      ? 'https://storage.googleapis.com/maker-studio-5f335.appspot.com/users/temp-user-a9f3a53d-d88e-49b0-a359-59892797e884/generations/1718042459419/image_0.webp'
+      : `https://images.unsplash.com/photo-1597516827827-531421031a96?q=80&w=400&h=225&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&seed=${land.images[0]}`;
+  
+  const dataAiHint = isSitioDasAguas ? 'fazenda campo' : 'fazenda';
+
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
@@ -65,7 +71,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint="fazenda"
+          data-ai-hint={dataAiHint}
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />

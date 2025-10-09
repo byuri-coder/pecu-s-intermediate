@@ -90,7 +90,13 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                     <Carousel className="w-full">
                         <CarouselContent>
                             {land.images.map((imgSeed, index) => {
-                                const imageUrl = `https://images.unsplash.com/photo-1597516827827-531421031a96?q=80&w=1200&h=675&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&seed=${imgSeed}`;
+                                const isSitioDasAguas = land.id === 'land-002';
+                                const imageUrl = isSitioDasAguas
+                                    ? 'https://storage.googleapis.com/maker-studio-5f335.appspot.com/users/temp-user-a9f3a53d-d88e-49b0-a359-59892797e884/generations/1718042459419/image_0.webp'
+                                    : `https://images.unsplash.com/photo-1597516827827-531421031a96?q=80&w=1200&h=675&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&seed=${imgSeed}`;
+                                
+                                const dataAiHint = isSitioDasAguas ? 'fazenda campo' : 'fazenda';
+
                                 return (
                                     <CarouselItem key={index}>
                                         <div className="aspect-video w-full overflow-hidden rounded-lg relative">
@@ -99,7 +105,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                                 alt={`Imagem ${index + 1} de ${land.title}`}
                                                 fill
                                                 className="object-cover"
-                                                data-ai-hint="fazenda"
+                                                data-ai-hint={dataAiHint}
                                             />
                                         </div>
                                     </CarouselItem>
