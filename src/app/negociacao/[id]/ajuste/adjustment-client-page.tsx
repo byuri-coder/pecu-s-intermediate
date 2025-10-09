@@ -662,7 +662,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         const contractHash = await sha256(finalContractText);
         
         await logContractSignature({
-            userId: user.uid,
             userEmail: user.email,
             contractHash: contractHash,
             assetId: asset.id,
