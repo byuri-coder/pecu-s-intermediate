@@ -65,8 +65,6 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
-  const imageHint = land.id === 'land-001' ? 'drone soybean' : 'fazenda';
-
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
@@ -91,19 +89,23 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                 <CardContent className="p-4">
                     <Carousel className="w-full">
                         <CarouselContent>
-                            {land.images.map((imgSeed, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="aspect-video w-full overflow-hidden rounded-lg relative">
-                                        <Image
-                                            src={`https://picsum.photos/seed/${imgSeed}/1200/675`}
-                                            alt={`Imagem ${index + 1} de ${land.title}`}
-                                            fill
-                                            className="object-cover"
-                                            data-ai-hint={imageHint}
-                                        />
-                                    </div>
-                                </CarouselItem>
-                            ))}
+                            {land.images.map((imgSeed, index) => {
+                                const imageUrl = land.id === 'land-001'
+                                    ? `https://images.unsplash.com/photo-1599543331459-33435dd35515?q=80&w=1200&auto=format&fit=crop` // Drone view of soybean farm
+                                    : `https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200&auto=format&fit=crop`; // Generic farm
+                                return (
+                                    <CarouselItem key={index}>
+                                        <div className="aspect-video w-full overflow-hidden rounded-lg relative">
+                                            <Image
+                                                src={imageUrl}
+                                                alt={`Imagem ${index + 1} de ${land.title}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    </CarouselItem>
+                                );
+                            })}
                         </CarouselContent>
                         <CarouselPrevious className="ml-16" />
                         <CarouselNext className="mr-16" />

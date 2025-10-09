@@ -55,19 +55,19 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  // Use a hash of the land ID to pick a consistent image from the list
-  const imageSeed = land.images[0] || land.id;
-  const imageHint = land.id === 'land-001' ? 'drone soybean' : 'fazenda';
+  // Define image based on land ID
+  const imageUrl = land.id === 'land-001'
+    ? `https://images.unsplash.com/photo-1599543331459-33435dd35515?q=80&w=400&auto=format&fit=crop` // Drone view of soybean farm
+    : `https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=400&auto=format&fit=crop`; // Generic farm
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
        <div className="relative w-full aspect-[16/9] overflow-hidden">
         <Image
-          src={`https://picsum.photos/seed/${imageSeed}/400/225`}
+          src={imageUrl}
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint={imageHint}
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
