@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -416,8 +417,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
 
-  const [sellerAuthState, setSellerAuthState] = usePersistentState<AuthState>(`${negotiationId}_sellerAuth`, { status: 'pending' });
-  const [buyerAuthState, setBuyerAuthState] = usePersistentState<AuthState>(`${negotiationId}_buyerAuth`, { status: 'pending' });
+  const [authStatus, setAuthStatus] = React.useState<{buyer: AuthStatus, seller: AuthStatus}>({ buyer: 'pending', seller: 'pending' });
+  const [authTimestamps, setAuthTimestamps] = React.useState<{buyer?: number, seller?: number}>({});
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
@@ -426,56 +427,55 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
 
   React.useEffect(() => {
-    if (!isFinalized || (buyerAuthState.status === 'validated' && sellerAuthState.status === 'validated')) {
-        return;
-    }
-
-    const checkStatus = async (role: 'buyer' | 'seller') => {
-        const authState = role === 'buyer' ? buyerAuthState : sellerAuthState;
-        if (authState.status !== 'pending') return;
-
-        try {
-            const res = await fetch(`/api/contract-status?assetId=${asset.id}&role=${role}`);
-            if (res.ok) {
-                const { status } = await res.json();
-                if (status === 'validated') {
-                    const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
-                    setAuthState({ status: 'validated' });
-                    toast({
-                        title: `Contrato Validado (${role})!`,
-                        description: `O aceite de ${role === 'buyer' ? buyerEmail : sellerEmail} foi confirmado.`,
-                    });
-                }
+    if (!isFinalized) return;
+    
+    // Polling function to check status from the backend
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/contract-status?assetId=${asset.id}`);
+        if (res.ok) {
+          const { status: newStatus } = await res.json();
+          // Update local state only if it has changed to avoid re-renders
+          if (newStatus.buyer !== authStatus.buyer || newStatus.seller !== authStatus.seller) {
+            setAuthStatus(newStatus);
+            if(newStatus.buyer === 'validated' && authStatus.buyer === 'pending') {
+                 toast({ title: 'Comprador validou o contrato!' });
             }
-        } catch (error) {
-            console.error(`Error checking ${role} status:`, error);
+             if(newStatus.seller === 'validated' && authStatus.seller === 'pending') {
+                 toast({ title: 'Vendedor validou o contrato!' });
+            }
+          }
         }
+      } catch (error) {
+        console.error("Erro ao buscar status do contrato:", error);
+      }
     };
 
-    const interval = setInterval(() => {
-        checkStatus('buyer');
-        checkStatus('seller');
-    }, 5000); // Poll every 5 seconds
+    // Start polling when component mounts and is finalized
+    const interval = setInterval(checkStatus, 5000);
 
+    // Initial check
+    checkStatus();
+
+    // Cleanup on unmount
     return () => clearInterval(interval);
-}, [isFinalized, asset.id, buyerAuthState, sellerAuthState, setBuyerAuthState, setSellerAuthState, toast, buyerEmail, sellerEmail]);
+  }, [isFinalized, asset.id, authStatus]);
 
 
   React.useEffect(() => {
     const checkExpiration = (role: 'buyer' | 'seller') => {
-        const authState = role === 'buyer' ? buyerAuthState : sellerAuthState;
-        const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
+        const timestamp = authTimestamps[role];
         
-        if (authState.status === 'pending' && authState.timestamp) {
+        if (authStatus[role] === 'pending' && timestamp) {
             const twentyFourHours = 24 * 60 * 60 * 1000;
-            if (Date.now() - authState.timestamp > twentyFourHours) {
-                setAuthState({ status: 'expired', timestamp: authState.timestamp });
+            if (Date.now() - timestamp > twentyFourHours) {
+                setAuthStatus(prev => ({...prev, [role]: 'expired'}));
             }
         }
     };
     checkExpiration('buyer');
     checkExpiration('seller');
-  }, [buyerAuthState, sellerAuthState, setBuyerAuthState, setSellerAuthState]);
+  }, [authStatus, authTimestamps]);
 
 
 
@@ -771,7 +771,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
 
         try {
-            const verificationLink = `${window.location.origin}/api/contract-status`;
+            // Este link agora aponta para a API GET de verificação
+            const verificationLink = `${window.location.origin}/api/verify-acceptance?assetId=${asset.id}&role=${role}&email=${encodeURIComponent(email)}`;
             
             const response = await fetch('/api/send-email', {
                 method: 'POST',
@@ -781,32 +782,32 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     subject: "Confirmação de contrato - Pecu’s Intermediate",
                     htmlContent: `
                         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                        <h2>Olá!</h2>
-                        <p>Você está finalizando um contrato em nossa plataforma.</p>
-                        <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite. Este link acionará a validação no backend.</p>
-                        <form action="${verificationLink}" method="POST" style="display: inline;">
-                           <input type="hidden" name="email" value="${email}" />
-                           <input type="hidden" name="assetId" value="${asset.id}" />
-                           <input type="hidden" name="role" value="${role}" />
-                           <button type="submit"
+                          <h2>Olá!</h2>
+                          <p>Você está recebendo este e-mail para validar um contrato na plataforma PECU'S INTERMEDIATE.</p>
+                          <p>Para garantir a segurança de todos, por favor, clique no botão abaixo para confirmar a autenticidade do documento e registrar seu aceite. Isto validará sua parte no contrato.</p>
+                          <a href="${verificationLink}"
                             style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; border: none; cursor: pointer;">
                             Confirmar e Validar Contrato
-                           </button>
-                        </form>
-                        <br><br>
-                        <p>Se o botão não funcionar, você pode acionar a validação manualmente via outros métodos se fornecido pela plataforma.</p>
-                        <br>
-                        <small>Este link é válido por 24 horas.</small>
-                        <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
+                          </a>
+                          <br><br>
+                          <small>Este link é válido por 24 horas.</small>
+                          <p>Atenciosamente,<br>Equipe PECU'S INTERMEDIATE</p>
                         </div>
                     `,
                 }),
             });
 
             if (!response.ok) throw new Error('Falha na resposta da API de e-mail');
+
+            // Atualiza o timestamp para a lógica de expiração
+            setAuthTimestamps(prev => ({...prev, [role]: Date.now()}));
             
-            const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
-            setAuthState({ status: 'pending', timestamp: Date.now() });
+            // Informa o backend que o processo de validação para este usuário foi iniciado
+            await fetch('/api/contract-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId: asset.id, role }),
+            });
 
             toast({
                 title: "E-mail de verificação enviado!",
@@ -826,18 +827,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
 
     const AuthStatusIndicator = ({ role }: { role: 'buyer' | 'seller'}) => {
-        const authState = role === 'buyer' ? buyerAuthState : sellerAuthState;
+        const status = authStatus[role];
         const email = role === 'buyer' ? buyerEmail : sellerEmail;
         const setEmail = role === 'buyer' ? setBuyerEmail : setSellerEmail;
-        const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
 
         const handleResend = () => {
-            setAuthState({ status: 'pending' });
+            setAuthStatus(prev => ({...prev, [role]: 'pending'}));
+            setAuthTimestamps(prev => ({...prev, [role]: undefined}));
             handleSendVerificationEmail(role);
         }
 
         let content;
-        switch (authState.status) {
+        switch (status) {
             case 'validated':
                 content = <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Validado</span>;
                 break;
@@ -855,14 +856,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }
 
         return (
-             <div className={cn("p-4 rounded-lg border", authState.status === 'validated' ? "bg-green-50 border-green-200" : authState.status === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
+             <div className={cn("p-4 rounded-lg border", status === 'validated' ? "bg-green-50 border-green-200" : status === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
                 <div className="flex items-center justify-between mb-2">
                     <p className="font-semibold">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
                     {content}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={authState.status === 'validated' || isSendingEmail}/>
-                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={authState.status === 'validated' || isSendingEmail || !email}>
+                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail}/>
+                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email}>
                         {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                     </Button>
                 </div>
@@ -1145,7 +1146,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardContent>
             </Card>
 
-            <Card className={cn("transition-opacity", (buyerAuthState.status !== 'validated' || sellerAuthState.status !== 'validated') && "opacity-50 pointer-events-none")}>
+            <Card className={cn("transition-opacity", (authStatus.buyer !== 'validated' || authStatus.seller !== 'validated') && "opacity-50 pointer-events-none")}>
                 <CardHeader>
                     <CardTitle>Assinaturas e Finalização</CardTitle>
                     <CardDescription>Anexe o contrato assinado e os documentos comprobatórios para concluir a transação.</CardDescription>
@@ -1212,7 +1213,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             <div className="flex justify-end">
                 <Button 
                     size="lg"
-                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete || buyerAuthState.status !== 'validated' || sellerAuthState.status !== 'validated'}
+                    disabled={!signedContractBuyer || !signedContractSeller || !buyerProofFile || !sellerProofFile || isTransactionComplete || authStatus.buyer !== 'validated' || authStatus.seller !== 'validated'}
                     onClick={handleFinishTransaction}
                 >
                     {isTransactionComplete ? 'Transação Salva' : 'Finalizar Transação e Gerar Fatura'}
