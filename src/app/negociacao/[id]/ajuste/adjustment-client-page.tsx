@@ -2,6 +2,7 @@
 
 
 
+
 'use client';
 
 import * as React from 'react';
@@ -820,7 +821,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     const AuthStatusIndicator = ({ role }: { role: 'buyer' | 'seller'}) => {
         const state = role === 'buyer' ? buyerAuthState : sellerAuthState;
-        const email = role === 'buyer' ? buyerEmail : setEmail;
+        const email = role === 'buyer' ? buyerEmail : sellerEmail;
         const setEmail = role === 'buyer' ? setBuyerEmail : setSellerEmail;
         const setAuthState = role === 'buyer' ? setBuyerAuthState : setSellerAuthState;
 
