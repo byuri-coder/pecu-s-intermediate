@@ -56,7 +56,7 @@ export async function POST(req: Request) {
  * @param assetId - O ID do ativo/contrato.
  * @param role - 'buyer' ou 'seller'.
  */
-export function validateContractInMemory(assetId: string, role: 'buyer' | 'seller') {
+export async function validateContractInMemory(assetId: string, role: 'buyer' | 'seller') {
   if (!contractsStatus.has(assetId)) {
     contractsStatus.set(assetId, { buyer: 'pending', seller: 'pending' });
   }
