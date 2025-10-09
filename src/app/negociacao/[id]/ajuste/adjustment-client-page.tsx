@@ -3,6 +3,7 @@
 
 
 
+
 'use client';
 
 import * as React from 'react';
@@ -452,8 +453,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       const newUrl = window.location.pathname + `?type=${assetType}`;
       window.history.replaceState({...window.history.state, as: newUrl, url: newUrl}, '', newUrl);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, setBuyerAuthState, setSellerAuthState, toast, assetType]);
 
   // useEffect for checking expired verification links
   React.useEffect(() => {
