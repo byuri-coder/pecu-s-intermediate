@@ -90,9 +90,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                     <Carousel className="w-full">
                         <CarouselContent>
                             {land.images.map((imgSeed, index) => {
-                                const imageUrl = land.id === 'land-001'
-                                    ? `https://images.unsplash.com/photo-1599543331459-33435dd35515?q=80&w=1200&auto=format&fit=crop`
-                                    : `https://picsum.photos/seed/${imgSeed}/1200/675`;
+                                const imageUrl = `https://source.unsplash.com/1200x675/?fazenda,rural,campo&seed=${imgSeed}`;
                                 return (
                                     <CarouselItem key={index}>
                                         <div className="aspect-video w-full overflow-hidden rounded-lg relative">
@@ -101,7 +99,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                                 alt={`Imagem ${index + 1} de ${land.title}`}
                                                 fill
                                                 className="object-cover"
-                                                data-ai-hint={land.id === 'land-001' ? "drone soybean" : "fazenda"}
+                                                data-ai-hint={"fazenda"}
                                             />
                                         </div>
                                     </CarouselItem>
