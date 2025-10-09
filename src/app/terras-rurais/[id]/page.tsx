@@ -9,6 +9,7 @@ import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickax
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
+import imageData from '@/app/lib/placeholder-images.json';
 
 
 const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType'], className?: string }) => {
@@ -65,10 +66,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
-  const carouselImages = Array.from({ length: 3 }, (_, i) => ({
-    src: `https://picsum.photos/seed/${land.id}${i + 1}/1200/675`,
-    alt: `Imagem ${i + 1} de ${land.title}`,
-  }));
+  const carouselImages = (imageData as Record<string, string[]>)[land.id] || [];
 
 
   return (
@@ -95,12 +93,12 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                 <CardContent className="p-4">
                     <Carousel className="w-full">
                         <CarouselContent>
-                            {carouselImages.map((image, index) => (
+                            {carouselImages.map((src, index) => (
                                 <CarouselItem key={index}>
                                     <div className="aspect-video w-full overflow-hidden rounded-lg relative">
                                         <Image
-                                            src={image.src}
-                                            alt={image.alt}
+                                            src={src}
+                                            alt={`Imagem ${index + 1} de ${land.title}`}
                                             fill
                                             className="object-cover"
                                             data-ai-hint="fazenda"

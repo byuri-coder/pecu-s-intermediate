@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import imageData from '@/app/lib/placeholder-images.json';
 
 type RuralLandCardProps = {
   land: RuralLand;
@@ -49,14 +50,14 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
       case 'Mineração':
         return 'Valor da Parceria/Venda';
       case 'Permuta':
-        return 'Valor de Permuta';
+        return 'Valor de Referência';
       default:
         return 'Preço';
     }
   }
 
-  const imageUrl = `https://picsum.photos/seed/${land.id}/400/225`;
-  const dataAiHint = 'fazenda';
+  const landImages = (imageData as Record<string, string[]>)[land.id] || [];
+  const imageUrl = landImages.length > 0 ? landImages[0] : `https://picsum.photos/seed/${land.id}/400/225`;
 
 
   return (
@@ -67,7 +68,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
-          data-ai-hint={dataAiHint}
+          data-ai-hint="fazenda"
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
