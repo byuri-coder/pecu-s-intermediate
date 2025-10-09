@@ -55,10 +55,9 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  // Define image based on land ID
   const imageUrl = land.id === 'land-001'
-    ? `https://images.unsplash.com/photo-1599543331459-33435dd35515?q=80&w=400&auto=format&fit=crop` // Drone view of soybean farm
-    : `https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=400&auto=format&fit=crop`; // Generic farm
+    ? `https://images.unsplash.com/photo-1599543331459-33435dd35515?q=80&w=400&auto=format&fit=crop`
+    : `https://picsum.photos/seed/${land.images[0]}/400/225`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
@@ -68,6 +67,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
           alt={`Imagem da propriedade ${land.title}`}
           fill
           className="object-cover"
+          data-ai-hint={land.id === 'land-001' ? "drone soybean" : "fazenda"}
         />
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
