@@ -29,10 +29,11 @@ export async function POST(req: Request) {
 
     console.log("📨 Corpo recebido:", body);
 
-    const { vendorEmail, buyerEmail, subject, htmlContent } = body;
+    // Agora esperamos apenas um destinatário no campo 'to'
+    const { to, subject, htmlContent } = body;
 
-    if (!vendorEmail || !buyerEmail || !subject || !htmlContent) {
-      console.error("⚠️ Parâmetros ausentes no body!");
+    if (!to || !subject || !htmlContent) {
+      console.error("⚠️ Parâmetros ausentes no body! Esperado: to, subject, htmlContent.");
       return setCorsHeaders(
         NextResponse.json({ error: "Parâmetros ausentes." }, { status: 400 })
       );
@@ -53,10 +54,7 @@ export async function POST(req: Request) {
 
     const emailData = {
       sender: { email: senderEmail, name: "PECU'S Plataforma" },
-      to: [
-        { email: vendorEmail },
-        { email: buyerEmail },
-      ],
+      to: [{ email: to }], // O 'to' agora é um único e-mail
       subject,
       htmlContent,
     };

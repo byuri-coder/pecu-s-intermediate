@@ -4,6 +4,7 @@
 
 
 
+
 'use client';
 
 import * as React from 'react';
@@ -774,8 +775,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    vendorEmail: "noreply.pecuscontratos@gmail.com", // This should be a generic sender
-                    buyerEmail: email, // Send only to the specific role
+                    to: email, // Envia o email apenas para o destinatário específico
                     subject: "Confirmação de contrato - Pecu’s Intermediate",
                     htmlContent: `
                         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
