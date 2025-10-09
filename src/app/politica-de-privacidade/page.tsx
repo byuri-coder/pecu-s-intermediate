@@ -149,9 +149,6 @@ export default function PrivacyPolicyPage() {
                         <li><strong>Vigência:</strong> Esta Política foi atualizada em {lastUpdated}.</li>
                     </ul>
 
-                    <p className="text-center text-sm text-muted-foreground mt-4">
-                        Lembre-se: Este modelo serve como um excelente ponto de partida! No entanto, devido à complexidade da LGPD e às especificidades do seu negócio, a consulta e validação por um profissional jurídico é obrigatória para garantir total conformidade legal e a proteção do seu negócio.
-                    </p>
                 </CardContent>
             </Card>
         </div>
