@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -19,11 +19,21 @@ import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { numberToWords } from '@/lib/number-to-words';
+import { Seal } from '@/components/ui/seal';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 type UserRole = 'buyer' | 'seller';
+
+interface Duplicata {
+    orderNumber: string;
+    invoiceNumber: string;
+    issueDate: string;
+    dueDate: string;
+    value: number;
+}
 
 
 const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
@@ -416,16 +426,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const negotiationId = `neg_${asset.id}`;
 
-  // --- User Role Logic ---
   const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
+  const buyerName = "Comprador Fictício";
   
-  // Simulate a logged-in user. In a real app, this would come from an auth context.
-  const LOGGED_IN_USER_NAME = "Comprador Fictício"; 
+  const LOGGED_IN_USER_NAME = buyerName; 
 
   React.useEffect(() => {
-    // Automatically determine the user's role based on the asset owner.
-    // Since our simulated logged-in user is not the owner, they will always be the buyer.
     if (sellerName === LOGGED_IN_USER_NAME) {
       setCurrentUserRole('seller');
     } else {
@@ -435,7 +442,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
-  // --- End User Role Logic ---
 
   const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, false);
   const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
@@ -447,20 +453,63 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
-  const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, '');
-  const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, '');
+  const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, 'vendedor@example.com');
+  const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, 'comprador@example.com');
   
+  // Duplicates State
+  const [showDuplicatesSection, setShowDuplicatesSection] = React.useState(false);
+  const [paymentMethod, setPaymentMethod] = usePersistentState<'vista' | 'parcelado'>(`${negotiationId}_paymentMethod`, 'vista');
+  const [numberOfInstallments, setNumberOfInstallments] = usePersistentState(`${negotiationId}_installments`, '2');
+  const [duplicates, setDuplicates] = usePersistentState<Duplicata[]>(`${negotiationId}_duplicates`, []);
 
+  const handleGenerateDuplicates = React.useCallback(() => {
+    const totalValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 0);
+    if (totalValue === 0) return;
+
+    let newDuplicates: Duplicata[] = [];
+    const issueDate = new Date();
+
+    if (paymentMethod === 'vista') {
+        newDuplicates.push({
+            orderNumber: `00001/${issueDate.getFullYear()}`,
+            invoiceNumber: '99999',
+            issueDate: issueDate.toLocaleDateString('pt-BR'),
+            dueDate: 'À VISTA',
+            value: totalValue,
+        });
+    } else {
+        const installments = parseInt(numberOfInstallments, 10);
+        if (isNaN(installments) || installments <= 0) return;
+        
+        const installmentValue = totalValue / installments;
+        for (let i = 1; i <= installments; i++) {
+            const dueDate = new Date(issueDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            newDuplicates.push({
+                orderNumber: `${String(i).padStart(5, '0')}/${issueDate.getFullYear()}`,
+                invoiceNumber: '99999',
+                issueDate: issueDate.toLocaleDateString('pt-BR'),
+                dueDate: dueDate.toLocaleDateString('pt-BR'),
+                value: installmentValue,
+            });
+        }
+    }
+    setDuplicates(newDuplicates);
+  }, [asset, paymentMethod, numberOfInstallments, setDuplicates]);
+
+
+  React.useEffect(() => {
+     handleGenerateDuplicates();
+  }, [paymentMethod, numberOfInstallments, handleGenerateDuplicates]);
+  
   React.useEffect(() => {
     if (!isFinalized) return;
     
-    // Polling function to check status from the backend
     const checkStatus = async () => {
       try {
         const res = await fetch(`/api/contract-status?assetId=${asset.id}`);
         if (res.ok) {
           const { status: newStatus } = await res.json();
-          // Update local state only if it has changed to avoid re-renders
           if (newStatus.buyer !== authStatus.buyer || newStatus.seller !== authStatus.seller) {
             setAuthStatus(newStatus);
             if(newStatus.buyer === 'validated' && authStatus.buyer === 'pending') {
@@ -476,13 +525,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       }
     };
 
-    // Start polling when component mounts and is finalized
     const interval = setInterval(checkStatus, 5000);
-
-    // Initial check
     checkStatus();
 
-    // Cleanup on unmount
     return () => clearInterval(interval);
   }, [isFinalized, asset.id, authStatus, toast]);
 
@@ -501,8 +546,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     checkExpiration('buyer');
     checkExpiration('seller');
   }, [authStatus, authTimestamps]);
-
-
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
@@ -606,15 +649,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
 
-  const paymentInfo = {
-    bank: "Banco Exemplo S.A.",
-    agency: "0001",
-    account: "12345-6",
-    pixKey: "documento@email.com",
-    holder: sellerName,
-  };
-
-  
   const getContractTemplateInfo = () => {
     if (assetType === 'rural-land' && 'businessType' in asset) {
         if(asset.businessType === 'Venda') return { template: ruralLandSaleContractTemplate, title: 'Venda de Imóvel Rural' };
@@ -796,7 +830,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
 
         try {
-            // Este link agora aponta para a API GET de verificação
             const verificationLink = `${window.location.origin}/api/verify-acceptance?assetId=${asset.id}&role=${role}&email=${encodeURIComponent(email)}`;
             
             const response = await fetch('/api/send-email', {
@@ -824,10 +857,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
             if (!response.ok) throw new Error('Falha na resposta da API de e-mail');
 
-            // Atualiza o timestamp para a lógica de expiração
             setAuthTimestamps(prev => ({...prev, [role]: Date.now()}));
             
-            // Informa o backend que o processo de validação para este usuário foi iniciado
             await fetch('/api/contract-status', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -895,7 +926,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             </div>
         );
     }
-
+    
     if (searchParams.get('view') === 'archive') {
         return (
              <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
@@ -1154,6 +1185,103 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     </Card>
                 </div>
             </div>
+             {isSeller && !isFinalized && (
+                <div className="mt-8">
+                    <Button variant="outline" onClick={() => setShowDuplicatesSection(prev => !prev)}>
+                       {showDuplicatesSection ? 'Ocultar' : 'Gerar'} Duplicatas
+                    </Button>
+                </div>
+             )}
+             {(showDuplicatesSection || (duplicates && duplicates.length > 0)) && (
+             <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle>Duplicatas de Venda Mercantil (DM)</CardTitle>
+                     <CardDescription>
+                        {isSeller ? 'Configure como o pagamento será estruturado através de duplicatas.' : 'Abaixo estão as duplicatas geradas pelo vendedor.'}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {isSeller && !isFinalized && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end p-4 border rounded-lg bg-secondary/30">
+                            <div>
+                                <Label>Forma de Pagamento</Label>
+                                <Select value={paymentMethod} onValueChange={(v: 'vista' | 'parcelado') => setPaymentMethod(v)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="vista">À Vista</SelectItem>
+                                        <SelectItem value="parcelado">Parcelado</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {paymentMethod === 'parcelado' && (
+                                <div>
+                                    <Label>Número de Parcelas</Label>
+                                    <Input type="number" value={numberOfInstallments} onChange={e => setNumberOfInstallments(e.target.value)} min="2" max="24" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {duplicates.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-center">Pré-visualização das Duplicatas</h3>
+                             {duplicates.map((dup, index) => (
+                                <Card key={index} className="bg-background overflow-hidden">
+                                    <CardHeader className="bg-muted p-4">
+                                        <CardTitle className="text-lg">DM - DUPLICATA DE VENDA MERCANTIL</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-4 space-y-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                            <div><Label>Nº de Ordem:</Label><p>{dup.orderNumber}</p></div>
+                                            <div><Label>Nº da Fatura:</Label><p>{dup.invoiceNumber}</p></div>
+                                            <div><Label>Data Emissão:</Label><p>{dup.issueDate}</p></div>
+                                            <div><Label>Data Vencimento:</Label><p>{dup.dueDate}</p></div>
+                                        </div>
+                                         <div className="text-center p-4 border rounded-lg">
+                                            <Label>Valor do Título</Label>
+                                            <p className="text-2xl font-bold text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dup.value)}</p>
+                                            <p className="text-xs text-muted-foreground">{numberToWords(dup.value)}</p>
+                                        </div>
+                                         <div className="grid md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <h4 className="font-semibold">SACADOR (Vendedor)</h4>
+                                                <p className="text-sm">{sellerName}</p>
+                                                <p className="text-xs text-muted-foreground">{genericContractFields.cnpj_cpf_cedente}</p>
+                                                <p className="text-xs text-muted-foreground">{genericContractFields.endereco_cedente}</p>
+                                            </div>
+                                             <div className="space-y-2">
+                                                <h4 className="font-semibold">SACADO (Comprador)</h4>
+                                                <p className="text-sm">{buyerName}</p>
+                                                <p className="text-xs text-muted-foreground">{genericContractFields.cnpj_cpf_cessionario}</p>
+                                                <p className="text-xs text-muted-foreground">{genericContractFields.endereco_cessionario}</p>
+                                            </div>
+                                        </div>
+                                        <div className="border-t pt-4 mt-4 text-center text-xs space-y-4">
+                                            <p className="italic">RECONHEÇO(EMOS) A EXATIDÃO DESTA DUPLICATA DE VENDA MERCANTIL, NA IMPORTÂNCIA ACIMA, QUE PAGAREI(EMOS) AO SACADOR OU À SUA ORDEM, NA PRAÇA E VENCIMENTO INDICADOS.</p>
+                                            <div className="grid grid-cols-2 gap-4 pt-4">
+                                                 <div className="flex flex-col items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{isFinalized ? buyerName : '________________'}</span>
+                                                        {isFinalized && <Seal text="Assinado Digitalmente" className="border-green-300"/>}
+                                                    </div>
+                                                    <Label className="text-muted-foreground">Assinatura do Sacado (Comprador)</Label>
+                                                </div>
+                                                 <div className="flex flex-col items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{isFinalized ? sellerName : '________________'}</span>
+                                                         {isFinalized && <Seal text="Assinado Digitalmente" className="border-green-300"/>}
+                                                    </div>
+                                                    <Label className="text-muted-foreground">Assinatura do Sacador (Vendedor)</Label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+             </Card>
+             )}
         </div>
       
       {isFinalized && (
@@ -1254,5 +1382,3 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
-
-    
