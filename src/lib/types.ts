@@ -76,3 +76,19 @@ export type Invoice = {
   value: number;
   status: 'Paga' | 'Pendente' | 'Em Análise';
 };
+
+export interface Duplicata {
+    orderNumber: string;
+    invoiceNumber: string;
+    issueDate: string;
+    dueDate: string;
+    value: number;
+}
+
+export interface CompletedDeal {
+    assetId: string;
+    assetName: string;
+    duplicates: Duplicata[];
+    seller: { name: string; doc: string, address: string };
+    buyer: { name: string; doc: string, address: string };
+}

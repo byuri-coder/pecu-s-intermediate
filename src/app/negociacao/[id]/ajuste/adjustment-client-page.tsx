@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, CompletedDeal } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -27,14 +27,9 @@ type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 type UserRole = 'buyer' | 'seller';
 
-interface Duplicata {
-    orderNumber: string;
-    invoiceNumber: string;
-    issueDate: string;
-    dueDate: string;
-    value: number;
-}
 
+const INVOICE_COUNTER_KEY = 'invoice_global_counter';
+const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
 
 const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
 
@@ -425,14 +420,15 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const { toast } = useToast();
   
   const negotiationId = `neg_${asset.id}`;
+  
+  const LOGGED_IN_USER_NAME = "Comprador Fictício"; // Simulates the logged-in user
+  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
 
   const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
-  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
-  const buyerName = "Comprador Fictício";
   
-  const LOGGED_IN_USER_NAME = buyerName; 
-
   React.useEffect(() => {
+    // This logic determines the user's role based on the simulated logged-in user.
+    // Since LOGGED_IN_USER_NAME is not the sellerName, the role will be 'buyer'.
     if (sellerName === LOGGED_IN_USER_NAME) {
       setCurrentUserRole('seller');
     } else {
@@ -462,17 +458,26 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [numberOfInstallments, setNumberOfInstallments] = usePersistentState(`${negotiationId}_installments`, '2');
   const [duplicates, setDuplicates] = usePersistentState<Duplicata[]>(`${negotiationId}_duplicates`, []);
 
+  const getNextInvoiceNumber = () => {
+    if (typeof window === 'undefined') return '000001';
+    let currentCounter = parseInt(window.localStorage.getItem(INVOICE_COUNTER_KEY) || '0', 10);
+    currentCounter++;
+    window.localStorage.setItem(INVOICE_COUNTER_KEY, currentCounter.toString());
+    return currentCounter.toString().padStart(6, '0');
+  }
+
   const handleGenerateDuplicates = React.useCallback(() => {
     const totalValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 0);
     if (totalValue === 0) return;
 
     let newDuplicates: Duplicata[] = [];
     const issueDate = new Date();
+    const invoiceNumber = getNextInvoiceNumber();
 
     if (paymentMethod === 'vista') {
         newDuplicates.push({
-            orderNumber: `00001/${issueDate.getFullYear()}`,
-            invoiceNumber: '99999',
+            orderNumber: `001/${issueDate.getFullYear()}`,
+            invoiceNumber: invoiceNumber,
             issueDate: issueDate.toLocaleDateString('pt-BR'),
             dueDate: 'À VISTA',
             value: totalValue,
@@ -486,8 +491,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${String(i).padStart(5, '0')}/${issueDate.getFullYear()}`,
-                invoiceNumber: '99999',
+                orderNumber: `${String(i).padStart(3, '0')}/${issueDate.getFullYear()}`,
+                invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
                 value: installmentValue,
@@ -557,7 +562,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     cnpj_cpf_cedente: '11.111.111/0001-11',
     endereco_cedente: 'Rua do Cedente, 123, Cidade, Estado',
     representante_cedente: 'Nome Representante Cedente',
-    nome_razao_social_cessionario: 'Empresa Cessionária LTDA',
+    nome_razao_social_cessionario: LOGGED_IN_USER_NAME,
     cnpj_cpf_cessionario: '22.222.222/0001-22',
     endereco_cessionario: 'Avenida do Cessionário, 456, Cidade, Estado',
     representante_cessionario: 'Nome Representante Cessionário',
@@ -572,7 +577,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       rg: '11.111.111-1',
       cpf: '111.111.111-11',
       endereco_completo: 'Rua do Vendedor, 123, São Paulo, SP',
-      comprador_nome: 'COMPRADOR EXEMPLO S.A.',
+      comprador_nome: LOGGED_IN_USER_NAME,
       nacionalidade_comprador: 'Brasileira',
       estado_civil_comprador: '',
       profissao_comprador: 'Empresa',
@@ -593,7 +598,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       rg_arrendador: '22.222.222-2',
       cpf_arrendador: '222.222.222-22',
       endereco_arrendador: 'Rua do Arrendador, 456, Cuiabá, MT',
-      arrendatario_nome: 'ARRENDATÁRIO EXEMPLO LTDA',
+      arrendatario_nome: LOGGED_IN_USER_NAME,
       nacionalidade_arrendatario: 'Brasileira',
       estado_civil_arrendatario: '',
       profissao_arrendatario: 'Empresa',
@@ -617,7 +622,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     cpf_cnpj1: '333.333.333-33',
     endereco1: 'Alameda dos Investidores, 789, Goiânia, GO',
     entrega1: `Imóvel Rural: ${asset.id}`,
-    permutante2_nome: 'PERMUTANTE 2 EXEMPLO',
+    permutante2_nome: LOGGED_IN_USER_NAME,
     nacionalidade2: 'Brasileira',
     estado_civil2: '',
     profissao2: 'Investidor',
@@ -643,6 +648,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
 
   const id = asset.id;
+  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
   
   const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
   
@@ -721,6 +727,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   
   const handleFinalize = async () => {
+    handleGenerateDuplicates(); // Ensure duplicates are generated with the latest invoice number
     toast({
         title: "Contrato Finalizado!",
         description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
@@ -806,13 +813,33 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     }
 
     const handleFinishTransaction = () => {
+        if(typeof window !== 'undefined') {
+            const newDeal: CompletedDeal = {
+                assetId: asset.id,
+                assetName: assetName,
+                duplicates: duplicates,
+                seller: {
+                    name: sellerName,
+                    doc: genericContractFields.cnpj_cpf_cedente,
+                    address: genericContractFields.endereco_cedente
+                },
+                buyer: {
+                    name: LOGGED_IN_USER_NAME,
+                    doc: genericContractFields.cnpj_cpf_cessionario,
+                    address: genericContractFields.endereco_cessionario
+                }
+            };
+            const existingDeals: CompletedDeal[] = JSON.parse(window.localStorage.getItem(DUPLICATAS_STORAGE_KEY) || '[]');
+            window.localStorage.setItem(DUPLICATAS_STORAGE_KEY, JSON.stringify([...existingDeals, newDeal]));
+        }
+
         setTransactionComplete(true);
         toast({
             title: "Transação Finalizada!",
             description: "A fatura foi gerada e os documentos salvos. Você será redirecionado.",
         });
         setTimeout(() => {
-            router.push('/faturas');
+            router.push('/duplicatas');
         }, 3000);
     }
     
@@ -918,8 +945,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     {content}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail || isFinalized && currentUserRole !== role}/>
-                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email || isFinalized && currentUserRole !== role}>
+                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
+                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
                         {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                     </Button>
                 </div>
@@ -1250,7 +1277,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                             </div>
                                              <div className="space-y-2">
                                                 <h4 className="font-semibold">SACADO (Comprador)</h4>
-                                                <p className="text-sm">{buyerName}</p>
+                                                <p className="text-sm">{LOGGED_IN_USER_NAME}</p>
                                                 <p className="text-xs text-muted-foreground">{genericContractFields.cnpj_cpf_cessionario}</p>
                                                 <p className="text-xs text-muted-foreground">{genericContractFields.endereco_cessionario}</p>
                                             </div>
@@ -1260,7 +1287,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                             <div className="grid grid-cols-2 gap-4 pt-4">
                                                  <div className="flex flex-col items-center">
                                                     <div className="flex items-center gap-2">
-                                                        <span>{isFinalized ? buyerName : '________________'}</span>
+                                                        <span>{isFinalized ? LOGGED_IN_USER_NAME : '________________'}</span>
                                                         {isFinalized && <Seal text="Assinado Digitalmente" className="border-green-300"/>}
                                                     </div>
                                                     <Label className="text-muted-foreground">Assinatura do Sacado (Comprador)</Label>
