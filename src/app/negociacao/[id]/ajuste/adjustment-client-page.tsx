@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
@@ -18,10 +18,12 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
+type UserRole = 'buyer' | 'seller';
 
 
 const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
@@ -288,6 +290,7 @@ const FileUploadDisplay = ({
   maxSize,
   isReadOnly = false,
   label,
+  disabled = false,
 }: {
   file: File | null;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -296,6 +299,7 @@ const FileUploadDisplay = ({
   maxSize: string;
   isReadOnly?: boolean;
   label: string;
+  disabled?: boolean;
 }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   
@@ -335,7 +339,7 @@ const FileUploadDisplay = ({
             <Button variant="ghost" size="icon" onClick={handleDownload} className="h-7 w-7 text-muted-foreground">
                 <Download className="h-4 w-4" />
             </Button>
-            {!isReadOnly && (
+            {!isReadOnly && !disabled && (
                 <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
                     <X className="h-4 w-4" />
                 </Button>
@@ -345,7 +349,7 @@ const FileUploadDisplay = ({
     );
   }
 
-  if (isReadOnly) {
+  if (isReadOnly || disabled) {
     return (
         <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30 text-muted-foreground">
              <p className="font-semibold text-sm truncate">Nenhum documento anexado.</p>
@@ -412,7 +416,11 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const negotiationId = `neg_${asset.id}`;
 
-  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, true);
+  const [currentUserRole, setCurrentUserRole] = usePersistentState<UserRole>(`${negotiationId}_userRole`, 'seller');
+  const isSeller = currentUserRole === 'seller';
+  const isBuyer = currentUserRole === 'buyer';
+
+  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, false);
   const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
@@ -459,7 +467,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     // Cleanup on unmount
     return () => clearInterval(interval);
-  }, [isFinalized, asset.id, authStatus]);
+  }, [isFinalized, asset.id, authStatus, toast]);
 
 
   React.useEffect(() => {
@@ -846,7 +854,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 content = (
                     <div className="flex items-center gap-2">
                         <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
-                        <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend}>Reenviar</Button>
+                        <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend} disabled={currentUserRole !== role}>Reenviar</Button>
                     </div>
                 );
                 break;
@@ -862,9 +870,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     {content}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail}/>
-                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email}>
-                        {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail || isFinalized && currentUserRole !== role}/>
+                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email || isFinalized && currentUserRole !== role}>
+                        {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                     </Button>
                 </div>
             </div>
@@ -954,13 +962,28 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
+      <div className="mb-6 flex justify-between items-center">
         <Button variant="ghost" asChild>
             <Link href={`/negociacao/${id}?type=${assetType}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para a Negociação
             </Link>
         </Button>
+        <div className="w-64">
+             <Select value={currentUserRole} onValueChange={(value) => setCurrentUserRole(value as UserRole)}>
+                <SelectTrigger>
+                    <div className='flex items-center gap-2'>
+                        <Users className="h-4 w-4 text-muted-foreground"/>
+                        <span className="font-semibold">Visualizando como:</span>
+                        <SelectValue />
+                    </div>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="seller">Vendedor</SelectItem>
+                    <SelectItem value="buyer">Comprador</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       </div>
         <div className="space-y-6">
             <Card>
@@ -970,7 +993,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         Ajuste e Assinatura do Contrato
                     </CardTitle>
                     <CardDescription>
-                        Revise e preencha os termos, defina os custos e finalize a negociação.
+                        {isFinalized ? 'O contrato está finalizado. Prossiga com a autenticação e assinatura.' : 'Revise e preencha os termos, defina os custos e finalize a negociação.'}
                     </CardDescription>
                 </CardHeader>
             </Card>
@@ -987,19 +1010,19 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 <>
                                     <h3 className="font-semibold text-md">Dados do Vendedor</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={saleContractFields.nacionalidade} onChange={(e) => handleFieldChange(setSaleContractFields, 'nacionalidade', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={saleContractFields.estado_civil} onChange={(e) => handleFieldChange(setSaleContractFields, 'estado_civil', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Profissão</Label><Input value={saleContractFields.profissao} onChange={(e) => handleFieldChange(setSaleContractFields, 'profissao', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>RG</Label><Input value={saleContractFields.rg} onChange={(e) => handleFieldChange(setSaleContractFields, 'rg', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF</Label><Input value={saleContractFields.cpf} onChange={(e) => handleFieldChange(setSaleContractFields, 'cpf', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_completo} onChange={(e) => handleFieldChange(setSaleContractFields, 'endereco_completo', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={saleContractFields.nacionalidade} onChange={(e) => handleFieldChange(setSaleContractFields, 'nacionalidade', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={saleContractFields.estado_civil} onChange={(e) => handleFieldChange(setSaleContractFields, 'estado_civil', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1"><Label>Profissão</Label><Input value={saleContractFields.profissao} onChange={(e) => handleFieldChange(setSaleContractFields, 'profissao', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1"><Label>RG</Label><Input value={saleContractFields.rg} onChange={(e) => handleFieldChange(setSaleContractFields, 'rg', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1"><Label>CPF</Label><Input value={saleContractFields.cpf} onChange={(e) => handleFieldChange(setSaleContractFields, 'cpf', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_completo} onChange={(e) => handleFieldChange(setSaleContractFields, 'endereco_completo', e.target.value)} disabled={isFinalized || !isSeller} /></div>
                                     </div>
                                     <h3 className="font-semibold text-md pt-4">Dados do Comprador</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1 md:col-span-2"><Label>Nome/Razão Social</Label><Input value={saleContractFields.comprador_nome} onChange={(e) => handleFieldChange(setSaleContractFields, 'comprador_nome', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={saleContractFields.cpf_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'cpf_comprador', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>RG</Label><Input value={saleContractFields.rg_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'rg_comprador', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'endereco_comprador', e.target.value)} /></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Nome/Razão Social</Label><Input value={saleContractFields.comprador_nome} onChange={(e) => handleFieldChange(setSaleContractFields, 'comprador_nome', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={saleContractFields.cpf_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'cpf_comprador', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1"><Label>RG</Label><Input value={saleContractFields.rg_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'rg_comprador', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={saleContractFields.endereco_comprador} onChange={(e) => handleFieldChange(setSaleContractFields, 'endereco_comprador', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
                                     </div>
                                 </>
                             )}
@@ -1007,16 +1030,16 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 <>
                                     <h3 className="font-semibold text-md">Dados do Arrendador (Vendedor)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={leaseContractFields.nacionalidade_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'nacionalidade_arrendador', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={leaseContractFields.estado_civil_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'estado_civil_arrendador', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF</Label><Input value={leaseContractFields.cpf_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'cpf_arrendador', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'endereco_arrendador', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={leaseContractFields.nacionalidade_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'nacionalidade_arrendador', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={leaseContractFields.estado_civil_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'estado_civil_arrendador', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1"><Label>CPF</Label><Input value={leaseContractFields.cpf_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'cpf_arrendador', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendador} onChange={(e) => handleFieldChange(setLeaseContractFields, 'endereco_arrendador', e.target.value)} disabled={isFinalized || !isSeller}/></div>
                                     </div>
                                     <h3 className="font-semibold text-md pt-4">Dados do Arrendatário (Comprador)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={leaseContractFields.arrendatario_nome} onChange={(e) => handleFieldChange(setLeaseContractFields, 'arrendatario_nome', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={leaseContractFields.cpf_arrendatario} onChange={(e) => handleFieldChange(setLeaseContractFields, 'cpf_arrendatario', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendatario} onChange={(e) => handleFieldChange(setLeaseContractFields, 'endereco_arrendatario', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={leaseContractFields.arrendatario_nome} onChange={(e) => handleFieldChange(setLeaseContractFields, 'arrendatario_nome', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={leaseContractFields.cpf_arrendatario} onChange={(e) => handleFieldChange(setLeaseContractFields, 'cpf_arrendatario', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={leaseContractFields.endereco_arrendatario} onChange={(e) => handleFieldChange(setLeaseContractFields, 'endereco_arrendatario', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
                                     </div>
                                 </>
                             )}
@@ -1024,20 +1047,20 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                  <>
                                     <h3 className="font-semibold text-md">Dados do Permutante 1 (Vendedor)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={permutaContractFields.nacionalidade1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'nacionalidade1', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={permutaContractFields.estado_civil1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'estado_civil1', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'cpf_cnpj1', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'endereco1', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nacionalidade</Label><Input value={permutaContractFields.nacionalidade1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'nacionalidade1', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1"><Label>Estado Civil</Label><Input value={permutaContractFields.estado_civil1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'estado_civil1', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'cpf_cnpj1', e.target.value)} disabled={isFinalized || !isSeller}/></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco1} onChange={(e) => handleFieldChange(setPermutaContractFields, 'endereco1', e.target.value)} disabled={isFinalized || !isSeller}/></div>
                                     </div>
                                     <h3 className="font-semibold text-md pt-4">Dados do Permutante 2 (Comprador)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={permutaContractFields.permutante2_nome} onChange={(e) => handleFieldChange(setPermutaContractFields, 'permutante2_nome', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'cpf_cnpj2', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'endereco2', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={permutaContractFields.permutante2_nome} onChange={(e) => handleFieldChange(setPermutaContractFields, 'permutante2_nome', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1"><Label>CPF/CNPJ</Label><Input value={permutaContractFields.cpf_cnpj2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'cpf_cnpj2', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={permutaContractFields.endereco2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'endereco2', e.target.value)} disabled={isFinalized || !isBuyer}/></div>
                                     </div>
                                     <h3 className="font-semibold text-md pt-4">Cláusula do Objeto</h3>
                                     <div className="space-y-2">
-                                       <div className="space-y-1"><Label>O que o Permutante 2 entrega</Label><Textarea value={permutaContractFields.entrega2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'entrega2', e.target.value)} rows={2} /></div>
+                                       <div className="space-y-1"><Label>O que o Permutante 2 entrega</Label><Textarea value={permutaContractFields.entrega2} onChange={(e) => handleFieldChange(setPermutaContractFields, 'entrega2', e.target.value)} rows={2} disabled={isFinalized || !isBuyer}/></div>
                                     </div>
                                 </>
                             )}
@@ -1045,16 +1068,16 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 <>
                                     <h3 className="font-semibold text-md">Dados do Cedente (Vendedor)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>CNPJ/CPF</Label><Input value={genericContractFields.cnpj_cpf_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'cnpj_cpf_cedente', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Representante Legal</Label><Input value={genericContractFields.representante_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'representante_cedente', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={genericContractFields.endereco_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'endereco_cedente', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>CNPJ/CPF</Label><Input value={genericContractFields.cnpj_cpf_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'cnpj_cpf_cedente', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1"><Label>Representante Legal</Label><Input value={genericContractFields.representante_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'representante_cedente', e.target.value)} disabled={isFinalized || !isSeller} /></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={genericContractFields.endereco_cedente} onChange={(e) => handleFieldChange(setGenericContractFields, 'endereco_cedente', e.target.value)} disabled={isFinalized || !isSeller} /></div>
                                     </div>
                                     <h3 className="font-semibold text-md pt-4">Dados do Cessionário (Comprador)</h3>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={genericContractFields.nome_razao_social_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'nome_razao_social_cessionario', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>CNPJ/CPF</Label><Input value={genericContractFields.cnpj_cpf_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'cnpj_cpf_cessionario', e.target.value)} /></div>
-                                        <div className="space-y-1"><Label>Representante Legal</Label><Input value={genericContractFields.representante_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'representante_cessionario', e.target.value)} /></div>
-                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={genericContractFields.endereco_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'endereco_cessionario', e.target.value)} /></div>
+                                        <div className="space-y-1"><Label>Nome/Razão Social</Label><Input value={genericContractFields.nome_razao_social_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'nome_razao_social_cessionario', e.target.value)} disabled={isFinalized || !isBuyer} /></div>
+                                        <div className="space-y-1"><Label>CNPJ/CPF</Label><Input value={genericContractFields.cnpj_cpf_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'cnpj_cpf_cessionario', e.target.value)} disabled={isFinalized || !isBuyer} /></div>
+                                        <div className="space-y-1"><Label>Representante Legal</Label><Input value={genericContractFields.representante_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'representante_cessionario', e.target.value)} disabled={isFinalized || !isBuyer} /></div>
+                                        <div className="space-y-1 md:col-span-2"><Label>Endereço Completo</Label><Input value={genericContractFields.endereco_cessionario} onChange={(e) => handleFieldChange(setGenericContractFields, 'endereco_cessionario', e.target.value)} disabled={isFinalized || !isBuyer} /></div>
                                     </div>
                                 </>
                             )}
@@ -1084,14 +1107,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         <CardContent className="space-y-4">
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", sellerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => setSellerAgrees(!!checked)} disabled={isFinalized || !isSeller} />
                                     <Label htmlFor="seller-agrees" className="font-medium">Vendedor aceita os termos</Label>
                                 </div>
                                 {sellerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
                             </div>
                             <div className={cn("flex items-center justify-between p-3 rounded-md transition-colors", buyerAgrees ? 'bg-green-100' : 'bg-secondary/40')}>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized} />
+                                    <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => setBuyerAgrees(!!checked)} disabled={isFinalized || !isBuyer} />
                                     <Label htmlFor="buyer-agrees" className="font-medium">Comprador aceita os termos</Label>
                                 </div>
                                 {buyerAgrees ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-muted-foreground" />}
@@ -1140,8 +1163,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
-                        <AuthStatusIndicator role="buyer" />
                         <AuthStatusIndicator role="seller" />
+                        <AuthStatusIndicator role="buyer" />
                     </div>
                 </CardContent>
             </Card>
@@ -1154,17 +1177,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 <CardContent className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="font-semibold mb-2">Contrato Assinado pelo Comprador</h3>
-                            <FileUploadDisplay
-                                file={signedContractBuyer}
-                                label="contrato_assinado_comprador.pdf"
-                                onFileChange={handleFileChange(setSignedContractBuyer)}
-                                onClear={() => setSignedContractBuyer(null)}
-                                acceptedTypes="PDF, JPG, PNG"
-                                maxSize="10MB"
-                            />
-                        </div>
-                        <div>
                             <h3 className="font-semibold mb-2">Contrato Assinado pelo Vendedor</h3>
                             <FileUploadDisplay
                                 file={signedContractSeller}
@@ -1173,6 +1185,19 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 onClear={() => setSignedContractSeller(null)}
                                 acceptedTypes="PDF, JPG, PNG"
                                 maxSize="10MB"
+                                disabled={!isSeller}
+                            />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold mb-2">Contrato Assinado pelo Comprador</h3>
+                            <FileUploadDisplay
+                                file={signedContractBuyer}
+                                label="contrato_assinado_comprador.pdf"
+                                onFileChange={handleFileChange(setSignedContractBuyer)}
+                                onClear={() => setSignedContractBuyer(null)}
+                                acceptedTypes="PDF, JPG, PNG"
+                                maxSize="10MB"
+                                disabled={!isBuyer}
                             />
                         </div>
                     </div>
@@ -1193,6 +1218,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 onClear={() => setBuyerProofFile(null)}
                                 acceptedTypes="PDF, JPG, PNG, ZIP"
                                 maxSize="10MB"
+                                disabled={!isBuyer}
                             />
                         </div>
                         <div>
@@ -1204,6 +1230,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                 onClear={() => setSellerProofFile(null)}
                                 acceptedTypes="PDF, DOCX, ZIP"
                                 maxSize="25MB"
+                                disabled={!isSeller}
                             />
                         </div>
                     </div>
@@ -1225,3 +1252,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
