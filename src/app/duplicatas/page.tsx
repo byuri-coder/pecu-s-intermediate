@@ -26,7 +26,7 @@ const mockDeal: CompletedDeal = {
   assetName: "Saldo Credor de ICMS (Exemplo)",
   duplicates: [
     {
-      orderNumber: "001/2024",
+      orderNumber: "001/1",
       invoiceNumber: "000001",
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
@@ -50,14 +50,14 @@ const mockDealParcelado: CompletedDeal = {
   assetName: "Arrendamento Fazenda Boa Safra (Parcelado)",
   duplicates: [
     {
-      orderNumber: "001/2024",
+      orderNumber: "001/002",
       invoiceNumber: "000002",
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
       value: 2400000
     },
     {
-      orderNumber: "002/2024",
+      orderNumber: "002/002",
       invoiceNumber: "000002",
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),

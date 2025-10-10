@@ -421,11 +421,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const negotiationId = `neg_${asset.id}`;
   
-  const LOGGED_IN_USER_NAME = "Comprador Fictício"; // Simulates the logged-in user
+  // Simulate a logged-in user. In a real app, this would come from an auth context.
+  // We assume the logged-in user is NOT the owner of the asset, thus they are the 'buyer'.
+  const LOGGED_IN_USER_NAME = "Comprador Interessado";
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
-
-  const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
   
+  const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
+
   React.useEffect(() => {
     // This logic determines the user's role based on the simulated logged-in user.
     if (sellerName === LOGGED_IN_USER_NAME) {
@@ -475,7 +477,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     if (paymentMethod === 'vista') {
         newDuplicates.push({
-            orderNumber: '001/1',
+            orderNumber: '1/1',
             invoiceNumber: invoiceNumber,
             issueDate: issueDate.toLocaleDateString('pt-BR'),
             dueDate: 'À VISTA',
@@ -490,7 +492,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${String(i).padStart(3, '0')}/${installments}`,
+                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
