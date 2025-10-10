@@ -21,14 +21,49 @@ import { Separator } from '@/components/ui/separator';
 
 const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
 
+const mockDeal: CompletedDeal = {
+  assetId: "tax-001-mock",
+  assetName: "Saldo Credor de ICMS (Exemplo)",
+  duplicates: [
+    {
+      orderNumber: "001/2024",
+      invoiceNumber: "000001",
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
+      value: 110000
+    },
+    {
+      orderNumber: "002/2024",
+      invoiceNumber: "000001",
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),
+      value: 110000
+    }
+  ],
+  seller: {
+    name: "Indústria Têxtil Fios de Ouro",
+    doc: "11.111.111/0001-11",
+    address: "Rua do Cedente, 123, São Paulo, SP"
+  },
+  buyer: {
+    name: "Comprador Fictício Ltda.",
+    doc: "22.222.222/0001-22",
+    address: "Avenida do Cessionário, 456, Campinas, SP"
+  }
+};
+
+
 export default function DuplicatasPage() {
-  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
+  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([mockDeal]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedDeals = window.localStorage.getItem(DUPLICATAS_STORAGE_KEY);
       if (storedDeals) {
-        setCompletedDeals(JSON.parse(storedDeals));
+        // Combine mock data with stored data, ensuring no duplicates if mock is already there
+        const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
+        const allDeals = [mockDeal, ...parsedDeals.filter(d => d.assetId !== mockDeal.assetId)];
+        setCompletedDeals(allDeals);
       }
     }
   }, []);
