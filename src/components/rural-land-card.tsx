@@ -56,9 +56,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = land.id === 'land-002' 
-    ? (imageData as Record<string, string[]>)[land.id]?.[1] ?? `https://picsum.photos/seed/${land.id.replace(/[^0-9]/g, '')}/400/225`
-    : (imageData as Record<string, string[]>)[land.id]?.[0] ?? `https://picsum.photos/seed/${land.id.replace(/[^0-9]/g, '')}/400/225`;
+  const imageUrl = `https://picsum.photos/seed/${land.id}/400/225`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">

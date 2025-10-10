@@ -66,8 +66,8 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
-  const carouselImages = (imageData as Record<string, string[]>)[land.id] ?? Array.from({ length: 3 }).map((_, index) => {
-    const seed = land.id.replace(/[^0-9]/g, '') + index;
+  const carouselImages = Array.from({ length: 3 }).map((_, index) => {
+    const seed = `${land.id}-${index}`;
     return `https://picsum.photos/seed/${seed}/1200/675`;
   });
 
