@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import imageData from '@/app/lib/placeholder-images.json';
 
 type RuralLandCardProps = {
   land: RuralLand;
@@ -56,9 +55,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const landImages = (imageData as Record<string, string[]>)[land.id] || [];
-  const imageUrl = landImages.length > 0 ? landImages[0] : `https://picsum.photos/seed/${land.id}/400/225`;
-
+  const imageUrl = `https://source.unsplash.com/400x225/?fazenda,campo&seed=${land.id.replace(/[^0-9]/g, '')}`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
