@@ -66,9 +66,9 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
 
-  const carouselImages = Array.from({ length: 3 }).map((_, index) => {
+  const carouselImages = (imageData as Record<string, string[]>)[land.id] ?? Array.from({ length: 3 }).map((_, index) => {
     const seed = land.id.replace(/[^0-9]/g, '') + index;
-    return `https://source.unsplash.com/1200x675/?fazenda,campo&seed=${seed}`;
+    return `https://picsum.photos/seed/${seed}/1200/675`;
   });
 
 
