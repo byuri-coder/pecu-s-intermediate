@@ -428,7 +428,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   React.useEffect(() => {
     // This logic determines the user's role based on the simulated logged-in user.
-    // Since LOGGED_IN_USER_NAME is not the sellerName, the role will be 'buyer'.
     if (sellerName === LOGGED_IN_USER_NAME) {
       setCurrentUserRole('seller');
     } else {
@@ -476,7 +475,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     if (paymentMethod === 'vista') {
         newDuplicates.push({
-            orderNumber: `001/${issueDate.getFullYear()}`,
+            orderNumber: '001/1',
             invoiceNumber: invoiceNumber,
             issueDate: issueDate.toLocaleDateString('pt-BR'),
             dueDate: 'À VISTA',
@@ -491,7 +490,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${String(i).padStart(3, '0')}/${issueDate.getFullYear()}`,
+                orderNumber: `${String(i).padStart(3, '0')}/${installments}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
