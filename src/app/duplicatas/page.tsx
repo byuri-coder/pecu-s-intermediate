@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import { FileText, Users, VenetianMask } from 'lucide-react';
+import { FileText, Users, VenetianMask, FilePlus, ChevronDown } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -50,14 +50,14 @@ const mockDealParcelado: CompletedDeal = {
   assetName: "Arrendamento Fazenda Boa Safra (Parcelado)",
   duplicates: [
     {
-      orderNumber: "001/002",
+      orderNumber: "001/2",
       invoiceNumber: "000002",
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
       value: 2400000
     },
     {
-      orderNumber: "002/002",
+      orderNumber: "002/2",
       invoiceNumber: "000002",
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),
@@ -84,7 +84,6 @@ export default function DuplicatasPage() {
     if (typeof window !== 'undefined') {
       const storedDeals = window.localStorage.getItem(DUPLICATAS_STORAGE_KEY);
       if (storedDeals) {
-        // Combine mock data with stored data, ensuring no duplicates if mock is already there
         const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
         const allDealIds = new Set([...parsedDeals.map(d => d.assetId), mockDeal.assetId, mockDealParcelado.assetId]);
         const allDeals = Array.from(allDealIds).map(id => {
@@ -116,7 +115,11 @@ export default function DuplicatasPage() {
         <CardContent>
           {completedDeals.length > 0 ? (
             <Accordion type="single" collapsible className="w-full space-y-4">
-              {completedDeals.map((deal) => (
+              {completedDeals.map((deal) => {
+                const isParcelado = deal.duplicates.length > 1;
+                const totalValue = deal.duplicates.reduce((acc, dup) => acc + dup.value, 0);
+                
+                return (
                 <AccordionItem value={deal.assetId} key={deal.assetId}>
                   <AccordionTrigger className="p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50">
                     <div className="flex items-center gap-4 text-left">
@@ -129,9 +132,30 @@ export default function DuplicatasPage() {
                        </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="p-4 border border-t-0 rounded-b-lg">
+                  <AccordionContent className="p-4 border border-t-0 rounded-b-lg space-y-4">
+                    {isParcelado && (
+                        <Card className="bg-blue-50 border-blue-200">
+                             <CardHeader className="p-4">
+                                <CardTitle className="text-md text-blue-800">Resumo da Fatura</CardTitle>
+                             </CardHeader>
+                             <CardContent className="p-4 pt-0 grid grid-cols-3 gap-4 text-center">
+                                 <div>
+                                     <p className="text-sm font-semibold text-blue-700">Valor Total</p>
+                                     <p className="text-lg font-bold text-blue-900">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}</p>
+                                 </div>
+                                 <div>
+                                     <p className="text-sm font-semibold text-blue-700">Nº de Parcelas</p>
+                                     <p className="text-lg font-bold text-blue-900">{deal.duplicates.length}</p>
+                                 </div>
+                                 <div>
+                                     <p className="text-sm font-semibold text-blue-700">Fatura Ref.</p>
+                                     <p className="text-lg font-bold text-blue-900">{deal.duplicates[0].invoiceNumber}</p>
+                                 </div>
+                             </CardContent>
+                        </Card>
+                    )}
                     {deal.duplicates.map((dup, index) => (
-                      <Card key={index} className="bg-background overflow-hidden mb-4">
+                      <Card key={index} className="bg-background overflow-hidden">
                         <CardHeader className="bg-muted p-4">
                           <CardTitle className="text-lg">
                             DM - DUPLICATA DE VENDA MERCANTIL
@@ -176,7 +200,8 @@ export default function DuplicatasPage() {
                     ))}
                   </AccordionContent>
                 </AccordionItem>
-              ))}
+                )
+            })}
             </Accordion>
           ) : (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
