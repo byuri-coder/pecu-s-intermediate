@@ -416,9 +416,26 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const negotiationId = `neg_${asset.id}`;
 
-  const [currentUserRole, setCurrentUserRole] = usePersistentState<UserRole>(`${negotiationId}_userRole`, 'seller');
+  // --- User Role Logic ---
+  const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
+  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
+  
+  // Simulate a logged-in user. In a real app, this would come from an auth context.
+  const LOGGED_IN_USER_NAME = "Comprador Fictício"; 
+
+  React.useEffect(() => {
+    // Automatically determine the user's role based on the asset owner.
+    // Since our simulated logged-in user is not the owner, they will always be the buyer.
+    if (sellerName === LOGGED_IN_USER_NAME) {
+      setCurrentUserRole('seller');
+    } else {
+      setCurrentUserRole('buyer');
+    }
+  }, [sellerName]);
+
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
+  // --- End User Role Logic ---
 
   const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, false);
   const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
@@ -583,7 +600,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
 
   const id = asset.id;
-  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
+  
   const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
   
   const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
@@ -969,21 +986,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 Voltar para a Negociação
             </Link>
         </Button>
-        <div className="w-64">
-             <Select value={currentUserRole} onValueChange={(value) => setCurrentUserRole(value as UserRole)}>
-                <SelectTrigger>
-                    <div className='flex items-center gap-2'>
-                        <Users className="h-4 w-4 text-muted-foreground"/>
-                        <span className="font-semibold">Visualizando como:</span>
-                        <SelectValue />
-                    </div>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="seller">Vendedor</SelectItem>
-                    <SelectItem value="buyer">Comprador</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
       </div>
         <div className="space-y-6">
             <Card>
