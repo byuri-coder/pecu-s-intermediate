@@ -8,7 +8,7 @@ export const placeholderTaxCredits: TaxCredit[] = [
       id: 'tax-001',
       sellerName: 'Indústria Têxtil Fios de Ouro',
       taxType: 'ICMS',
-      amount: 250000,
+      amount: 600000,
       price: 220000,
       location: 'São Paulo, SP',
       status: 'Disponível',
@@ -27,8 +27,8 @@ export const placeholderRuralLands: RuralLand[] = [
     images: ['https://picsum.photos/id/10/800/600'],
     documentation: 'Completa e regularizada',
     registration: 'CRI 99.000',
-    price: 2500000, // Valor de referência para permuta
-    status: 'Disponível',
+    price: 4800000, // Valor de referência para permuta
+    status: 'Negociando',
   }
 ];
 
