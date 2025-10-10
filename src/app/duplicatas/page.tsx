@@ -31,13 +31,6 @@ const mockDeal: CompletedDeal = {
       issueDate: new Date().toLocaleDateString('pt-BR'),
       dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
       value: 110000
-    },
-    {
-      orderNumber: "002/2024",
-      invoiceNumber: "000001",
-      issueDate: new Date().toLocaleDateString('pt-BR'),
-      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),
-      value: 110000
     }
   ],
   seller: {
@@ -52,9 +45,40 @@ const mockDeal: CompletedDeal = {
   }
 };
 
+const mockDealParcelado: CompletedDeal = {
+  assetId: "land-005-mock",
+  assetName: "Arrendamento Fazenda Boa Safra (Parcelado)",
+  duplicates: [
+    {
+      orderNumber: "001/2024",
+      invoiceNumber: "000002",
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
+      value: 2400000
+    },
+    {
+      orderNumber: "002/2024",
+      invoiceNumber: "000002",
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),
+      value: 2400000
+    }
+  ],
+  seller: {
+    name: "Agropecuária Sol Nascente",
+    doc: "33.333.333/0001-33",
+    address: "Zona Rural, 789, Primavera do Leste, MT"
+  },
+  buyer: {
+    name: "Grãos & Cia Exportação",
+    doc: "44.444.444/0001-44",
+    address: "Avenida do Porto, 101, Santos, SP"
+  }
+};
+
 
 export default function DuplicatasPage() {
-  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([mockDeal]);
+  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([mockDeal, mockDealParcelado]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -62,7 +86,12 @@ export default function DuplicatasPage() {
       if (storedDeals) {
         // Combine mock data with stored data, ensuring no duplicates if mock is already there
         const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
-        const allDeals = [mockDeal, ...parsedDeals.filter(d => d.assetId !== mockDeal.assetId)];
+        const allDealIds = new Set([...parsedDeals.map(d => d.assetId), mockDeal.assetId, mockDealParcelado.assetId]);
+        const allDeals = Array.from(allDealIds).map(id => {
+            if (id === mockDeal.assetId) return mockDeal;
+            if (id === mockDealParcelado.assetId) return mockDealParcelado;
+            return parsedDeals.find(d => d.assetId === id)!;
+        });
         setCompletedDeals(allDeals);
       }
     }
