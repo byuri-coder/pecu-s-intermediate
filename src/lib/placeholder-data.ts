@@ -28,7 +28,7 @@ export const placeholderRuralLands: RuralLand[] = [
     documentation: 'Completa e regularizada',
     registration: 'CRI 99.000',
     price: 4800000, // Valor de referência para permuta
-    status: 'Negociando',
+    status: 'Disponível',
   }
 ];
 

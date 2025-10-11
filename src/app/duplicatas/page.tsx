@@ -25,62 +25,6 @@ import 'jspdf-autotable';
 
 const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
 
-const mockDeal: CompletedDeal = {
-  assetId: "tax-001-mock",
-  assetName: "Saldo Credor de ICMS (Exemplo)",
-  duplicates: [
-    {
-      orderNumber: "001/1",
-      invoiceNumber: "000001",
-      issueDate: new Date().toLocaleDateString('pt-BR'),
-      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
-      value: 110000
-    }
-  ],
-  seller: {
-    name: "Indústria Têxtil Fios de Ouro",
-    doc: "11.111.111/0001-11",
-    address: "Rua do Cedente, 123, São Paulo, SP"
-  },
-  buyer: {
-    name: "Comprador Fictício Ltda.",
-    doc: "22.222.222/0001-22",
-    address: "Avenida do Cessionário, 456, Campinas, SP"
-  }
-};
-
-const mockDealParcelado: CompletedDeal = {
-  assetId: "land-005-mock",
-  assetName: "Arrendamento Fazenda Boa Safra (Parcelado)",
-  duplicates: [
-    {
-      orderNumber: "001/2",
-      invoiceNumber: "000002",
-      issueDate: new Date().toLocaleDateString('pt-BR'),
-      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR'),
-      value: 2400000
-    },
-    {
-      orderNumber: "002/2",
-      invoiceNumber: "000002",
-      issueDate: new Date().toLocaleDateString('pt-BR'),
-      dueDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('pt-BR'),
-      value: 2400000
-    }
-  ],
-  seller: {
-    name: "Agropecuária Sol Nascente",
-    doc: "33.333.333/0001-33",
-    address: "Zona Rural, 789, Primavera do Leste, MT"
-  },
-  buyer: {
-    name: "Grãos & Cia Exportação",
-    doc: "44.444.444/0001-44",
-    address: "Avenida do Porto, 101, Santos, SP"
-  }
-};
-
-
 export default function DuplicatasPage() {
   const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
 
@@ -92,23 +36,18 @@ export default function DuplicatasPage() {
         window.dispatchEvent(new Event('storage'));
     }
 
-    // Start with default mock deals
-    const initialDeals = [mockDeal, mockDealParcelado];
-    const dealMap = new Map(initialDeals.map(d => [d.assetId, d]));
-
     if (typeof window !== 'undefined') {
       const storedDeals = window.localStorage.getItem(DUPLICATAS_STORAGE_KEY);
       if (storedDeals) {
         try {
             const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
-            // Add stored deals to the map, overwriting mocks if IDs match
-            parsedDeals.forEach(deal => dealMap.set(deal.assetId, deal));
+            setCompletedDeals(parsedDeals);
         } catch (e) {
             console.error("Failed to parse deals from localStorage", e);
+            setCompletedDeals([]);
         }
       }
     }
-    setCompletedDeals(Array.from(dealMap.values()));
   }, []);
 
   const handleDownloadPdf = (deal: CompletedDeal) => {
