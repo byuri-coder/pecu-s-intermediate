@@ -82,22 +82,26 @@ const mockDealParcelado: CompletedDeal = {
 
 
 export default function DuplicatasPage() {
-  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([mockDeal, mockDealParcelado]);
+  const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
 
   React.useEffect(() => {
+    // Start with default mock deals
+    const initialDeals = [mockDeal, mockDealParcelado];
+    const dealMap = new Map(initialDeals.map(d => [d.assetId, d]));
+
     if (typeof window !== 'undefined') {
       const storedDeals = window.localStorage.getItem(DUPLICATAS_STORAGE_KEY);
       if (storedDeals) {
-        const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
-        const allDealIds = new Set([...parsedDeals.map(d => d.assetId), mockDeal.assetId, mockDealParcelado.assetId]);
-        const allDeals = Array.from(allDealIds).map(id => {
-            if (id === mockDeal.assetId) return mockDeal;
-            if (id === mockDealParcelado.assetId) return mockDealParcelado;
-            return parsedDeals.find(d => d.assetId === id)!;
-        });
-        setCompletedDeals(allDeals);
+        try {
+            const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
+            // Add stored deals to the map, overwriting mocks if IDs match
+            parsedDeals.forEach(deal => dealMap.set(deal.assetId, deal));
+        } catch (e) {
+            console.error("Failed to parse deals from localStorage", e);
+        }
       }
     }
+    setCompletedDeals(Array.from(dealMap.values()));
   }, []);
 
   const handleDownloadPdf = (deal: CompletedDeal) => {
@@ -127,7 +131,10 @@ export default function DuplicatasPage() {
     }
 
     deal.duplicates.forEach((dup, index) => {
-        if (index > 0) yPos += 10;
+        if (index > 0) {
+            doc.addPage();
+            yPos = 15;
+        };
         doc.setFontSize(14);
         doc.text(`Duplicata de Venda Mercantil (DM) - Parcela ${dup.orderNumber}`, 14, yPos);
         yPos += 8;
@@ -158,7 +165,7 @@ export default function DuplicatasPage() {
         });
         yPos = (doc as any).autoTable.previous.finalY;
 
-         yPos += 5;
+         yPos += 15;
         (doc as any).autoTable({
             startY: yPos,
             theme: 'plain',
