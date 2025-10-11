@@ -71,10 +71,11 @@ export type Petition = {
 export type Invoice = {
   id: string;
   transactionId: string;
+  transactionHash?: string;
   description: string;
   dueDate: string;
   value: number;
-  status: 'Paga' | 'Pendente' | 'Em Análise';
+  status: 'Paga' | 'Pendente' | 'Em Análise' | 'Negado';
 };
 
 export interface Duplicata {
@@ -83,6 +84,10 @@ export interface Duplicata {
     issueDate: string;
     dueDate: string;
     value: number;
+    blockchain: {
+      transactionHash: string;
+      blockTimestamp: string;
+    };
 }
 
 export interface CompletedDeal {
@@ -91,4 +96,8 @@ export interface CompletedDeal {
     duplicates: Duplicata[];
     seller: { name: string; doc: string, address: string };
     buyer: { name: string; doc: string, address: string };
+    blockchain: {
+      transactionHash: string;
+      blockTimestamp: string;
+    };
 }

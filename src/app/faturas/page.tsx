@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info, AlertCircle } from "lucide-react";
+import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info, AlertCircle, Fingerprint } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -48,6 +48,7 @@ type InvoiceStatus = "Paga" | "Pendente" | "Em Análise" | "Negado";
 type Invoice = {
   id: string;
   transactionId: string;
+  transactionHash?: string;
   description: string;
   dueDate: string;
   value: number;
@@ -160,7 +161,15 @@ export default function InvoicesPage() {
                                 <TableBody>
                                     {invoices.map((invoice) => (
                                         <TableRow key={invoice.id}>
-                                            <TableCell className="font-medium">{invoice.id}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <p>{invoice.id}</p>
+                                                {invoice.transactionHash && (
+                                                    <p className="text-xs text-muted-foreground font-mono flex items-center gap-1 mt-1" title={invoice.transactionHash}>
+                                                        <Fingerprint className="h-3 w-3"/>
+                                                        {invoice.transactionHash.substring(0, 10)}...
+                                                    </p>
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <p className="text-muted-foreground">{invoice.description}</p>
                                                 {invoice.status === 'Negado' && invoice.rejectionReason && (

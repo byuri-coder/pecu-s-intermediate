@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified, Fingerprint } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, CompletedDeal } from '@/lib/types';
@@ -473,6 +473,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     const issueDate = new Date();
     const invoiceNumber = getNextInvoiceNumber();
 
+    const transactionHash = `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+    const blockTimestamp = new Date().toISOString();
+
     if (paymentMethod === 'vista') {
         newDuplicates.push({
             orderNumber: '1/1',
@@ -480,6 +483,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             issueDate: issueDate.toLocaleDateString('pt-BR'),
             dueDate: 'À VISTA',
             value: totalValue,
+            blockchain: { transactionHash, blockTimestamp }
         });
     } else {
         const installments = parseInt(numberOfInstallments, 10);
@@ -490,11 +494,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${i}/${installments}`,
+                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
                 value: installmentValue,
+                blockchain: { transactionHash, blockTimestamp }
             });
         }
     }
@@ -813,6 +818,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
     const handleFinishTransaction = () => {
         if(typeof window !== 'undefined') {
+             const transactionHash = `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+            const blockTimestamp = new Date().toISOString();
+
             const newDeal: CompletedDeal = {
                 assetId: asset.id,
                 assetName: assetName,
@@ -826,7 +834,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     name: LOGGED_IN_USER_NAME,
                     doc: genericContractFields.cnpj_cpf_cessionario,
                     address: genericContractFields.endereco_cessionario
-                }
+                },
+                blockchain: { transactionHash, blockTimestamp }
             };
             const existingDeals: CompletedDeal[] = JSON.parse(window.localStorage.getItem(DUPLICATAS_STORAGE_KEY) || '[]');
             window.localStorage.setItem(DUPLICATAS_STORAGE_KEY, JSON.stringify([...existingDeals, newDeal]));

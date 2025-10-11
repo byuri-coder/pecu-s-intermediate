@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import { FileText, Users, VenetianMask, FilePlus, ChevronDown, Download } from 'lucide-react';
+import { FileText, Users, VenetianMask, FilePlus, ChevronDown, Download, Fingerprint } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -21,12 +21,15 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useToast } from '@/hooks/use-toast';
+import { Seal } from '@/components/ui/seal';
 
 
 const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
 
 export default function DuplicatasPage() {
   const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     // Clear the notification dot when the page is visited
@@ -125,6 +128,13 @@ export default function DuplicatasPage() {
     doc.save(`duplicatas_${deal.assetId}.pdf`);
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `Hash copiado!`,
+    });
+  }
+
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-5xl">
       <Card>
@@ -164,10 +174,21 @@ export default function DuplicatasPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 border border-t-0 rounded-b-lg space-y-4">
-                     <Button onClick={() => handleDownloadPdf(deal)} size="sm" variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Baixar PDF
-                    </Button>
+                     <div className="flex items-center justify-between">
+                         <Button onClick={() => handleDownloadPdf(deal)} size="sm" variant="outline">
+                            <Download className="mr-2 h-4 w-4" />
+                            Baixar PDF
+                        </Button>
+                        <Card className="p-2 bg-muted/30">
+                             <div className="flex items-center gap-2">
+                                <Fingerprint className="h-5 w-5 text-primary"/>
+                                <div className="text-xs">
+                                    <p className="font-semibold text-muted-foreground">Registro Blockchain</p>
+                                    <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain.transactionHash)} title="Copiar hash">{deal.blockchain.transactionHash}</p>
+                                </div>
+                             </div>
+                         </Card>
+                     </div>
                     {isParcelado && (
                         <Card className="bg-blue-50 border-blue-200">
                              <CardHeader className="p-4">
@@ -191,10 +212,11 @@ export default function DuplicatasPage() {
                     )}
                     {deal.duplicates.map((dup, index) => (
                       <Card key={index} className="bg-background overflow-hidden">
-                        <CardHeader className="bg-muted p-4">
+                        <CardHeader className="bg-muted p-4 flex flex-row items-center justify-between">
                           <CardTitle className="text-lg">
                             DM - DUPLICATA DE VENDA MERCANTIL
                           </CardTitle>
+                          <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
