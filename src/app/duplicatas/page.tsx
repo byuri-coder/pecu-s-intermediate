@@ -85,6 +85,13 @@ export default function DuplicatasPage() {
   const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
 
   React.useEffect(() => {
+    // Clear the notification dot when the page is visited
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('newDuplicatesAvailable');
+        // Dispatch a storage event to notify other components (like the header)
+        window.dispatchEvent(new Event('storage'));
+    }
+
     // Start with default mock deals
     const initialDeals = [mockDeal, mockDealParcelado];
     const dealMap = new Map(initialDeals.map(d => [d.assetId, d]));
@@ -303,5 +310,3 @@ export default function DuplicatasPage() {
     </div>
   );
 }
-
-    

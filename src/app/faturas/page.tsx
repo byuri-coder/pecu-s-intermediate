@@ -73,6 +73,15 @@ export default function InvoicesPage() {
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
 
+    React.useEffect(() => {
+        // Clear the notification dot when the page is visited
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('newInvoicesAvailable');
+            // Dispatch a storage event to notify other components (like the header)
+            window.dispatchEvent(new Event('storage'));
+        }
+    }, []);
+
     const handleUploadConfirmation = () => {
         if (!selectedInvoice) return;
         

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -422,7 +420,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const negotiationId = `neg_${asset.id}`;
   
   // Simulate a logged-in user. In a real app, this would come from an auth context.
-  // We assume the logged-in user is NOT the owner of the asset, thus they are the 'buyer'.
   const LOGGED_IN_USER_NAME = "Comprador Interessado";
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   
@@ -430,6 +427,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   React.useEffect(() => {
     // This logic determines the user's role based on the simulated logged-in user.
+    // If the logged-in user is the owner of the asset, their role is 'seller'. Otherwise, 'buyer'.
     if (sellerName === LOGGED_IN_USER_NAME) {
       setCurrentUserRole('seller');
     } else {
@@ -492,7 +490,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
+                orderNumber: `${i}/${installments}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
@@ -832,6 +830,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             };
             const existingDeals: CompletedDeal[] = JSON.parse(window.localStorage.getItem(DUPLICATAS_STORAGE_KEY) || '[]');
             window.localStorage.setItem(DUPLICATAS_STORAGE_KEY, JSON.stringify([...existingDeals, newDeal]));
+            
+            // Set notification flags
+            window.localStorage.setItem('newInvoicesAvailable', 'true');
+            window.localStorage.setItem('newDuplicatesAvailable', 'true');
+            // Dispatch a storage event to notify other tabs/windows (like the header)
+            window.dispatchEvent(new Event('storage'));
         }
 
         setTransactionComplete(true);

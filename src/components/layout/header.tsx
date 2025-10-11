@@ -11,6 +11,7 @@ import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -18,9 +19,19 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
   </Link>
 );
 
+const NotificationDot = () => (
+    <span className="relative flex h-2 w-2 ml-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+    </span>
+);
+
 export function Header() {
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [hasNewInvoices, setHasNewInvoices] = React.useState(false);
+  const [hasNewDuplicates, setHasNewDuplicates] = React.useState(false);
+
 
   const navItems = [
     { href: '/tributos', label: 'Tributos' },
@@ -42,8 +53,22 @@ export function Header() {
       }
     });
 
+    const checkNotifications = () => {
+        if (typeof window !== 'undefined') {
+            setHasNewInvoices(localStorage.getItem('newInvoicesAvailable') === 'true');
+            setHasNewDuplicates(localStorage.getItem('newDuplicatesAvailable') === 'true');
+        }
+    };
+
+    checkNotifications();
+
+    window.addEventListener('storage', checkNotifications);
+
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+        unsubscribe();
+        window.removeEventListener('storage', checkNotifications);
+    };
   }, []);
 
   const isLoggedIn = !!user;
@@ -137,10 +162,22 @@ export function Header() {
                     <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Gerenciamento</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
-                    <Link href="/faturas"><Receipt className="mr-2 h-4 w-4" /><span>Faturas</span></Link>
+                    <Link href="/faturas" className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <Receipt className="mr-2 h-4 w-4" />
+                            <span>Faturas</span>
+                        </div>
+                        {hasNewInvoices && <NotificationDot />}
+                    </Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
-                    <Link href="/duplicatas"><FileText className="mr-2 h-4 w-4" /><span>Duplicatas de Compra/Venda</span></Link>
+                     <Link href="/duplicatas" className="flex items-center justify-between">
+                        <div className="flex items-center">
+                             <FileText className="mr-2 h-4 w-4" />
+                             <span>Duplicatas de Compra/Venda</span>
+                        </div>
+                         {hasNewDuplicates && <NotificationDot />}
+                    </Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/cadastrar-ativo"><FilePlus className="mr-2 h-4 w-4" /><span>Cadastrar Ativos</span></Link>
