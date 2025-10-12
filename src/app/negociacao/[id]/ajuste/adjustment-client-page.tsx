@@ -383,26 +383,38 @@ const FileUploadDisplay = ({
 
 // Custom hook for persisting state to localStorage
 function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [state, setState] = React.useState<T>(() => {
-        if (typeof window === 'undefined') {
-            return initialState;
-        }
-        try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialState;
-        } catch (error) {
-            console.error(error);
-            return initialState;
-        }
-    });
+    const [state, setState] = React.useState<T>(initialState);
+    const isInitialized = React.useRef(false);
 
     React.useEffect(() => {
-        try {
-            window.localStorage.setItem(key, JSON.stringify(state));
-        } catch (error) {
-            console.error(error);
+        if (typeof window !== 'undefined') {
+            try {
+                const item = window.localStorage.getItem(key);
+                if (item) {
+                    setState(JSON.parse(item));
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        isInitialized.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key]);
+
+    React.useEffect(() => {
+        if (isInitialized.current) {
+            try {
+                window.localStorage.setItem(key, JSON.stringify(state));
+            } catch (error) {
+                console.error(error);
+            }
         }
     }, [key, state]);
+    
+    React.useEffect(() => {
+        setState(initialState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(initialState)]);
 
     return [state, setState];
 }
