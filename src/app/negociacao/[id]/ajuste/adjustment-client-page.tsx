@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -425,7 +426,7 @@ const AuthStatusIndicator = React.memo(({
     role: 'buyer' | 'seller';
     authStatus: AuthStatus;
     email: string;
-    onEmailChange: (email: string) => void;
+    onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSendVerification: () => void;
     isSendingEmail: boolean;
     currentUserRole: UserRole;
@@ -456,7 +457,7 @@ const AuthStatusIndicator = React.memo(({
                 {content}
             </div>
             <div className="flex items-center gap-2">
-                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={(e) => onEmailChange(e.target.value)} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
+                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={onEmailChange} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
                 <Button size="sm" variant="outline" onClick={onSendVerification} disabled={authStatus === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
                     {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                 </Button>
@@ -492,7 +493,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
-  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, asset.id === 'cc-003' ? true : false);
+  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, false);
   const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
@@ -1351,7 +1352,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             role="seller" 
                             authStatus={authStatus.seller}
                             email={sellerEmail}
-                            onEmailChange={setSellerEmail}
+                            onEmailChange={(e) => setSellerEmail(e.target.value)}
                             onSendVerification={() => handleSendVerificationEmail('seller')}
                             isSendingEmail={isSendingEmail}
                             currentUserRole={currentUserRole}
@@ -1361,7 +1362,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             role="buyer"
                             authStatus={authStatus.buyer}
                             email={buyerEmail}
-                            onEmailChange={setBuyerEmail}
+                            onEmailChange={(e) => setBuyerEmail(e.target.value)}
                             onSendVerification={() => handleSendVerificationEmail('buyer')}
                             isSendingEmail={isSendingEmail}
                             currentUserRole={currentUserRole}
@@ -1454,3 +1455,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+    
