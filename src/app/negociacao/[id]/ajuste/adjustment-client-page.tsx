@@ -413,7 +413,6 @@ type AuthState = {
     timestamp?: number; 
 };
 
-// Moved AuthStatusIndicator outside to prevent re-creation on every render.
 const AuthStatusIndicator = React.memo(({ 
     role, 
     authStatus,
@@ -451,6 +450,8 @@ const AuthStatusIndicator = React.memo(({
             break;
     }
 
+    const isFieldDisabled = authStatus === 'validated' || isSendingEmail || (currentUserRole !== role) || isFinalized;
+
     return (
          <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
             <div className="flex items-center justify-between mb-2">
@@ -458,8 +459,19 @@ const AuthStatusIndicator = React.memo(({
                 {content}
             </div>
             <div className="flex items-center gap-2">
-                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={onEmailChange} disabled={authStatus === 'validated' || isSendingEmail || (currentUserRole !== role)}/>
-                <Button size="sm" variant="outline" onClick={onSendVerification} disabled={authStatus === 'validated' || isSendingEmail || !email || (currentUserRole !== role)}>
+                <Input 
+                  type="email" 
+                  placeholder={`email.${role}@exemplo.com`} 
+                  value={email} 
+                  onChange={onEmailChange} 
+                  disabled={isFieldDisabled}
+                />
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={onSendVerification} 
+                  disabled={isFieldDisabled || !email}
+                >
                     {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                 </Button>
             </div>
@@ -475,15 +487,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const negotiationId = `neg_${asset.id}`;
   
-  // Simulate a logged-in user. In a real app, this would come from an auth context.
   const LOGGED_IN_USER_NAME = "Comprador Interessado";
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   
   const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
 
   React.useEffect(() => {
-    // This logic determines the user's role based on the simulated logged-in user.
-    // If the logged-in user is the owner of the asset, their role is 'seller'. Otherwise, 'buyer'.
     if (sellerName === LOGGED_IN_USER_NAME) {
       setCurrentUserRole('seller');
     } else {
@@ -513,7 +522,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [sellerEmail, setSellerEmail] = usePersistentState(`${negotiationId}_sellerEmail`, 'vendedor@example.com');
   const [buyerEmail, setBuyerEmail] = usePersistentState(`${negotiationId}_buyerEmail`, 'comprador@example.com');
   
-  // Duplicates State
   const [showDuplicatesSection, setShowDuplicatesSection] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = usePersistentState<'vista' | 'parcelado'>(`${negotiationId}_paymentMethod`, 'vista');
   const [numberOfInstallments, setNumberOfInstallments] = usePersistentState(`${negotiationId}_installments`, '2');
