@@ -383,19 +383,25 @@ const FileUploadDisplay = ({
 
 // Custom hook for persisting state to localStorage
 function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [state, setState] = React.useState<T>(() => {
+    const [state, setState] = React.useState<T>(initialState);
+
+    React.useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
                 const item = window.localStorage.getItem(key);
                 if (item) {
-                    return JSON.parse(item);
+                    setState(JSON.parse(item));
+                } else {
+                    setState(initialState);
                 }
             } catch (error) {
                 console.error(error);
+                setState(initialState);
             }
         }
-        return initialState;
-    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key]);
+
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -406,14 +412,6 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
             }
         }
     }, [key, state]);
-    
-    React.useEffect(() => {
-        if (typeof window !== 'undefined' && window.localStorage.getItem(key) === null) {
-            setState(initialState);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(initialState), key]);
-
 
     return [state, setState];
 }
@@ -461,7 +459,7 @@ const AuthStatusIndicator = React.memo(({
             break;
     }
 
-    const isFieldDisabled = authStatus === 'validated' || isSendingEmail || isFinalized;
+    const isFieldDisabled = authStatus === 'validated' || isSendingEmail;
 
     return (
          <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
@@ -516,7 +514,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   const [sellerAgrees, setSellerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_sellerAgrees`, 
-    asset.id === 'tax-001'
+    false
   );
   const [buyerAgrees, setBuyerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_buyerAgrees`, 
