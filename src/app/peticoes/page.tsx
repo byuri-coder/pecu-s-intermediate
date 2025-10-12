@@ -38,14 +38,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Petition } from '@/lib/types';
 import { PetitionForm } from './petition-form';
-import { placeholderPetitions } from '@/lib/placeholder-data';
 
 
 export default function PetitionsPage() {
   const [isFormOpen, setFormOpen] = React.useState(false);
   const [selectedPetition, setSelectedPetition] = React.useState<Petition | null>(null);
+  const [petitions, setPetitions] = React.useState<Petition[]>([]);
 
-  const petitions = placeholderPetitions.map(p => ({...p, updatedAt: new Date(p.updatedAt), petitionDate: new Date(p.petitionDate || p.updatedAt)}));
 
   const handleEdit = (petition: Petition) => {
     setSelectedPetition(petition);
