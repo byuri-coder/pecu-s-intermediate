@@ -384,6 +384,7 @@ const FileUploadDisplay = ({
 // Custom hook for persisting state to localStorage
 function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
     const [state, setState] = React.useState<T>(initialState);
+    const isInitialized = React.useRef(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -392,19 +393,20 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
                 if (item) {
                     setState(JSON.parse(item));
                 } else {
-                    setState(initialState);
+                     setState(initialState);
                 }
             } catch (error) {
                 console.error(error);
                 setState(initialState);
+            } finally {
+                isInitialized.current = true;
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key]);
 
-
     React.useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && isInitialized.current) {
             try {
                 window.localStorage.setItem(key, JSON.stringify(state));
             } catch (error) {
@@ -429,8 +431,6 @@ const AuthStatusIndicator = React.memo(({
     onEmailChange,
     onSendVerification,
     isSendingEmail,
-    currentUserRole,
-    isFinalized
 }: { 
     role: 'buyer' | 'seller';
     authStatus: AuthStatus;
@@ -438,8 +438,6 @@ const AuthStatusIndicator = React.memo(({
     onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSendVerification: () => void;
     isSendingEmail: boolean;
-    currentUserRole: UserRole;
-    isFinalized: boolean;
 }) => {
     let content;
     switch (authStatus) {
@@ -481,7 +479,7 @@ const AuthStatusIndicator = React.memo(({
                   onClick={onSendVerification} 
                   disabled={isFieldDisabled || !email}
                 >
-                    {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                    {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                 </Button>
             </div>
         </div>
@@ -499,22 +497,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const LOGGED_IN_USER_NAME = "Comprador Interessado";
   const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
   
-  const [currentUserRole, setCurrentUserRole] = React.useState<UserRole>('buyer');
-
-  React.useEffect(() => {
-    if (sellerName === LOGGED_IN_USER_NAME) {
-      setCurrentUserRole('seller');
-    } else {
-      setCurrentUserRole('buyer');
-    }
-  }, [sellerName]);
-
+  const currentUserRole: UserRole = sellerName === LOGGED_IN_USER_NAME ? 'seller' : 'buyer';
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
-
+  
   const [sellerAgrees, setSellerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_sellerAgrees`, 
-    false
+    asset.id === 'tax-001' ? true : false
   );
   const [buyerAgrees, setBuyerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_buyerAgrees`, 
@@ -1379,8 +1368,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             onEmailChange={(e) => setSellerEmail(e.target.value)}
                             onSendVerification={() => handleSendVerificationEmail('seller')}
                             isSendingEmail={isSendingEmail}
-                            currentUserRole={currentUserRole}
-                            isFinalized={isFinalized}
                         />
                         <AuthStatusIndicator 
                             role="buyer"
@@ -1389,8 +1376,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             onEmailChange={(e) => setBuyerEmail(e.target.value)}
                             onSendVerification={() => handleSendVerificationEmail('buyer')}
                             isSendingEmail={isSendingEmail}
-                            currentUserRole={currentUserRole}
-                            isFinalized={isFinalized}
                         />
                     </div>
                 </CardContent>
