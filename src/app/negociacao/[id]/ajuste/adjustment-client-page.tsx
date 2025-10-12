@@ -412,35 +412,25 @@ type AuthState = {
 };
 
 // Moved AuthStatusIndicator outside to prevent re-creation on every render.
-const AuthStatusIndicator = ({ 
+const AuthStatusIndicator = React.memo(({ 
     role, 
     authStatus,
-    setAuthStatus,
     email,
-    setEmail,
+    onEmailChange,
+    onSendVerification,
     isSendingEmail,
     currentUserRole,
-    isFinalized,
-    onSendVerification,
-    setAuthTimestamps
+    isFinalized
 }: { 
     role: 'buyer' | 'seller';
     authStatus: AuthStatus;
-    setAuthStatus: React.Dispatch<React.SetStateAction<Record<'buyer' | 'seller', AuthStatus>>>;
     email: string;
-    setEmail: (email: string) => void;
+    onEmailChange: (email: string) => void;
+    onSendVerification: () => void;
     isSendingEmail: boolean;
     currentUserRole: UserRole;
     isFinalized: boolean;
-    onSendVerification: (role: 'buyer' | 'seller') => void;
-    setAuthTimestamps: React.Dispatch<React.SetStateAction<Record<'buyer' | 'seller', number | undefined>>>;
 }) => {
-    const handleResend = () => {
-        setAuthStatus(prev => ({...prev, [role]: 'pending'}));
-        setAuthTimestamps(prev => ({...prev, [role]: undefined}));
-        onSendVerification(role);
-    }
-
     let content;
     switch (authStatus) {
         case 'validated':
@@ -450,7 +440,7 @@ const AuthStatusIndicator = ({
             content = (
                 <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
-                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend} disabled={currentUserRole !== role}>Reenviar</Button>
+                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={onSendVerification} disabled={currentUserRole !== role}>Reenviar</Button>
                 </div>
             );
             break;
@@ -466,14 +456,15 @@ const AuthStatusIndicator = ({
                 {content}
             </div>
             <div className="flex items-center gap-2">
-                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={(e) => setEmail(e.target.value)} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
-                <Button size="sm" variant="outline" onClick={() => onSendVerification(role)} disabled={authStatus === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
+                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={(e) => onEmailChange(e.target.value)} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
+                <Button size="sm" variant="outline" onClick={onSendVerification} disabled={authStatus === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
                     {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                 </Button>
             </div>
         </div>
     );
-}
+});
+AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
@@ -501,13 +492,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
-  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, false);
+  const [sellerAgrees, setSellerAgrees] = usePersistentState(`${negotiationId}_sellerAgrees`, asset.id === 'cc-003' ? true : false);
   const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
 
-  const [authStatus, setAuthStatus] = React.useState<{buyer: AuthStatus, seller: AuthStatus}>({ buyer: 'pending', seller: 'pending' });
-  const [authTimestamps, setAuthTimestamps] = React.useState<{buyer?: number, seller?: number}>({});
+  const [authStatus, setAuthStatus] = usePersistentState<Record<'buyer' | 'seller', AuthStatus>>(`${negotiationId}_authStatus`, { buyer: 'pending', seller: 'pending' });
+  const [authTimestamps, setAuthTimestamps] = usePersistentState<Record<'buyer' | 'seller', number | undefined>>(`${negotiationId}_authTimestamps`,{});
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
@@ -557,7 +548,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                 orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
+                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
@@ -601,7 +592,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     checkStatus();
 
     return () => clearInterval(interval);
-  }, [isFinalized, asset.id, authStatus, toast]);
+  }, [isFinalized, asset.id, authStatus, toast, setAuthStatus]);
 
 
   React.useEffect(() => {
@@ -615,9 +606,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             }
         }
     };
-    checkExpiration('buyer');
-    checkExpiration('seller');
-  }, [authStatus, authTimestamps]);
+    const intervalId = setInterval(() => {
+        checkExpiration('buyer');
+        checkExpiration('seller');
+    }, 60000); // Check every minute
+
+    return () => clearInterval(intervalId);
+  }, [authStatus, authTimestamps, setAuthStatus]);
 
   const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
   const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
@@ -962,6 +957,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             if (!response.ok) throw new Error('Falha na resposta da API de e-mail');
 
             setAuthTimestamps(prev => ({...prev, [role]: Date.now()}));
+            setAuthStatus(prev => ({...prev, [role]: 'pending'}));
             
             await fetch('/api/contract-status', {
                 method: 'POST',
@@ -1319,7 +1315,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                                                  <div className="flex flex-col items-center">
                                                     <div className="flex items-center gap-2">
                                                         <span>{isFinalized ? LOGGED_IN_USER_NAME : '________________'}</span>
-                                                        {isFinalized && <Seal text="Assinado Digitalmente" className="border-green-300"/>}
+                                                         {isFinalized && <Seal text="Assinado Digitalmente" className="border-green-300"/>}
                                                     </div>
                                                     <Label className="text-muted-foreground">Assinatura do Sacado (Comprador)</Label>
                                                 </div>
@@ -1351,29 +1347,25 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
-                        <AuthStatusIndicator 
+                         <AuthStatusIndicator 
                             role="seller" 
                             authStatus={authStatus.seller}
-                            setAuthStatus={setAuthStatus}
                             email={sellerEmail}
-                            setEmail={setSellerEmail}
+                            onEmailChange={setSellerEmail}
+                            onSendVerification={() => handleSendVerificationEmail('seller')}
                             isSendingEmail={isSendingEmail}
                             currentUserRole={currentUserRole}
                             isFinalized={isFinalized}
-                            onSendVerification={handleSendVerificationEmail}
-                            setAuthTimestamps={setAuthTimestamps}
                         />
                         <AuthStatusIndicator 
                             role="buyer"
                             authStatus={authStatus.buyer}
-                            setAuthStatus={setAuthStatus}
                             email={buyerEmail}
-                            setEmail={setBuyerEmail}
+                            onEmailChange={setBuyerEmail}
+                            onSendVerification={() => handleSendVerificationEmail('buyer')}
                             isSendingEmail={isSendingEmail}
                             currentUserRole={currentUserRole}
                             isFinalized={isFinalized}
-                            onSendVerification={handleSendVerificationEmail}
-                            setAuthTimestamps={setAuthTimestamps}
                         />
                     </div>
                 </CardContent>
