@@ -458,8 +458,8 @@ const AuthStatusIndicator = React.memo(({
                 {content}
             </div>
             <div className="flex items-center gap-2">
-                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={onEmailChange} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
-                <Button size="sm" variant="outline" onClick={onSendVerification} disabled={authStatus === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
+                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={onEmailChange} disabled={authStatus === 'validated' || isSendingEmail || (currentUserRole !== role)}/>
+                <Button size="sm" variant="outline" onClick={onSendVerification} disabled={authStatus === 'validated' || isSendingEmail || !email || (currentUserRole !== role)}>
                     {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
                 </Button>
             </div>
