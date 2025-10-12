@@ -411,6 +411,69 @@ type AuthState = {
     timestamp?: number; 
 };
 
+// Moved AuthStatusIndicator outside to prevent re-creation on every render.
+const AuthStatusIndicator = ({ 
+    role, 
+    authStatus,
+    setAuthStatus,
+    email,
+    setEmail,
+    isSendingEmail,
+    currentUserRole,
+    isFinalized,
+    onSendVerification,
+    setAuthTimestamps
+}: { 
+    role: 'buyer' | 'seller';
+    authStatus: AuthStatus;
+    setAuthStatus: React.Dispatch<React.SetStateAction<Record<'buyer' | 'seller', AuthStatus>>>;
+    email: string;
+    setEmail: (email: string) => void;
+    isSendingEmail: boolean;
+    currentUserRole: UserRole;
+    isFinalized: boolean;
+    onSendVerification: (role: 'buyer' | 'seller') => void;
+    setAuthTimestamps: React.Dispatch<React.SetStateAction<Record<'buyer' | 'seller', number | undefined>>>;
+}) => {
+    const handleResend = () => {
+        setAuthStatus(prev => ({...prev, [role]: 'pending'}));
+        setAuthTimestamps(prev => ({...prev, [role]: undefined}));
+        onSendVerification(role);
+    }
+
+    let content;
+    switch (authStatus) {
+        case 'validated':
+            content = <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Validado</span>;
+            break;
+        case 'expired':
+            content = (
+                <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
+                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend} disabled={currentUserRole !== role}>Reenviar</Button>
+                </div>
+            );
+            break;
+        default: // pending
+            content = <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin"/>Pendente</span>;
+            break;
+    }
+
+    return (
+         <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
+            <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
+                {content}
+            </div>
+            <div className="flex items-center gap-2">
+                <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email} onChange={(e) => setEmail(e.target.value)} disabled={authStatus === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
+                <Button size="sm" variant="outline" onClick={() => onSendVerification(role)} disabled={authStatus === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
+                    {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
+                </Button>
+            </div>
+        </div>
+    );
+}
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
@@ -494,7 +557,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             const dueDate = new Date(issueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             newDuplicates.push({
-                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
+                 orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
                 invoiceNumber: invoiceNumber,
                 issueDate: issueDate.toLocaleDateString('pt-BR'),
                 dueDate: dueDate.toLocaleDateString('pt-BR'),
@@ -921,52 +984,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             setIsSendingEmail(false);
         }
     }
-
-
-    const AuthStatusIndicator = ({ role }: { role: 'buyer' | 'seller'}) => {
-        const status = authStatus[role];
-        const email = role === 'buyer' ? buyerEmail : sellerEmail;
-        const setEmail = role === 'buyer' ? setBuyerEmail : setSellerEmail;
-
-        const handleResend = () => {
-            setAuthStatus(prev => ({...prev, [role]: 'pending'}));
-            setAuthTimestamps(prev => ({...prev, [role]: undefined}));
-            handleSendVerificationEmail(role);
-        }
-
-        let content;
-        switch (status) {
-            case 'validated':
-                content = <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Validado</span>;
-                break;
-            case 'expired':
-                content = (
-                    <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
-                        <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={handleResend} disabled={currentUserRole !== role}>Reenviar</Button>
-                    </div>
-                );
-                break;
-            default: // pending
-                content = <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin"/>Pendente</span>;
-                break;
-        }
-
-        return (
-             <div className={cn("p-4 rounded-lg border", status === 'validated' ? "bg-green-50 border-green-200" : status === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
-                <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
-                    {content}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Input type="email" placeholder={`email.${role}@exemplo.com`} value={email as string} onChange={(e) => setEmail(e.target.value)} disabled={status === 'validated' || isSendingEmail || (isFinalized && currentUserRole !== role)}/>
-                    <Button size="sm" variant="outline" onClick={() => handleSendVerificationEmail(role)} disabled={status === 'validated' || isSendingEmail || !email || (isFinalized && currentUserRole !== role)}>
-                        {isSendingEmail && currentUserRole === role ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
-                    </Button>
-                </div>
-            </div>
-        );
-    }
     
     if (searchParams.get('view') === 'archive') {
         return (
@@ -1334,8 +1351,30 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
-                        <AuthStatusIndicator role="seller" />
-                        <AuthStatusIndicator role="buyer" />
+                        <AuthStatusIndicator 
+                            role="seller" 
+                            authStatus={authStatus.seller}
+                            setAuthStatus={setAuthStatus}
+                            email={sellerEmail}
+                            setEmail={setSellerEmail}
+                            isSendingEmail={isSendingEmail}
+                            currentUserRole={currentUserRole}
+                            isFinalized={isFinalized}
+                            onSendVerification={handleSendVerificationEmail}
+                            setAuthTimestamps={setAuthTimestamps}
+                        />
+                        <AuthStatusIndicator 
+                            role="buyer"
+                            authStatus={authStatus.buyer}
+                            setAuthStatus={setAuthStatus}
+                            email={buyerEmail}
+                            setEmail={setBuyerEmail}
+                            isSendingEmail={isSendingEmail}
+                            currentUserRole={currentUserRole}
+                            isFinalized={isFinalized}
+                            onSendVerification={handleSendVerificationEmail}
+                            setAuthTimestamps={setAuthTimestamps}
+                        />
                     </div>
                 </CardContent>
             </Card>
