@@ -383,26 +383,22 @@ const FileUploadDisplay = ({
 
 // Custom hook for persisting state to localStorage
 function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [state, setState] = React.useState<T>(initialState);
-    const isInitialized = React.useRef(false);
-
-    React.useEffect(() => {
+    const [state, setState] = React.useState<T>(() => {
         if (typeof window !== 'undefined') {
             try {
                 const item = window.localStorage.getItem(key);
                 if (item) {
-                    setState(JSON.parse(item));
+                    return JSON.parse(item);
                 }
             } catch (error) {
                 console.error(error);
             }
         }
-        isInitialized.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [key]);
+        return initialState;
+    });
 
     React.useEffect(() => {
-        if (isInitialized.current) {
+        if (typeof window !== 'undefined') {
             try {
                 window.localStorage.setItem(key, JSON.stringify(state));
             } catch (error) {
@@ -412,9 +408,12 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
     }, [key, state]);
     
     React.useEffect(() => {
-        setState(initialState);
+        if (typeof window !== 'undefined' && window.localStorage.getItem(key) === null) {
+            setState(initialState);
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(initialState)]);
+    }, [JSON.stringify(initialState), key]);
+
 
     return [state, setState];
 }
@@ -453,7 +452,7 @@ const AuthStatusIndicator = React.memo(({
             content = (
                 <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
-                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={onSendVerification} disabled={currentUserRole !== role}>Reenviar</Button>
+                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={onSendVerification}>Reenviar</Button>
                 </div>
             );
             break;
@@ -462,7 +461,7 @@ const AuthStatusIndicator = React.memo(({
             break;
     }
 
-    const isFieldDisabled = authStatus === 'validated' || isSendingEmail || (currentUserRole !== role) || isFinalized;
+    const isFieldDisabled = authStatus === 'validated' || isSendingEmail || isFinalized;
 
     return (
          <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
