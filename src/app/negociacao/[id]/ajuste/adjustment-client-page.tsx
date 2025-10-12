@@ -494,8 +494,14 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
-  const [sellerAgrees, setSellerAgrees] = usePersistentState<boolean>(`${negotiationId}_sellerAgrees`, false);
-  const [buyerAgrees, setBuyerAgrees] = usePersistentState(`${negotiationId}_buyerAgrees`, false);
+  const [sellerAgrees, setSellerAgrees] = usePersistentState<boolean>(
+    `${negotiationId}_sellerAgrees`, 
+    asset.id === 'tax-001'
+  );
+  const [buyerAgrees, setBuyerAgrees] = usePersistentState<boolean>(
+    `${negotiationId}_buyerAgrees`, 
+    false
+  );
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
 
