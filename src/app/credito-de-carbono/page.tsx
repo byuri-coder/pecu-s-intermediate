@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { CarbonCredit } from '@/lib/types';
-import { CreditCard } from '@/components/credit-card';
+import { CreditCard as CreditCardComponent } from '@/components/credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Filter, Loader2 } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
@@ -113,7 +113,7 @@ export default function MarketplacePage() {
         ) : activeCredits.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {activeCredits.map((credit) => (
-              <CreditCard key={credit.id} credit={credit} />
+              <CreditCardComponent key={credit.id} credit={credit} />
             ))}
           </div>
         ) : (

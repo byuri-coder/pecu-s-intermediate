@@ -7,7 +7,7 @@ import type { TaxCredit } from '@/lib/types';
 import { TaxCreditCard } from '@/components/tax-credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter, Loader2 } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
