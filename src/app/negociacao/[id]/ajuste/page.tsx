@@ -1,9 +1,11 @@
 
+'use client';
 
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams, useParams } from 'next/navigation';
 import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 import { AdjustmentClientPage } from './adjustment-client-page';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import * as React from 'react';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -12,6 +14,18 @@ type Asset = CarbonCredit | TaxCredit | RuralLand | null;
 
 
 function getAssetDetails(id: string, type: AssetType): Asset {
+    let localItems: any[] = [];
+    if (typeof window !== 'undefined') {
+        const storageKey = `${type.replace('-', '_')}s`;
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+            localItems = JSON.parse(localData);
+        }
+    }
+
+    const localAsset = localItems.find(item => item.id === id);
+    if (localAsset) return localAsset as Asset;
+
     if (type === 'carbon-credit') {
         return placeholderCredits.find((c) => c.id === id) || null;
     }
@@ -24,9 +38,26 @@ function getAssetDetails(id: string, type: AssetType): Asset {
     return null;
 }
 
-export default function AdjustmentPage({ params, searchParams }: { params: { id: string }, searchParams: { type: AssetType } }) {
-  const assetType = searchParams.type || 'carbon-credit';
-  const asset = getAssetDetails(params.id, assetType);
+export default function AdjustmentPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
+  
+  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
+
+  React.useEffect(() => {
+    if (id && assetType) {
+      const assetDetails = getAssetDetails(id, assetType);
+      setAsset(assetDetails);
+    }
+  }, [id, assetType]);
+  
+
+  if (asset === 'loading') {
+    return <div>Carregando...</div>;
+  }
 
   if (!asset) {
     notFound();
@@ -34,27 +65,3 @@ export default function AdjustmentPage({ params, searchParams }: { params: { id:
 
   return <AdjustmentClientPage asset={asset} assetType={assetType} />;
 }
-
-export async function generateStaticParams() {
-  const carbonParams = placeholderCredits.map((credit) => ({
-    id: credit.id,
-  }));
-
-  const taxParams = placeholderTaxCredits.map((credit) => ({
-    id: credit.id,
-  }));
-
-  const ruralLandParams = placeholderRuralLands.map((land) => ({
-    id: land.id,
-  }));
-
-  const allParams = [...carbonParams, ...taxParams, ...ruralLandParams];
-  
-  // Create a structure that matches what generateStaticParams expects for the 'ajuste' route
-  // We only need to provide the 'id' part of the slug. The searchParams are not part of it.
-  // Also, we need to avoid duplicates if IDs are shared across asset types.
-  const uniqueIds = [...new Set(allParams.map(p => p.id))];
-
-  return uniqueIds.map(id => ({ id }));
-}
-    
