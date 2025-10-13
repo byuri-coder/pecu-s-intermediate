@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ import { CalendarIcon, UploadCloud, Wand2, Loader2, Info } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { getPriceSuggestion, registerCreditAction } from './actions';
+import { getPriceSuggestion } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -34,6 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { CarbonCredit } from '@/lib/types';
+
 
 const registerCreditSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -58,33 +60,41 @@ export function RegisterCreditForm() {
   const [suggestion, setSuggestion] = useState<{ suggestedPrice: string; reasoning: string } | null>(null);
   const [isSuggestionOpen, setSuggestionOpen] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<RegisterCreditFormValues>({
     resolver: zodResolver(registerCreditSchema),
   });
 
   const onSubmit = (data: RegisterCreditFormValues) => {
-    startTransition(async () => {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-          if (value instanceof Date) {
-              formData.append(key, value.toISOString());
-          } else {
-              formData.append(key, String(value));
-          }
-      });
-      
-      const result = await registerCreditAction(formData);
-      if (result.success) {
+    startTransition(() => {
+      try {
+        const newCredit: CarbonCredit = {
+            id: data.credit_id,
+            sellerName: data.name,
+            creditType: data.credit_type as CarbonCredit['creditType'],
+            quantity: data.quantity,
+            location: data.location,
+            pricePerCredit: data.price,
+            vintage: data.vintage,
+            standard: 'Padrão a ser definido',
+            projectOverview: 'Visão geral do projeto a ser preenchida.',
+            status: 'Ativo',
+        };
+
+        const existingCredits: CarbonCredit[] = JSON.parse(localStorage.getItem('carbon_credits') || '[]');
+        localStorage.setItem('carbon_credits', JSON.stringify([newCredit, ...existingCredits]));
+
         toast({
           title: "Sucesso!",
-          description: result.message,
+          description: "Crédito de Carbono cadastrado e já disponível no marketplace!",
         });
         form.reset();
-      } else {
+      } catch (error) {
+        console.error("Failed to save credit:", error);
         toast({
           title: "Erro",
-          description: "Ocorreu um erro ao cadastrar o crédito.",
+          description: "Ocorreu um erro ao salvar o crédito no seu navegador.",
           variant: "destructive",
         });
       }
@@ -227,11 +237,13 @@ export function RegisterCreditForm() {
 
           <section>
             <h3 className="text-xl font-semibold mb-4 border-b pb-2">Documentação</h3>
-            <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+            <div 
+              className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+              onClick={() => fileInputRef.current?.click()}>
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
               <p className="text-xs text-muted-foreground/70">PDF, DOCX, JPG (max. 10MB)</p>
-              <Input type="file" className="hidden" multiple />
+              <Input ref={fileInputRef} type="file" className="hidden" multiple />
             </div>
           </section>
 

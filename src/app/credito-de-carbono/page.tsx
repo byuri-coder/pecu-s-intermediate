@@ -1,4 +1,8 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { placeholderCredits } from '@/lib/placeholder-data';
+import type { CarbonCredit } from '@/lib/types';
 import { CreditCard } from '@/components/credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -6,7 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 
 export default function MarketplacePage() {
-  const activeCredits = placeholderCredits.filter(c => c.status === 'Ativo');
+  const [allCredits, setAllCredits] = useState<CarbonCredit[]>([]);
+
+  useEffect(() => {
+    // This effect runs only on the client-side
+    const localCredits: CarbonCredit[] = JSON.parse(localStorage.getItem('carbon_credits') || '[]');
+    // Combine placeholder data with locally stored data, avoiding duplicates
+    const combined = [...localCredits, ...placeholderCredits.filter(p => !localCredits.some(l => l.id === p.id))];
+    setAllCredits(combined);
+  }, []);
+
+  const activeCredits = allCredits.filter(c => c.status === 'Ativo');
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">

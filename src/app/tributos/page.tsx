@@ -1,4 +1,8 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { placeholderTaxCredits } from '@/lib/placeholder-data';
+import type { TaxCredit } from '@/lib/types';
 import { TaxCreditCard } from '@/components/tax-credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -6,7 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 
 export default function TaxCreditsMarketplacePage() {
-  const availableCredits = placeholderTaxCredits.filter(
+  const [allCredits, setAllCredits] = useState<TaxCredit[]>([]);
+
+  useEffect(() => {
+    // This effect runs only on the client-side
+    const localCredits: TaxCredit[] = JSON.parse(localStorage.getItem('tax_credits') || '[]');
+    // Combine placeholder data with locally stored data, avoiding duplicates
+    const combined = [...localCredits, ...placeholderTaxCredits.filter(p => !localCredits.some(l => l.id === p.id))];
+    setAllCredits(combined);
+  }, []);
+
+  const availableCredits = allCredits.filter(
     c => (c.status === 'Disponível' || c.status === 'Negociando') &&
          c.taxType === 'ICMS' &&
          c.location.includes('SP')

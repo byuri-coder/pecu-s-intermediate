@@ -1,4 +1,8 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { placeholderRuralLands } from '@/lib/placeholder-data';
+import type { RuralLand } from '@/lib/types';
 import { RuralLandCard } from '@/components/rural-land-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -6,7 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 
 export default function RuralLandsMarketplacePage() {
-  const availableLands = placeholderRuralLands.filter(c => c.status === 'Disponível' || c.status === 'Negociando');
+  const [allLands, setAllLands] = useState<RuralLand[]>([]);
+
+  useEffect(() => {
+    // This effect runs only on the client-side
+    const localLands: RuralLand[] = JSON.parse(localStorage.getItem('rural_lands') || '[]');
+    // Combine placeholder data with locally stored data, avoiding duplicates
+    const combined = [...localLands, ...placeholderRuralLands.filter(p => !localLands.some(l => l.id === p.id))];
+    setAllLands(combined);
+  }, []);
+
+  const availableLands = allLands.filter(c => c.status === 'Disponível' || c.status === 'Negociando');
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">

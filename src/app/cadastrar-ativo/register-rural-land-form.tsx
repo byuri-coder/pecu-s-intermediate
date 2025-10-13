@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition } from 'react';
+import { useTransition, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { registerRuralLandAction } from './actions';
+import { placeholderRuralLands } from '@/lib/placeholder-data';
+import type { RuralLand } from '@/lib/types';
+
 
 const registerRuralLandSchema = z.object({
   title: z.string().min(5, 'O título é muito curto'),
@@ -38,6 +40,7 @@ type RegisterRuralLandFormValues = z.infer<typeof registerRuralLandSchema>;
 export function RegisterRuralLandForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<RegisterRuralLandFormValues>({
     resolver: zodResolver(registerRuralLandSchema),
@@ -47,28 +50,39 @@ export function RegisterRuralLandForm() {
   });
 
   const onSubmit = (data: RegisterRuralLandFormValues) => {
-    startTransition(async () => {
-      const formData = new FormData();
-       Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, String(value));
+    startTransition(() => {
+        try {
+            const newLand: RuralLand = {
+                id: `land-${Date.now()}`,
+                title: data.title,
+                description: data.description,
+                owner: data.owner,
+                sizeHa: data.sizeHa,
+                businessType: data.businessType as RuralLand['businessType'],
+                location: data.location,
+                images: ['https://picsum.photos/seed/new-land/800/600'],
+                documentation: 'Em análise',
+                registration: data.registration,
+                price: data.price,
+                status: 'Disponível',
+            };
+
+            const existingLands: RuralLand[] = JSON.parse(localStorage.getItem('rural_lands') || '[]');
+            localStorage.setItem('rural_lands', JSON.stringify([newLand, ...existingLands]));
+
+            toast({
+                title: "Sucesso!",
+                description: "Terra Rural cadastrada com sucesso e disponível no marketplace!",
+            });
+            form.reset();
+        } catch (error) {
+            console.error("Failed to save rural land:", error);
+            toast({
+                title: "Erro",
+                description: "Ocorreu um erro ao salvar a terra rural no seu navegador.",
+                variant: "destructive",
+            });
         }
-      });
-      
-      const result = await registerRuralLandAction(formData);
-      if (result.success) {
-        toast({
-          title: "Sucesso!",
-          description: result.message,
-        });
-        form.reset();
-      } else {
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao cadastrar a terra.",
-          variant: "destructive",
-        });
-      }
     });
   };
 
@@ -123,11 +137,13 @@ export function RegisterRuralLandForm() {
         <section>
           <h3 className="text-xl font-semibold mb-4 border-b pb-2">Documentação e Imagens</h3>
            <div className="space-y-4">
-              <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+              <div 
+                className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+                onClick={() => fileInputRef.current?.click()}>
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
                 <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG), Documentos (PDF)</p>
-                <Input type="file" className="hidden" multiple />
+                <Input ref={fileInputRef} type="file" className="hidden" multiple />
               </div>
               <p className="text-sm text-muted-foreground">Envie fotos da propriedade, mapa georreferenciado, CAR, e outros documentos relevantes para agilizar a análise.</p>
            </div>

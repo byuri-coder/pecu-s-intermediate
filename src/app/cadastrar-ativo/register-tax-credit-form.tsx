@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition } from 'react';
+import { useTransition, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, Loader2, FileText, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { registerTaxCreditAction } from './actions';
+import type { TaxCredit } from '@/lib/types';
+
 
 const registerTaxCreditSchema = z.object({
   sellerName: z.string().min(3, 'O nome do vendedor é obrigatório'),
@@ -40,6 +41,8 @@ type RegisterTaxCreditFormValues = z.infer<typeof registerTaxCreditSchema>;
 export function RegisterTaxCreditForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const cndInputRef = useRef<HTMLInputElement>(null);
+  const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<RegisterTaxCreditFormValues>({
     resolver: zodResolver(registerTaxCreditSchema),
@@ -50,24 +53,32 @@ export function RegisterTaxCreditForm() {
   });
 
   const onSubmit = (data: RegisterTaxCreditFormValues) => {
-    startTransition(async () => {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-          formData.append(key, String(value));
-      });
-      
-      const result = await registerTaxCreditAction(formData);
-      if (result.success) {
+    startTransition(() => {
+      try {
+        const newCredit: TaxCredit = {
+            id: `tax-${Date.now()}`,
+            sellerName: data.sellerName,
+            taxType: data.taxType as TaxCredit['taxType'],
+            amount: data.amount,
+            price: data.price,
+            location: data.location,
+            status: 'Disponível'
+        };
+
+        const existingCredits: TaxCredit[] = JSON.parse(localStorage.getItem('tax_credits') || '[]');
+        localStorage.setItem('tax_credits', JSON.stringify([newCredit, ...existingCredits]));
+
         toast({
           title: "Sucesso!",
-          description: result.message,
+          description: "Crédito Tributário cadastrado com sucesso e disponível no marketplace!",
         });
         form.reset();
-      } else {
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao cadastrar o crédito tributário.",
-          variant: "destructive",
+      } catch (error) {
+         console.error("Failed to save tax credit:", error);
+         toast({
+            title: "Erro",
+            description: "Ocorreu um erro ao salvar o crédito tributário no seu navegador.",
+            variant: "destructive",
         });
       }
     });
@@ -128,8 +139,11 @@ export function RegisterTaxCreditForm() {
                  )} />
                   <FormItem>
                     <FormLabel>Arquivo da Certidão</FormLabel>
-                     <div className="border border-input rounded-md flex items-center pr-3">
-                        <Input type="file" className="border-0 shadow-none focus-visible:ring-0 flex-1" />
+                     <div 
+                        className="border border-input rounded-md flex items-center pr-3 cursor-pointer hover:bg-secondary transition-colors"
+                        onClick={() => cndInputRef.current?.click()}>
+                        <div className="flex-1 px-3 py-2 text-sm text-muted-foreground">Anexar arquivo...</div>
+                        <Input ref={cndInputRef} type="file" className="hidden" />
                         <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <FormDescription>Anexe o arquivo da CND (conhecido como "Nada Consta").</FormDescription>
@@ -140,11 +154,13 @@ export function RegisterTaxCreditForm() {
         <section>
           <h3 className="text-xl font-semibold mb-4 border-b pb-2">Outros Documentos Comprobatórios</h3>
            <div className="space-y-4">
-              <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors">
+              <div 
+                className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+                onClick={() => otherDocsInputRef.current?.click()}>
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
                 <p className="text-xs text-muted-foreground/70">Documentos (PDF, XML, DOCX)</p>
-                <Input type="file" className="hidden" multiple />
+                <Input ref={otherDocsInputRef} type="file" className="hidden" multiple />
               </div>
               <p className="text-sm text-muted-foreground">Anexe documentos adicionais que comprovem a liquidez e certeza do crédito, como certidões, decisões judiciais, notas fiscais, etc. As informações sensíveis podem ser omitidas.</p>
            </div>
