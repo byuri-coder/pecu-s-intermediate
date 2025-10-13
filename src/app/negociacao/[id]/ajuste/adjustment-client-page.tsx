@@ -103,7 +103,7 @@ PROMISSÁRIO COMPRADOR(A): [COMPRADOR_NOME], [nacionalidade_comprador], [estado_
 Resolvem celebrar o presente Contrato Particular de Promessa de Compra e Venda de Imóvel Rural, que se regerá pelas seguintes cláusulas e condições:
 
 CLÁUSULA PRIMEIRA - DO OBJETO
-1.1. O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado "[DENOMINACAO_PROPRIEDADE]", situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, devidamente registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDADE_MATRICULA].
+1.1. O VENDEDOR é legítimo proprietário e possuidor do imóvel rural denominado "[DENOMINACAO_PROPRIEDADE]", situado no município de [PROPRIEDADE_MUNICIPIO], Estado de [PROPRIEDADE_ESTADO], com área total de [PROPRIEDADE_AREA] hectares, devidamente registrado no Cartório de Registro de Imóveis da Comarca de [PROPRIEDADE_COMARCA], sob a matrícula nº [PROPRIEDade_MATRICULA].
 
 CLÁUSULA SEGUNDA - DO PREÇO E DA FORMA DE PAGAMENTO
 2.1. O preço certo e ajustado pela presente transação é de R$ [VALOR_NEGOCIADO_NUM], que o COMPRADOR pagará da seguinte forma:
@@ -390,8 +390,7 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
         if (typeof window !== 'undefined') {
             try {
                 const item = window.localStorage.getItem(key);
-                // The initialState is a function, so we call it to get the value.
-                const initialValue = typeof initialState === 'function' ? initialState() : initialState;
+                const initialValue = typeof initialState === 'function' ? (initialState as () => T)() : initialState;
                 if (item) {
                     setState(JSON.parse(item));
                 } else {
@@ -399,7 +398,7 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
                 }
             } catch (error) {
                 console.error(error);
-                setState(typeof initialState === 'function' ? initialState() : initialState);
+                setState(typeof initialState === 'function' ? (initialState as () => T)() : initialState);
             } finally {
                 isInitialized.current = true;
             }
@@ -459,7 +458,7 @@ const AuthStatusIndicator = React.memo(({
             break;
     }
 
-    const isFieldDisabled = authStatus === 'validated' || isSendingEmail;
+    const isFieldDisabled = isSendingEmail;
 
     return (
          <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
@@ -509,7 +508,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   );
   const [buyerAgrees, setBuyerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_buyerAgrees`, 
-    false
+    () => asset.id === 'tax-001'
   );
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
