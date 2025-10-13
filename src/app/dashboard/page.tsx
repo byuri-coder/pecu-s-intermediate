@@ -222,7 +222,7 @@ export default function DashboardPage({
                               ) : (
                                 <>
                                   <DropdownMenuItem asChild>
-                                      <Link href={`/negociacao/${asset.id}/ajuste?type=${asset.assetType}`}>
+                                      <Link href={`/editar-ativo/${asset.id}?type=${asset.assetType}`}>
                                         <Edit className="mr-2 h-4 w-4"/> Editar
                                       </Link>
                                   </DropdownMenuItem>
