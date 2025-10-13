@@ -56,7 +56,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = `https://picsum.photos/seed/${land.id}/400/225`;
+  const imageUrl = land.images && land.images.length > 0 ? land.images[0] : `https://picsum.photos/seed/${land.id}/400/225`;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
