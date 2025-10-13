@@ -11,6 +11,7 @@ export type CarbonCredit = {
   standard: string;
   projectOverview: string;
   status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível';
+  ownerId: string;
 };
 
 export type TaxCredit = {
@@ -21,6 +22,7 @@ export type TaxCredit = {
   price: number;
   location: string;
   status: 'Disponível' | 'Negociando' | 'Vendido';
+  ownerId: string;
 };
 
 export type RuralLand = {
@@ -36,6 +38,7 @@ export type RuralLand = {
   registration: string; // Land registration identifier
   price?: number; // Optional, might not apply to all business types
   status: 'Disponível' | 'Negociando' | 'Vendido';
+  ownerId: string;
 };
 
 export type Operation = {

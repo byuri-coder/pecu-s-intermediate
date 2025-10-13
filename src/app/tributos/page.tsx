@@ -1,23 +1,37 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { placeholderTaxCredits } from '@/lib/placeholder-data';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { TaxCredit } from '@/lib/types';
 import { TaxCreditCard } from '@/components/tax-credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 export default function TaxCreditsMarketplacePage() {
   const [allCredits, setAllCredits] = useState<TaxCredit[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This effect runs only on the client-side
-    const localCredits: TaxCredit[] = JSON.parse(localStorage.getItem('tax_credits') || '[]');
-    // Combine placeholder data with locally stored data, avoiding duplicates
-    const combined = [...localCredits, ...placeholderTaxCredits.filter(p => !localCredits.some(l => l.id === p.id))];
-    setAllCredits(combined);
+     const fetchCredits = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "tax-credits"));
+        const credits: TaxCredit[] = [];
+        querySnapshot.forEach((doc) => {
+          credits.push({ id: doc.id, ...doc.data() } as TaxCredit);
+        });
+        setAllCredits(credits);
+      } catch (error) {
+        console.error("Error fetching tax credits: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCredits();
   }, []);
 
   const availableCredits = allCredits.filter(
@@ -62,16 +76,30 @@ export default function TaxCreditsMarketplacePage() {
       </section>
       
       <section>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {availableCredits.map((credit) => (
-            <TaxCreditCard key={credit.id} credit={credit} />
-          ))}
-           {availableCredits.length === 0 && (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
+        {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
+                        <CardContent className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                        </CardContent>
+                        <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+                    </Card>
+                ))}
+            </div>
+        ) : availableCredits.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {availableCredits.map((credit) => (
+                    <TaxCreditCard key={credit.id} credit={credit} />
+                ))}
+            </div>
+        ) : (
+           <div className="col-span-full text-center py-12 text-muted-foreground">
               <p>Nenhum crédito de ICMS de São Paulo disponível no momento.</p>
             </div>
-           )}
-        </div>
+        )}
       </section>
     </div>
   );

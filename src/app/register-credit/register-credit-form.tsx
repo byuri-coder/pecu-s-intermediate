@@ -4,6 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef } from 'react';
+import { getAuth } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
+import { db, app } from '@/lib/firebase';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -67,10 +71,21 @@ export function RegisterCreditForm() {
   });
 
   const onSubmit = (data: RegisterCreditFormValues) => {
-    startTransition(() => {
+    startTransition(async () => {
+      const auth = getAuth(app);
+      const user = auth.currentUser;
+
+      if (!user) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Você precisa estar logado para cadastrar um ativo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
-        const newCredit: CarbonCredit = {
-            id: data.credit_id,
+        const newCredit: Omit<CarbonCredit, 'id'> = {
             sellerName: data.name,
             creditType: data.credit_type as CarbonCredit['creditType'],
             quantity: data.quantity,
@@ -80,10 +95,10 @@ export function RegisterCreditForm() {
             standard: 'Padrão a ser definido',
             projectOverview: 'Visão geral do projeto a ser preenchida.',
             status: 'Ativo',
+            ownerId: user.uid,
         };
 
-        const existingCredits: CarbonCredit[] = JSON.parse(localStorage.getItem('carbon_credits') || '[]');
-        localStorage.setItem('carbon_credits', JSON.stringify([newCredit, ...existingCredits]));
+        await addDoc(collection(db, "carbon-credits"), newCredit);
 
         toast({
           title: "Sucesso!",
@@ -94,7 +109,7 @@ export function RegisterCreditForm() {
         console.error("Failed to save credit:", error);
         toast({
           title: "Erro",
-          description: "Ocorreu um erro ao salvar o crédito no seu navegador.",
+          description: "Ocorreu um erro ao salvar o crédito no banco de dados.",
           variant: "destructive",
         });
       }
@@ -128,7 +143,6 @@ export function RegisterCreditForm() {
 
   const useSuggestedPrice = () => {
     if (suggestion) {
-        // Extracts the number from a string like "R$ 15,50" or "$15.50"
         const priceNumber = parseFloat(suggestion.suggestedPrice.replace(/[^0-9,.]/g, '').replace(',', '.'));
         if (!isNaN(priceNumber)) {
             form.setValue('price', priceNumber, { shouldValidate: true });

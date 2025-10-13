@@ -1,13 +1,16 @@
 'use client';
 
 import * as React from 'react';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { db, app } from '@/lib/firebase';
 import type { CarbonCredit, TaxCredit, RuralLand } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Trash2, Play, Pause } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Play, Pause, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MovementsChart } from './movements-chart';
 import { cn } from '@/lib/utils';
@@ -56,6 +59,13 @@ const AssetTypeBadge = ({ type }: { type: Asset['assetType']}) => {
     return <Badge variant="secondary" className={cn('capitalize', className)}>{label}</Badge>
 }
 
+const collectionNameMap = {
+    'carbon-credit': 'carbon-credits',
+    'tax-credit': 'tax-credits',
+    'rural-land': 'rural-lands',
+};
+
+
 export default function DashboardPage({
   searchParams,
 }: {
@@ -66,45 +76,63 @@ export default function DashboardPage({
   const currentTab = searchParams?.tab || 'my-assets';
   const { toast } = useToast();
   const [allAssets, setAllAssets] = React.useState<Asset[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [isAlertOpen, setAlertOpen] = React.useState(false);
   const [assetToDelete, setAssetToDelete] = React.useState<Asset | null>(null);
 
-  const fetchAssets = React.useCallback(() => {
-    const carbonCredits: CarbonCredit[] = JSON.parse(localStorage.getItem('carbon_credits') || '[]');
-    const taxCredits: TaxCredit[] = JSON.parse(localStorage.getItem('tax_credits') || '[]');
-    const ruralLands: RuralLand[] = JSON.parse(localStorage.getItem('rural_lands') || '[]');
+  const fetchAssets = React.useCallback(async (userId: string) => {
+    setLoading(true);
+    try {
+        const assetTypes: Asset['assetType'][] = ['carbon-credit', 'tax-credit', 'rural-land'];
+        const allFetchedAssets: Asset[] = [];
 
-    const combinedAssets: Asset[] = [
-      ...carbonCredits.map(c => ({...c, assetType: 'carbon-credit' as const })),
-      ...taxCredits.map(t => ({...t, assetType: 'tax-credit' as const })),
-      ...ruralLands.map(r => ({...r, assetType: 'rural-land' as const })),
-    ];
-    
-    setAllAssets(combinedAssets);
-  }, []);
+        for (const assetType of assetTypes) {
+            const collectionName = collectionNameMap[assetType];
+            const q = query(collection(db, collectionName), where("ownerId", "==", userId));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                allFetchedAssets.push({ ...(doc.data() as any), id: doc.id, assetType });
+            });
+        }
+        setAllAssets(allFetchedAssets);
+    } catch (error) {
+        console.error("Error fetching assets: ", error);
+        toast({ title: "Erro ao buscar ativos", description: "Não foi possível carregar seus ativos do banco de dados.", variant: 'destructive' });
+    } finally {
+        setLoading(false);
+    }
+  }, [toast]);
 
   React.useEffect(() => {
-    fetchAssets();
-    // Listen for storage changes from other tabs
-    window.addEventListener('storage', fetchAssets);
-    return () => {
-      window.removeEventListener('storage', fetchAssets);
-    };
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            fetchAssets(user.uid);
+        } else {
+            setLoading(false);
+            setAllAssets([]);
+        }
+    });
+
+    return () => unsubscribe();
   }, [fetchAssets]);
 
-  const updateAssetStatus = (assetId: string, assetType: Asset['assetType'], newStatus: Asset['status']) => {
-    const storageKey = `${assetType.replace('-', '_')}s`;
-    const assets: Asset[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const updatedAssets = assets.map(asset => asset.id === assetId ? { ...asset, status: newStatus } : asset);
-    localStorage.setItem(storageKey, JSON.stringify(updatedAssets));
-    fetchAssets(); // Refresh state
-    window.dispatchEvent(new Event('storage')); // Notify other components
-    toast({ title: "Sucesso!", description: `Status do ativo foi alterado para "${newStatus}".` });
+  const updateAssetStatus = async (asset: Asset, newStatus: Asset['status']) => {
+    const collectionName = collectionNameMap[asset.assetType];
+    const docRef = doc(db, collectionName, asset.id);
+    try {
+        await updateDoc(docRef, { status: newStatus });
+        setAllAssets(prevAssets => prevAssets.map(a => a.id === asset.id ? { ...a, status: newStatus } : a));
+        toast({ title: "Sucesso!", description: `Status do ativo foi alterado para "${newStatus}".` });
+    } catch (error) {
+        console.error("Error updating asset status: ", error);
+        toast({ title: "Erro", description: "Não foi possível atualizar o status do ativo.", variant: 'destructive' });
+    }
   };
   
   const handleTogglePause = (asset: Asset) => {
     const newStatus: Asset['status'] = (asset.status === 'Ativo' || asset.status === 'Disponível') ? 'Pausado' : 'Disponível';
-    updateAssetStatus(asset.id, asset.assetType, newStatus);
+    updateAssetStatus(asset, newStatus);
   };
   
   const confirmDelete = (asset: Asset) => {
@@ -112,18 +140,23 @@ export default function DashboardPage({
     setAlertOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!assetToDelete) return;
     const { id, assetType } = assetToDelete;
-    const storageKey = `${assetType.replace('-', '_')}s`;
-    const assets: Asset[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const updatedAssets = assets.filter(asset => asset.id !== id);
-    localStorage.setItem(storageKey, JSON.stringify(updatedAssets));
-    fetchAssets();
-    window.dispatchEvent(new Event('storage'));
-    toast({ title: "Ativo Removido", description: "O ativo foi excluído com sucesso." });
-    setAlertOpen(false);
-    setAssetToDelete(null);
+    const collectionName = collectionNameMap[assetType];
+    const docRef = doc(db, collectionName, id);
+
+    try {
+        await deleteDoc(docRef);
+        setAllAssets(prevAssets => prevAssets.filter(a => a.id !== id));
+        toast({ title: "Ativo Removido", description: "O ativo foi excluído com sucesso." });
+    } catch (error) {
+        console.error("Error deleting asset: ", error);
+        toast({ title: "Erro", description: "Não foi possível remover o ativo.", variant: 'destructive' });
+    } finally {
+        setAlertOpen(false);
+        setAssetToDelete(null);
+    }
   };
 
   const getAssetDetails = (asset: Asset) => {
@@ -195,10 +228,16 @@ export default function DashboardPage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allAssets.length > 0 ? allAssets.map((asset) => {
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                            </TableCell>
+                        </TableRow>
+                    ) : allAssets.length > 0 ? allAssets.map((asset) => {
                       const { name, value } = getAssetDetails(asset);
                       return (
-                      <TableRow key={`${asset.id}-${asset.assetType}`}>
+                      <TableRow key={asset.id}>
                         <TableCell className="font-medium">{name}</TableCell>
                         <TableCell><AssetTypeBadge type={asset.assetType}/></TableCell>
                         <TableCell>{value}</TableCell>

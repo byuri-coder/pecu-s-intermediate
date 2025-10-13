@@ -5,6 +5,10 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useRef, useState } from 'react';
 import Image from 'next/image';
+import { getAuth } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
+import { db, app } from '@/lib/firebase';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -69,25 +73,35 @@ export function RegisterRuralLandForm() {
 
 
   const onSubmit = (data: RegisterRuralLandFormValues) => {
-    startTransition(() => {
+    startTransition(async () => {
+        const auth = getAuth(app);
+        const user = auth.currentUser;
+        if (!user) {
+            toast({ title: "Erro de Autenticação", description: "Você precisa estar logado para cadastrar um ativo.", variant: "destructive" });
+            return;
+        }
+
         try {
-            const newLand: RuralLand = {
-                id: `land-${Date.now()}`,
+            // Here you would upload images to Firebase Storage and get the URLs
+            // For now, we'll use placeholder URLs or data URIs if needed, but Firestore doesn't store files directly.
+            const imageUrls = imagePreviews; // In a real app, these would be gs:// URLs from Firebase Storage.
+
+            const newLand: Omit<RuralLand, 'id'> = {
                 title: data.title,
                 description: data.description,
                 owner: data.owner,
                 sizeHa: data.sizeHa,
                 businessType: data.businessType as RuralLand['businessType'],
                 location: data.location,
-                images: imagePreviews, // Use local blob URLs for now
+                images: imageUrls,
                 documentation: 'Em análise',
                 registration: data.registration,
                 price: data.price,
                 status: 'Disponível',
+                ownerId: user.uid,
             };
 
-            const existingLands: RuralLand[] = JSON.parse(localStorage.getItem('rural_lands') || '[]');
-            localStorage.setItem('rural_lands', JSON.stringify([newLand, ...existingLands]));
+            await addDoc(collection(db, "rural-lands"), newLand);
 
             toast({
                 title: "Sucesso!",
@@ -100,7 +114,7 @@ export function RegisterRuralLandForm() {
             console.error("Failed to save rural land:", error);
             toast({
                 title: "Erro",
-                description: "Ocorreu um erro ao salvar a terra rural no seu navegador.",
+                description: "Ocorreu um erro ao salvar a terra rural no banco de dados.",
                 variant: "destructive",
             });
         }

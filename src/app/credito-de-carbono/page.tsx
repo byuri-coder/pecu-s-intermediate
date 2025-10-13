@@ -1,26 +1,42 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { placeholderCredits } from '@/lib/placeholder-data';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { CarbonCredit } from '@/lib/types';
 import { CreditCard } from '@/components/credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 export default function MarketplacePage() {
   const [allCredits, setAllCredits] = useState<CarbonCredit[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This effect runs only on the client-side
-    const localCredits: CarbonCredit[] = JSON.parse(localStorage.getItem('carbon_credits') || '[]');
-    // Combine placeholder data with locally stored data, avoiding duplicates
-    const combined = [...localCredits, ...placeholderCredits.filter(p => !localCredits.some(l => l.id === p.id))];
-    setAllCredits(combined);
-  }, []);
+    const fetchCredits = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "carbon-credits"));
+        const credits: CarbonCredit[] = [];
+        querySnapshot.forEach((doc) => {
+          credits.push({ id: doc.id, ...doc.data() } as CarbonCredit);
+        });
+        setAllCredits(credits);
+      } catch (error) {
+        console.error("Error fetching carbon credits: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const activeCredits = allCredits.filter(c => c.status === 'Ativo');
+    fetchCredits();
+  }, []);
+  
+  const activeCredits = allCredits.filter(c => c.status === 'Ativo' || c.status === 'Disponível');
+
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -81,11 +97,30 @@ export default function MarketplacePage() {
       </section>
       
       <section>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {activeCredits.map((credit) => (
-            <CreditCard key={credit.id} credit={credit} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
+                    <CardContent className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </CardContent>
+                    <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+                </Card>
+            ))}
+          </div>
+        ) : activeCredits.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {activeCredits.map((credit) => (
+              <CreditCard key={credit.id} credit={credit} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>Nenhum crédito de carbono disponível no momento.</p>
+          </div>
+        )}
       </section>
     </div>
   );

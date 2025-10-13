@@ -4,6 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useRef } from 'react';
+import { getAuth } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
+import { db, app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -53,20 +56,30 @@ export function RegisterTaxCreditForm() {
   });
 
   const onSubmit = (data: RegisterTaxCreditFormValues) => {
-    startTransition(() => {
+    startTransition(async () => {
+      const auth = getAuth(app);
+      const user = auth.currentUser;
+
+      if (!user) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Você precisa estar logado para cadastrar um ativo.",
+          variant: "destructive",
+        });
+        return;
+      }
       try {
-        const newCredit: TaxCredit = {
-            id: `tax-${Date.now()}`,
+        const newCredit: Omit<TaxCredit, 'id'> = {
             sellerName: data.sellerName,
             taxType: data.taxType as TaxCredit['taxType'],
             amount: data.amount,
             price: data.price,
             location: data.location,
-            status: 'Disponível'
+            status: 'Disponível',
+            ownerId: user.uid,
         };
-
-        const existingCredits: TaxCredit[] = JSON.parse(localStorage.getItem('tax_credits') || '[]');
-        localStorage.setItem('tax_credits', JSON.stringify([newCredit, ...existingCredits]));
+        
+        await addDoc(collection(db, "tax-credits"), newCredit);
 
         toast({
           title: "Sucesso!",
