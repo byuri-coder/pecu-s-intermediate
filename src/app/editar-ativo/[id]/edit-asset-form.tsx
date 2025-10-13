@@ -18,7 +18,8 @@ type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 // Mock user, in a real app this would come from an auth context.
-const LOGGED_IN_USER_NAME = "Comprador Interessado";
+// Updated to a name that likely matches what the user is entering in forms.
+const LOGGED_IN_USER_NAME = "Seu Nome Completo";
 
 export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
@@ -81,11 +82,8 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
     }
   }
 
-  // A simple check to see if the current user "owns" the asset.
-  const isOwner = ('owner' in asset && asset.owner === LOGGED_IN_USER_NAME) || 
-                  ('sellerName' in asset && asset.sellerName === LOGGED_IN_USER_NAME) || 
-                  // If no owner/seller, assume current user can edit (for new items)
-                  !('owner' in asset) && !('sellerName' in asset);
+  const sellerOrOwnerName = 'owner' in asset ? asset.owner : 'sellerName' in asset ? asset.sellerName : null;
+  const isOwner = sellerOrOwnerName === LOGGED_IN_USER_NAME;
 
 
     if (!isOwner) {
@@ -96,7 +94,7 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
                         <CardTitle>Acesso Negado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p>Você não tem permissão para editar este ativo.</p>
+                        <p>Você não tem permissão para editar este ativo. Apenas o anunciante ({sellerOrOwnerName}) pode fazer alterações.</p>
                          <Button asChild className="mt-4">
                             <Link href="/dashboard">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -140,7 +138,7 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
                             <Input value={editableAsset.title} onChange={(e) => handleAssetFieldChange('title', e.target.value)} />
                         </div>
                     )}
-                    {('price' in editableAsset) && (
+                    {('price' in editableAsset && editableAsset.price !== undefined) && (
                         <div className="space-y-1">
                             <Label>Preço (BRL)</Label>
                             <Input type="number" value={editableAsset.price} onChange={(e) => handleAssetFieldChange('price', parseFloat(e.target.value) || 0)} />
