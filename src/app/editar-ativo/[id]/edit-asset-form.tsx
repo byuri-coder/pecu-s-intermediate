@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import { ArrowLeft, Edit, UploadCloud, Film, Trash2, Loader2, ShieldCheck } from 'lucide-react';
-import { getAuth, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -30,7 +30,6 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
 
   // State for re-authentication
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [authError, setAuthError] = React.useState('');
   const [isAuthPending, setIsAuthPending] = React.useState(false);
@@ -95,16 +94,21 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
       const auth = getAuth(app);
       const user = auth.currentUser;
 
-      if (user && user.email === email) {
+      if (user && user.email) {
           try {
-              // We just try to sign in again as a simple way to verify password
-              await signInWithEmailAndPassword(auth, email, password);
+              const credential = EmailAuthProvider.credential(user.email, password);
+              await reauthenticateWithCredential(user, credential);
               setIsAuthenticated(true);
           } catch(error: any) {
-              setAuthError("Email ou senha inválidos. Tente novamente.");
+              if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                setAuthError("Senha inválida. Tente novamente.");
+              } else {
+                setAuthError("Ocorreu um erro ao verificar sua identidade.");
+                console.error(error);
+              }
           }
       } else {
-          setAuthError("O e-mail informado não corresponde ao do usuário logado.");
+          setAuthError("Não foi possível encontrar um usuário logado.");
       }
       setIsAuthPending(false);
   }
@@ -135,6 +139,8 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
     }
 
   if (!isAuthenticated) {
+    const auth = getAuth(app);
+    const user = auth.currentUser;
     return (
         <div className="container mx-auto max-w-md py-8 px-4 sm:px-6 lg:px-8">
              <div className="mb-6">
@@ -152,18 +158,18 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
                         Confirme sua Identidade
                     </CardTitle>
                     <CardDescription>
-                        Para sua segurança, por favor, insira seu e-mail e senha para continuar.
+                        Para sua segurança, por favor, confirme sua senha para continuar.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleReauthenticate} className="space-y-4">
                         <div className="space-y-1">
                             <Label htmlFor="auth-email">Email</Label>
-                            <Input id="auth-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu.email@exemplo.com"/>
+                            <Input id="auth-email" type="email" value={user?.email || ''} required readOnly disabled className="bg-muted"/>
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="auth-password">Senha</Label>
-                            <Input id="auth-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
+                            <Input id="auth-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" autoFocus/>
                         </div>
                         {authError && <p className="text-sm font-medium text-destructive">{authError}</p>}
                         <Button type="submit" className="w-full" disabled={isAuthPending}>
