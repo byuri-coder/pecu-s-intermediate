@@ -1,20 +1,18 @@
-import admin from 'firebase-admin';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
-// Esta configuração de inicialização presume que a variável de ambiente
-// FIREBASE_KEY (como uma string JSON) está configurada no ambiente do servidor.
-// Em um ambiente de desenvolvimento local, você pode precisar apontar para a chave de serviço.
+const firebaseConfig = {
+  apiKey: "AIzaSyAFH8O36DKxdui3CClrJqkgEf_2YgsTOT0",
+  authDomain: "pecus-intermediate.firebaseapp.com",
+  databaseURL: "https://pecus-intermediate-default-rtdb.firebaseio.com",
+  projectId: "pecus-intermediate",
+  storageBucket: "pecus-intermediate.appspot.com",
+  messagingSenderId: "667966942508",
+  appId: "1:667966942508:web:df881058a5e69464175089"
+};
 
-const serviceAccountKeyString = process.env.FIREBASE_KEY;
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
 
-if (serviceAccountKeyString && !admin.apps.length) {
-  try {
-    const serviceAccount = JSON.parse(serviceAccountKeyString);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-    });
-  } catch (e) {
-    console.error("Failed to parse FIREBASE_KEY or initialize Firebase Admin", e);
-  }
-}
-
-export const firebaseAdmin = admin;
+export { app, db };

@@ -7,7 +7,7 @@ import { useTransition, useRef, useState } from 'react';
 import Image from 'next/image';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
+import { db } from '@/lib/firebaseAdmin';
 
 
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,7 @@ export function RegisterRuralLandForm() {
 
   const onSubmit = (data: RegisterRuralLandFormValues) => {
     startTransition(async () => {
-        const auth = getAuth(app);
+        const auth = getAuth();
         const user = auth.currentUser;
         if (!user) {
             toast({ title: "Erro de Autenticação", description: "Você precisa estar logado para cadastrar um ativo.", variant: "destructive" });

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useTransition, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
+import { db } from '@/lib/firebaseAdmin';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -57,7 +57,7 @@ export function RegisterTaxCreditForm() {
 
   const onSubmit = (data: RegisterTaxCreditFormValues) => {
     startTransition(async () => {
-      const auth = getAuth(app);
+      const auth = getAuth();
       const user = auth.currentUser;
 
       if (!user) {
@@ -91,7 +91,7 @@ export function RegisterTaxCreditForm() {
          console.error("Failed to save tax credit:", error);
          toast({
             title: "Erro",
-            description: "Ocorreu um erro ao salvar o crédito tributário no seu navegador.",
+            description: "Ocorreu um erro ao salvar o crédito tributário no banco de dados.",
             variant: "destructive",
         });
       }

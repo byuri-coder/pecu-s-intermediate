@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useTransition, useState, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
+import { db } from '@/lib/firebaseAdmin';
 
 
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,7 @@ export function RegisterCreditForm() {
 
   const onSubmit = (data: RegisterCreditFormValues) => {
     startTransition(async () => {
-      const auth = getAuth(app);
+      const auth = getAuth();
       const user = auth.currentUser;
 
       if (!user) {
