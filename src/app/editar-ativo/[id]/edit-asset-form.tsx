@@ -18,9 +18,6 @@ import { app } from '@/lib/firebase';
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 
-// Mock user, in a real app this would come from an auth context.
-const LOGGED_IN_USER_NAME = "Seu Nome Completo";
-
 export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -112,31 +109,6 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
       }
       setIsAuthPending(false);
   }
-
-  const sellerOrOwnerName = 'owner' in asset ? asset.owner : 'sellerName' in asset ? asset.sellerName : null;
-  const isOwner = sellerOrOwnerName === LOGGED_IN_USER_NAME;
-
-
-    if (!isOwner) {
-        return (
-            <div className="container mx-auto py-12">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Acesso Negado</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>Você não tem permissão para editar este ativo. Apenas o anunciante ({sellerOrOwnerName}) pode fazer alterações.</p>
-                         <Button asChild className="mt-4">
-                            <Link href="/dashboard">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Voltar ao Dashboard
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
 
   if (!isAuthenticated) {
     const auth = getAuth(app);
