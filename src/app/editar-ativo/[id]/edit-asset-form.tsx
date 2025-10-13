@@ -11,14 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
-import { ArrowLeft, Edit, UploadCloud, Film, Trash2 } from 'lucide-react';
-
+import { ArrowLeft, Edit, UploadCloud, Film, Trash2, Loader2, ShieldCheck } from 'lucide-react';
+import { getAuth, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 // Mock user, in a real app this would come from an auth context.
-// Updated to a name that likely matches what the user is entering in forms.
 const LOGGED_IN_USER_NAME = "Seu Nome Completo";
 
 export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
@@ -27,6 +27,13 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
   
   const [editableAsset, setEditableAsset] = React.useState(asset);
   const [mediaFiles, setMediaFiles] = React.useState<(File|string)[]>(('images' in asset && asset.images) ? asset.images : []);
+
+  // State for re-authentication
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [authError, setAuthError] = React.useState('');
+  const [isAuthPending, setIsAuthPending] = React.useState(false);
 
   const handleAssetFieldChange = (field: keyof Asset, value: any) => {
     setEditableAsset(prev => ({...prev, [field]: value }));
@@ -61,7 +68,6 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
         const assetsFromStorage: Asset[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
         const updatedAssets = assetsFromStorage.map(a => a.id === asset.id ? updatedAsset : a);
         
-        // If the asset wasn't in local storage (was a placeholder), add it.
         if (!assetsFromStorage.some(a => a.id === asset.id)) {
             updatedAssets.push(updatedAsset);
         }
@@ -80,6 +86,27 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
         toast({ title: "Erro", description: "Não foi possível salvar as alterações.", variant: 'destructive'});
         console.error(e);
     }
+  }
+
+  const handleReauthenticate = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setAuthError('');
+      setIsAuthPending(true);
+      const auth = getAuth(app);
+      const user = auth.currentUser;
+
+      if (user && user.email === email) {
+          try {
+              // We just try to sign in again as a simple way to verify password
+              await signInWithEmailAndPassword(auth, email, password);
+              setIsAuthenticated(true);
+          } catch(error: any) {
+              setAuthError("Email ou senha inválidos. Tente novamente.");
+          }
+      } else {
+          setAuthError("O e-mail informado não corresponde ao do usuário logado.");
+      }
+      setIsAuthPending(false);
   }
 
   const sellerOrOwnerName = 'owner' in asset ? asset.owner : 'sellerName' in asset ? asset.sellerName : null;
@@ -106,6 +133,48 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
             </div>
         );
     }
+
+  if (!isAuthenticated) {
+    return (
+        <div className="container mx-auto max-w-md py-8 px-4 sm:px-6 lg:px-8">
+             <div className="mb-6">
+                <Button variant="outline" asChild>
+                    <Link href="/dashboard">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Voltar para o Gerenciamento
+                    </Link>
+                </Button>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-2xl font-bold font-headline flex items-center gap-3">
+                        <ShieldCheck className="h-7 w-7" />
+                        Confirme sua Identidade
+                    </CardTitle>
+                    <CardDescription>
+                        Para sua segurança, por favor, insira seu e-mail e senha para continuar.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleReauthenticate} className="space-y-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="auth-email">Email</Label>
+                            <Input id="auth-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu.email@exemplo.com"/>
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="auth-password">Senha</Label>
+                            <Input id="auth-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
+                        </div>
+                        {authError && <p className="text-sm font-medium text-destructive">{authError}</p>}
+                        <Button type="submit" className="w-full" disabled={isAuthPending}>
+                            {isAuthPending ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Confirmar e Editar'}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
 
   return (
