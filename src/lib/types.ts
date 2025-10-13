@@ -10,7 +10,7 @@ export type CarbonCredit = {
   vintage: string; // Year
   standard: string;
   projectOverview: string;
-  status: 'Ativo' | 'Pausado' | 'Vendido';
+  status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível';
 };
 
 export type TaxCredit = {

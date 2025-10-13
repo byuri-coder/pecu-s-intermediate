@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified, Fingerprint } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified, Fingerprint, Trash2, Video, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, CompletedDeal } from '@/lib/types';
@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { numberToWords } from '@/lib/number-to-words';
 import { Seal } from '@/components/ui/seal';
+import Image from 'next/image';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -392,7 +393,15 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
                 const item = window.localStorage.getItem(key);
                 const initialValue = typeof initialState === 'function' ? (initialState as () => T)() : initialState;
                 if (item) {
-                    setState(JSON.parse(item));
+                    // For the specific tax-001 asset, force the seller agreement to true on initialization
+                    if (key.includes('tax-001_sellerAgrees')) {
+                        setState(true);
+                    } else if (key.includes('tax-001_buyerAgrees')) {
+                        setState(true);
+                    }
+                    else {
+                        setState(JSON.parse(item));
+                    }
                 } else {
                      setState(initialValue);
                 }
@@ -510,6 +519,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     `${negotiationId}_buyerAgrees`, 
     () => asset.id === 'tax-001'
   );
+
   const [isFinalized, setFinalized] = usePersistentState(`${negotiationId}_isFinalized`, false);
   const [isTransactionComplete, setTransactionComplete] = usePersistentState(`${negotiationId}_isTransactionComplete`, false);
 
@@ -525,6 +535,49 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const [paymentMethod, setPaymentMethod] = usePersistentState<'vista' | 'parcelado'>(`${negotiationId}_paymentMethod`, 'vista');
   const [numberOfInstallments, setNumberOfInstallments] = usePersistentState(`${negotiationId}_installments`, '2');
   const [duplicates, setDuplicates] = usePersistentState<Duplicata[]>(`${negotiationId}_duplicates`, []);
+
+  const [editableAsset, setEditableAsset] = React.useState(asset);
+  const [mediaFiles, setMediaFiles] = React.useState<(File|string)[]>(('images' in asset && asset.images) ? asset.images : []);
+
+  const handleAssetFieldChange = (field: keyof Asset, value: any) => {
+    setEditableAsset(prev => ({...prev, [field]: value }));
+  };
+
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const newImagePreviews = newFiles.map(file => URL.createObjectURL(file));
+      setMediaFiles(prev => [...prev, ...newImagePreviews]);
+    }
+  };
+  
+  const removeMedia = (index: number) => {
+    const file = mediaFiles[index];
+    if (typeof file === 'string' && file.startsWith('blob:')) {
+        URL.revokeObjectURL(file);
+    }
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleSaveAssetChanges = () => {
+    try {
+        const updatedAsset = { ...editableAsset, images: mediaFiles };
+        const storageKey = `${assetType.replace('-', '_')}s`;
+        const assets: Asset[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const updatedAssets = assets.map(a => a.id === asset.id ? updatedAsset : a);
+        localStorage.setItem(storageKey, JSON.stringify(updatedAssets));
+        window.dispatchEvent(new Event('storage'));
+        toast({
+            title: "Sucesso!",
+            description: "As alterações no ativo foram salvas.",
+        });
+    } catch(e) {
+        toast({ title: "Erro", description: "Não foi possível salvar as alterações.", variant: 'destructive'});
+        console.error(e);
+    }
+  }
+
 
   const getNextInvoiceNumber = () => {
     if (typeof window === 'undefined') return '000001';
@@ -1099,6 +1152,79 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     </CardDescription>
                 </CardHeader>
             </Card>
+            
+            {assetType === 'rural-land' && !isFinalized && (
+                <Card>
+                    <CardHeader>
+                         <CardTitle className="flex items-center gap-2"><Edit className="h-5 w-5"/> Editar Detalhes do Ativo</CardTitle>
+                         <CardDescription>Modifique as informações e mídias do seu ativo. Clique em salvar para atualizar.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <Label>Título do Anúncio</Label>
+                                <Input value={editableAsset.title} onChange={(e) => handleAssetFieldChange('title', e.target.value)} />
+                            </div>
+                             <div className="space-y-1">
+                                <Label>Preço (BRL)</Label>
+                                <Input type="number" value={editableAsset.price} onChange={(e) => handleAssetFieldChange('price', parseFloat(e.target.value))} />
+                            </div>
+                             <div className="md:col-span-2 space-y-1">
+                                <Label>Descrição</Label>
+                                <Textarea value={editableAsset.description} onChange={(e) => handleAssetFieldChange('description', e.target.value)} rows={4} />
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                             <Label>Mídia da Propriedade (Fotos e Vídeos)</Label>
+                             <div 
+                                className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+                                onClick={() => document.getElementById('media-upload-input')?.click()}>
+                                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <p className="mt-4 text-sm text-muted-foreground">Clique para adicionar fotos ou vídeos</p>
+                                <p className="text-xs text-muted-foreground/70">JPG, PNG, MP4 (máx. 30MB)</p>
+                                <Input 
+                                    id="media-upload-input"
+                                    type="file" 
+                                    className="hidden" 
+                                    multiple 
+                                    onChange={handleMediaFileChange}
+                                    accept="image/jpeg,image/png,video/mp4"
+                                />
+                            </div>
+                            {mediaFiles.length > 0 && (
+                                <div>
+                                <h4 className="font-medium mb-2">Mídias Atuais:</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {mediaFiles.map((file, index) => {
+                                        const isVideo = (typeof file === 'string' && file.startsWith('blob:video')) || (typeof file !== 'string' && file.type.startsWith('video'));
+                                        const src = typeof file === 'string' ? file : URL.createObjectURL(file);
+                                        return (
+                                            <div key={index} className="relative aspect-video rounded-md overflow-hidden group bg-secondary">
+                                                {isVideo ? (
+                                                    <video src={src} className="w-full h-full object-cover" muted loop playsInline />
+                                                ) : (
+                                                    <Image src={src} alt={`Preview ${index}`} fill className="object-cover" />
+                                                )}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                    {isVideo && <Film className="h-6 w-6 text-white absolute top-2 left-2" />}
+                                                    <Button variant="destructive" size="icon" onClick={() => removeMedia(index)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-end">
+                            <Button onClick={handleSaveAssetChanges}>Salvar Alterações do Ativo</Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-6">
