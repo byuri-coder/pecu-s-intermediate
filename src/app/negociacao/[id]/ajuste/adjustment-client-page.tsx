@@ -390,14 +390,16 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
         if (typeof window !== 'undefined') {
             try {
                 const item = window.localStorage.getItem(key);
+                // The initialState is a function, so we call it to get the value.
+                const initialValue = typeof initialState === 'function' ? initialState() : initialState;
                 if (item) {
                     setState(JSON.parse(item));
                 } else {
-                     setState(initialState);
+                     setState(initialValue);
                 }
             } catch (error) {
                 console.error(error);
-                setState(initialState);
+                setState(typeof initialState === 'function' ? initialState() : initialState);
             } finally {
                 isInitialized.current = true;
             }
@@ -503,7 +505,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const [sellerAgrees, setSellerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_sellerAgrees`, 
-    asset.id === 'tax-001' ? true : false
+    () => asset.id === 'tax-001'
   );
   const [buyerAgrees, setBuyerAgrees] = usePersistentState<boolean>(
     `${negotiationId}_buyerAgrees`, 
