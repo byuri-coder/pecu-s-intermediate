@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition, useRef } from 'react';
+import { useTransition, useRef, useState } from 'react';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,9 +19,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, Loader2 } from 'lucide-react';
+import { UploadCloud, Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { placeholderRuralLands } from '@/lib/placeholder-data';
 import type { RuralLand } from '@/lib/types';
 
 
@@ -41,6 +41,8 @@ export function RegisterRuralLandForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const form = useForm<RegisterRuralLandFormValues>({
     resolver: zodResolver(registerRuralLandSchema),
@@ -48,6 +50,23 @@ export function RegisterRuralLandForm() {
       businessType: 'Venda',
     },
   });
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const newImagePreviews = newFiles.map(file => URL.createObjectURL(file));
+      setImageFiles(prev => [...prev, ...newFiles]);
+      setImagePreviews(prev => [...prev, ...newImagePreviews]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
 
   const onSubmit = (data: RegisterRuralLandFormValues) => {
     startTransition(() => {
@@ -60,7 +79,7 @@ export function RegisterRuralLandForm() {
                 sizeHa: data.sizeHa,
                 businessType: data.businessType as RuralLand['businessType'],
                 location: data.location,
-                images: ['https://picsum.photos/seed/new-land/800/600'],
+                images: imagePreviews, // Use local blob URLs for now
                 documentation: 'Em análise',
                 registration: data.registration,
                 price: data.price,
@@ -75,6 +94,8 @@ export function RegisterRuralLandForm() {
                 description: "Terra Rural cadastrada com sucesso e disponível no marketplace!",
             });
             form.reset();
+            setImageFiles([]);
+            setImagePreviews([]);
         } catch (error) {
             console.error("Failed to save rural land:", error);
             toast({
@@ -135,7 +156,7 @@ export function RegisterRuralLandForm() {
         </section>
 
         <section>
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Documentação e Imagens</h3>
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Fotos e Documentos</h3>
            <div className="space-y-4">
               <div 
                 className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
@@ -143,8 +164,36 @@ export function RegisterRuralLandForm() {
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
                 <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG), Documentos (PDF)</p>
-                <Input ref={fileInputRef} type="file" className="hidden" multiple />
+                <Input 
+                    ref={fileInputRef} 
+                    type="file" 
+                    className="hidden" 
+                    multiple 
+                    onChange={handleFileChange}
+                    accept="image/jpeg,image/png,application/pdf"
+                />
               </div>
+              {imagePreviews.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Imagens Selecionadas:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {imagePreviews.map((src, index) => (
+                      <div key={index} className="relative aspect-video rounded-md overflow-hidden group">
+                        <Image src={src} alt={`Preview ${index}`} fill className="object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button 
+                            variant="destructive" 
+                            size="icon"
+                            onClick={() => removeImage(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">Envie fotos da propriedade, mapa georreferenciado, CAR, e outros documentos relevantes para agilizar a análise.</p>
            </div>
         </section>

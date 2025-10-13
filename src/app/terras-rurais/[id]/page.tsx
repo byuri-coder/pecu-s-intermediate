@@ -65,11 +65,11 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: Fingerprint, label: 'Inscrição/Matrícula', value: land.registration },
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
-
-  const carouselImages = Array.from({ length: 3 }).map((_, index) => {
-    const seed = `${land.id}-${index}`;
-    return `https://picsum.photos/seed/${seed}/1200/675`;
-  });
+  
+  // Use images from the object, or fall back to placeholders if empty
+  const carouselImages = land.images.length > 0 
+    ? land.images 
+    : Array.from({ length: 3 }).map((_, index) => `https://picsum.photos/seed/${land.id}-${index}/1200/675`);
 
 
   return (
