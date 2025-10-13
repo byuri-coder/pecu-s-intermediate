@@ -101,6 +101,35 @@
         }
       },
       "required": ["action", "timestamp"]
+    },
+    "Negotiation": {
+      "title": "Negotiation",
+      "description": "Represents the state of a negotiation for an asset.",
+      "type": "object",
+      "properties": {
+        "assetId": { "type": "string" },
+        "assetType": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "sellerEmail": { "type": "string" },
+        "buyerEmail": { "type": "string" },
+        "sellerAgrees": { "type": "boolean" },
+        "buyerAgrees": { "type": "boolean" },
+        "isFinalized": { "type": "boolean" },
+        "isTransactionComplete": { "type": "boolean" },
+        "paymentMethod": { "type": "string", "enum": ["vista", "parcelado"] },
+        "numberOfInstallments": { "type": "string" },
+        "authStatus": {
+          "type": "object",
+          "properties": {
+            "buyer": { "type": "string", "enum": ["pending", "validated", "expired"] },
+            "seller": { "type": "string", "enum": ["pending", "validated", "expired"] }
+          }
+        },
+        "contractFields": {
+          "type": "object"
+        }
+      }
     }
   },
   "auth": {
@@ -130,6 +159,12 @@
         "$ref": "#/entities/AuditLog"
       },
       "description": "Subcollection for audit trail entries for a user."
+    },
+    "/negociacoes/{negotiationId}": {
+      "schema": {
+        "$ref": "#/entities/Negotiation"
+      },
+      "description": "Stores the state of a negotiation for an asset."
     }
   }
 }
