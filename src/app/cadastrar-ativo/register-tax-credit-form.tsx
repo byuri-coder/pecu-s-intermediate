@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -77,6 +77,7 @@ export function RegisterTaxCreditForm() {
             location: data.location,
             status: 'Disponível',
             ownerId: user.uid,
+            createdAt: serverTimestamp(),
         };
         
         await addDoc(collection(db, "tax-credits"), newCredit);

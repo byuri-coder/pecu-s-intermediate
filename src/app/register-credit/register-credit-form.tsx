@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, app } from '@/lib/firebase';
 
 
@@ -96,6 +96,7 @@ export function RegisterCreditForm() {
             projectOverview: 'Visão geral do projeto a ser preenchida.',
             status: 'Ativo',
             ownerId: user.uid,
+            createdAt: serverTimestamp(),
         };
 
         await addDoc(collection(db, "carbon-credits"), newCredit);

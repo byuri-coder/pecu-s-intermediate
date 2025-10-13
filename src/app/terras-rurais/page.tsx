@@ -1,41 +1,76 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, query, orderBy, limit, startAfter, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { RuralLand } from '@/lib/types';
 import { RuralLandCard } from '@/components/rural-land-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
+const PAGE_SIZE = 8;
+
 export default function RuralLandsMarketplacePage() {
-  const [allLands, setAllLands] = useState<RuralLand[]>([]);
+  const [lands, setLands] = useState<RuralLand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchLands = useCallback(async (loadMore = false) => {
+    if (loadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    
+    try {
+      let q = query(
+        collection(db, "rural-lands"),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE)
+      );
+
+      if (loadMore && lastVisible) {
+        q = query(
+          collection(db, "rural-lands"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const newLands: RuralLand[] = [];
+      querySnapshot.forEach((doc) => {
+        newLands.push({ id: doc.id, ...doc.data() } as RuralLand);
+      });
+      
+      const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisible(newLastVisible);
+      
+      if(querySnapshot.docs.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+
+      setLands(prev => loadMore ? [...prev, ...newLands] : newLands);
+    } catch (error) {
+      console.error("Error fetching rural lands: ", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [lastVisible]);
 
   useEffect(() => {
-    const fetchLands = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "rural-lands"));
-        const lands: RuralLand[] = [];
-        querySnapshot.forEach((doc) => {
-          lands.push({ id: doc.id, ...doc.data() } as RuralLand);
-        });
-        setAllLands(lands);
-      } catch (error) {
-        console.error("Error fetching rural lands: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchLands();
-  }, []);
+    fetchLands(false);
+  }, []); // initial fetch
 
-  const availableLands = allLands.filter(c => c.status === 'Disponível' || c.status === 'Negociando');
+  const availableLands = lands.filter(c => c.status === 'Disponível' || c.status === 'Negociando');
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -84,7 +119,7 @@ export default function RuralLandsMarketplacePage() {
       <section>
          {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
                 <Card key={i}>
                     <Skeleton className="h-40 w-full" />
                     <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
@@ -97,11 +132,20 @@ export default function RuralLandsMarketplacePage() {
             ))}
           </div>
         ) : availableLands.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {availableLands.map((land) => (
-              <RuralLandCard key={land.id} land={land} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {availableLands.map((land) => (
+                <RuralLandCard key={land.id} land={land} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <Button onClick={() => fetchLands(true)} disabled={loadingMore}>
+                  {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Carregar Mais'}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
            <div className="col-span-full text-center py-12 text-muted-foreground">
               <p>Nenhuma terra rural disponível no momento.</p>

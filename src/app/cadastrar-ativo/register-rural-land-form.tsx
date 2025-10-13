@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useTransition, useRef, useState } from 'react';
 import Image from 'next/image';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, app } from '@/lib/firebase';
 
 
@@ -99,6 +99,7 @@ export function RegisterRuralLandForm() {
                 price: data.price,
                 status: 'Disponível',
                 ownerId: user.uid,
+                createdAt: serverTimestamp(),
             };
 
             await addDoc(collection(db, "rural-lands"), newLand);
@@ -133,16 +134,16 @@ export function RegisterRuralLandForm() {
             <FormField name="owner" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Nome do Proprietário</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-             <FormField name="registration" control={form.control} render={({ field }) => (
+             <FormField name="registration" control={form.control} render={({ field })_ => (
               <FormItem><FormLabel>Matrícula ou Inscrição</FormLabel><FormControl><Input {...field} placeholder="Ex: CRI 12.345-6" /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="location" control={form.control} render={({ field }) => (
+            <FormField name="location" control={form.control} render={({ field })_ => (
               <FormItem><FormLabel>Localização</FormLabel><FormControl><Input {...field} placeholder="Município, Estado" /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="sizeHa" control={form.control} render={({ field }) => (
+            <FormField name="sizeHa" control={form.control} render={({ field })_ => (
               <FormItem><FormLabel>Área (Hectares)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="businessType" control={form.control} render={({ field }) => (
+            <FormField name="businessType" control={form.control} render={({ field })_ => (
               <FormItem><FormLabel>Tipo de Negócio</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
@@ -155,7 +156,7 @@ export function RegisterRuralLandForm() {
                 </Select>
               <FormMessage /></FormItem>
             )} />
-             <FormField name="price" control={form.control} render={({ field }) => (
+             <FormField name="price" control={form.control} render={({ field })_ => (
                 <FormItem>
                     <FormLabel>Preço (BRL)</FormLabel>
                     <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
@@ -163,7 +164,7 @@ export function RegisterRuralLandForm() {
                     <FormMessage />
                 </FormItem>
             )} />
-            <FormField name="description" control={form.control} render={({ field }) => (
+            <FormField name="description" control={form.control} render={({ field })_ => (
               <FormItem className="md:col-span-2"><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea {...field} rows={5} placeholder="Descreva a propriedade, sua infraestrutura, aptidão (gado, soja, etc.), recursos hídricos e outros detalhes relevantes." /></FormControl><FormMessage /></FormItem>
             )} />
           </div>

@@ -1,40 +1,77 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, query, orderBy, limit, startAfter, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { TaxCredit } from '@/lib/types';
 import { TaxCreditCard } from '@/components/tax-credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
+const PAGE_SIZE = 8;
+
 export default function TaxCreditsMarketplacePage() {
-  const [allCredits, setAllCredits] = useState<TaxCredit[]>([]);
+  const [credits, setCredits] = useState<TaxCredit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchCredits = useCallback(async (loadMore = false) => {
+    if (loadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      let q = query(
+        collection(db, "tax-credits"),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE)
+      );
+
+      if (loadMore && lastVisible) {
+        q = query(
+          collection(db, "tax-credits"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const newCredits: TaxCredit[] = [];
+      querySnapshot.forEach((doc) => {
+        newCredits.push({ id: doc.id, ...doc.data() } as TaxCredit);
+      });
+      
+      const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisible(newLastVisible);
+      
+      if(querySnapshot.docs.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+
+      setCredits(prev => loadMore ? [...prev, ...newCredits] : newCredits);
+
+    } catch (error) {
+      console.error("Error fetching tax credits: ", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [lastVisible]);
+  
 
   useEffect(() => {
-     const fetchCredits = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "tax-credits"));
-        const credits: TaxCredit[] = [];
-        querySnapshot.forEach((doc) => {
-          credits.push({ id: doc.id, ...doc.data() } as TaxCredit);
-        });
-        setAllCredits(credits);
-      } catch (error) {
-        console.error("Error fetching tax credits: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCredits();
+    fetchCredits(false);
   }, []);
 
-  const availableCredits = allCredits.filter(
+  const availableCredits = credits.filter(
     c => (c.status === 'Disponível' || c.status === 'Negociando') &&
          c.taxType === 'ICMS' &&
          c.location.includes('SP')
@@ -78,7 +115,7 @@ export default function TaxCreditsMarketplacePage() {
       <section>
         {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
+                {[...Array(8)].map((_, i) => (
                     <Card key={i}>
                         <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
                         <CardContent className="space-y-2">
@@ -90,11 +127,20 @@ export default function TaxCreditsMarketplacePage() {
                 ))}
             </div>
         ) : availableCredits.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {availableCredits.map((credit) => (
-                    <TaxCreditCard key={credit.id} credit={credit} />
-                ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {availableCredits.map((credit) => (
+                      <TaxCreditCard key={credit.id} credit={credit} />
+                  ))}
+              </div>
+              {hasMore && (
+                <div className="mt-8 flex justify-center">
+                  <Button onClick={() => fetchCredits(true)} disabled={loadingMore}>
+                    {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Carregar Mais'}
+                  </Button>
+                </div>
+              )}
+            </>
         ) : (
            <div className="col-span-full text-center py-12 text-muted-foreground">
               <p>Nenhum crédito de ICMS de São Paulo disponível no momento.</p>

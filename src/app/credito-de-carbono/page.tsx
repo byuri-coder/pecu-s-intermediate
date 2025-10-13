@@ -1,41 +1,78 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, query, orderBy, limit, startAfter, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { CarbonCredit } from '@/lib/types';
 import { CreditCard as CreditCardComponent } from '@/components/credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
+const PAGE_SIZE = 8;
+
 export default function MarketplacePage() {
-  const [allCredits, setAllCredits] = useState<CarbonCredit[]>([]);
+  const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchCredits = useCallback(async (loadMore = false) => {
+    if (loadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      let q = query(
+        collection(db, "carbon-credits"),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE)
+      );
+
+      if (loadMore && lastVisible) {
+        q = query(
+          collection(db, "carbon-credits"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const newCredits: CarbonCredit[] = [];
+      querySnapshot.forEach((doc) => {
+        newCredits.push({ id: doc.id, ...doc.data() } as CarbonCredit);
+      });
+
+      const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisible(newLastVisible);
+      
+      if(querySnapshot.docs.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+
+      setCredits(prev => loadMore ? [...prev, ...newCredits] : newCredits);
+
+    } catch (error) {
+      console.error("Error fetching carbon credits: ", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [lastVisible]);
+
 
   useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "carbon-credits"));
-        const credits: CarbonCredit[] = [];
-        querySnapshot.forEach((doc) => {
-          credits.push({ id: doc.id, ...doc.data() } as CarbonCredit);
-        });
-        setAllCredits(credits);
-      } catch (error) {
-        console.error("Error fetching carbon credits: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchCredits(false);
+  }, []); // Note: fetchCredits is wrapped in useCallback, so this is safe.
 
-    fetchCredits();
-  }, []);
-  
-  const activeCredits = allCredits.filter(c => c.status === 'Ativo' || c.status === 'Disponível');
+  const activeCredits = credits.filter(c => c.status === 'Ativo' || c.status === 'Disponível');
 
 
   return (
@@ -99,7 +136,7 @@ export default function MarketplacePage() {
       <section>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
                 <Card key={i}>
                     <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
                     <CardContent className="space-y-2">
@@ -111,11 +148,20 @@ export default function MarketplacePage() {
             ))}
           </div>
         ) : activeCredits.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {activeCredits.map((credit) => (
-              <CreditCardComponent key={credit.id} credit={credit} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {activeCredits.map((credit) => (
+                <CreditCardComponent key={credit.id} credit={credit} />
+              ))}
+            </div>
+             {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <Button onClick={() => fetchCredits(true)} disabled={loadingMore}>
+                  {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Carregar Mais'}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <p>Nenhum crédito de carbono disponível no momento.</p>

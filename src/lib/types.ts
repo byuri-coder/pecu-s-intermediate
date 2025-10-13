@@ -12,6 +12,7 @@ export type CarbonCredit = {
   projectOverview: string;
   status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível';
   ownerId: string;
+  createdAt: any; // Firestore ServerTimestamp
 };
 
 export type TaxCredit = {
@@ -23,6 +24,7 @@ export type TaxCredit = {
   location: string;
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
+  createdAt: any; // Firestore ServerTimestamp
 };
 
 export type RuralLand = {
@@ -39,6 +41,7 @@ export type RuralLand = {
   price?: number; // Optional, might not apply to all business types
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
+  createdAt: any; // Firestore ServerTimestamp
 };
 
 export type Operation = {
