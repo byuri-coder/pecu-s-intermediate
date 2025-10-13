@@ -134,16 +134,16 @@ export function RegisterRuralLandForm() {
             <FormField name="owner" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Nome do Proprietário</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-             <FormField name="registration" control={form.control} render={({ field })_ => (
+             <FormField name="registration" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Matrícula ou Inscrição</FormLabel><FormControl><Input {...field} placeholder="Ex: CRI 12.345-6" /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="location" control={form.control} render={({ field })_ => (
+            <FormField name="location" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Localização</FormLabel><FormControl><Input {...field} placeholder="Município, Estado" /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="sizeHa" control={form.control} render={({ field })_ => (
+            <FormField name="sizeHa" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Área (Hectares)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField name="businessType" control={form.control} render={({ field })_ => (
+            <FormField name="businessType" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Tipo de Negócio</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
@@ -156,7 +156,7 @@ export function RegisterRuralLandForm() {
                 </Select>
               <FormMessage /></FormItem>
             )} />
-             <FormField name="price" control={form.control} render={({ field })_ => (
+             <FormField name="price" control={form.control} render={({ field }) => (
                 <FormItem>
                     <FormLabel>Preço (BRL)</FormLabel>
                     <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
@@ -164,7 +164,7 @@ export function RegisterRuralLandForm() {
                     <FormMessage />
                 </FormItem>
             )} />
-            <FormField name="description" control={form.control} render={({ field })_ => (
+            <FormField name="description" control={form.control} render={({ field }) => (
               <FormItem className="md:col-span-2"><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea {...field} rows={5} placeholder="Descreva a propriedade, sua infraestrutura, aptidão (gado, soja, etc.), recursos hídricos e outros detalhes relevantes." /></FormControl><FormMessage /></FormItem>
             )} />
           </div>
