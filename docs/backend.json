@@ -1,106 +1,62 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile information.",
+    "User": {
+      "title": "User",
+      "description": "Represents a user's account and profile information.",
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The user's email address."
-        },
-        "displayName": {
-          "type": "string",
-          "description": "The user's display name."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the user profile was created."
-        }
+        "name": { "type": "string", "description": "The user's full name." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "role": { "type": "string", "enum": ["seller", "buyer", "admin"], "description": "The user's role in the platform." },
+        "verified": { "type": "boolean", "description": "Indicates if the user's email is verified." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "createdAt"]
+      "required": ["name", "email", "role", "createdAt"]
     },
-    "Asset": {
-      "title": "Asset",
-      "description": "Represents a generic asset listed by a user.",
+    "Listing": {
+      "title": "Listing",
+      "description": "Represents a generic marketplace listing.",
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["carbon-credit", "tax-credit", "rural-land"],
-          "description": "The type of the asset."
-        },
-        "details": {
-          "type": "object",
-          "description": "The specific details of the asset."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["available", "in-negotiation", "sold"],
-          "description": "The current status of the asset."
-        }
+        "sellerId": { "type": "string", "description": "The ID of the user who created the listing." },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string", "enum": ["carbon-credit", "tax-credit", "rural-land"] },
+        "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "status": { "type": "string", "enum": ["active", "pending", "sold", "paused"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["type", "details", "createdAt", "status"]
+      "required": ["sellerId", "title", "price", "category", "status", "createdAt"]
     },
-    "Contract": {
-      "title": "Contract",
-      "description": "Represents a negotiation contract between users.",
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Records a completed transaction between a buyer and a seller.",
       "type": "object",
       "properties": {
-        "assetId": {
-          "type": "string",
-          "description": "The ID of the asset being negotiated."
-        },
-        "buyerId": {
-          "type": "string",
-          "description": "The UID of the buyer."
-        },
-        "sellerId": {
-          "type": "string",
-          "description": "The UID of the seller."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["draft", "signed", "completed", "cancelled"],
-          "description": "The status of the contract."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "buyerId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "value": { "type": "number" },
+        "type": { "type": "string", "enum": ["venda", "arrendamento", "permuta"] },
+        "status": { "type": "string", "enum": ["completed", "pending", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["assetId", "buyerId", "sellerId", "status", "createdAt"]
+      "required": ["buyerId", "sellerId", "listingId", "value", "type", "status", "createdAt"]
     },
     "AuditLog": {
       "title": "Audit Log",
       "description": "Represents an audit log entry for a user's actions.",
       "type": "object",
       "properties": {
-        "action": {
-          "type": "string",
-          "description": "The action performed by the user."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp of the action."
-        },
-        "details": {
-          "type": "object",
-          "description": "Additional details about the audit event."
-        }
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" }
       },
-      "required": ["action", "timestamp"]
+      "required": ["userId", "action", "timestamp"]
     },
     "Negotiation": {
       "title": "Negotiation",
@@ -136,29 +92,29 @@
     "providers": ["email"]
   },
   "firestore": {
-    "/usuarios/{userId}": {
+    "/users/{userId}": {
       "schema": {
-        "$ref": "#/entities/UserProfile"
+        "$ref": "#/entities/User"
       },
-      "description": "Stores public profile information for each user, identified by their email."
+      "description": "Stores user account and profile information."
     },
-    "/usuarios/{userId}/ativos/{assetId}": {
+    "/listings/{listingId}": {
       "schema": {
-        "$ref": "#/entities/Asset"
+        "$ref": "#/entities/Listing"
       },
-      "description": "Subcollection for assets listed by a specific user."
+      "description": "Stores all marketplace listings (carbon, tax, land)."
     },
-    "/usuarios/{userId}/contratos/{contractId}": {
+     "/transactions/{transactionId}": {
       "schema": {
-        "$ref": "#/entities/Contract"
+        "$ref": "#/entities/Transaction"
       },
-      "description": "Subcollection for contracts related to a user."
+      "description": "Stores all completed transactions."
     },
-    "/usuarios/{userId}/auditoria/{logId}": {
-      "schema": {
+    "/audits/{logId}": {
+       "schema": {
         "$ref": "#/entities/AuditLog"
       },
-      "description": "Subcollection for audit trail entries for a user."
+      "description": "Stores audit trail entries for important platform actions."
     },
     "/negociacoes/{negotiationId}": {
       "schema": {
