@@ -1,13 +1,21 @@
-import mongoose, { Schema, models } from "mongoose";
+import mongoose, { Schema, models, model } from "mongoose";
 
 const AnuncioSchema = new Schema(
   {
     titulo: { type: String, required: true },
-    descricao: { type: String, required: true },
+    descricao: { type: String },
     preco: { type: Number, required: true },
+    categoria: { type: String },
+    imagens: [{ type: String }],
     usuarioId: { type: String, required: true },
+    criadoEm: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export const Anuncio = models.Anuncio || mongoose.model("Anuncio", AnuncioSchema);
+// evita recriar o modelo se já existir (importante em ambiente Next.js)
+const Anuncio = models.Anuncio || model("Anuncio", AnuncioSchema);
+
+export { Anuncio };
