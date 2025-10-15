@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
+import { connectMongo } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
+    await connectMongo();
     const data = await req.json();
     const anuncio = new Anuncio(data);
     await anuncio.save();
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    await connectToDatabase();
+    await connectMongo();
     const anuncios = await Anuncio.find().sort({ createdAt: -1 });
     return NextResponse.json(anuncios, { status: 200 });
   } catch (error) {

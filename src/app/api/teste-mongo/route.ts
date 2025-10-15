@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
+import { connectMongo } from "@/lib/mongodb";
 
 export async function GET() {
   try {
-    // Conecta ao Atlas
-    await mongoose.connect(process.env.MONGO_URL as string);
-
-    // Retorna sucesso
-    return NextResponse.json({ status: "✅ Conectado ao MongoDB Atlas com sucesso!" });
+    await connectMongo();
+    return NextResponse.json({ ok: true, msg: "Conectado ao MongoDB Atlas!" });
   } catch (error: any) {
-    // Retorna erro detalhado
-    return NextResponse.json({
-      status: "❌ Falha na conexão",
-      error: error.message,
-    }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
