@@ -31,6 +31,20 @@ export default function AdminLoginPage() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         
         if (userCredential.user.email === adminEmail) {
+          
+          // Sync with MongoDB
+          const { user } = userCredential;
+          await fetch("/api/usuarios/salvar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uidFirebase: user.uid,
+              nome: user.displayName || "Admin",
+              email: user.email,
+              tipo: "administrador",
+            }),
+          });
+
           toast({
             title: "Acesso autorizado!",
             description: "Bem-vindo à Área do Administrador.",

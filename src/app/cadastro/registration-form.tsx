@@ -99,6 +99,19 @@ export function RegistrationForm() {
             displayName: data.fullName
         });
 
+        // Sync with MongoDB
+        const { user } = userCredential;
+        await fetch("/api/usuarios/salvar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uidFirebase: user.uid,
+            nome: user.displayName || "Usuário",
+            email: user.email,
+            tipo: "comprador",
+          }),
+        });
+
         toast({
             title: "Cadastro realizado com sucesso!",
             description: "Sua conta foi criada. Você será redirecionado.",

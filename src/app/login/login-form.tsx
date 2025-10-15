@@ -49,8 +49,21 @@ export function LoginForm() {
       const auth = getAuth(app);
       try {
         await setPersistence(auth, browserSessionPersistence);
-        await signInWithEmailAndPassword(auth, data.email, data.password);
+        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         
+        // Sync with MongoDB
+        const { user } = userCredential;
+        await fetch("/api/usuarios/salvar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uidFirebase: user.uid,
+            nome: user.displayName || "Usuário",
+            email: user.email,
+            tipo: "comprador", // Default type on login
+          }),
+        });
+
         toast({
           title: "Login bem-sucedido!",
           description: "Você será redirecionado para o painel.",
