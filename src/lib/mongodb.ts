@@ -1,34 +1,22 @@
-import mongoose, { Connection } from "mongoose";
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
+const MONGO_URL = process.env.MONGO_URL as string;
 
-if (!MONGODB_URI) {
-  throw new Error("⚠️ A variável de ambiente MONGODB_URI não está definida!");
+if (!MONGO_URL) {
+  throw new Error("⚠️ Defina a variável de ambiente MONGO_URL no arquivo .env.local");
 }
 
-interface MongooseCache {
-  conn: Connection | null;
-  promise: Promise<typeof mongoose> | null;
-}
+let isConnected = false;
 
-let cached: MongooseCache = (global as any).mongoose;
+export async function connectToDatabase() {
+  if (isConnected) return;
 
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
-}
-
-export async function connectToDatabase(): Promise<Connection> {
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: "plataforma", // opcional: nome do seu banco no Atlas
-      bufferCommands: false,
-    });
+  try {
+    const db = await mongoose.connect(MONGO_URL);
+    isConnected = !!db.connections[0].readyState;
+    console.log("✅ Conectado ao MongoDB Atlas com sucesso!");
+  } catch (error) {
+    console.error("❌ Erro ao conectar ao MongoDB:", error);
+    throw error;
   }
-
-  const mongooseInstance = await cached.promise;
-  cached.conn = mongooseInstance.connection;
-
-  return cached.conn;
 }

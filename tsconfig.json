@@ -29,6 +29,8 @@
       }
     ]
     // ... outras opções
+    ,
+    "strictNullChecks": true
   },
   "include": [
     "next-env.d.ts",
