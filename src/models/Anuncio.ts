@@ -1,21 +1,17 @@
-import mongoose, { Schema, models, model } from "mongoose";
+// src/models/Anuncio.ts
+import mongoose, { Schema, models } from "mongoose";
 
-const AnuncioSchema = new Schema(
-  {
-    titulo: { type: String, required: true },
-    descricao: { type: String },
-    preco: { type: Number, required: true },
-    categoria: { type: String },
-    imagens: [{ type: String }],
-    usuarioId: { type: String, required: true },
-    criadoEm: { type: Date, default: Date.now },
-  },
-  {
-    timestamps: true,
-  }
-);
+const AnuncioSchema = new Schema({
+  uidFirebase: { type: String, required: true, index: true }, // vinculação ao usuário
+  titulo: { type: String, required: true },
+  descricao: { type: String },
+  tipo: { type: String, enum: ["rural-land", "carbon-credit", "tax-credit", "other"], default: "rural-land" },
+  price: { type: Number },
+  currency: { type: String, default: "BRL" },
+  status: { type: String, enum: ["Disponível", "Negociando", "Vendido"], default: "Disponível", index: true },
+  imagens: [{ url: String, alt: String }],
+  metadados: { type: Schema.Types.Mixed },
+  criadoEm: { type: Date, default: Date.now, index: true },
+}, { timestamps: true });
 
-// evita recriar o modelo se já existir (importante em ambiente Next.js)
-const Anuncio = models.Anuncio || model("Anuncio", AnuncioSchema);
-
-export { Anuncio };
+export const Anuncio = models.Anuncio || mongoose.model("Anuncio", AnuncioSchema);
