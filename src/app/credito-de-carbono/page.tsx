@@ -34,13 +34,28 @@ export default function MarketplacePage() {
       }
       const data = await response.json();
       
+      const formattedCredits = data.anuncios.map((anuncio: any) => ({
+        id: anuncio._id,
+        sellerName: anuncio.metadados?.sellerName || 'Vendedor Anônimo',
+        creditType: anuncio.metadados?.credit_type || 'N/A',
+        quantity: anuncio.metadados?.quantity || 0,
+        location: anuncio.metadados?.location || 'N/A',
+        pricePerCredit: anuncio.price || 0,
+        vintage: anuncio.metadados?.vintage || 'N/A',
+        standard: anuncio.metadados?.standard || 'N/A',
+        projectOverview: anuncio.descricao || '',
+        status: anuncio.status || 'Disponível',
+        ownerId: anuncio.uidFirebase,
+        createdAt: anuncio.createdAt,
+      }));
+      
       if (data.anuncios.length < PAGE_SIZE) {
         setHasMore(false);
       } else {
         setHasMore(true);
       }
 
-      setCredits(prev => isLoadMore ? [...prev, ...data.anuncios] : data.anuncios);
+      setCredits(prev => isLoadMore ? [...prev, ...formattedCredits] : formattedCredits);
       if (isLoadMore) {
         setPage(currentPage + 1);
       } else {
