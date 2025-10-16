@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -68,7 +69,7 @@ export function RegisterCreditForm() {
 
   const onSubmit = (data: RegisterCreditFormValues) => {
     startTransition(async () => {
-      const auth = getAuth();
+      const auth = getAuth(app);
       const user = auth.currentUser;
 
       if (!user) {
@@ -84,10 +85,12 @@ export function RegisterCreditForm() {
         const payload = {
           uidFirebase: user.uid,
           titulo: `${data.credit_type} - ${data.vintage}`,
-          descricao: `Crédito de carbono do tipo ${data.credit_type}, vintage ${data.vintage}, localizado em ${data.location}.`,
+          descricao: `Crédito de carbono do tipo ${data.credit_type}, vintage ${data.vintage}, localizado em ${data.location}. Quantidade: ${data.quantity}.`,
           tipo: 'carbon-credit',
           price: data.price,
           metadados: {
+            sellerName: data.name,
+            credit_type: data.credit_type,
             quantity: data.quantity,
             location: data.location,
             vintage: data.vintage,
@@ -312,3 +315,5 @@ export function RegisterCreditForm() {
     </>
   );
 }
+
+    
