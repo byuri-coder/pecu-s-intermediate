@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, query, orderBy, limit, startAfter, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { CarbonCredit } from '@/lib/types';
 import { CreditCard as CreditCardComponent } from '@/components/credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,62 +16,50 @@ export default function MarketplacePage() {
   const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchCredits = useCallback(async (loadMore = false) => {
-    if (loadMore) {
+  const fetchCredits = useCallback(async (isLoadMore = false) => {
+    const currentPage = isLoadMore ? page : 1;
+    if (isLoadMore) {
       setLoadingMore(true);
     } else {
       setLoading(true);
     }
 
     try {
-      let q = query(
-        collection(db, "carbon-credits"),
-        orderBy("createdAt", "desc"),
-        limit(PAGE_SIZE)
-      );
-
-      if (loadMore && lastVisible) {
-        q = query(
-          collection(db, "carbon-credits"),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(PAGE_SIZE)
-        );
+      const response = await fetch(`/api/anuncios/list?page=${currentPage}&limit=${PAGE_SIZE}&tipo=carbon-credit`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch credits');
       }
+      const data = await response.json();
       
-      const querySnapshot = await getDocs(q);
-      const newCredits: CarbonCredit[] = [];
-      querySnapshot.forEach((doc) => {
-        newCredits.push({ id: doc.id, ...doc.data() } as CarbonCredit);
-      });
-
-      const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      setLastVisible(newLastVisible);
-      
-      if(querySnapshot.docs.length < PAGE_SIZE) {
+      if (data.anuncios.length < PAGE_SIZE) {
         setHasMore(false);
+      } else {
+        setHasMore(true);
       }
 
-      setCredits(prev => loadMore ? [...prev, ...newCredits] : newCredits);
-
+      setCredits(prev => isLoadMore ? [...prev, ...data.anuncios] : data.anuncios);
+      if (isLoadMore) {
+        setPage(currentPage + 1);
+      } else {
+        setPage(2);
+      }
+      
     } catch (error) {
       console.error("Error fetching carbon credits: ", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [lastVisible]);
+  }, [page]);
 
 
   useEffect(() => {
     fetchCredits(false);
-  }, []); // Note: fetchCredits is wrapped in useCallback, so this is safe.
-
-  const activeCredits = credits.filter(c => c.status === 'Ativo' || c.status === 'Disponível');
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -147,10 +133,10 @@ export default function MarketplacePage() {
                 </Card>
             ))}
           </div>
-        ) : activeCredits.length > 0 ? (
+        ) : credits.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {activeCredits.map((credit) => (
+              {credits.map((credit) => (
                 <CreditCardComponent key={credit.id} credit={credit} />
               ))}
             </div>
