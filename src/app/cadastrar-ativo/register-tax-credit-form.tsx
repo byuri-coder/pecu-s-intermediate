@@ -5,8 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebaseAdmin';
+import { app } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -69,29 +68,44 @@ export function RegisterTaxCreditForm() {
         return;
       }
       try {
-        const newCredit: Omit<TaxCredit, 'id'> = {
+        const payload = {
+          uidFirebase: user.uid,
+          titulo: `Crédito de ${data.taxType} - ${data.location}`,
+          descricao: data.details,
+          tipo: 'tax-credit',
+          price: data.price,
+          metadados: {
             sellerName: data.sellerName,
-            taxType: data.taxType as TaxCredit['taxType'],
-            amount: data.amount,
-            price: data.price,
+            taxType: data.taxType,
             location: data.location,
-            status: 'Disponível',
-            ownerId: user.uid,
-            createdAt: serverTimestamp(),
+            amount: data.amount,
+            fiscalStatus: data.fiscalStatus,
+          }
         };
-        
-        await addDoc(collection(db, "tax-credits"), newCredit);
 
+        const response = await fetch('/api/anuncios/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || "Falha ao criar anúncio de crédito tributário.");
+        }
+        
         toast({
           title: "Sucesso!",
           description: "Crédito Tributário cadastrado com sucesso e disponível no marketplace!",
         });
         form.reset();
-      } catch (error) {
+      } catch (error: any) {
          console.error("Failed to save tax credit:", error);
          toast({
             title: "Erro",
-            description: "Ocorreu um erro ao salvar o crédito tributário no banco de dados.",
+            description: error.message || "Ocorreu um erro ao salvar o crédito tributário no banco de dados.",
             variant: "destructive",
         });
       }

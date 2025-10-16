@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { useTransition, useRef, useState } from 'react';
 import Image from 'next/image';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebaseAdmin';
+import { app } from '@/lib/firebase';
 
 
 import { Button } from '@/components/ui/button';
@@ -82,27 +81,36 @@ export function RegisterRuralLandForm() {
         }
 
         try {
-            // Here you would upload images to Firebase Storage and get the URLs
-            // For now, we'll use placeholder URLs or data URIs if needed, but Firestore doesn't store files directly.
             const imageUrls = imagePreviews; // In a real app, these would be gs:// URLs from Firebase Storage.
 
-            const newLand: Omit<RuralLand, 'id'> = {
-                title: data.title,
-                description: data.description,
+            const payload = {
+              uidFirebase: user.uid,
+              titulo: data.title,
+              descricao: data.description,
+              tipo: 'rural-land',
+              price: data.price,
+              imagens: imageUrls.map(url => ({ url, alt: data.title })),
+              metadados: {
                 owner: data.owner,
-                sizeHa: data.sizeHa,
-                businessType: data.businessType as RuralLand['businessType'],
-                location: data.location,
-                images: imageUrls,
-                documentation: 'Em análise',
                 registration: data.registration,
-                price: data.price,
-                status: 'Disponível',
-                ownerId: user.uid,
-                createdAt: serverTimestamp(),
+                location: data.location,
+                sizeHa: data.sizeHa,
+                businessType: data.businessType,
+              },
             };
 
-            await addDoc(collection(db, "rural-lands"), newLand);
+            const response = await fetch('/api/anuncios/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+              const result = await response.json();
+              throw new Error(result.error || "Falha ao criar anúncio de terra rural.");
+            }
 
             toast({
                 title: "Sucesso!",
@@ -111,11 +119,11 @@ export function RegisterRuralLandForm() {
             form.reset();
             setImageFiles([]);
             setImagePreviews([]);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save rural land:", error);
             toast({
                 title: "Erro",
-                description: "Ocorreu um erro ao salvar a terra rural no banco de dados.",
+                description: error.message || "Ocorreu um erro ao salvar a terra rural no banco de dados.",
                 variant: "destructive",
             });
         }
