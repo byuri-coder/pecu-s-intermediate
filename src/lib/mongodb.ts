@@ -1,20 +1,19 @@
 // src/lib/mongodb.ts
 import mongoose from "mongoose";
 
-const MONGO_URL = process.env.MONGO_URL || process.env.MONGO_URI;
+const MONGO_URL = process.env.MONGO_URL;
 
 if (!MONGO_URL) {
   throw new Error("MONGO_URL não definida. Defina a variável de ambiente MONGO_URL.");
 }
 
 /**
- * Evita múltiplas conexões em hot-reload (Next dev / serverless).
- * Usa cache global em node (dev) para não reabrir conexão.
+ * Mantém a conexão única durante o hot reload do Next.js.
  */
-let cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } = (global as any).__mongo__;
+let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).__mongo__ = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 export async function connectMongo() {
@@ -24,15 +23,16 @@ export async function connectMongo() {
 
   if (!cached.promise) {
     const opts = {
-      // useNewUrlParser, useUnifiedTopology são defaults já.
       bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
     };
 
-    cached.promise = mongoose.connect(MONGO_URL!, opts).then((mongooseInstance) => {
-      return mongooseInstance;
+    cached.promise = mongoose.connect(MONGO_URL, opts).then((mongoose) => {
+      console.log("✅ Conectado ao MongoDB Atlas!");
+      return mongoose;
     });
   }
+
   cached.conn = await cached.promise;
   return cached.conn;
 }
