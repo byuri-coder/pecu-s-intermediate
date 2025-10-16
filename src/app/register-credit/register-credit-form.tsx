@@ -5,9 +5,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebaseAdmin';
-
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +35,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { CarbonCredit } from '@/lib/types';
 
 
 const registerCreditSchema = z.object({
@@ -85,32 +81,47 @@ export function RegisterCreditForm() {
       }
 
       try {
-        const newCredit: Omit<CarbonCredit, 'id'> = {
-            sellerName: data.name,
-            creditType: data.credit_type as CarbonCredit['creditType'],
+        const payload = {
+          uidFirebase: user.uid,
+          titulo: `${data.credit_type} - ${data.vintage}`,
+          descricao: `Crédito de carbono do tipo ${data.credit_type}, vintage ${data.vintage}, localizado em ${data.location}.`,
+          tipo: 'carbon-credit',
+          price: data.price,
+          metadados: {
             quantity: data.quantity,
             location: data.location,
-            pricePerCredit: data.price,
             vintage: data.vintage,
-            standard: 'Padrão a ser definido',
-            projectOverview: 'Visão geral do projeto a ser preenchida.',
-            status: 'Ativo',
-            ownerId: user.uid,
-            createdAt: serverTimestamp(),
+            credit_id: data.credit_id,
+            issue_date: data.issue_date,
+            expiry_date: data.expiry_date,
+          }
         };
 
-        await addDoc(collection(db, "carbon-credits"), newCredit);
+        const response = await fetch('/api/anuncios/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Falha ao criar anúncio.");
+        }
 
         toast({
           title: "Sucesso!",
           description: "Crédito de Carbono cadastrado e já disponível no marketplace!",
         });
         form.reset();
-      } catch (error) {
+
+      } catch (error: any) {
         console.error("Failed to save credit:", error);
         toast({
           title: "Erro",
-          description: "Ocorreu um erro ao salvar o crédito no banco de dados.",
+          description: error.message || "Ocorreu um erro ao salvar o crédito.",
           variant: "destructive",
         });
       }

@@ -11,7 +11,6 @@ const AnuncioSchema = new Schema({
   status: { type: String, enum: ["Disponível", "Negociando", "Vendido"], default: "Disponível", index: true },
   imagens: [{ url: String, alt: String }],
   metadados: { type: Schema.Types.Mixed },
-  criadoEm: { type: Date, default: Date.now, index: true },
 }, { timestamps: true });
 
 export const Anuncio = models.Anuncio || mongoose.model("Anuncio", AnuncioSchema);
