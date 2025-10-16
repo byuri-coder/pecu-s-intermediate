@@ -100,6 +100,7 @@ export function RegisterCreditForm() {
           }
         };
 
+        console.log("📤 Enviando anúncio:", payload);
         const response = await fetch('/api/anuncios/create', {
           method: 'POST',
           headers: {
@@ -109,6 +110,7 @@ export function RegisterCreditForm() {
         });
 
         const result = await response.json();
+        console.log("📥 Resposta da API:", response.status, result);
 
         if (!response.ok) {
           throw new Error(result.error || "Falha ao criar anúncio.");
@@ -315,5 +317,3 @@ export function RegisterCreditForm() {
     </>
   );
 }
-
-    
