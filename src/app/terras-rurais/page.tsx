@@ -34,7 +34,7 @@ export default function RuralLandsMarketplacePage() {
       }
       const data = await response.json();
 
-      const formattedLands = data.anuncios.map((anuncio: any) => ({
+      const formattedLands: RuralLand[] = data.anuncios.map((anuncio: any) => ({
         id: anuncio._id,
         title: anuncio.titulo,
         description: anuncio.descricao,
@@ -42,7 +42,7 @@ export default function RuralLandsMarketplacePage() {
         sizeHa: anuncio.metadados?.sizeHa || 0,
         businessType: anuncio.metadados?.businessType || 'Venda',
         location: anuncio.metadados?.location || 'N/A',
-        images: anuncio.imagens?.map((img: any) => img.url) || [],
+        images: anuncio.imagens || [], // Use the 'imagens' field from the API
         documentation: anuncio.metadados?.documentation || 'N/A',
         registration: anuncio.metadados?.registration || 'N/A',
         price: anuncio.price,

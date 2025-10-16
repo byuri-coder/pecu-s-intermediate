@@ -99,12 +99,17 @@ export function RegisterRuralLandForm() {
         }
 
         try {
-            // In a real app, upload files to storage first and get URLs
-            const uploadedMedia = mediaFiles.map(mf => ({
-                url: mf.preview, // Placeholder, should be the real URL after upload
-                type: mf.type,
-                alt: data.title
-            }));
+            // SIMULATE UPLOAD: Replace local blob URLs with public placeholder URLs
+            const uploadedMedia = mediaFiles.map((mf, index) => {
+                // In a real app, this is where you'd upload mf.file to cloud storage
+                // and get a permanent URL. For this demo, we'll use a public placeholder.
+                const publicUrl = `https://picsum.photos/seed/${user.uid.substring(0, 8)}${index}/800/600`;
+                return {
+                    url: publicUrl, // Use the public URL
+                    type: mf.type,
+                    alt: data.title
+                };
+            });
 
             const payload = {
               uidFirebase: user.uid,
