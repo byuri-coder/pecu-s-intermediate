@@ -27,6 +27,12 @@ export type TaxCredit = {
   createdAt: any; // Firestore ServerTimestamp
 };
 
+type MediaItem = {
+    url: string;
+    type: 'image' | 'video';
+    alt?: string;
+}
+
 export type RuralLand = {
   id: string;
   title: string;
@@ -35,7 +41,7 @@ export type RuralLand = {
   sizeHa: number;
   businessType: 'Venda' | 'Permuta' | 'Mineração' | 'Arrendamento';
   location: string;
-  images: string[];
+  images: MediaItem[];
   documentation: string; // Link or description of available docs
   registration: string; // Land registration identifier
   price?: number; // Optional, might not apply to all business types

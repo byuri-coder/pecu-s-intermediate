@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, Loader2, Trash2 } from 'lucide-react';
+import { UploadCloud, Loader2, Trash2, Film } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { RuralLand } from '@/lib/types';
 
@@ -40,12 +40,17 @@ const registerRuralLandSchema = z.object({
 
 type RegisterRuralLandFormValues = z.infer<typeof registerRuralLandSchema>;
 
+type MediaFile = {
+    file: File;
+    preview: string;
+    type: 'image' | 'video';
+}
+
 export function RegisterRuralLandForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   const form = useForm<RegisterRuralLandFormValues>({
     resolver: zodResolver(registerRuralLandSchema),
@@ -57,17 +62,30 @@ export function RegisterRuralLandForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newFiles = Array.from(files);
-      const newImagePreviews = newFiles.map(file => URL.createObjectURL(file));
-      setImageFiles(prev => [...prev, ...newFiles]);
-      setImagePreviews(prev => [...prev, ...newImagePreviews]);
+        const newFiles = Array.from(files);
+        if (mediaFiles.length + newFiles.length > 10) {
+            toast({
+                title: "Limite de arquivos excedido",
+                description: "Você pode adicionar no máximo 10 fotos e vídeos.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const newMediaFiles: MediaFile[] = newFiles.map(file => ({
+            file,
+            preview: URL.createObjectURL(file),
+            type: file.type.startsWith('video') ? 'video' : 'image',
+        }));
+        
+        setMediaFiles(prev => [...prev, ...newMediaFiles]);
     }
   };
 
-  const removeImage = (index: number) => {
-    URL.revokeObjectURL(imagePreviews[index]);
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const removeMedia = (index: number) => {
+    const fileToRemove = mediaFiles[index];
+    URL.revokeObjectURL(fileToRemove.preview);
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
   };
 
 
@@ -81,7 +99,12 @@ export function RegisterRuralLandForm() {
         }
 
         try {
-            const imageUrls = imagePreviews; // In a real app, these would be gs:// URLs from Firebase Storage.
+            // In a real app, upload files to storage first and get URLs
+            const uploadedMedia = mediaFiles.map(mf => ({
+                url: mf.preview, // Placeholder, should be the real URL after upload
+                type: mf.type,
+                alt: data.title
+            }));
 
             const payload = {
               uidFirebase: user.uid,
@@ -89,7 +112,7 @@ export function RegisterRuralLandForm() {
               descricao: data.description,
               tipo: 'rural-land',
               price: data.price,
-              imagens: imageUrls.map(url => ({ url, alt: data.title })),
+              imagens: uploadedMedia,
               metadados: {
                 owner: data.owner,
                 registration: data.registration,
@@ -117,8 +140,8 @@ export function RegisterRuralLandForm() {
                 description: "Terra Rural cadastrada com sucesso e disponível no marketplace!",
             });
             form.reset();
-            setImageFiles([]);
-            setImagePreviews([]);
+            mediaFiles.forEach(mf => URL.revokeObjectURL(mf.preview));
+            setMediaFiles([]);
         } catch (error: any) {
             console.error("Failed to save rural land:", error);
             toast({
@@ -179,45 +202,50 @@ export function RegisterRuralLandForm() {
         </section>
 
         <section>
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Fotos e Documentos</h3>
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Fotos e Vídeos ({mediaFiles.length}/10)</h3>
            <div className="space-y-4">
               <div 
                 className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
                 onClick={() => fileInputRef.current?.click()}>
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
-                <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG), Documentos (PDF)</p>
+                <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG) e Vídeos (MP4, MOV). Máx 10 arquivos.</p>
                 <Input 
                     ref={fileInputRef} 
                     type="file" 
                     className="hidden" 
                     multiple 
                     onChange={handleFileChange}
-                    accept="image/jpeg,image/png,application/pdf"
+                    accept="image/jpeg,image/png,video/mp4,video/quicktime"
                 />
               </div>
-              {imagePreviews.length > 0 && (
+              {mediaFiles.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">Imagens Selecionadas:</h4>
+                  <h4 className="font-medium mb-2">Mídias Selecionadas:</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {imagePreviews.map((src, index) => (
-                      <div key={index} className="relative aspect-video rounded-md overflow-hidden group">
-                        <Image src={src} alt={`Preview ${index}`} fill className="object-cover" />
+                    {mediaFiles.map((mf, index) => (
+                      <div key={index} className="relative aspect-video rounded-md overflow-hidden group bg-secondary">
+                        {mf.type === 'image' ? (
+                            <Image src={mf.preview} alt={`Preview ${index}`} fill className="object-cover" />
+                        ) : (
+                            <video src={mf.preview} className="w-full h-full object-cover" muted loop playsInline />
+                        )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button 
-                            variant="destructive" 
-                            size="icon"
-                            onClick={() => removeImage(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            {mf.type === 'video' && <Film className="h-6 w-6 text-white absolute top-2 left-2" />}
+                            <Button 
+                                variant="destructive" 
+                                size="icon"
+                                onClick={() => removeMedia(index)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-              <p className="text-sm text-muted-foreground">Envie fotos da propriedade, mapa georreferenciado, CAR, e outros documentos relevantes para agilizar a análise.</p>
+              <p className="text-sm text-muted-foreground">Envie fotos da propriedade, mapa georreferenciado, CAR, vídeos aéreos e outros documentos relevantes para agilizar a análise.</p>
            </div>
         </section>
 

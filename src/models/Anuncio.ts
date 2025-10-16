@@ -9,7 +9,7 @@ const AnuncioSchema = new Schema({
   price: { type: Number },
   currency: { type: String, default: "BRL" },
   status: { type: String, enum: ["Disponível", "Negociando", "Vendido"], default: "Disponível", index: true },
-  imagens: [{ url: String, alt: String }],
+  imagens: [{ url: String, alt: String, type: { type: String, enum: ['image', 'video'], default: 'image' } }],
   metadados: { type: Schema.Types.Mixed },
 }, { timestamps: true });
 

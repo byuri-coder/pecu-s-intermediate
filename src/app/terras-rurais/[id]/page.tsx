@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare } from 'lucide-react';
+import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare, Film } from 'lucide-react';
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
@@ -66,10 +66,9 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
   
-  // Use images from the object, or fall back to placeholders if empty
-  const carouselImages = land.images.length > 0 
-    ? land.images 
-    : Array.from({ length: 3 }).map((_, index) => `https://picsum.photos/seed/${land.id}-${index}/1200/675`);
+  const carouselMedia = land.images.length > 0
+    ? land.images
+    : [{ url: `https://picsum.photos/seed/${land.id}/1200/675`, type: 'image' as const, alt: 'Placeholder Image' }];
 
 
   return (
@@ -96,16 +95,25 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                 <CardContent className="p-4">
                     <Carousel className="w-full">
                         <CarouselContent>
-                            {carouselImages.map((src, index) => (
+                            {carouselMedia.map((media, index) => (
                                 <CarouselItem key={index}>
-                                    <div className="aspect-video w-full overflow-hidden rounded-lg relative">
-                                        <Image
-                                            src={src}
-                                            alt={`Imagem ${index + 1} de ${land.title}`}
-                                            fill
-                                            className="object-cover"
-                                            data-ai-hint="fazenda"
-                                        />
+                                    <div className="aspect-video w-full overflow-hidden rounded-lg relative bg-secondary">
+                                        {media.type === 'video' ? (
+                                            <video
+                                                src={media.url}
+                                                controls
+                                                className="object-contain w-full h-full"
+                                            />
+                                        ) : (
+                                            <Image
+                                                src={media.url}
+                                                alt={media.alt || `Mídia ${index + 1} de ${land.title}`}
+                                                fill
+                                                className="object-cover"
+                                                data-ai-hint="fazenda"
+                                            />
+                                        )}
+                                         {media.type === 'video' && <Film className="h-6 w-6 text-white absolute top-3 left-3 drop-shadow-lg" />}
                                     </div>
                                 </CarouselItem>
                             ))}
