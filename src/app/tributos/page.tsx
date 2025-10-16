@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, query, orderBy, limit, startAfter, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { TaxCredit } from '@/lib/types';
 import { TaxCreditCard } from '@/components/tax-credit-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,46 +15,48 @@ export default function TaxCreditsMarketplacePage() {
   const [credits, setCredits] = useState<TaxCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchCredits = useCallback(async (loadMore = false) => {
-    if (loadMore) {
+  const fetchCredits = useCallback(async (isLoadMore = false) => {
+    const currentPage = isLoadMore ? page : 1;
+    if (isLoadMore) {
       setLoadingMore(true);
     } else {
       setLoading(true);
     }
-
+    
     try {
-      let q = query(
-        collection(db, "tax-credits"),
-        orderBy("createdAt", "desc"),
-        limit(PAGE_SIZE)
-      );
-
-      if (loadMore && lastVisible) {
-        q = query(
-          collection(db, "tax-credits"),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(PAGE_SIZE)
-        );
+      const response = await fetch(`/api/anuncios/list?page=${currentPage}&limit=${PAGE_SIZE}&tipo=tax-credit`);
+       if (!response.ok) {
+        throw new Error('Failed to fetch tax credits');
       }
+      const data = await response.json();
+
+      const formattedCredits = data.anuncios.map((anuncio: any) => ({
+        id: anuncio._id,
+        sellerName: anuncio.metadados?.sellerName || 'Vendedor Anônimo',
+        taxType: anuncio.metadados?.taxType || 'N/A',
+        amount: anuncio.metadados?.amount || 0,
+        price: anuncio.price || 0,
+        location: anuncio.metadados?.location || 'N/A',
+        status: anuncio.status || 'Disponível',
+        ownerId: anuncio.uidFirebase,
+        createdAt: anuncio.createdAt,
+      }));
       
-      const querySnapshot = await getDocs(q);
-      const newCredits: TaxCredit[] = [];
-      querySnapshot.forEach((doc) => {
-        newCredits.push({ id: doc.id, ...doc.data() } as TaxCredit);
-      });
-      
-      const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      setLastVisible(newLastVisible);
-      
-      if(querySnapshot.docs.length < PAGE_SIZE) {
+      if (data.anuncios.length < PAGE_SIZE) {
         setHasMore(false);
+      } else {
+        setHasMore(true);
       }
 
-      setCredits(prev => loadMore ? [...prev, ...newCredits] : newCredits);
+      setCredits(prev => isLoadMore ? [...prev, ...formattedCredits] : formattedCredits);
+      if (isLoadMore) {
+        setPage(currentPage + 1);
+      } else {
+        setPage(2);
+      }
 
     } catch (error) {
       console.error("Error fetching tax credits: ", error);
@@ -64,18 +64,15 @@ export default function TaxCreditsMarketplacePage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [lastVisible]);
+  }, [page]);
   
 
   useEffect(() => {
     fetchCredits(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const availableCredits = credits.filter(
-    c => (c.status === 'Disponível' || c.status === 'Negociando') &&
-         c.taxType === 'ICMS' &&
-         c.location.includes('SP')
-  );
+  const availableCredits = credits.filter(c => c.status === 'Disponível' || c.status === 'Negociando');
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">

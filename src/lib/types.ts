@@ -10,7 +10,7 @@ export type CarbonCredit = {
   vintage: string; // Year
   standard: string;
   projectOverview: string;
-  status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível';
+  status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível' | 'Negociando';
   ownerId: string;
   createdAt: any; // Firestore ServerTimestamp
 };
