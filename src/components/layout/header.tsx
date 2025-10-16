@@ -138,9 +138,9 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.photoURL || "https://picsum.photos/seed/avatar1/36/36"} alt="User Avatar" />
+                    <AvatarImage src={user.photoURL || undefined} alt="User Avatar" />
                     <AvatarFallback>
-                        <UserCircle className="h-6 w-6" />
+                        {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

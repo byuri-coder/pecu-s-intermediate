@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useTransition } from 'react';
+import { useTransition, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -24,6 +24,8 @@ import { Loader2, MapPin, UserCircle, Pencil, Banknote, Landmark } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getAuth, onAuthStateChanged, updateProfile, type User } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 
 const profileSchema = z.object({
@@ -68,10 +70,12 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    // Placeholder data for an existing user
     defaultValues: {
       fullName: '',
       email: '',
@@ -88,11 +92,40 @@ export function ProfileForm() {
       pixKey: ''
     },
   });
+
+  useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        if (currentUser) {
+            form.reset({
+                fullName: currentUser.displayName || '',
+                email: currentUser.email || '',
+                // Here you would fetch and set other profile data from your DB (Firestore/Mongo)
+            });
+            if (currentUser.photoURL) {
+                setAvatarPreview(currentUser.photoURL);
+            }
+        }
+    });
+    return () => unsubscribe();
+  }, [form]);
   
   const address = form.watch('address');
   const city = form.watch('city');
   const state = form.watch('state');
   const fullAddress = [address, city, state].filter(Boolean).join(', ');
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   const onSubmit = (data: ProfileFormValues) => {
@@ -100,13 +133,21 @@ export function ProfileForm() {
       // Here you would typically send the data to your backend
       console.log(data);
       
+      // Placeholder: in a real app, you would upload the avatarPreview (if it's a new file) to a storage service
+      // and get a URL, then update the user's profile with that URL.
+      // For this example, we'll just log it.
+      if (avatarPreview && user && avatarPreview !== user.photoURL) {
+          console.log("New avatar to upload:", avatarPreview);
+          // Example: await updateProfile(user, { photoURL: 'new_url_from_storage' });
+      }
+
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       toast({
         title: "Perfil Atualizado!",
         description: "Suas informações foram salvas com sucesso.",
       });
-      form.reset(data); // reset with new values
+      // form.reset(data); // reset with new values
     });
   };
 
@@ -118,13 +159,26 @@ export function ProfileForm() {
             <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais e Acesso</h3>
             <div className="flex items-center gap-6">
                 <div className="relative">
+                    <input
+                        type="file"
+                        ref={avatarInputRef}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                        onChange={handleAvatarChange}
+                    />
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src="https://picsum.photos/seed/avatar1/96/96" alt="User Avatar" />
+                        <AvatarImage src={avatarPreview || undefined} alt="User Avatar" />
                         <AvatarFallback>
                             <UserCircle className="h-12 w-12" />
                         </AvatarFallback>
                     </Avatar>
-                    <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full">
+                    <Button 
+                        type="button"
+                        size="icon" 
+                        variant="outline" 
+                        className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
+                        onClick={() => avatarInputRef.current?.click()}
+                    >
                         <Pencil className="h-4 w-4"/>
                         <span className="sr-only">Editar foto</span>
                     </Button>
