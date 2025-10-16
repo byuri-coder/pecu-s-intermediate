@@ -37,7 +37,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl font-headline">
                 Projeto de {credit.creditType} em {credit.location}
               </h1>
-              <Badge className="text-base" variant="default">Créditos Disponíveis</Badge>
+              <Badge className="text-base" variant="default">{credit.status === 'Ativo' ? 'Disponível' : credit.status}</Badge>
             </div>
             <p className="text-lg text-muted-foreground">Vendido por {credit.sellerName}</p>
           </div>
@@ -97,7 +97,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(credit.pricePerCredit)}
                 </span>
               </div>
-              <Button asChild className="w-full text-base" size="lg">
+              <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Ativo'}>
                   <Link href={`/negociacao/${credit.id}?type=carbon-credit`}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Iniciar Negociação
@@ -111,8 +111,6 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   );
 }
 export async function generateStaticParams() {
-  // Como 'placeholderCredits' já está disponível e contém todos os créditos
-  // podemos usá-lo diretamente para obter todos os IDs.
   return placeholderCredits.map((credit) => ({
     id: credit.id,
   }));

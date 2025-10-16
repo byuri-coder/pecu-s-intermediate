@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Landmark, MapPin, BadgePercent, Building, MessageSquare } from 'lucide-react';
+import { ChevronRight, Landmark, MapPin, Building, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendido' }) => {
