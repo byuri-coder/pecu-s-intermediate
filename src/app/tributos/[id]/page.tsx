@@ -1,11 +1,15 @@
-import { placeholderTaxCredits } from '@/lib/placeholder-data';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Landmark, MapPin, Building, MessageSquare } from 'lucide-react';
+import { ChevronRight, Landmark, MapPin, Building, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { TaxCredit } from '@/lib/types';
+
 
 const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendido' }) => {
   const variant = {
@@ -23,9 +27,48 @@ const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendi
   return <Badge variant={variant} className={cn('capitalize', className)}>{status}</Badge>;
 };
 
+async function getCreditDetails(id: string): Promise<TaxCredit | null> {
+  try {
+    const response = await fetch(`/api/anuncios/get/${id}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (data.ok && data.anuncio.tipo === 'tax-credit') {
+        const anuncio = data.anuncio;
+        return {
+            id: anuncio._id,
+            sellerName: anuncio.metadados?.sellerName || 'Vendedor Anônimo',
+            taxType: anuncio.metadados?.taxType || 'N/A',
+            amount: anuncio.metadados?.amount || 0,
+            price: anuncio.price || 0,
+            location: anuncio.metadados?.location || 'N/A',
+            status: anuncio.status || 'Disponível',
+            ownerId: anuncio.uidFirebase,
+            createdAt: anuncio.createdAt,
+        };
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch tax credit details", error);
+    return null;
+  }
+}
 
 export default function TaxCreditDetailPage({ params }: { params: { id: string } }) {
-  const credit = placeholderTaxCredits.find((p) => p.id === params.id);
+  const [credit, setCredit] = useState<TaxCredit | null | 'loading'>('loading');
+
+  useEffect(() => {
+    if(params.id) {
+        getCreditDetails(params.id).then(data => {
+            setCredit(data);
+        });
+    }
+  }, [params.id]);
+
+  if (credit === 'loading') {
+    return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;
+  }
 
   if (!credit) {
     notFound();
@@ -127,9 +170,4 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
       </div>
     </div>
   );
-}
-export async function generateStaticParams() {
-  return placeholderTaxCredits.map((taxCredit) => ({
-    id: taxCredit.id,
-  }));
 }

@@ -1,16 +1,16 @@
-import { placeholderRuralLands } from '@/lib/placeholder-data';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare, Film } from 'lucide-react';
+import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare, Film, Loader2 } from 'lucide-react';
 import type { RuralLand } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
-import imageData from '@/app/lib/placeholder-images.json';
-
 
 const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType'], className?: string }) => {
     const icons = {
@@ -40,9 +40,55 @@ const StatusBadge = ({ status }: { status: RuralLand['status'] }) => {
 };
 
 
-export default function RuralLandDetailPage({ params }: { params: { id: string } }) {
-  const land = placeholderRuralLands.find((p) => p.id === params.id);
+async function getLandDetails(id: string): Promise<RuralLand | null> {
+  try {
+    const response = await fetch(`/api/anuncios/get/${id}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (data.ok && data.anuncio.tipo === 'rural-land') {
+        const anuncio = data.anuncio;
+        return {
+            id: anuncio._id,
+            title: anuncio.titulo,
+            description: anuncio.descricao,
+            owner: anuncio.metadados?.owner || 'Vendedor Anônimo',
+            sizeHa: anuncio.metadados?.sizeHa || 0,
+            businessType: anuncio.metadados?.businessType || 'Venda',
+            location: anuncio.metadados?.location || 'N/A',
+            images: anuncio.imagens || [],
+            documentation: anuncio.metadados?.documentation || 'N/A',
+            registration: anuncio.metadados?.registration || 'N/A',
+            price: anuncio.price,
+            status: anuncio.status || 'Disponível',
+            ownerId: anuncio.uidFirebase,
+            createdAt: anuncio.createdAt,
+        };
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch land details", error);
+    return null;
+  }
+}
 
+export default function RuralLandDetailPage({ params }: { params: { id: string } }) {
+  const [land, setLand] = useState<RuralLand | null | 'loading'>('loading');
+
+  useEffect(() => {
+    if(params.id) {
+        getLandDetails(params.id).then(data => {
+            setLand(data);
+        });
+    }
+  }, [params.id]);
+
+
+  if (land === 'loading') {
+    return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;
+  }
+  
   if (!land) {
     notFound();
   }
@@ -66,7 +112,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     { icon: FileText, label: 'Documentação', value: land.documentation },
   ];
   
-  const carouselMedia = land.images.length > 0
+  const carouselMedia = land.images && land.images.length > 0
     ? land.images
     : [{ url: `https://picsum.photos/seed/${land.id}/1200/675`, type: 'image' as const, alt: 'Placeholder Image' }];
 
@@ -188,9 +234,4 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
       </div>
     </div>
   );
-}
-export async function generateStaticParams() {
-  return placeholderRuralLands.map((ruralLand) => ({
-    id: ruralLand.id,
-  }));
 }

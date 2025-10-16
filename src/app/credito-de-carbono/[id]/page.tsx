@@ -1,14 +1,62 @@
-import { placeholderCredits } from '@/lib/placeholder-data';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare } from 'lucide-react';
+import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare, Loader2 } from 'lucide-react';
+import type { CarbonCredit } from '@/lib/types';
+
+async function getCreditDetails(id: string): Promise<CarbonCredit | null> {
+  try {
+    const response = await fetch(`/api/anuncios/get/${id}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (data.ok && data.anuncio.tipo === 'carbon-credit') {
+        const anuncio = data.anuncio;
+        return {
+            id: anuncio._id,
+            sellerName: anuncio.metadados?.sellerName || 'Vendedor Anônimo',
+            creditType: anuncio.metadados?.credit_type || 'N/A',
+            quantity: anuncio.metadados?.quantity || 0,
+            location: anuncio.metadados?.location || 'N/A',
+            pricePerCredit: anuncio.price || 0,
+            vintage: anuncio.metadados?.vintage || 'N/A',
+            standard: anuncio.metadados?.standard || 'N/A',
+            projectOverview: anuncio.descricao || '',
+            status: anuncio.status || 'Disponível',
+            ownerId: anuncio.uidFirebase,
+            createdAt: anuncio.createdAt,
+        };
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch credit details", error);
+    return null;
+  }
+}
+
 
 export default function CreditDetailPage({ params }: { params: { id: string } }) {
-  const credit = placeholderCredits.find((p) => p.id === params.id);
+  const [credit, setCredit] = useState<CarbonCredit | null | 'loading'>('loading');
+
+  useEffect(() => {
+    if (params.id) {
+        getCreditDetails(params.id).then(data => {
+            setCredit(data);
+        });
+    }
+  }, [params.id]);
+
+
+  if (credit === 'loading') {
+    return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;
+  }
 
   if (!credit) {
     notFound();
@@ -18,7 +66,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
     { icon: Leaf, label: 'Tipo de Crédito', value: credit.creditType },
     { icon: BarChart, label: 'Quantidade Disponível', value: credit.quantity.toLocaleString() },
     { icon: Calendar, label: 'Vintage (Ano)', value: credit.vintage },
-    { icon: Tag, label: 'Padrão (Standard)', value: credit.standard },
+    { icon: Tag, label: 'Padrão (Standard)', value: credit.standard || 'N/A' },
     { icon: Globe, label: 'Localização', value: credit.location },
   ];
 
@@ -97,7 +145,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(credit.pricePerCredit)}
                 </span>
               </div>
-              <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Ativo'}>
+              <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' && credit.status !== 'Ativo'}>
                   <Link href={`/negociacao/${credit.id}?type=carbon-credit`}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Iniciar Negociação
@@ -109,9 +157,4 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
-}
-export async function generateStaticParams() {
-  return placeholderCredits.map((credit) => ({
-    id: credit.id,
-  }));
 }
