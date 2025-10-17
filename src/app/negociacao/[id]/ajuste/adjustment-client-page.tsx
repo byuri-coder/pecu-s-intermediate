@@ -4,11 +4,11 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Copy, Banknote, Download, FileText, FileDown, UploadCloud, X, Eye, Lock, Edit, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, BadgePercent, Verified, Fingerprint, Trash2, Video, Film } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, Download, FileText, UploadCloud, X, Eye, Lock, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, Fingerprint, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, CompletedDeal } from '@/lib/types';
@@ -17,7 +17,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { numberToWords } from '@/lib/number-to-words';
 import { Seal } from '@/components/ui/seal';
 import Image from 'next/image';
@@ -345,7 +344,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
   const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
-  const { template: contractTemplate, title: contractTitle } = getContractTemplateInfo();
+  const { title: contractTitle } = getContractTemplateInfo();
 
   const getFinalContractText = React.useCallback(() => {
     return '...'; // Simplified for brevity
@@ -361,16 +360,22 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         title: "Contrato Finalizado!",
         description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
     });
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
   };
     
-  const handleDownloadPdf = () => { /* ... implementation ... */ };
-  const handleDownloadDocx = () => { /* ... implementation ... */ };
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF();
+    doc.text("Contrato de Exemplo", 10, 10);
+    doc.save("contrato.pdf");
+  };
 
   const handleFinishTransaction = () => {
       const router = useRouter();
       //... implementation ...
       updateNegotiationState({ isTransactionComplete: true });
+      router.push('/dashboard');
   };
     
   const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
@@ -381,15 +386,20 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }
         setIsSendingEmail(true);
         try {
-            // ... (API call logic remains the same)
+            // In a real app, you would make an API call to your backend to send the email
+            // For example: await fetch('/api/send-verification', { method: 'POST', body: JSON.stringify({ email, role, negotiationId }) });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             // On success, update state in Firestore
             await updateNegotiationState({
                 authStatus: { ...negotiationState!.authStatus, [role]: 'pending' }
             });
             toast({ title: "E-mail de verificação enviado!" });
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Erro ao enviar e-mail", variant: "destructive" });
+        } catch (error: any) {
+            if (typeof console !== "undefined") {
+              console.error(error);
+            }
+            toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
         } finally {
             setIsSendingEmail(false);
         }
@@ -559,6 +569,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         </div>
       )}
     </div>
-  </div>
   );
 }
