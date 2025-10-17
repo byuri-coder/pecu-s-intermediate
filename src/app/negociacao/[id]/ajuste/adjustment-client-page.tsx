@@ -403,7 +403,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   if (searchParams.get('view') === 'archive') {
       return (
-        <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px:8">
             {/* Archive View JSX... */}
         </div>
       )
@@ -489,19 +489,18 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                             <Label htmlFor="buyer-agrees" className="flex-1">O COMPRADOR declara que leu e concorda com todos os termos deste contrato.</Label>
                         </div>
                     </CardContent>
+                     <CardFooter className="flex justify-end">
+                        <Button 
+                            size="lg" 
+                            className="w-full" 
+                            disabled={!sellerAgrees || !buyerAgrees || isFinalized}
+                            onClick={handleFinalize}
+                        >
+                            {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
+                            {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
+                        </Button>
+                    </CardFooter>
                 </Card>
-                 <CardFooter className="flex justify-end">
-                    <Button 
-                        size="lg" 
-                        className="w-full" 
-                        disabled={!sellerAgrees || !buyerAgrees || isFinalized}
-                        onClick={handleFinalize}
-                    >
-                        {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
-                        {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
-                    </Button>
-                </CardFooter>
-            </Card>
 
             </div>
              <Card>
@@ -560,5 +559,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         </div>
       )}
     </div>
+  </div>
   );
 }
