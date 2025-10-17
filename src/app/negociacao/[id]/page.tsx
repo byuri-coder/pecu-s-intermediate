@@ -7,8 +7,7 @@ import { notFound, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
+import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList, type Conversation } from '../chat-list';
@@ -22,37 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import { usePersistentState } from '../use-persistent-state';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | RuralLand | TaxCredit;
-
-// Custom hook for persisting state to localStorage
-function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [state, setState] = React.useState<T>(() => {
-        if (typeof window === 'undefined') {
-            return initialState;
-        }
-        try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialState;
-        } catch (error) {
-            console.error(`Error reading localStorage key “${key}”:`, error);
-            return initialState;
-        }
-    });
-
-    React.useEffect(() => {
-        try {
-            window.localStorage.setItem(key, JSON.stringify(state));
-        } catch (error) {
-            console.error(`Error setting localStorage key “${key}”:`, error);
-        }
-    }, [key, state]);
-
-    return [state, setState];
-}
-
 
 function getAssetTypeName(type: AssetType) {
     switch(type) {
@@ -155,10 +128,21 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     };
     
     setConversations(prevConvos => {
-        const existing = prevConvos.find(c => c.id === newConversation.id);
-        if (existing) {
-            return prevConvos.map(c => c.id === newConversation.id ? {...c, lastMessage: newConversation.lastMessage, time: newConversation.time } : c);
+        const existingConvoIndex = prevConvos.findIndex(c => c.id === newConversation.id);
+        if (existingConvoIndex > -1) {
+            // Move the existing conversation to the top and update it
+            const updatedConvos = [...prevConvos];
+            const [existingConvo] = updatedConvos.splice(existingConvoIndex, 1);
+            return [
+                {
+                    ...existingConvo,
+                    lastMessage: newConversation.lastMessage,
+                    time: newConversation.time
+                },
+                ...updatedConvos
+            ];
         }
+        // Add as a new conversation at the top
         return [newConversation, ...prevConvos];
     })
   }
@@ -167,7 +151,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     const messageContent = newMessage.trim();
     if (messageContent === '') return;
 
-    // Check if the message is a Google Maps URL
     const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
     const messageType = isGoogleMapsUrl ? 'location' : 'text';
 
@@ -270,40 +253,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                                     </CardHeader>
                                 </Card>
 
-                                {isTaxCredit && (
-                                     <Card>
-                                        <CardHeader>
-                                            <CardTitle>Documentos do Ativo</CardTitle>
-                                            <CardDescription>Acesse os arquivos comprobatórios.</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-3">
-                                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
-                                                <div className="flex items-center gap-3">
-                                                    <ShieldCheck className="h-6 w-6 text-primary"/>
-                                                    <div>
-                                                        <p className="font-semibold text-sm">Certidão Negativa de Débitos</p>
-                                                        <p className="text-xs text-muted-foreground">cnd_2024.pdf</p>
-                                                    </div>
-                                                </div>
-                                                <Button variant="outline" size="icon">
-                                                    <Download className="h-4 w-4"/>
-                                                </Button>
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
-                                                <div className="flex items-center gap-3">
-                                                    <FileText className="h-6 w-6 text-primary"/>
-                                                    <div>
-                                                        <p className="font-semibold text-sm">Documentos Comprobatórios</p>
-                                                        <p className="text-xs text-muted-foreground">docs.zip</p>
-                                                    </div>
-                                                </div>
-                                                <Button variant="outline" size="icon">
-                                                    <Download className="h-4 w-4"/>
-                                                </Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
                             </div>
                         </SheetContent>
                     </Sheet>
