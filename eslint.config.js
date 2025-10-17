@@ -1,10 +1,27 @@
 import js from "@eslint/js";
-import tseslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 
-export default [
+export default tseslint.config([
   js.configs.recommended,
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    plugins: {
+      react: reactPlugin,
+    },
+    rules: {
+      "react/jsx-uses-react": "off",
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+    },
+  },
   {
     languageOptions: {
       globals: {
@@ -14,27 +31,9 @@ export default [
         File: 'readonly',
         setTimeout: 'readonly',
         navigator: 'readonly',
+        URL: 'readonly',
+        localStorage: 'readonly'
       },
     },
   },
-  {
-    files: ["**/*.ts", "**/*.tsx"],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-    },
-    plugins: {
-      "@typescript-eslint": tseslint,
-      react: reactPlugin,
-    },
-    rules: {
-      "react/jsx-uses-react": "off",
-      "react/react-in-jsx-scope": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
-    },
-  },
-];
+]);
