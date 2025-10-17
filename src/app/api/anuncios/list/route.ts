@@ -2,15 +2,12 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
-import Redis from 'ioredis';
-
-// Conexão Redis (pode ser local ou cloud)
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+import redis from "@/lib/redis";
 
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const cacheKey = url.search || "all"; // Use query params as cache key
+  const cacheKey = `anuncios:${url.search || "all"}`; 
 
   try {
     const cached = await redis.get(cacheKey);
@@ -24,7 +21,7 @@ export async function GET(req: Request) {
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
     const limit = Math.min(Number(url.searchParams.get("limit") || "12"), 100);
-    const tipo = url.searchParams.get("tipo"); // optional
+    const tipo = url.searchParams.get("tipo"); 
     const status = url.searchParams.get("status") || "Disponível";
 
     const filter: any = { status };

@@ -2,9 +2,7 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
-import Redis from 'ioredis';
-
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+import redis from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -29,8 +27,11 @@ export async function POST(req: Request) {
     });
 
     // Limpa o cache após criar um novo anúncio para garantir que as listas sejam atualizadas
-    await redis.flushall();
-    console.log("🧹 Cache cleared due to new announcement.");
+    const keys = await redis.keys("anuncios:*");
+    if (keys.length > 0) {
+      await redis.del(keys);
+      console.log(`🧹 Cache cleared for ${keys.length} keys.`);
+    }
 
 
     return NextResponse.json({ ok: true, anuncio });
