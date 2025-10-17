@@ -20,12 +20,23 @@ export async function GET(req: Request) {
     await connectMongo();
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
-    const limit = Math.min(Number(url.searchParams.get("limit") || "12"), 100);
+    const limit = Math.min(Number(url.searchParams.get("limit") || "100"), 100);
     const tipo = url.searchParams.get("tipo"); 
     const status = url.searchParams.get("status") || "Disponível";
+    const uidFirebase = url.searchParams.get("uidFirebase");
 
-    const filter: any = { status };
+    const filter: any = { status: { $in: ["Disponível", "Ativo", "Negociando", "Pausado"] } };
+    
     if (tipo) filter.tipo = tipo;
+
+    if (uidFirebase) {
+        filter.uidFirebase = uidFirebase;
+        // Quando buscamos por usuário, queremos todos os status, exceto talvez 'Vendido'
+        delete filter.status; 
+    } else {
+        filter.status = "Disponível"; // Para marketplaces públicos, apenas os disponíveis
+    }
+
 
     const skip = (page - 1) * limit;
     const total = await Anuncio.countDocuments(filter);

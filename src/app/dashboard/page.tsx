@@ -1,10 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { db, app } from '@/lib/firebase';
-import type { CarbonCredit, TaxCredit, RuralLand } from '@/lib/types';
+import { app } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -26,8 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { Anuncio } from '@/models/Anuncio.ts'; // Importando o tipo do modelo
 
-type Asset = (CarbonCredit | TaxCredit | RuralLand) & { assetType: 'carbon-credit' | 'tax-credit' | 'rural-land' };
+
+type Asset = Anuncio & {
+    id: string; // Mongoose usa _id, mas vamos mapear para id
+    assetType: 'carbon-credit' | 'tax-credit' | 'rural-land';
+    status: 'Disponível' | 'Negociando' | 'Vendido' | 'Pausado' | 'Ativo';
+};
 
 const StatusBadge = ({ status }: { status: Asset['status'] }) => {
   const variant = {
@@ -55,16 +59,9 @@ const AssetTypeBadge = ({ type }: { type: Asset['assetType']}) => {
         'tax-credit': { label: 'Tributário', className: 'bg-blue-600/10 text-blue-800' },
         'rural-land': { label: 'Terra Rural', className: 'bg-orange-600/10 text-orange-800' },
     }
-    const { label, className } = typeMap[type];
+    const { label, className } = typeMap[type] || { label: 'Outro', className: 'bg-gray-600/10 text-gray-800' };
     return <Badge variant="secondary" className={cn('capitalize', className)}>{label}</Badge>
 }
-
-const collectionNameMap = {
-    'carbon-credit': 'carbon-credits',
-    'tax-credit': 'tax-credits',
-    'rural-land': 'rural-lands',
-};
-
 
 export default function DashboardPage({
   searchParams,
@@ -83,18 +80,20 @@ export default function DashboardPage({
   const fetchAssets = React.useCallback(async (userId: string) => {
     setLoading(true);
     try {
-        const assetTypes: Asset['assetType'][] = ['carbon-credit', 'tax-credit', 'rural-land'];
-        const allFetchedAssets: Asset[] = [];
-
-        for (const assetType of assetTypes) {
-            const collectionName = collectionNameMap[assetType];
-            const q = query(collection(db, collectionName), where("ownerId", "==", userId));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                allFetchedAssets.push({ ...(doc.data() as any), id: doc.id, assetType });
-            });
+        const response = await fetch(`/api/anuncios/list?uidFirebase=${userId}`);
+        if (!response.ok) {
+            throw new Error('Falha ao buscar anúncios do usuário.');
         }
-        setAllAssets(allFetchedAssets);
+        const data = await response.json();
+        
+        const formattedAssets = data.anuncios.map((anuncio: any) => ({
+            ...anuncio,
+            id: anuncio._id,
+            assetType: anuncio.tipo,
+        }));
+        
+        setAllAssets(formattedAssets);
+
     } catch (error) {
         console.error("Error fetching assets: ", error);
         toast({ title: "Erro ao buscar ativos", description: "Não foi possível carregar seus ativos do banco de dados.", variant: 'destructive' });
@@ -118,16 +117,8 @@ export default function DashboardPage({
   }, [fetchAssets]);
 
   const updateAssetStatus = async (asset: Asset, newStatus: Asset['status']) => {
-    const collectionName = collectionNameMap[asset.assetType];
-    const docRef = doc(db, collectionName, asset.id);
-    try {
-        await updateDoc(docRef, { status: newStatus });
-        setAllAssets(prevAssets => prevAssets.map(a => a.id === asset.id ? { ...a, status: newStatus } : a));
-        toast({ title: "Sucesso!", description: `Status do ativo foi alterado para "${newStatus}".` });
-    } catch (error) {
-        console.error("Error updating asset status: ", error);
-        toast({ title: "Erro", description: "Não foi possível atualizar o status do ativo.", variant: 'destructive' });
-    }
+    // A API de update ainda precisa ser criada.
+    toast({ title: "Funcionalidade em desenvolvimento", description: "A atualização de status será implementada em breve."});
   };
   
   const handleTogglePause = (asset: Asset) => {
@@ -142,38 +133,17 @@ export default function DashboardPage({
 
   const handleDelete = async () => {
     if (!assetToDelete) return;
-    const { id, assetType } = assetToDelete;
-    const collectionName = collectionNameMap[assetType];
-    const docRef = doc(db, collectionName, id);
-
-    try {
-        await deleteDoc(docRef);
-        setAllAssets(prevAssets => prevAssets.filter(a => a.id !== id));
-        toast({ title: "Ativo Removido", description: "O ativo foi excluído com sucesso." });
-    } catch (error) {
-        console.error("Error deleting asset: ", error);
-        toast({ title: "Erro", description: "Não foi possível remover o ativo.", variant: 'destructive' });
-    } finally {
-        setAlertOpen(false);
-        setAssetToDelete(null);
-    }
+    // A API de delete ainda precisa ser criada.
+     toast({ title: "Funcionalidade em desenvolvimento", description: "A exclusão de ativos será implementada em breve."});
+    setAlertOpen(false);
+    setAssetToDelete(null);
   };
 
   const getAssetDetails = (asset: Asset) => {
-    let name = 'N/A';
-    let value = 'N/A';
-
-    if (asset.assetType === 'carbon-credit') {
-        name = asset.creditType;
-        value = `${asset.quantity.toLocaleString()} @ ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.pricePerCredit)}`;
-    } else if (asset.assetType === 'tax-credit') {
-        name = asset.taxType;
-        value = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.price);
-    } else if (asset.assetType === 'rural-land') {
-        name = asset.title;
-        value = asset.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.price) : 'A negociar';
-    }
-    return { name, value };
+    return {
+        name: asset.titulo,
+        value: asset.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.price) : 'A negociar'
+    };
   }
 
 
