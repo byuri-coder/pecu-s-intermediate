@@ -18,16 +18,6 @@ export interface Conversation {
   type: string;
 }
 
-function getAssetTypeQueryParam(type: string) {
-    switch(type) {
-        case 'carbon-credit': return 'carbon-credit';
-        case 'tax-credit': return 'tax-credit';
-        case 'rural-land': return 'rural-land';
-        default: return 'carbon-credit';
-    }
-}
-
-
 export function ChatList({ conversations }: { conversations: Conversation[] }) {
   const pathname = usePathname();
 
@@ -48,7 +38,7 @@ export function ChatList({ conversations }: { conversations: Conversation[] }) {
           {conversations.map((convo) => {
             const isActive = pathname.includes(convo.id);
             return (
-              <Link key={convo.id} href={`/negociacao/${convo.id}?type=${getAssetTypeQueryParam(convo.type)}`} className="block">
+              <Link key={convo.id} href={`/negociacao/${convo.id}?type=${convo.type}`} className="block">
                 <div
                   className={cn(
                     'flex items-center gap-4 p-4 cursor-pointer border-b',
