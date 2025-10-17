@@ -3,13 +3,12 @@
 'use client';
 
 import * as React from 'react';
-import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 import { notFound, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin, LocateFixed, Map } from 'lucide-react';
+import { Landmark, Handshake, ThumbsUp, ThumbsDown, Edit, FileSignature, Upload, Download, Paperclip, Send, FileText, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList, type Conversation } from '../chat-list';
@@ -22,9 +21,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
+type Asset = CarbonCredit | RuralLand | TaxCredit;
 
 // Custom hook for persisting state to localStorage
 function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -52,21 +53,6 @@ function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch
     return [state, setState];
 }
 
-function getAssetDetails(id: string, type: AssetType | null) {
-    if (type === 'carbon-credit') {
-        return placeholderCredits.find((c) => c.id === id);
-    }
-    if (type === 'tax-credit') {
-        return placeholderTaxCredits.find((c) => c.id === id);
-    }
-    if (type === 'rural-land') {
-        return placeholderRuralLands.find((c) => c.id === id);
-    }
-    // Fallback or default search if type is not provided
-    return placeholderCredits.find((c) => c.id === id) || 
-           placeholderTaxCredits.find((c) => c.id === id) || 
-           placeholderRuralLands.find((c) => c.id === id);
-}
 
 function getAssetTypeName(type: AssetType) {
     switch(type) {
@@ -88,23 +74,56 @@ function getAssetTypeRoute(type: AssetType) {
 export default function NegotiationPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
   const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
-  const asset = getAssetDetails(params.id, assetType);
   const { toast } = useToast();
+
+  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   
   const negotiationId = `neg_${params.id}`;
   const [messages, setMessages] = usePersistentState<Message[]>(`${negotiationId}_messages`, []);
   const [newMessage, setNewMessage] = React.useState('');
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    async function getAssetDetails(id: string) {
+        try {
+            const res = await fetch(`/api/anuncios/get/${id}`);
+            if (!res.ok) {
+                setAsset(null);
+                return;
+            }
+            const data = await res.json();
+            if (data.ok) {
+                const anuncio = data.anuncio;
+                const formattedAsset = {
+                    ...anuncio,
+                    id: anuncio._id,
+                    ...anuncio.metadados,
+                    // Ensure price is handled correctly
+                    price: anuncio.price,
+                };
+                setAsset(formattedAsset as Asset);
+            } else {
+                setAsset(null);
+            }
+        } catch(err) {
+            console.error("Failed to fetch asset", err);
+            setAsset(null);
+        }
+    }
+    
+    if (params.id) {
+        getAssetDetails(params.id);
+    }
+  }, [params.id]);
   
 
+  if (asset === 'loading') {
+    return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
+  }
+  
   if (!asset) {
-    // In a real app with server components, this would be a regular notFound() call.
-    // In this client component setup, we return null or a message.
-    React.useEffect(() => {
-        notFound(); // This hook can be called in client components directly.
-    }, []);
-    return <div>Ativo não encontrado.</div>;
+    notFound();
   }
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
@@ -344,4 +363,3 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
