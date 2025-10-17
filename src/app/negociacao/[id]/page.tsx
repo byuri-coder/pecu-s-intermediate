@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -22,6 +21,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import { usePersistentState } from '../use-persistent-state';
+import { db, app } from '@/lib/firebase';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -48,11 +50,13 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const searchParams = useSearchParams();
   const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
   const { toast } = useToast();
+  const auth = getAuth(app);
+  const currentUser = auth.currentUser;
 
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   
   const negotiationId = `neg_${params.id}`;
-  const [messages, setMessages] = usePersistentState<Message[]>(`${negotiationId}_messages`, []);
+  const [messages, setMessages] = React.useState<Message[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -72,7 +76,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                     ...anuncio,
                     id: anuncio._id,
                     ...anuncio.metadados,
-                    // Ensure price is handled correctly
                     price: anuncio.price,
                 };
                 setAsset(formattedAsset as Asset);
@@ -89,6 +92,29 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
         getAssetDetails(params.id);
     }
   }, [params.id]);
+
+  // Listen for real-time messages from Firestore
+  React.useEffect(() => {
+    const messagesRef = collection(db, 'negociacoes', negotiationId, 'messages');
+    const q = query(messagesRef, orderBy('timestamp', 'asc'));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const newMessages = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          sender: data.senderId === currentUser?.uid ? 'me' : 'other',
+          content: data.content,
+          type: data.type,
+          timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || 'agora',
+          avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : `https://picsum.photos/seed/${data.senderId}/40/40`,
+        } as Message;
+      });
+      setMessages(newMessages);
+    });
+
+    return () => unsubscribe();
+  }, [negotiationId, currentUser?.uid]);
   
 
   if (asset === 'loading') {
@@ -101,50 +127,56 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
   const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
-  const isTaxCredit = assetType === 'tax-credit';
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
-  const addMessage = (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
+  const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
+    if (!currentUser) {
+        toast({ title: "Erro de autenticação", description: "Você precisa estar logado para enviar mensagens.", variant: "destructive" });
+        return;
+    }
     const now = new Date();
-    const finalMessage: Message = {
-      id: String(Date.now()),
-      sender: 'me',
-      timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
-      avatar: 'https://picsum.photos/seed/avatar1/40/40',
-      ...msg
-    };
     
-    setMessages(prev => [...prev, finalMessage]);
+    // 1. Add message to Firestore
+    const messagesRef = collection(db, 'negociacoes', negotiationId, 'messages');
+    await addDoc(messagesRef, {
+      senderId: currentUser.uid,
+      content: msg.content,
+      type: msg.type,
+      timestamp: serverTimestamp(),
+    });
 
-    // Check if it's the first message to create a conversation
+    const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
+    
+    // 2. Update or create conversation in localStorage
     const newConversation: Conversation = {
         id: params.id,
         name: sellerName,
         avatar: sellerAvatar,
-        lastMessage: finalMessage.type === 'text' ? finalMessage.content : `Anexo: ${finalMessage.type}`,
-        time: finalMessage.timestamp,
-        unread: 0,
+        lastMessage: lastMessageText,
+        time: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+        unread: 0, // This should be handled based on recipient's view
         type: assetType,
     };
     
     setConversations(prevConvos => {
         const existingConvoIndex = prevConvos.findIndex(c => c.id === newConversation.id);
         if (existingConvoIndex > -1) {
-            // Move the existing conversation to the top and update it
             const updatedConvos = [...prevConvos];
             const [existingConvo] = updatedConvos.splice(existingConvoIndex, 1);
-            return [
-                {
-                    ...existingConvo,
-                    lastMessage: newConversation.lastMessage,
-                    time: newConversation.time
-                },
-                ...updatedConvos
-            ];
+            return [{ ...existingConvo, lastMessage: newConversation.lastMessage, time: newConversation.time }, ...updatedConvos];
         }
-        // Add as a new conversation at the top
         return [newConversation, ...prevConvos];
-    })
+    });
+
+    // 3. Update the main negotiation document with last message info
+    const negotiationDocRef = doc(db, 'negociacoes', negotiationId);
+    await setDoc(negotiationDocRef, { 
+      lastMessage: lastMessageText,
+      lastMessageTimestamp: serverTimestamp(),
+      assetId: params.id,
+      assetName,
+      participants: [currentUser.uid, asset.ownerId],
+    }, { merge: true });
   }
 
   const handleSendMessage = () => {
@@ -161,6 +193,8 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
+      // Here you would upload the file to Firebase Storage and get the URL
+      // For now, we'll just simulate with a placeholder.
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
       const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
       addMessage({ content: content, type: fileType });
@@ -312,3 +346,4 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
