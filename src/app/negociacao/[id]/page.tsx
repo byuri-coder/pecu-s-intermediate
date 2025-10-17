@@ -345,3 +345,4 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   );
 }
 
+
