@@ -207,9 +207,10 @@ const AuthStatusIndicator = React.memo(({
 });
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
-export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
+function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const router = useRouter();
   
   const negotiationId = `neg_${asset.id}`;
   
@@ -360,7 +361,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
 
   const handleFinishTransaction = () => {
-      const router = useRouter();
       updateNegotiationState({ isTransactionComplete: true });
       router.push('/dashboard');
   };
@@ -382,7 +382,9 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             });
             toast({ title: "E-mail de verificação enviado!" });
         } catch (error: any) {
-            console.error(error);
+            if (typeof console !== 'undefined') {
+              console.error(error);
+            }
             toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
         } finally {
             setIsSendingEmail(false);
@@ -555,3 +557,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
+export default AdjustmentClientPage;
