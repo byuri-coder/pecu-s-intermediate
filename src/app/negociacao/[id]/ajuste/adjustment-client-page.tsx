@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -400,7 +399,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       return <div className="flex items-center justify-center h-full"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
-  const { isFinalized } = negotiationState;
+  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, duplicates, authStatus, isTransactionComplete } = negotiationState;
 
   if (searchParams.get('view') === 'archive') {
       return (
@@ -412,18 +411,123 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
-      {/* Main Adjustment Page JSX... using negotiationState where needed */}
-      <div className="flex justify-end">
-          <Button 
-              size="lg" 
-              className="w-full" 
-              disabled={!negotiationState.sellerAgrees || !negotiationState.buyerAgrees || isFinalized}
-              onClick={handleFinalize}
-          >
-              {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
-              {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
-          </Button>
-      </div>
+        <div className="mb-6">
+            <Button variant="outline" asChild>
+                <Link href={`/negociacao/${id}?type=${assetType}`}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Voltar para a Negociação
+                </Link>
+            </Button>
+        </div>
+      <div className="space-y-8">
+          <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                    <FileSignature className="h-8 w-8" />
+                    Ajuste Fino e Fechamento do Contrato
+                </CardTitle>
+                <CardDescription>
+                    Revise os termos, preencha os campos e confirme o acordo para finalizar o contrato.
+                </CardDescription>
+            </CardHeader>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <Label>Vendedor (Cedente)</Label>
+                            <Input value={sellerName} disabled />
+                        </div>
+                        <div>
+                            <Label>Comprador (Cessionário)</Label>
+                            <Input value={currentUser?.displayName || "Comprador Anônimo"} disabled />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Banknote className="h-5 w-5"/>Termos de Pagamento</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                         <div className="flex items-center space-x-4">
+                            <Label>Método de Pagamento:</Label>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="vista" checked={paymentMethod === 'vista'} onCheckedChange={() => !isFinalized && updateNegotiationState({ paymentMethod: 'vista' })} disabled={isFinalized}/>
+                                <Label htmlFor="vista">À Vista</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                 <Checkbox id="parcelado" checked={paymentMethod === 'parcelado'} onCheckedChange={() => !isFinalized && updateNegotiationState({ paymentMethod: 'parcelado' })} disabled={isFinalized}/>
+                                <Label htmlFor="parcelado">Parcelado</Label>
+                            </div>
+                        </div>
+                        {paymentMethod === 'parcelado' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="installments">Número de Parcelas</Label>
+                                <Input id="installments" type="number" value={numberOfInstallments} onChange={(e) => !isFinalized && updateNegotiationState({ numberOfInstallments: e.target.value })} disabled={isFinalized}/>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><CheckCircle className="h-5 w-5"/>Acordo e Assinaturas</CardTitle>
+                        <CardDescription>Ambas as partes devem marcar que concordam com os termos para finalizar o contrato.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className={cn("flex items-center space-x-2 p-4 rounded-md border", isSeller ? 'bg-background' : 'bg-secondary/30')}>
+                            <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => !isFinalized && isSeller && updateNegotiationState({ sellerAgrees: !!checked })} disabled={isFinalized || !isSeller} />
+                            <Label htmlFor="seller-agrees" className="flex-1">O VENDEDOR declara que leu e concorda com todos os termos deste contrato.</Label>
+                        </div>
+                        <div className={cn("flex items-center space-x-2 p-4 rounded-md border", isBuyer ? 'bg-background' : 'bg-secondary/30')}>
+                            <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => !isFinalized && isBuyer && updateNegotiationState({ buyerAgrees: !!checked })} disabled={isFinalized || !isBuyer} />
+                            <Label htmlFor="buyer-agrees" className="flex-1">O COMPRADOR declara que leu e concorda com todos os termos deste contrato.</Label>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <CardFooter className="flex justify-end">
+                    <Button 
+                        size="lg" 
+                        className="w-full" 
+                        disabled={!sellerAgrees || !buyerAgrees || isFinalized}
+                        onClick={handleFinalize}
+                    >
+                        {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
+                        {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
+                    </Button>
+                </CardFooter>
+            </Card>
+
+            </div>
+             <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5"/>Minuta do Contrato</CardTitle>
+                        <div className="flex gap-2">
+                             <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+                                <Download className="mr-2 h-4 w-4"/> PDF
+                             </Button>
+                        </div>
+                    </div>
+                    <CardDescription>
+                        Pré-visualização do documento de {contractTitle}.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Textarea
+                        value={finalContractText}
+                        readOnly={isFinalized}
+                        rows={25}
+                        className="bg-secondary/20 text-xs font-mono"
+                    />
+                </CardContent>
+            </Card>
+        </div>
 
        {isFinalized && (
         <div className="mt-8 space-y-6">
@@ -436,7 +540,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     <div className="grid md:grid-cols-2 gap-4">
                          <AuthStatusIndicator 
                             role="seller" 
-                            authStatus={negotiationState.authStatus.seller}
+                            authStatus={authStatus.seller}
                             email={negotiationState.sellerEmail}
                             onEmailChange={(e) => updateNegotiationState({ sellerEmail: e.target.value })}
                             onSendVerification={() => handleSendVerificationEmail('seller')}
@@ -444,7 +548,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                         />
                         <AuthStatusIndicator 
                             role="buyer"
-                            authStatus={negotiationState.authStatus.buyer}
+                            authStatus={authStatus.buyer}
                             email={negotiationState.buyerEmail}
                             onEmailChange={(e) => updateNegotiationState({ buyerEmail: e.target.value })}
                             onSendVerification={() => handleSendVerificationEmail('buyer')}
@@ -453,11 +557,8 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
                     </div>
                 </CardContent>
             </Card>
-            {/* ... other sections that depend on isFinalized */}
         </div>
       )}
     </div>
   );
 }
-
-
