@@ -215,7 +215,6 @@ const AuthStatusIndicator = React.memo(({
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
 export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
@@ -274,7 +273,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
   
   const getNextInvoiceNumber = () => {
-    if (typeof window === 'undefined') return '000001';
+    if (typeof window === 'undefined') return '000001'; // Fallback for SSR
     let currentCounter = parseInt(window.localStorage.getItem(INVOICE_COUNTER_KEY) || '0', 10);
     currentCounter++;
     window.localStorage.setItem(INVOICE_COUNTER_KEY, currentCounter.toString());
@@ -369,6 +368,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   const handleDownloadDocx = () => { /* ... implementation ... */ };
 
   const handleFinishTransaction = () => {
+      const router = useRouter();
       //... implementation ...
       updateNegotiationState({ isTransactionComplete: true });
   };
