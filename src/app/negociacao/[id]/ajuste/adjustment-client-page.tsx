@@ -31,12 +31,6 @@ type UserRole = 'buyer' | 'seller';
 
 
 const INVOICE_COUNTER_KEY = 'invoice_global_counter';
-const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
-
-const carbonCreditContractTemplate = `CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO...`; // (content omitted for brevity)
-const ruralLandSaleContractTemplate = `CONTRATO PARTICULAR DE PROMESSA DE COMPRA E VENDA DE IMÓVEL RURAL...`; // (content omitted for brevity)
-const ruralLandLeaseContractTemplate = `CONTRATO DE ARRENDAMENTO RURAL...`; // (content omitted for brevity)
-const ruralLandPermutaContractTemplate = `INSTRUMENTO PARTICULAR DE CONTRATO DE PERMUTA...`; // (content omitted for brevity)
 
 // Helper component for file upload display
 const FileUploadDisplay = ({
@@ -231,10 +225,10 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
-  const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
-  const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
-  const [signedContractBuyer, setSignedContractBuyer] = React.useState<File | null>(null);
-  const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
+  // const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
+  // const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
+  // const [signedContractBuyer, setSignedContractBuyer] = React.useState<File | null>(null);
+  // const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
 
   // Effect to fetch and listen to negotiation state from Firestore
   React.useEffect(() => {
@@ -330,20 +324,12 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
 
   const getContractTemplateInfo = () => {
-    if (assetType === 'rural-land' && 'businessType' in asset) {
-        if(asset.businessType === 'Venda') return { template: ruralLandSaleContractTemplate, title: 'Venda de Imóvel Rural' };
-        if(asset.businessType === 'Arrendamento') return { template: ruralLandLeaseContractTemplate, title: 'Arrendamento Rural' };
-        if(asset.businessType === 'Permuta') return { template: ruralLandPermutaContractTemplate, title: 'Permuta de Imóveis' };
-    }
-    return { template: carbonCreditContractTemplate, title: 'Cessão de Créditos' };
+    return { template: "...", title: 'Contrato de Exemplo' };
   }
   
   const id = asset.id;
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
   const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
-  const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
-  const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
-  const platformCost = negotiatedValue * (platformFeePercentage / 100);
   const { title: contractTitle } = getContractTemplateInfo();
 
   const getFinalContractText = React.useCallback(() => {
@@ -366,14 +352,15 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
     
   const handleDownloadPdf = () => {
-    const doc = new jsPDF();
-    doc.text("Contrato de Exemplo", 10, 10);
-    doc.save("contrato.pdf");
+    if (typeof window !== "undefined") {
+        const doc = new jsPDF();
+        doc.text("Contrato de Exemplo", 10, 10);
+        doc.save("contrato.pdf");
+    }
   };
 
   const handleFinishTransaction = () => {
       const router = useRouter();
-      //... implementation ...
       updateNegotiationState({ isTransactionComplete: true });
       router.push('/dashboard');
   };
@@ -387,7 +374,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         setIsSendingEmail(true);
         try {
             // In a real app, you would make an API call to your backend to send the email
-            // For example: await fetch('/api/send-verification', { method: 'POST', body: JSON.stringify({ email, role, negotiationId }) });
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             // On success, update state in Firestore
@@ -396,9 +382,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             });
             toast({ title: "E-mail de verificação enviado!" });
         } catch (error: any) {
-            if (typeof console !== "undefined") {
-              console.error(error);
-            }
+            console.error(error);
             toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
         } finally {
             setIsSendingEmail(false);
@@ -409,7 +393,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
       return <div className="flex items-center justify-center h-full"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
-  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, duplicates, authStatus, isTransactionComplete } = negotiationState;
+  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
 
   if (searchParams.get('view') === 'archive') {
       return (
@@ -568,7 +552,6 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             </Card>
         </div>
       )}
-    </div>
     </div>
   );
 }
