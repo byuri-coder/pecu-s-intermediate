@@ -4,6 +4,18 @@ import { connectMongo } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import redis from "@/lib/redis";
 
+async function clearCachePrefix(prefix: string) {
+  try {
+    const keys = await redis.keys(`${prefix}:*`);
+    if (keys.length > 0) {
+      await redis.del(keys);
+      console.log(`🧹 Cache cleared: ${keys.length} keys removed starting with '${prefix}:'`);
+    }
+  } catch (error) {
+    console.error("Error clearing cache:", error);
+  }
+}
+
 export async function POST(req: Request) {
   try {
     await connectMongo();
@@ -27,12 +39,7 @@ export async function POST(req: Request) {
     });
 
     // Limpa o cache após criar um novo anúncio para garantir que as listas sejam atualizadas
-    const keys = await redis.keys("anuncios:*");
-    if (keys.length > 0) {
-      await redis.del(keys);
-      console.log(`🧹 Cache cleared for ${keys.length} keys.`);
-    }
-
+    await clearCachePrefix("anuncios");
 
     return NextResponse.json({ ok: true, anuncio });
   } catch (err: any) {

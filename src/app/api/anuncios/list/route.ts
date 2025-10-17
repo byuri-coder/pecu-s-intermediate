@@ -3,11 +3,19 @@ import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import redis from "@/lib/redis";
+import crypto from "crypto";
 
+// Função auxiliar para gerar uma chave de cache única por filtro/página/usuário
+function generateCacheKey(base: string, queryParams: any) {
+  const queryString = JSON.stringify(queryParams);
+  const hash = crypto.createHash("md5").update(queryString).digest("hex");
+  return `${base}:${hash}`;
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const cacheKey = `anuncios:${url.search || "all"}`; 
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const cacheKey = generateCacheKey("anuncios", queryParams);
 
   try {
     const cached = await redis.get(cacheKey);
@@ -15,28 +23,25 @@ export async function GET(req: Request) {
       console.log("✅ Cache hit:", cacheKey);
       return NextResponse.json(JSON.parse(cached));
     }
-     console.log("❌ Cache miss:", cacheKey);
+    console.log("❌ Cache miss:", cacheKey);
 
     await connectMongo();
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
     const limit = Math.min(Number(url.searchParams.get("limit") || "100"), 100);
     const tipo = url.searchParams.get("tipo"); 
-    const status = url.searchParams.get("status") || "Disponível";
     const uidFirebase = url.searchParams.get("uidFirebase");
 
-    const filter: any = { status: { $in: ["Disponível", "Ativo", "Negociando", "Pausado"] } };
+    const filter: any = {};
     
     if (tipo) filter.tipo = tipo;
 
     if (uidFirebase) {
         filter.uidFirebase = uidFirebase;
-        // Quando buscamos por usuário, queremos todos os status, exceto talvez 'Vendido'
-        delete filter.status; 
     } else {
-        filter.status = "Disponível"; // Para marketplaces públicos, apenas os disponíveis
+        // Para marketplaces públicos, apenas os disponíveis/ativos
+        filter.status = { $in: ["Disponível", "Ativo"] };
     }
-
 
     const skip = (page - 1) * limit;
     const total = await Anuncio.countDocuments(filter);
