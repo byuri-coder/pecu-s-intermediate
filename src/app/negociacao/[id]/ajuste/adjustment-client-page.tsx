@@ -61,7 +61,7 @@ const FileUploadDisplay = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
   
   const handleDownload = () => {
-    if (file) {
+    if (file && typeof window !== "undefined") {
       const url = URL.createObjectURL(file);
       const a = document.createElement('a');
       a.href = url;
@@ -74,7 +74,7 @@ const FileUploadDisplay = ({
   };
 
   const handleView = () => {
-     if (file) {
+     if (file && typeof window !== "undefined") {
       const url = URL.createObjectURL(file);
       window.open(url, '_blank');
     }
@@ -340,7 +340,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   
   const id = asset.id;
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset ? asset.owner : asset.sellerName;
+  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
   const negotiatedValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 50000);
   const platformFeePercentage = negotiatedValue <= 100000 ? 1.5 : 1;
   const platformCost = negotiatedValue * (platformFeePercentage / 100);
@@ -413,7 +413,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
 
   if (searchParams.get('view') === 'archive') {
       return (
-        <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px:8">
+        <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
             {/* Archive View JSX... */}
         </div>
       )
@@ -568,6 +568,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
             </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }
