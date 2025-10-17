@@ -1,41 +1,42 @@
 
+
 'use client';
 
 import { notFound, useSearchParams, useParams } from 'next/navigation';
-import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 import { AdjustmentClientPage } from './adjustment-client-page';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import * as React from 'react';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
-
 type Asset = CarbonCredit | TaxCredit | RuralLand | null;
 
 
-function getAssetDetails(id: string, type: AssetType): Asset {
-    let localItems: any[] = [];
-    if (typeof window !== 'undefined') {
-        const storageKey = `${type.replace('-', '_')}s`;
-        const localData = localStorage.getItem(storageKey);
-        if (localData) {
-            localItems = JSON.parse(localData);
+async function getAssetDetails(id: string, type: AssetType): Promise<Asset> {
+    try {
+      const response = await fetch(`/api/anuncios/get/${id}`);
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      if (data.ok) {
+        const anuncio = data.anuncio;
+        const formattedAsset = {
+            ...anuncio,
+            id: anuncio._id,
+            ...anuncio.metadados,
+        };
+        // Specific mappings for different asset types if needed
+        if (formattedAsset.tipo === 'carbon-credit') {
+            formattedAsset.pricePerCredit = formattedAsset.price;
         }
+        return formattedAsset as Asset;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch asset details", error);
+      return null;
     }
-
-    const localAsset = localItems.find(item => item.id === id);
-    if (localAsset) return localAsset as Asset;
-
-    if (type === 'carbon-credit') {
-        return placeholderCredits.find((c) => c.id === id) || null;
-    }
-    if (type === 'tax-credit') {
-        return placeholderTaxCredits.find((c) => c.id === id) || null;
-    }
-    if (type === 'rural-land') {
-        return placeholderRuralLands.find((c) => c.id === id) || null;
-    }
-    return null;
 }
 
 export default function AdjustmentPage() {
@@ -45,12 +46,13 @@ export default function AdjustmentPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
   
-  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
+  const [asset, setAsset] = React.useState<Asset | 'loading'>('loading');
 
   React.useEffect(() => {
     if (id && assetType) {
-      const assetDetails = getAssetDetails(id, assetType);
-      setAsset(assetDetails);
+      getAssetDetails(id, assetType).then(assetData => {
+        setAsset(assetData);
+      });
     }
   }, [id, assetType]);
   
@@ -65,3 +67,4 @@ export default function AdjustmentPage() {
 
   return <AdjustmentClientPage asset={asset} assetType={assetType} />;
 }
+

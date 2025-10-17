@@ -323,13 +323,13 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
         }
     }
     updateNegotiationState({ duplicates: newDuplicates });
-  }, [asset, negotiationState, negotiationId]);
+  }, [asset, negotiationState]);
 
   React.useEffect(() => {
-    if(negotiationState?.paymentMethod || negotiationState?.numberOfInstallments) {
+    if(negotiationState?.isFinalized && negotiationState.duplicates.length === 0) {
         handleGenerateDuplicates();
     }
-  }, [negotiationState?.paymentMethod, negotiationState?.numberOfInstallments, handleGenerateDuplicates]);
+  }, [negotiationState?.isFinalized, negotiationState?.duplicates, handleGenerateDuplicates]);
   
 
   const getContractTemplateInfo = () => {
@@ -459,4 +459,5 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     </div>
   );
 }
+
 
