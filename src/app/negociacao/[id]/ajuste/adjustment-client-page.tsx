@@ -273,7 +273,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
   };
   
   const getNextInvoiceNumber = () => {
-    if (typeof window === 'undefined') return '000001'; // Fallback for SSR
+    if (typeof window === 'undefined') return '000001';
     let currentCounter = parseInt(window.localStorage.getItem(INVOICE_COUNTER_KEY) || '0', 10);
     currentCounter++;
     window.localStorage.setItem(INVOICE_COUNTER_KEY, currentCounter.toString());
@@ -327,7 +327,7 @@ export function AdjustmentClientPage({ asset, assetType }: { asset: Asset, asset
     if(negotiationState?.isFinalized && negotiationState.duplicates.length === 0) {
         handleGenerateDuplicates();
     }
-  }, [negotiationState?.isFinalized, negotiationState?.duplicates, handleGenerateDuplicates]);
+  }, [negotiationState?.isFinalized, negotiationState?.duplicates.length, handleGenerateDuplicates]);
   
 
   const getContractTemplateInfo = () => {

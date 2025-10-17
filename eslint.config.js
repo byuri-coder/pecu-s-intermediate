@@ -1,16 +1,17 @@
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import reactPlugin from "eslint-plugin-react";
 
 export default [
   js.configs.recommended,
-  ...tseslint.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
-      parser: tseslint.parser,
+      parser: tsParser,
     },
     plugins: {
+      "@typescript-eslint": tseslint,
       react: reactPlugin,
     },
     rules: {
