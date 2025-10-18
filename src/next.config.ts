@@ -1,5 +1,6 @@
 
 import type {NextConfig} from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -48,7 +49,14 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_PLATFORM_HOLDER: process.env.PLATFORM_HOLDER,
     NEXT_PUBLIC_PLATFORM_CNPJ: process.env.PLATFORM_CNPJ,
     NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE: process.env.PLATFORM_ACCOUNT_TYPE,
-  }
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, './'),
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
