@@ -63,6 +63,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
 
   React.useEffect(() => {
     async function getAssetDetails(id: string) {
+        setAsset('loading');
         try {
             const res = await fetch(`/api/anuncios/get/${id}`);
             if (!res.ok) {
@@ -76,6 +77,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                     ...anuncio,
                     id: anuncio._id,
                     ...anuncio.metadados,
+                    ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
                     price: anuncio.price,
                 };
                 setAsset(formattedAsset as Asset);
@@ -95,6 +97,8 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
 
   // Listen for real-time messages from Firestore
   React.useEffect(() => {
+    if (!negotiationId || !currentUser?.uid) return;
+
     const messagesRef = collection(db, 'negociacoes', negotiationId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
@@ -130,7 +134,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
   const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
-    if (!currentUser) {
+    if (!currentUser || !asset.ownerId) {
         toast({ title: "Erro de autenticação", description: "Você precisa estar logado para enviar mensagens.", variant: "destructive" });
         return;
     }
@@ -346,4 +350,3 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
