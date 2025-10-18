@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,11 @@ import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Lo
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, Duplicata } from '@/lib/types';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
 
@@ -43,7 +42,7 @@ type NegotiationState = {
   numberOfInstallments: string;
   duplicates: Duplicata[];
   authStatus: Record<'buyer' | 'seller', AuthStatus>;
-  contractFields: Record<string, any>;
+  contractFields: Record<string, unknown>;
 };
 
 const AuthStatusIndicator = React.memo(({ 
@@ -112,7 +111,6 @@ AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const router = useRouter();
   
   const negotiationId = `neg_${asset.id}`;
   
@@ -458,8 +456,7 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
         </div>
       )}
     </div>
-    </div>
-  );
+    );
 }
 
 export default AdjustmentClientPage;
