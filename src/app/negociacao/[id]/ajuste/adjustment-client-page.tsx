@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, notFound } from 'next/navigation';
+import { useSearchParams, notFound, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,6 +110,7 @@ AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const router = useRouter();
   
   const auth = getAuth();
   const currentUser = auth.currentUser;
