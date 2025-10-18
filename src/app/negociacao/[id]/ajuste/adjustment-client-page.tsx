@@ -226,19 +226,12 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
   
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
-  // const [buyerProofFile, setBuyerProofFile] = React.useState<File | null>(null);
-  // const [sellerProofFile, setSellerProofFile] = React.useState<File | null>(null);
-  // const [signedContractBuyer, setSignedContractBuyer] = React.useState<File | null>(null);
-  // const [signedContractSeller, setSignedContractSeller] = React.useState<File | null>(null);
-
-  // Effect to fetch and listen to negotiation state from Firestore
   React.useEffect(() => {
     const docRef = doc(db, 'negociacoes', negotiationId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            // Document doesn't exist, create it with initial state
             const initialState: NegotiationState = {
                 sellerAgrees: false,
                 buyerAgrees: false,
@@ -373,10 +366,8 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
         }
         setIsSendingEmail(true);
         try {
-            // In a real app, you would make an API call to your backend to send the email
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // On success, update state in Firestore
             await updateNegotiationState({
                 authStatus: { ...negotiationState!.authStatus, [role]: 'pending' }
             });
@@ -400,7 +391,23 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
   if (searchParams.get('view') === 'archive') {
       return (
         <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
-            {/* Archive View JSX... */}
+            <div className="mb-6">
+                <Button variant="outline" asChild>
+                    <Link href={`/dashboard`}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Voltar para o Dashboard
+                    </Link>
+                </Button>
+            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Arquivo da Negociação</CardTitle>
+                    <CardDescription>Detalhes e documentos da negociação concluída de {assetName}.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Visualização de arquivo de negociação concluída. (Em desenvolvimento)</p>
+                </CardContent>
+             </Card>
         </div>
       )
   }
@@ -554,6 +561,7 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
             </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }
