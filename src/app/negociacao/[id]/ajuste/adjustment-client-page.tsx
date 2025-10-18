@@ -2,24 +2,21 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, Download, FileText, UploadCloud, X, Eye, Lock, MailCheck, Loader2, AlertTriangle, RefreshCw, Users, Fingerprint, Film } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, CompletedDeal } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, Duplicata } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { numberToWords } from '@/lib/number-to-words';
-import { Seal } from '@/components/ui/seal';
-import Image from 'next/image';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
@@ -31,101 +28,6 @@ type UserRole = 'buyer' | 'seller';
 
 
 const INVOICE_COUNTER_KEY = 'invoice_global_counter';
-
-// Helper component for file upload display
-const FileUploadDisplay = ({
-  file,
-  onFileChange,
-  onClear,
-  acceptedTypes,
-  maxSize,
-  isReadOnly = false,
-  label,
-  disabled = false,
-}: {
-  file: File | null;
-  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onClear: () => void;
-  acceptedTypes: string;
-  maxSize: string;
-  isReadOnly?: boolean;
-  label: string;
-  disabled?: boolean;
-}) => {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  
-  const handleDownload = () => {
-    if (file && typeof window !== "undefined") {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const handleView = () => {
-     if (file && typeof window !== "undefined") {
-      const url = URL.createObjectURL(file);
-      window.open(url, '_blank');
-    }
-  }
-
-  if (file) {
-    return (
-      <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <FileText className="h-6 w-6 text-primary flex-shrink-0" />
-          <p className="font-semibold text-sm truncate" title={file.name}>
-            {label}
-          </p>
-        </div>
-        <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={handleView} className="h-7 w-7 text-muted-foreground">
-                <Eye className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleDownload} className="h-7 w-7 text-muted-foreground">
-                <Download className="h-4 w-4" />
-            </Button>
-            {!isReadOnly && !disabled && (
-                <Button variant="ghost" size="icon" onClick={onClear} className="h-7 w-7 text-muted-foreground">
-                    <X className="h-4 w-4" />
-                </Button>
-            )}
-        </div>
-      </div>
-    );
-  }
-
-  if (isReadOnly || disabled) {
-    return (
-        <div className="flex items-center justify-between p-3 rounded-md border bg-secondary/30 text-muted-foreground">
-             <p className="font-semibold text-sm truncate">Nenhum documento anexado.</p>
-        </div>
-    )
-  }
-
-  return (
-    <div
-      className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
-      onClick={() => inputRef.current?.click()}
-    >
-      <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-      <p className="mt-4 text-sm text-muted-foreground">Arraste ou clique para fazer upload</p>
-      <p className="text-xs text-muted-foreground/70">{acceptedTypes} (máx. {maxSize})</p>
-      <Input
-        ref={inputRef}
-        type="file"
-        className="hidden"
-        onChange={onFileChange}
-        accept={acceptedTypes}
-      />
-    </div>
-  );
-};
 
 
 type AuthStatus = 'pending' | 'validated' | 'expired';
@@ -141,7 +43,7 @@ type NegotiationState = {
   numberOfInstallments: string;
   duplicates: Duplicata[];
   authStatus: Record<'buyer' | 'seller', AuthStatus>;
-  contractFields: any;
+  contractFields: Record<string, any>;
 };
 
 const AuthStatusIndicator = React.memo(({ 
@@ -243,7 +145,7 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
                 numberOfInstallments: '2',
                 duplicates: [],
                 authStatus: { buyer: 'pending', seller: 'pending' },
-                contractFields: { /* initial fields */ },
+                contractFields: { },
             };
             setDoc(docRef, initialState).then(() => setNegotiationState(initialState));
         }
@@ -273,7 +175,7 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
     const totalValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 0);
     if (totalValue === 0) return;
 
-    let newDuplicates: Duplicata[] = [];
+    const newDuplicates: Duplicata[] = [];
     const issueDate = new Date();
     const invoiceNumber = getNextInvoiceNumber();
 
@@ -352,11 +254,6 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
         doc.save("contrato.pdf");
     }
   };
-
-  const handleFinishTransaction = () => {
-      updateNegotiationState({ isTransactionComplete: true });
-      router.push('/dashboard');
-  };
     
   const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
         const email = role === 'buyer' ? negotiationState?.buyerEmail : negotiationState?.sellerEmail;
@@ -372,11 +269,10 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
                 authStatus: { ...negotiationState!.authStatus, [role]: 'pending' }
             });
             toast({ title: "E-mail de verificação enviado!" });
-        } catch (error: any) {
-            if (typeof console !== 'undefined') {
-              console.error(error);
+        } catch (error) {
+            if (error instanceof Error) {
+                toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
             }
-            toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
         } finally {
             setIsSendingEmail(false);
         }
@@ -509,10 +405,10 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
              <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5"/>Minuta do Contrato</CardTitle>
+                        <CardTitle>Minuta do Contrato</CardTitle>
                         <div className="flex gap-2">
                              <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-                                <Download className="mr-2 h-4 w-4"/> PDF
+                                PDF
                              </Button>
                         </div>
                     </div>
