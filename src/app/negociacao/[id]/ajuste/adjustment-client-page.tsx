@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { CarbonCredit, RuralLand, TaxCredit, Duplicata } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, AssetType } from '@/lib/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
@@ -21,12 +21,8 @@ import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
 
 
-type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 type UserRole = 'buyer' | 'seller';
-
-
-const INVOICE_COUNTER_KEY = 'invoice_global_counter';
 
 
 type AuthStatus = 'pending' | 'validated' | 'expired';
@@ -44,6 +40,9 @@ type NegotiationState = {
   authStatus: Record<'buyer' | 'seller', AuthStatus>;
   contractFields: Record<string, unknown>;
 };
+
+const INVOICE_COUNTER_KEY = 'invoice_global_counter';
+
 
 const AuthStatusIndicator = React.memo(({ 
     role, 
@@ -108,25 +107,60 @@ const AuthStatusIndicator = React.memo(({
 });
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
-function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
+function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  
-  const negotiationId = `neg_${asset.id}`;
   
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
+  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   const [negotiationState, setNegotiationState] = React.useState<NegotiationState | null>(null);
   const [loading, setLoading] = React.useState(true);
-  
-  const currentUserRole: UserRole = currentUser?.uid === asset.ownerId ? 'seller' : 'buyer';
-  const isSeller = currentUserRole === 'seller';
-  const isBuyer = currentUserRole === 'buyer';
-  
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
+  const negotiationId = `neg_${assetId}`;
+
+  // Fetch asset details
   React.useEffect(() => {
+    async function getAssetDetails(id: string) {
+        setAsset('loading');
+        try {
+          const response = await fetch(`/api/anuncios/get/${id}`);
+          if (!response.ok) {
+            setAsset(null);
+            return;
+          }
+          const data = await response.json();
+          if (data.ok) {
+            const anuncio = data.anuncio;
+            const formattedAsset = {
+                ...anuncio,
+                id: anuncio._id,
+                ...anuncio.metadados,
+                ownerId: anuncio.uidFirebase,
+            };
+            if (formattedAsset.tipo === 'carbon-credit') {
+                formattedAsset.pricePerCredit = formattedAsset.price;
+            }
+            setAsset(formattedAsset as Asset);
+          } else {
+            setAsset(null);
+          }
+        } catch (error) {
+          console.error("Failed to fetch asset details", error);
+          setAsset(null);
+        }
+    }
+    if (assetId) {
+      getAssetDetails(assetId);
+    }
+  }, [assetId]);
+
+  // Firestore listener
+  React.useEffect(() => {
+    if (!asset || asset === 'loading') return;
+
     const docRef = doc(db, 'negociacoes', negotiationId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -151,7 +185,11 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
     });
 
     return () => unsubscribe();
-  }, [negotiationId]);
+  }, [negotiationId, asset]);
+
+  const currentUserRole: UserRole | null = asset && asset !== 'loading' && currentUser?.uid === asset.ownerId ? 'seller' : 'buyer';
+  const isSeller = currentUserRole === 'seller';
+  const isBuyer = currentUserRole === 'buyer';
 
   const updateNegotiationState = async (updates: Partial<NegotiationState>) => {
     if (!negotiationState) return;
@@ -168,7 +206,7 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
   }
 
   const handleGenerateDuplicates = React.useCallback(() => {
-    if(!negotiationState) return;
+    if(!negotiationState || !asset || asset === 'loading') return;
 
     const totalValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 0);
     if (totalValue === 0) return;
@@ -221,18 +259,12 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
     return { template: "...", title: 'Contrato de Exemplo' };
   }
   
-  const id = asset.id;
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
-  const { title: contractTitle } = getContractTemplateInfo();
-
   const getFinalContractText = React.useCallback(() => {
     return '...'; // Simplified for brevity
   }, []); // Dependencies would go here
 
   const finalContractText = getFinalContractText();
 
-  
   const handleFinalize = async () => {
     handleGenerateDuplicates();
     await updateNegotiationState({ isFinalized: true });
@@ -276,10 +308,17 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
         }
     }
   
-  if (loading || !negotiationState) {
-      return <div className="flex items-center justify-center h-full"><Loader2 className="h-16 w-16 animate-spin"/></div>
+  if (asset === 'loading' || loading || !negotiationState || !asset) {
+      return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
+  if (!asset) {
+      notFound();
+  }
+
+  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
+  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
+  const { title: contractTitle } = getContractTemplateInfo();
   const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
 
   if (searchParams.get('view') === 'archive') {
@@ -303,14 +342,14 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
                 </CardContent>
              </Card>
         </div>
-      )
+      );
   }
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
             <Button variant="outline" asChild>
-                <Link href={`/negociacao/${id}?type=${assetType}`}>
+                <Link href={`/negociacao/${assetId}?type=${assetType}`}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar para a Negociação
                 </Link>
@@ -398,7 +437,6 @@ function AdjustmentClientPage({ asset, assetType }: { asset: Asset, assetType: A
                         </Button>
                     </CardFooter>
                 </Card>
-
             </div>
              <Card>
                 <CardHeader>
