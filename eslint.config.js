@@ -4,6 +4,7 @@ import reactPlugin from "eslint-plugin-react";
 
 export default tseslint.config([
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -19,21 +20,8 @@ export default tseslint.config([
     rules: {
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
+      // regra do novo pacote:
       "@typescript-eslint/no-unused-vars": "warn",
-    },
-  },
-  {
-    languageOptions: {
-      globals: {
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
-        File: 'readonly',
-        setTimeout: 'readonly',
-        navigator: 'readonly',
-        URL: 'readonly',
-        localStorage: 'readonly'
-      },
     },
   },
 ]);
