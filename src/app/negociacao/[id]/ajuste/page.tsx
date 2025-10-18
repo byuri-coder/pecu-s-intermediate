@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { notFound, useSearchParams, useParams } from 'next/navigation';
-import { AdjustmentClientPage } from './adjustment-client-page';
+import AdjustmentClientPage from './adjustment-client-page';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import * as React from 'react';
 
@@ -67,4 +66,3 @@ export default function AdjustmentPage() {
 
   return <AdjustmentClientPage asset={asset} assetType={assetType} />;
 }
-
