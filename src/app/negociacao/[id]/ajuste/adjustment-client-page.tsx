@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { CarbonCredit, RuralLand, TaxCredit, Duplicata, AssetType } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, AssetType } from '@/lib/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
-
 
 type Asset = CarbonCredit | TaxCredit | RuralLand;
 type UserRole = 'buyer' | 'seller';
@@ -36,13 +35,9 @@ type NegotiationState = {
   buyerEmail: string;
   paymentMethod: 'vista' | 'parcelado';
   numberOfInstallments: string;
-  duplicates: Duplicata[];
   authStatus: Record<'buyer' | 'seller', AuthStatus>;
   contractFields: Record<string, unknown>;
 };
-
-const INVOICE_COUNTER_KEY = 'invoice_global_counter';
-
 
 const AuthStatusIndicator = React.memo(({ 
     role, 
@@ -110,7 +105,6 @@ AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const router = useRouter();
   
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -167,7 +161,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            const initialState: NegotiationState = {
+            const initialState: Omit<NegotiationState, 'duplicates'> & { contractFields: Record<string, unknown> } = {
                 sellerAgrees: false,
                 buyerAgrees: false,
                 isFinalized: false,
@@ -176,11 +170,10 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
                 buyerEmail: 'comprador@example.com',
                 paymentMethod: 'vista',
                 numberOfInstallments: '2',
-                duplicates: [],
                 authStatus: { buyer: 'pending', seller: 'pending' },
                 contractFields: { },
             };
-            setDoc(docRef, initialState).then(() => setNegotiationState(initialState));
+            setDoc(docRef, initialState).then(() => setNegotiationState(initialState as NegotiationState));
         }
         setLoading(false);
     });
@@ -198,64 +191,6 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
     await setDoc(docRef, { ...negotiationState, ...updates }, { merge: true });
   };
   
-  const getNextInvoiceNumber = () => {
-    if (typeof window === 'undefined') return '000001';
-    let currentCounter = parseInt(window.localStorage.getItem(INVOICE_COUNTER_KEY) || '0', 10);
-    currentCounter++;
-    window.localStorage.setItem(INVOICE_COUNTER_KEY, currentCounter.toString());
-    return currentCounter.toString().padStart(6, '0');
-  }
-
-  const handleGenerateDuplicates = React.useCallback(() => {
-    if(!negotiationState || !asset || asset === 'loading') return;
-
-    const totalValue = 'price' in asset && asset.price ? asset.price : ('amount' in asset ? asset.amount : 0);
-    if (totalValue === 0) return;
-
-    const newDuplicates: Duplicata[] = [];
-    const issueDate = new Date();
-    const invoiceNumber = getNextInvoiceNumber();
-
-    const transactionHash = `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-    const blockTimestamp = new Date().toISOString();
-
-    if (negotiationState.paymentMethod === 'vista') {
-        newDuplicates.push({
-            orderNumber: '1/1',
-            invoiceNumber: invoiceNumber,
-            issueDate: issueDate.toLocaleDateString('pt-BR'),
-            dueDate: 'À VISTA',
-            value: totalValue,
-            blockchain: { transactionHash, blockTimestamp }
-        });
-    } else {
-        const installments = parseInt(negotiationState.numberOfInstallments, 10);
-        if (isNaN(installments) || installments <= 0) return;
-        
-        const installmentValue = totalValue / installments;
-        for (let i = 1; i <= installments; i++) {
-            const dueDate = new Date(issueDate);
-            dueDate.setMonth(dueDate.getMonth() + i);
-            newDuplicates.push({
-                orderNumber: `${String(i).padStart(3, '0')}/${String(installments).padStart(3, '0')}`,
-                invoiceNumber: invoiceNumber,
-                issueDate: issueDate.toLocaleDateString('pt-BR'),
-                dueDate: dueDate.toLocaleDateString('pt-BR'),
-                value: installmentValue,
-                blockchain: { transactionHash, blockTimestamp }
-            });
-        }
-    }
-    updateNegotiationState({ duplicates: newDuplicates });
-  }, [asset, negotiationState]);
-
-  React.useEffect(() => {
-    if(negotiationState?.isFinalized && negotiationState.duplicates.length === 0) {
-        handleGenerateDuplicates();
-    }
-  }, [negotiationState?.isFinalized, negotiationState?.duplicates.length, handleGenerateDuplicates]);
-  
-
   const getContractTemplateInfo = () => {
     return { template: "...", title: 'Contrato de Exemplo' };
   }
@@ -267,7 +202,6 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
   const finalContractText = getFinalContractText();
 
   const handleFinalize = async () => {
-    handleGenerateDuplicates();
     await updateNegotiationState({ isFinalized: true });
     toast({
         title: "Contrato Finalizado!",

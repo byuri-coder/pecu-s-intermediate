@@ -108,8 +108,7 @@ export interface CompletedDeal {
     duplicates: Duplicata[];
     seller: { name: string; doc: string, address: string };
     buyer: { name: string; doc: string, address: string };
-    blockchain: {
-      transactionHash: string;
-      blockTimestamp: string;
-    };
 }
+
+
+export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
