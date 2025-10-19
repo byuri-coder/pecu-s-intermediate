@@ -10,9 +10,9 @@ export type CarbonCredit = {
   vintage: string; // Year
   standard: string;
   projectOverview: string;
-  status: 'Ativo' | 'Pausado' | 'Vendido' | 'Disponível' | 'Negociando';
+  status: string;
   ownerId: string;
-  createdAt: any; // Firestore ServerTimestamp
+  createdAt: string | Date; 
 };
 
 export type TaxCredit = {
@@ -24,7 +24,7 @@ export type TaxCredit = {
   location: string;
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
-  createdAt: any; // Firestore ServerTimestamp
+  createdAt: string | Date; 
 };
 
 type MediaItem = {
@@ -47,7 +47,7 @@ export type RuralLand = {
   price?: number; // Optional, might not apply to all business types
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
-  createdAt: any; // Firestore ServerTimestamp
+  createdAt: string | Date; 
 };
 
 export type Operation = {
