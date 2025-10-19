@@ -24,11 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Anuncio } from '@/models/Anuncio.ts'; // Importando o tipo do modelo
 
-
-type Asset = Anuncio & {
-    id: string; // Mongoose usa _id, mas vamos mapear para id
+type Asset = {
+    id: string;
+    titulo: string;
+    price?: number;
     assetType: 'carbon-credit' | 'tax-credit' | 'rural-land';
     status: 'Disponível' | 'Negociando' | 'Vendido' | 'Pausado' | 'Ativo';
 };
@@ -71,7 +71,7 @@ export default function DashboardPage({
   };
 }) {
   const currentTab = searchParams?.tab || 'my-assets';
-  const { toast } = useToast();
+  const { toast } } from useToast();
   const [allAssets, setAllAssets] = React.useState<Asset[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isAlertOpen, setAlertOpen] = React.useState(false);
@@ -296,3 +296,5 @@ export default function DashboardPage({
     </>
   );
 }
+
+    
