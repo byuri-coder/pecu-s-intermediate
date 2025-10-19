@@ -34,24 +34,19 @@ type Asset = {
 };
 
 const StatusBadge = ({ status }: { status: Asset['status'] }) => {
-  const variant = {
-    'Ativo': 'default',
-    'Disponível': 'default',
-    'Pausado': 'outline',
-    'Vendido': 'secondary',
-    'Negociando': 'outline',
-  }[status] as 'default' | 'outline' | 'secondary';
-  
-  const className = {
-    'Ativo': 'bg-green-100 text-green-800 border-green-200',
-    'Disponível': 'bg-green-100 text-green-800 border-green-200',
-    'Pausado': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Vendido': 'bg-gray-100 text-gray-800 border-gray-200',
-    'Negociando': 'bg-blue-100 text-blue-800 border-blue-200',
-  }[status];
+  const statusStyles: Record<Asset['status'], { variant: 'default' | 'secondary' | 'outline', className: string }> = {
+    'Ativo': { variant: 'default', className: 'bg-green-100 text-green-800 border-green-200' },
+    'Disponível': { variant: 'default', className: 'bg-green-100 text-green-800 border-green-200' },
+    'Pausado': { variant: 'outline', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    'Vendido': { variant: 'secondary', className: 'bg-gray-100 text-gray-800 border-gray-200' },
+    'Negociando': { variant: 'outline', className: 'bg-blue-100 text-blue-800 border-blue-200' },
+  };
 
-  return <Badge variant={variant} className={cn('capitalize', className)}>{status}</Badge>;
+  const style = statusStyles[status] || { variant: 'secondary', className: 'bg-gray-100 text-gray-800' };
+
+  return <Badge variant={style.variant} className={cn('capitalize', style.className)}>{status}</Badge>;
 };
+
 
 const AssetTypeBadge = ({ type }: { type: Asset['assetType']}) => {
     const typeMap = {
@@ -71,7 +66,7 @@ export default function DashboardPage({
   };
 }) {
   const currentTab = searchParams?.tab || 'my-assets';
-  const { toast } } from useToast();
+  const { toast } = useToast();
   const [allAssets, setAllAssets] = React.useState<Asset[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isAlertOpen, setAlertOpen] = React.useState(false);
@@ -296,5 +291,3 @@ export default function DashboardPage({
     </>
   );
 }
-
-    
