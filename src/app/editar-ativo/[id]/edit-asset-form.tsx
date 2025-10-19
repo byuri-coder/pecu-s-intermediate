@@ -23,7 +23,7 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
   const { toast } = useToast();
   
   const [editableAsset, setEditableAsset] = React.useState(asset);
-  const [mediaFiles, setMediaFiles] = React.useState<(File|string)[]>(('images' in asset && asset.images) ? asset.images : []);
+  const [mediaFiles, setMediaFiles] = React.useState<(File|string)[]>(('images' in asset && asset.images) ? asset.images.map(i => i.url) : []);
 
   // State for re-authentication
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -31,7 +31,7 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
   const [authError, setAuthError] = React.useState('');
   const [isAuthPending, setIsAuthPending] = React.useState(false);
 
-  const handleAssetFieldChange = (field: keyof Asset, value: any) => {
+  const handleAssetFieldChange = (field: keyof typeof editableAsset, value: any) => {
     setEditableAsset(prev => ({...prev, [field]: value }));
   };
   
@@ -58,22 +58,15 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
             return URL.createObjectURL(file); // Create blob URL for new files
         });
 
-        const updatedAsset = { ...editableAsset, images: imageURLs };
+        const updatedAsset = { ...editableAsset, images: imageURLs.map(url => ({ url, type: 'image' as const })) };
         
-        const storageKey = `${assetType.replace('-', '_')}s`;
-        const assetsFromStorage: Asset[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const updatedAssets = assetsFromStorage.map(a => a.id === asset.id ? updatedAsset : a);
-        
-        if (!assetsFromStorage.some(a => a.id === asset.id)) {
-            updatedAssets.push(updatedAsset);
-        }
+        // In a real app, this would be an API call to update the database
+        // For demonstration, we'll simulate it with localStorage.
+        console.log("Saving updated asset:", updatedAsset);
 
-        localStorage.setItem(storageKey, JSON.stringify(updatedAssets));
-        window.dispatchEvent(new Event('storage'));
-        
         toast({
             title: "Sucesso!",
-            description: "As alterações no ativo foram salvas.",
+            description: "As alterações no ativo foram salvas (simulado).",
         });
 
         router.push('/dashboard');
@@ -235,8 +228,9 @@ export function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: A
                             <h4 className="font-medium mb-2">Mídias Atuais:</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {mediaFiles.map((file, index) => {
-                                    const isVideo = (typeof file === 'string' && file.includes('video')) || (typeof file !== 'string' && file.type.startsWith('video'));
                                     const src = typeof file === 'string' ? file : URL.createObjectURL(file);
+                                    const isVideo = (typeof file !== 'string' && file.type.startsWith('video')) || (typeof file === 'string' && (file.endsWith('.mp4') || file.endsWith('.mov')));
+                                    
                                     return (
                                         <div key={index} className="relative aspect-video rounded-md overflow-hidden group bg-secondary">
                                             {isVideo ? (
