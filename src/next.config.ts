@@ -56,15 +56,11 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_PLATFORM_CNPJ: process.env.PLATFORM_CNPJ,
     NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE: process.env.PLATFORM_ACCOUNT_TYPE,
   },
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': path.resolve(__dirname, './src'),
-    };
-    
-    // This is the fix for the handlebars issue with Webpack 5
-    config.externals.push({ handlebars: 'commonjs handlebars' });
-
+  webpack: (config) => {
+    config.externals.push({
+      'mongodb-client-encryption': 'commonjs mongodb-client-encryption',
+      'mongoose': 'commonjs mongoose'
+    });
     return config;
   },
 };
