@@ -117,7 +117,7 @@ const CalculatorCard = ({ title, description, icon: Icon, href }: { title: strin
 );
 
 const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) => {
-    let chartContent = null;
+    let chartContent: React.ReactNode | null = null;
     let title = "Gráfico de Resultados";
     let description = "Visualize o resultado dos seus cálculos.";
     const hasData = data && chartType !== 'Simulador de Amortização';
