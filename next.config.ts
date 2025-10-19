@@ -56,13 +56,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_PLATFORM_CNPJ: process.env.PLATFORM_CNPJ,
     NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE: process.env.PLATFORM_ACCOUNT_TYPE,
   },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': path.resolve(__dirname, 'src'),
-    };
-    return config;
-  },
 };
 
 export default nextConfig;
