@@ -260,7 +260,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
   const { title: contractTitle } = getContractTemplateInfo();
   const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
 
-  if (searchParams.get('view') === 'archive') {
+  if (searchParams?.get('view') === 'archive') {
       return (
         <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
             <div className="mb-6">
