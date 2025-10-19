@@ -102,7 +102,7 @@ const AuthStatusIndicator = React.memo(({
 });
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
-function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
+export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
@@ -433,6 +433,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
         </div>
       )}
     </div>
+  </div>
   );
 }
 
