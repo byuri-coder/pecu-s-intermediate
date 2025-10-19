@@ -255,11 +255,6 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
     notFound();
   }
 
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
-  const { title: contractTitle } = getContractTemplateInfo();
-  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
-
   if (searchParams?.get('view') === 'archive') {
       return (
         <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
@@ -274,7 +269,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
              <Card>
                 <CardHeader>
                     <CardTitle>Arquivo da Negociação</CardTitle>
-                    <CardDescription>Detalhes e documentos da negociação concluída de {assetName}.</CardDescription>
+                    <CardDescription>Detalhes e documentos da negociação concluída de {asset && 'title' in asset ? asset.title : 'Ativo'}.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <p>Visualização de arquivo de negociação concluída. (Em desenvolvimento)</p>
@@ -283,6 +278,11 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
         </div>
       );
   }
+
+  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
+  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
+  const { title: contractTitle } = getContractTemplateInfo();
+  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
