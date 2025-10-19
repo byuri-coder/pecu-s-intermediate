@@ -48,7 +48,7 @@ function getAssetTypeRoute(type: AssetType) {
 
 export default function NegotiationPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
+  const assetType = (searchParams?.get('type') as AssetType) || 'carbon-credit';
   const { toast } = useToast();
   const auth = getAuth(app);
   const currentUser = auth.currentUser;

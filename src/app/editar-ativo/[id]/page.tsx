@@ -45,8 +45,8 @@ export default function EditAssetPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const assetType = (searchParams.get('type') as AssetType) || 'carbon-credit';
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id ?? '';
+  const assetType = (searchParams?.get('type') as AssetType) || 'carbon-credit';
   
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
 

@@ -36,7 +36,7 @@ export function ChatList({ conversations }: { conversations: Conversation[] }) {
       <ScrollArea className="h-full">
         <div className="flex flex-col">
           {conversations.map((convo) => {
-            const isActive = pathname.includes(convo.id);
+            const isActive = pathname?.includes(convo.id) ?? false;
             return (
               <Link key={convo.id} href={`/negociacao/${convo.id}?type=${convo.type}`} className="block">
                 <div
