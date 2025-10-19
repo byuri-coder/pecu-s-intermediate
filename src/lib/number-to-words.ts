@@ -11,7 +11,7 @@ function convertThreeDigits(n: number): string {
     if (n === 0) return "";
     if (n === 100) return "cem";
 
-    let words = [];
+    let words: string[] = [];
     let h = Math.floor(n / 100);
     let t = Math.floor((n % 100) / 10);
     let u = n % 10;
@@ -49,7 +49,7 @@ export function numberToWords(num: number): string {
         const thousands = Math.floor(integerPart / 1000);
         const rest = integerPart % 1000;
         
-        let words = [];
+        let words: string[] = [];
         if (thousands > 0) {
             words.push(convertThreeDigits(thousands) + " mil");
         }
