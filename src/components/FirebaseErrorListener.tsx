@@ -1,4 +1,3 @@
-// src/components/FirebaseErrorListener.tsx
 'use client';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -26,16 +25,17 @@ export function FirebaseErrorListener({
 
       toast({
         variant: 'destructive',
-        title: (
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            <span>Firestore Security Rules</span>
-          </div>
-        ),
+        title: "Firestore Security Rules",
         description: (
-          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-            <code className="text-white">{error.toString()}</code>
-          </pre>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 font-semibold">
+                 <AlertTriangle className="h-5 w-5" />
+                 <span>Acesso Negado</span>
+            </div>
+            <pre className="mt-2 w-full rounded-md bg-slate-950 p-4 overflow-x-auto">
+                <code className="text-white text-xs">{error.toString()}</code>
+            </pre>
+          </div>
         ),
         duration: 30000,
       });
