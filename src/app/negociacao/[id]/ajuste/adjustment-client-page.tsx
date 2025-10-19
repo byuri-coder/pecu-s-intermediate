@@ -221,7 +221,11 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
   };
     
   const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
-        const email = role === 'buyer' ? negotiationState?.buyerEmail : negotiationState?.sellerEmail;
+        if (!negotiationState) {
+            toast({ title: "Estado de negociação não carregado.", variant: "destructive"});
+            return;
+        }
+        const email = role === 'buyer' ? negotiationState.buyerEmail : negotiationState.sellerEmail;
         if (!email) {
             toast({ title: `E-mail do ${role} não fornecido`, variant: "destructive"});
             return;
@@ -231,7 +235,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             await updateNegotiationState({
-                authStatus: { ...negotiationState!.authStatus, [role]: 'pending' }
+                authStatus: { ...negotiationState.authStatus, [role]: 'pending' }
             });
             toast({ title: "E-mail de verificação enviado!" });
         } catch (error) {
@@ -243,12 +247,12 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
         }
     }
   
-  if (asset === 'loading' || loading || !negotiationState || !asset) {
+  if (asset === 'loading' || loading || !negotiationState) {
       return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
   if (!asset) {
-      notFound();
+    return notFound();
   }
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
@@ -429,7 +433,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
         </div>
       )}
     </div>
-    );
+  );
 }
 
 export default AdjustmentClientPage;
