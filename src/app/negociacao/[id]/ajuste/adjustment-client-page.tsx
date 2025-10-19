@@ -252,7 +252,7 @@ function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetTy
   }
   
   if (!asset) {
-    return notFound();
+    notFound();
   }
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
