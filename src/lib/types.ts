@@ -96,10 +96,6 @@ export interface Duplicata {
     issueDate: string;
     dueDate: string;
     value: number;
-    blockchain: {
-      transactionHash: string;
-      blockTimestamp: string;
-    };
 }
 
 export interface CompletedDeal {
@@ -108,6 +104,10 @@ export interface CompletedDeal {
     duplicates: Duplicata[];
     seller: { name: string; doc: string, address: string };
     buyer: { name: string; doc: string, address: string };
+    blockchain?: {
+      transactionHash: string;
+      blockTimestamp: string;
+    };
 }
 
 

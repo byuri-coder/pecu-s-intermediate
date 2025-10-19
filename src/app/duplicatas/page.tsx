@@ -179,15 +179,19 @@ export default function DuplicatasPage() {
                             <Download className="mr-2 h-4 w-4" />
                             Baixar PDF
                         </Button>
-                        <Card className="p-2 bg-muted/30">
+                        {deal.blockchain && (
+                         <Card className="p-2 bg-muted/30">
                              <div className="flex items-center gap-2">
                                 <Fingerprint className="h-5 w-5 text-primary"/>
                                 <div className="text-xs">
                                     <p className="font-semibold text-muted-foreground">Registro Blockchain</p>
-                                    <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain.transactionHash)} title="Copiar hash">{deal.blockchain.transactionHash}</p>
+                                    <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain?.transactionHash || '')} title="Copiar hash">
+                                        {deal.blockchain.transactionHash}
+                                    </p>
                                 </div>
                              </div>
                          </Card>
+                        )}
                      </div>
                     {isParcelado && (
                         <Card className="bg-blue-50 border-blue-200">
@@ -216,7 +220,7 @@ export default function DuplicatasPage() {
                           <CardTitle className="text-lg">
                             DM - DUPLICATA DE VENDA MERCANTIL
                           </CardTitle>
-                          <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />
+                          {deal.blockchain && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
