@@ -1,6 +1,6 @@
 // src/app/api/anuncios/get/[id]/route.ts
 import { NextResponse } from "next/server";
-import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
+import { connectDB } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import mongoose from "mongoose";
 

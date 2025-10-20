@@ -31,7 +31,11 @@ export async function GET(req: Request) {
     }
     console.log("❌ Cache miss:", cacheKey);
 
-    await connectDB();
+    const db = await connectDB();
+    if (!db) {
+       console.log("📄 Usando dados mockados (sem MongoDB)");
+       return NextResponse.json({ ok: true, page: 1, limit: 10, total: 0, anuncios: [] });
+    }
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
     const limit = Math.min(Number(url.searchParams.get("limit") || "100"), 100);

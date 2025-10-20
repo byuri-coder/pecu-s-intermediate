@@ -121,7 +121,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            const sellerEmail = ('ownerId' in asset && asset.ownerId) ? `vendedor+${asset.ownerId}@example.com` : 'vendedor.desconhecido@example.com';
+            const sellerEmail = ('ownerId' in asset && asset.ownerId) ? `vendedor+${asset.ownerId.substring(0,5)}@example.com` : 'vendedor.desconhecido@example.com';
             
             const initialState: NegotiationState = {
                 sellerAgrees: false,
