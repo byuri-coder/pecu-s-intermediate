@@ -121,7 +121,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
             const res = await fetch(`/api/anuncios/get/${id}`);
             if (res.ok) {
               const data = await res.json();
-              if (data.ok) {
+              if (data.ok && data.anuncio?.tipo === type) {
                   const anuncio = data.anuncio;
                   const formattedAsset = {
                       ...anuncio,
@@ -129,6 +129,8 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                       ...anuncio.metadados,
                       ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
                       price: anuncio.price,
+                      pricePerCredit: anuncio.price,
+                      images: anuncio.imagens,
                   };
                   setAsset(formattedAsset as Asset);
                   return; // Exit if found via API

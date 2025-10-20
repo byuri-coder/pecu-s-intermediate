@@ -2,36 +2,46 @@
 import AdjustmentClientPage from './adjustment-client-page';
 import type { Asset, AssetType } from '@/lib/types';
 import { notFound } from 'next/navigation';
+import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 
-// Placeholder: In a real app, this would fetch from a database or a secure API.
+
+// In a real app, this would fetch from a database or a secure API.
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
   try {
+    // First, try fetching from the API
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/anuncios/get/${id}`, { cache: 'no-store' });
-    if (!response.ok) {
-      console.error(`API call failed with status: ${response.status}`);
-      return null;
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && data.anuncio.tipo === type) {
+          const anuncio = data.anuncio;
+          const formattedAsset = {
+            ...anuncio,
+            id: anuncio._id.toString(),
+            ...anuncio.metadados,
+            ownerId: anuncio.uidFirebase,
+            price: anuncio.price,
+            pricePerCredit: anuncio.price, // Map price to pricePerCredit for carbon credits
+            images: anuncio.imagens, // Map imagens to images
+          };
+          return formattedAsset as Asset;
+      }
     }
-    const data = await response.json();
-    if (data.ok && data.anuncio.tipo === type) {
-        const anuncio = data.anuncio;
-        // The data from mongo has _id, but our type expects id.
-        const formattedAsset = {
-          ...anuncio,
-          id: anuncio._id.toString(),
-          ...anuncio.metadados,
-          ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
-        };
-        // Specific mapping for carbon credits if needed
-        if (formattedAsset.tipo === 'carbon-credit') {
-           formattedAsset.pricePerCredit = formattedAsset.price;
-        }
-        return formattedAsset as Asset;
-    }
-    return null;
   } catch (error) {
-    console.error("Server-side failed to fetch asset details", error);
-    return null;
+    console.warn("Server-side API call failed, falling back to placeholders. Error:", error);
   }
+
+  // Fallback to placeholder data if API fails or doesn't find it
+  console.log(`Falling back to placeholder data for asset ID ${id} and type ${type}`);
+  let placeholderData: Asset | undefined;
+  if (type === 'carbon-credit') {
+    placeholderData = placeholderCredits.find(c => c.id === id);
+  } else if (type === 'rural-land') {
+    placeholderData = placeholderRuralLands.find(l => l.id === id);
+  } else if (type === 'tax-credit') {
+    placeholderData = placeholderTaxCredits.find(t => t.id === id);
+  }
+  
+  return placeholderData || null;
 }
 
 
