@@ -209,12 +209,66 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
   };
   
   const getContractTemplateInfo = () => {
-    return { template: "...", title: 'Contrato de Exemplo' };
+    return { template: "...", title: 'Contrato de Cessão de Créditos de Carbono' };
   }
   
   const getFinalContractText = React.useCallback(() => {
-    return '...'; // Simplified for brevity
-  }, []); // Dependencies would go here
+    if (asset === 'loading' || !asset || !negotiationState) {
+        return "Carregando dados do contrato...";
+    }
+    
+    const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
+    const buyerName = currentUser?.displayName || "Comprador Anônimo";
+    const creditAmount = 'quantity' in asset ? asset.quantity : ('amount' in asset ? asset.amount : 0);
+    const creditType = 'creditType' in asset ? asset.creditType : ('taxType' in asset ? asset.taxType : 'N/A');
+    const creditLocation = asset.location;
+    const creditVintage = 'vintage' in asset ? asset.vintage : 'N/A';
+    const creditPrice = 'pricePerCredit' in asset ? asset.pricePerCredit : ('price' in asset ? asset.price : 0);
+    const totalPrice = creditAmount * creditPrice;
+    
+    const paymentMethodText = negotiationState.paymentMethod === 'vista' 
+      ? 'pagamento será realizado à vista, no valor total de...'
+      : `pagamento será realizado em ${negotiationState.numberOfInstallments} parcelas de...`;
+
+    return `
+INSTRUMENTO PARTICULAR DE CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
+
+Pelo presente instrumento particular, de um lado:
+
+CEDENTE: ${sellerName}, doravante denominado simplesmente "CEDENTE".
+
+CESSIONÁRIO: ${buyerName}, doravante denominado simplesmente "CESSIONÁRIO".
+
+As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Cessão de Créditos de Carbono, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
+
+Cláusula 1ª. DO OBJETO DO CONTRATO
+O presente contrato tem como OBJETO a cessão e transferência, de forma onerosa, da totalidade dos direitos creditórios relativos a ${creditAmount.toLocaleString()} (quantidade) créditos de carbono, do tipo ${creditType}, vintage ${creditVintage}, localizados em ${creditLocation}.
+
+Cláusula 2ª. DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
+Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${creditPrice.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
+O ${paymentMethodText}
+
+Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
+A transferência da titularidade dos créditos de carbono será efetivada pelo CEDENTE em favor do CESSIONÁrio em um registro ou plataforma de custódia acordada entre as partes, no prazo de 5 (cinco) dias úteis após a confirmação do pagamento integral.
+
+Cláusula 4ª. DAS OBRIGAÇÕES
+Compete ao CEDENTE garantir a existência, validade e livre disposição dos créditos de carbono, livres de quaisquer ônus ou gravames.
+Compete ao CESSIONÁRIO realizar o pagamento nos termos e prazos acordados.
+
+Cláusula 5ª. DO FORO
+Fica eleito o foro da comarca de [Cidade/UF] para dirimir quaisquer controvérsias oriundas do presente contrato.
+
+E, por estarem assim justos e contratados, firmam o presente instrumento em duas vias de igual teor, na presença das testemunhas abaixo.
+
+[Local], ${new Date().toLocaleDateString('pt-BR')}.
+
+_________________________
+CEDENTE: ${sellerName}
+
+_________________________
+CESSIONÁRIO: ${buyerName}
+    `;
+  }, [asset, currentUser, negotiationState]);
 
   const finalContractText = getFinalContractText();
 
