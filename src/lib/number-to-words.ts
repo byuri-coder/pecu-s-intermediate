@@ -1,4 +1,3 @@
-
 // A simple utility to convert numbers to words in Portuguese (for currency)
 // This is a simplified version and may not cover all edge cases.
 

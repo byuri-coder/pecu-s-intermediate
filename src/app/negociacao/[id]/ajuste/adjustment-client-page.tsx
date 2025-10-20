@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
+import { numberToWords } from '@/lib/number-to-words';
 
 type Asset = CarbonCredit | RuralLand | TaxCredit;
 type UserRole = 'buyer' | 'seller';
