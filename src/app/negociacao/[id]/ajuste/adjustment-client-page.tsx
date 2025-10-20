@@ -111,7 +111,6 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
 
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   const [negotiationState, setNegotiationState] = React.useState<NegotiationState | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const negotiationId = `neg_${assetId}`;
@@ -122,43 +121,39 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
         setAsset('loading');
         try {
           const response = await fetch(`/api/anuncios/get/${id}`);
-          if (!response.ok) {
-            setAsset(null);
-            setLoading(false);
-            return;
-          }
-          const data = await response.json();
-          if (data.ok) {
-            const anuncio = data.anuncio;
-            const formattedAsset = {
-                ...anuncio,
-                id: anuncio._id,
-                ...anuncio.metadados,
-                ownerId: anuncio.uidFirebase,
-            };
-            if (formattedAsset.tipo === 'carbon-credit') {
-                formattedAsset.pricePerCredit = formattedAsset.price;
+          if (response.ok) {
+            const data = await response.json();
+            if (data.ok) {
+                const anuncio = data.anuncio;
+                const formattedAsset = {
+                    ...anuncio,
+                    id: anuncio._id,
+                    ...anuncio.metadados,
+                    ownerId: anuncio.uidFirebase,
+                };
+                if (formattedAsset.tipo === 'carbon-credit') {
+                    formattedAsset.pricePerCredit = formattedAsset.price;
+                }
+                setAsset(formattedAsset as Asset);
+                return;
             }
-            setAsset(formattedAsset as Asset);
-          } else {
-            setAsset(null);
           }
+          setAsset(null); // Set to null if response is not ok or data is not ok
         } catch (error) {
           console.error("Failed to fetch asset details", error);
           setAsset(null);
         }
-        setLoading(false);
     }
     if (assetId) {
       getAssetDetails(assetId);
     } else {
-        setLoading(false);
+        setAsset(null);
     }
   }, [assetId]);
 
-  // Firestore listener
+  // Firestore listener, now dependent on the asset being loaded
   React.useEffect(() => {
-    if (!asset || asset === 'loading') return;
+    if (asset === 'loading' || !asset) return;
 
     const docRef = doc(db, 'negociacoes', negotiationId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -179,7 +174,6 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
             };
             setDoc(docRef, initialState).then(() => setNegotiationState(initialState as NegotiationState));
         }
-        if(asset !== 'loading') setLoading(false);
     });
 
     return () => unsubscribe();
@@ -251,7 +245,7 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
         }
     }
   
-  if (asset === 'loading' || loading || !negotiationState) {
+  if (asset === 'loading' || !negotiationState) {
       return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
