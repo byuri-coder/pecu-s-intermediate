@@ -11,16 +11,16 @@ function convertThreeDigits(n: number): string {
     if (n === 100) return "cem";
 
     let words: string[] = [];
-    let h = Math.floor(n / 100);
-    let t = Math.floor((n % 100) / 10);
-    let u = n % 10;
+    const h = Math.floor(n / 100);
+    const t = Math.floor((n % 100) / 10);
+    const u = n % 10;
 
     if (h > 0) {
         words.push(hundreds[h]);
     }
 
     if (t > 0 || u > 0) {
-        if (h > 0) words.push("e");
+        if (h > 0 && (t > 0 || u > 0)) words.push("e");
         if (t === 1) {
             words.push(teens[u]);
         } else {
@@ -36,39 +36,56 @@ function convertThreeDigits(n: number): string {
     return words.join(" ");
 }
 
+function convertToWords(num: number): string {
+    if (num === 0) return "zero";
+
+    const parts: string[] = [];
+    const bilhao = Math.floor(num / 1000000000);
+    const milhao = Math.floor((num % 1000000000) / 1000000);
+    const mil = Math.floor((num % 1000000) / 1000);
+    const resto = num % 1000;
+
+    if (bilhao > 0) {
+        parts.push(convertThreeDigits(bilhao) + (bilhao === 1 ? " bilhão" : " bilhões"));
+    }
+    if (milhao > 0) {
+        parts.push(convertThreeDigits(milhao) + (milhao === 1 ? " milhão" : " milhões"));
+    }
+    if (mil > 0) {
+      if (mil === 1 && (num < 2000 || num % 1000 === 0)) {
+         parts.push("mil");
+      } else {
+         parts.push(convertThreeDigits(mil) + " mil");
+      }
+    }
+    if (resto > 0) {
+        parts.push(convertThreeDigits(resto));
+    }
+    return parts.join(" e ");
+}
+
+
 export function numberToWords(num: number): string {
     if (num === null || num === undefined) return "";
-    if (num === 0) return "zero";
+    if (num === 0) return "zero reais";
 
     const integerPart = Math.floor(num);
     const fractionalPart = Math.round((num - integerPart) * 100);
 
-    let integerWords = "";
+    let result = "";
+
     if (integerPart > 0) {
-        const thousands = Math.floor(integerPart / 1000);
-        const rest = integerPart % 1000;
-        
-        let words: string[] = [];
-        if (thousands > 0) {
-            words.push(convertThreeDigits(thousands) + " mil");
-        }
-        if (rest > 0) {
-            words.push(convertThreeDigits(rest));
-        }
-        integerWords = words.join(thousands > 0 && rest > 0 ? " e " : "");
+        result += convertToWords(integerPart);
+        result += integerPart === 1 ? " real" : " reais";
     }
-    
-    let currencyUnit = integerPart === 1 ? "real" : "reais";
-    if (integerPart === 0) currencyUnit = "";
 
-    let fractionalWords = "";
     if (fractionalPart > 0) {
-        fractionalWords = " e " + convertThreeDigits(fractionalPart) + (fractionalPart === 1 ? " centavo" : " centavos");
-    }
-    
-    if(integerPart === 0 && fractionalPart > 0) {
-       return `${convertThreeDigits(fractionalPart)} ${fractionalPart === 1 ? "centavo" : "centavos"}`;
+        if (integerPart > 0) {
+            result += " e ";
+        }
+        result += convertToWords(fractionalPart);
+        result += fractionalPart === 1 ? " centavo" : " centavos";
     }
 
-    return `${integerWords} ${currencyUnit}${fractionalWords}`;
+    return result.trim();
 }

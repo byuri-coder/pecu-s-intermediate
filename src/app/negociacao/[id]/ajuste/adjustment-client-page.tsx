@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, notFound, useRouter } from 'next/navigation';
+import { useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,6 @@ import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Lo
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, AssetType } from '@/lib/types';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -236,11 +234,7 @@ CESSIONÁRIO: ${buyerName}
   };
     
   const handleDownloadPdf = () => {
-    if (typeof window !== "undefined") {
-        const doc = new jsPDF();
-        doc.text("Contrato de Exemplo", 10, 10);
-        doc.save("contrato.pdf");
-    }
+     toast({ title: "Funcionalidade em desenvolvimento", description: "O download de PDF será implementado em breve."});
   };
     
   const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
