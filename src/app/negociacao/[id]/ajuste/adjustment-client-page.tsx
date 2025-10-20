@@ -261,7 +261,7 @@ CESSIONÁRIO: ${buyerName}
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email,
-                    subject: 'Confirmação de Acordo - PECU\'S INTERMEDIATE',
+                    subject: 'Confirmação de Acordo - PECU\\'S INTERMEDIATE',
                     text: `Por favor, clique no link a seguir para confirmar seu acordo no contrato: [link_aqui]`,
                     // In a real app, you'd generate a unique token and link
                 }),
@@ -283,13 +283,8 @@ CESSIONÁRIO: ${buyerName}
         }
     }
   
-  if (!asset) {
-    notFound();
-  }
-
-  // Loading state check
-  if (!negotiationState) {
-      return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
+  if (!asset || !negotiationState) {
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
 
   if (searchParams?.get('view') === 'archive') {

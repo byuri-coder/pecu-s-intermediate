@@ -1,4 +1,5 @@
 
+
 import AdjustmentClientPage from './adjustment-client-page';
 import type { Asset, AssetType } from '@/lib/types';
 import { notFound } from 'next/navigation';
@@ -9,7 +10,7 @@ import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
   try {
     // First, try fetching from the API
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/anuncios/get/${id}`, { cache: 'no-store' });
+    const response = await fetch(`http://localhost:3000/api/anuncios/get/${id}`, { cache: 'no-store' });
     if (response.ok) {
       const data = await response.json();
       if (data.ok && data.anuncio.tipo === type) {
