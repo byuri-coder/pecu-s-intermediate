@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -124,8 +125,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            // Get seller email from asset data if available, otherwise use placeholder
-            const sellerEmail = ('ownerId' in asset) ? 'vendedor@example.com' : 'vendedor.desconhecido@example.com';
+            const sellerEmail = ('ownerId' in asset && asset.ownerId) ? `vendedor+${asset.ownerId}@example.com` : 'vendedor.desconhecido@example.com';
             
             const initialState: NegotiationState = {
                 sellerAgrees: false,
