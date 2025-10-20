@@ -100,7 +100,9 @@ const AuthStatusIndicatorComponent = ({
         </div>
     );
 };
+
 const AuthStatusIndicator = React.memo(AuthStatusIndicatorComponent);
+AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
   const searchParams = useSearchParams();
@@ -138,7 +140,9 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 authStatus: { buyer: 'pending', seller: 'pending' },
                 contractFields: { },
             };
-            setDoc(docRef, initialState).then(() => setNegotiationState(initialState));
+            setDoc(docRef, initialState).then(() => {
+              setNegotiationState(initialState)
+            });
         }
     });
 
@@ -215,7 +219,7 @@ CEDENTE: ${sellerName}
 _________________________
 CESSIONÁRIO: ${buyerName}
     `;
-  }, [asset, currentUser, negotiationState]);
+  }, [asset, negotiationState, currentUser?.displayName]);
 
   const finalContractText = getFinalContractText();
 
