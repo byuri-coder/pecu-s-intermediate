@@ -124,6 +124,7 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
           const response = await fetch(`/api/anuncios/get/${id}`);
           if (!response.ok) {
             setAsset(null);
+            setLoading(false);
             return;
           }
           const data = await response.json();
@@ -146,9 +147,12 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
           console.error("Failed to fetch asset details", error);
           setAsset(null);
         }
+        setLoading(false);
     }
     if (assetId) {
       getAssetDetails(assetId);
+    } else {
+        setLoading(false);
     }
   }, [assetId]);
 
@@ -175,7 +179,7 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
             };
             setDoc(docRef, initialState).then(() => setNegotiationState(initialState as NegotiationState));
         }
-        setLoading(false);
+        if(asset !== 'loading') setLoading(false);
     });
 
     return () => unsubscribe();
