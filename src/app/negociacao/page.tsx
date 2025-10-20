@@ -5,7 +5,6 @@ import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList, type Conversation } from './chat-list';
 import { MessageSquare } from 'lucide-react';
-import { usePersistentState } from './use-persistent-state';
 
 const mockConversations: Conversation[] = [
   {
@@ -20,7 +19,7 @@ const mockConversations: Conversation[] = [
 ];
 
 export default function NegotiationHubPage() {
-  const [conversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
+  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
 
   return (
     <div className="flex-1 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
