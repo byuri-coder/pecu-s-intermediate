@@ -123,7 +123,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
             let sellerEmail = 'vendedor.desconhecido@example.com';
-            if ('ownerId' in asset && asset.ownerId) {
+             if ('ownerId' in asset && asset.ownerId) {
                 // In a real app, you would fetch the seller's email from your user database
                 // For this example, we create a placeholder based on UID
                 sellerEmail = `vendedor+${asset.ownerId.substring(0,5)}@example.com`;
