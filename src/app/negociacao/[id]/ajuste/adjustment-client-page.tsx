@@ -454,9 +454,8 @@ CESSIONÁRIO: ${buyerName}
         </div>
       )}
     </div>
+    </div>
   );
 }
 
 export default AdjustmentClientPage;
-
-    
