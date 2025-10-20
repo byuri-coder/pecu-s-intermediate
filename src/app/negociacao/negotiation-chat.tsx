@@ -98,7 +98,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             {!isMe && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={msg.avatar} />
-                    <AvatarFallback>{msg.sender.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{'V'}</AvatarFallback>
                 </Avatar>
             )}
             <div
@@ -151,5 +151,3 @@ export function NegotiationChat({ messages }: { messages: Message[] }) {
     </>
   );
 }
-
-    

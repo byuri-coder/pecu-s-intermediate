@@ -45,6 +45,57 @@ function getAssetTypeRoute(type: AssetType) {
     }
 }
 
+const mockMessages: Message[] = [
+    {
+        id: '1',
+        sender: 'other',
+        content: 'Olá! Tenho interesse no seu crédito de carbono. O preço é negociável?',
+        type: 'text',
+        timestamp: '10:30',
+        avatar: 'https://picsum.photos/seed/avatar2/40/40'
+    },
+    {
+        id: '2',
+        sender: 'me',
+        content: 'Olá! Obrigado pelo interesse. Sim, podemos conversar sobre o valor. Qual a quantidade que você precisa?',
+        type: 'text',
+        timestamp: '10:32',
+        avatar: 'https://i.pravatar.cc/40?u=me'
+    },
+    {
+        id: '3',
+        sender: 'other',
+        content: 'Estou pensando em adquirir o lote completo de 8.000 créditos. Consegue fazer um preço melhor para essa quantidade?',
+        type: 'text',
+        timestamp: '10:35',
+        avatar: 'https://picsum.photos/seed/avatar2/40/40'
+    },
+     {
+        id: '4',
+        sender: 'me',
+        content: 'Entendido. Para o lote completo, consigo chegar em R$ 17,50 por crédito. O que acha?',
+        type: 'text',
+        timestamp: '10:40',
+        avatar: 'https://i.pravatar.cc/40?u=me'
+    },
+    {
+        id: '5',
+        sender: 'other',
+        content: 'Parece uma boa proposta. Pode me enviar a documentação do projeto para análise?',
+        type: 'text',
+        timestamp: '10:42',
+        avatar: 'https://picsum.photos/seed/avatar2/40/40'
+    },
+     {
+        id: '6',
+        sender: 'me',
+        content: 'Claro, segue o PDF com o relatório de verificação.',
+        type: 'pdf',
+        timestamp: '10:45',
+        avatar: 'https://i.pravatar.cc/40?u=me'
+    }
+];
+
 
 export default function NegotiationPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
@@ -56,7 +107,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   
   const negotiationId = `neg_${params.id}`;
-  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [messages, setMessages] = React.useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = React.useState('');
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -95,32 +146,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     }
   }, [params.id]);
 
-  // Listen for real-time messages from Firestore
-  React.useEffect(() => {
-    if (!negotiationId || !currentUser?.uid) return;
-
-    const messagesRef = collection(db, 'negociacoes', negotiationId, 'messages');
-    const q = query(messagesRef, orderBy('timestamp', 'asc'));
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const newMessages = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          sender: data.senderId === currentUser?.uid ? 'me' : 'other',
-          content: data.content,
-          type: data.type,
-          timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || 'agora',
-          avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : `https://picsum.photos/seed/${data.senderId}/40/40`,
-        } as Message;
-      });
-      setMessages(newMessages);
-    });
-
-    return () => unsubscribe();
-  }, [negotiationId, currentUser?.uid]);
-  
-
   if (asset === 'loading') {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   }
@@ -140,14 +165,15 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     }
     const now = new Date();
     
-    // 1. Add message to Firestore
-    const messagesRef = collection(db, 'negociacoes', negotiationId, 'messages');
-    await addDoc(messagesRef, {
-      senderId: currentUser.uid,
-      content: msg.content,
-      type: msg.type,
-      timestamp: serverTimestamp(),
-    });
+    const messageToAdd: Message = {
+        id: Date.now().toString(),
+        sender: 'me',
+        avatar: currentUser?.photoURL || 'https://i.pravatar.cc/40?u=me',
+        timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`,
+        ...msg,
+    };
+
+    setMessages(prev => [...prev, messageToAdd]);
 
     const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
     
@@ -171,16 +197,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
         }
         return [newConversation, ...prevConvos];
     });
-
-    // 3. Update the main negotiation document with last message info
-    const negotiationDocRef = doc(db, 'negociacoes', negotiationId);
-    await setDoc(negotiationDocRef, { 
-      lastMessage: lastMessageText,
-      lastMessageTimestamp: serverTimestamp(),
-      assetId: params.id,
-      assetName,
-      participants: [currentUser.uid, asset.ownerId],
-    }, { merge: true });
   }
 
   const handleSendMessage = () => {
@@ -197,8 +213,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-      // Here you would upload the file to Firebase Storage and get the URL
-      // For now, we'll just simulate with a placeholder.
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
       const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
       addMessage({ content: content, type: fileType });
