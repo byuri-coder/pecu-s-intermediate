@@ -39,7 +39,7 @@ type NegotiationState = {
   contractFields: Record<string, unknown>;
 };
 
-const AuthStatusIndicator = React.memo(function AuthStatusIndicator({ 
+const AuthStatusIndicatorComponent = ({ 
     role, 
     authStatus,
     email,
@@ -53,7 +53,7 @@ const AuthStatusIndicator = React.memo(function AuthStatusIndicator({
     onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSendVerification: () => void;
     isSendingEmail: boolean;
-}) {
+}) => {
     let content;
     switch (authStatus) {
         case 'validated':
@@ -99,8 +99,8 @@ const AuthStatusIndicator = React.memo(function AuthStatusIndicator({
             </div>
         </div>
     );
-});
-AuthStatusIndicator.displayName = 'AuthStatusIndicator';
+};
+const AuthStatusIndicator = React.memo(AuthStatusIndicatorComponent);
 
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
   const searchParams = useSearchParams();
@@ -124,7 +124,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
             // Get seller email from asset data if available, otherwise use placeholder
-            const sellerEmail = (asset && 'email' in asset && typeof asset.email === 'string') ? asset.email : 'vendedor@example.com';
+            const sellerEmail = 'vendedor@example.com';
             
             const initialState: NegotiationState = {
                 sellerAgrees: false,
@@ -170,8 +170,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     const creditType = 'creditType' in asset ? asset.creditType : ('taxType' in asset ? asset.taxType : 'N/A');
     const creditLocation = asset.location;
     const creditVintage = 'vintage' in asset ? asset.vintage : 'N/A';
-    const price = 'pricePerCredit' in asset ? asset.pricePerCredit : ('price' in asset ? asset.price : 0);
-    const totalPrice = creditAmount * (price || 0);
+    const price = ('pricePerCredit' in asset && asset.pricePerCredit) ? asset.pricePerCredit : (('price' in asset && asset.price) ? asset.price : 0);
+    const totalPrice = creditAmount * price;
     
     const paymentMethodText = negotiationState.paymentMethod === 'vista' 
       ? 'pagamento será realizado à vista, no valor total de...'
@@ -192,7 +192,7 @@ Cláusula 1ª. DO OBJETO DO CONTRATO
 O presente contrato tem como OBJETO a cessão e transferência, de forma onerosa, da totalidade dos direitos creditórios relativos a ${creditAmount.toLocaleString()} (quantidade) créditos de carbono, do tipo ${creditType}, vintage ${creditVintage}, localizados em ${creditLocation}.
 
 Cláusula 2ª. DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
-Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${(price || 0).toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
+Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${price.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
 O ${paymentMethodText}
 
 Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
@@ -250,6 +250,7 @@ CESSIONÁRIO: ${buyerName}
         }
         setIsSendingEmail(true);
         try {
+            // Simulate sending email
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             await updateNegotiationState({
