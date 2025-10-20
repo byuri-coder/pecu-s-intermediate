@@ -115,10 +115,29 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
 
   const negotiationId = `neg_${assetId}`;
 
-  // Fetch asset details
+  // Fetch asset details - optimized with localStorage
   React.useEffect(() => {
     async function getAssetDetails(id: string) {
         setAsset('loading');
+        
+        // 1. Try to get asset from localStorage first for speed
+        const storedAssetData = localStorage.getItem(`asset-for-neg-${id}`);
+        if (storedAssetData) {
+            try {
+                const storedAsset = JSON.parse(storedAssetData);
+                if (storedAsset && storedAsset.id === id) {
+                    setAsset(storedAsset as Asset);
+                    // Clean up localStorage after use
+                    localStorage.removeItem(`asset-for-neg-${id}`);
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to parse stored asset", e);
+            }
+        }
+        
+        // 2. Fallback to API call if not in localStorage
+        console.log("Asset not in localStorage, fetching from API...");
         try {
           const response = await fetch(`/api/anuncios/get/${id}`);
           if (response.ok) {
@@ -138,7 +157,7 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
                 return;
             }
           }
-          setAsset(null); // Set to null if response is not ok or data is not ok
+          setAsset(null);
         } catch (error) {
           console.error("Failed to fetch asset details", error);
           setAsset(null);
