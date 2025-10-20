@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users, UploadCloud, FileUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { CarbonCredit, RuralLand, TaxCredit, AssetType } from '@/lib/types';
@@ -258,13 +258,24 @@ CESSIONÁRIO: ${buyerName}
         }
         setIsSendingEmail(true);
         try {
-            // Placeholder for actual email sending logic
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    subject: 'Confirmação de Acordo - PECU\'S INTERMEDIATE',
+                    text: `Por favor, clique no link a seguir para confirmar seu acordo no contrato: [link_aqui]`,
+                    // In a real app, you'd generate a unique token and link
+                }),
+            });
+             if (!response.ok) {
+                throw new Error('Falha ao enviar e-mail.');
+            }
             
             await updateNegotiationState({
                 authStatus: { ...negotiationState.authStatus, [role]: 'pending' }
             });
-            toast({ title: "E-mail de verificação enviado!" });
+            toast({ title: "E-mail de verificação enviado!", description: `Um link foi enviado para ${email}.` });
         } catch (error) {
             if (error instanceof Error) {
                 toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
@@ -309,7 +320,7 @@ CESSIONÁRIO: ${buyerName}
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
   const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
   const { title: contractTitle } = getContractTemplateInfo();
-  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus } = negotiationState;
+  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus, isTransactionComplete } = negotiationState;
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
@@ -459,7 +470,38 @@ CESSIONÁRIO: ${buyerName}
             </Card>
         </div>
       )}
-    </div>
+
+      {isTransactionComplete && (
+        <div className="mt-8 space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5" />Upload de Documentos Finais</CardTitle>
+                    <CardDescription>Anexe o contrato assinado e o comprovante de pagamento para concluir a transação.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-6">
+                     <div 
+                        className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+                        >
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-4 text-sm text-muted-foreground">Contrato Assinado</p>
+                        <p className="text-xs text-muted-foreground/70">Anexe o PDF do contrato assinado</p>
+                        <Input type="file" className="hidden" />
+                    </div>
+                     <div 
+                        className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
+                        >
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-4 text-sm text-muted-foreground">Comprovante de Pagamento</p>
+                        <p className="text-xs text-muted-foreground/70">Anexe o comprovante da transferência</p>
+                        <Input type="file" className="hidden" />
+                    </div>
+                </CardContent>
+                 <CardFooter>
+                    <Button size="lg" className="w-full">Concluir Transação</Button>
+                </CardFooter>
+            </Card>
+        </div>
+      )}
     </div>
   );
 }
