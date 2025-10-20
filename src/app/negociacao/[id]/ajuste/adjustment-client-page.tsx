@@ -228,8 +228,6 @@ CESSIONÁRIO: ${buyerName}
     `;
   }, [asset, negotiationState, currentUser?.displayName]);
 
-  const finalContractText = getFinalContractText();
-
   const handleFinalize = async () => {
     await updateNegotiationState({ isFinalized: true });
     toast({
@@ -285,12 +283,13 @@ CESSIONÁRIO: ${buyerName}
         }
     }
   
-  if (!negotiationState) {
-      return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
-  }
-  
   if (!asset) {
     notFound();
+  }
+
+  // Loading state check
+  if (!negotiationState) {
+      return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
 
   if (searchParams?.get('view') === 'archive') {
@@ -321,6 +320,7 @@ CESSIONÁRIO: ${buyerName}
   const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
   const { title: contractTitle } = getContractTemplateInfo();
   const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus, isTransactionComplete } = negotiationState;
+  const finalContractText = getFinalContractText();
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
