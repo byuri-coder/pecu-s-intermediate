@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -23,7 +21,6 @@ import { getAuth } from 'firebase/auth';
 
 type Asset = CarbonCredit | RuralLand | TaxCredit;
 type UserRole = 'buyer' | 'seller';
-
 type AuthStatus = 'pending' | 'validated' | 'expired';
 
 type NegotiationState = {
@@ -104,6 +101,7 @@ const AuthStatusIndicator = ({
     );
 };
 
+
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -116,7 +114,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const negotiationId = `neg_${assetId}`;
 
-  // Firestore listener
   React.useEffect(() => {
     if (!asset) return;
 
@@ -140,7 +137,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 contractFields: { },
             };
             setDoc(docRef, initialState).then(() => {
-                setNegotiationState(initialState);
+                 setNegotiationState(initialState);
             });
         }
     });
@@ -177,7 +174,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     const price = ('pricePerCredit' in asset && asset.pricePerCredit) 
                 ? asset.pricePerCredit 
                 : (('price' in asset && asset.price) ? asset.price : 0);
-    const totalPrice = creditAmount * price;
+
+    const totalPrice = creditAmount * (price || 0);
     
     const paymentMethodText = negotiationState.paymentMethod === 'vista' 
       ? 'pagamento será realizado à vista, no valor total de...'
@@ -198,7 +196,7 @@ Cláusula 1ª. DO OBJETO DO CONTRATO
 O presente contrato tem como OBJETO a cessão e transferência, de forma onerosa, da totalidade dos direitos creditórios relativos a ${creditAmount.toLocaleString()} (quantidade) créditos de carbono, do tipo ${creditType}, vintage ${creditVintage}, localizados em ${creditLocation}.
 
 Cláusula 2ª. DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
-Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${price.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
+Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${price?.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
 O ${paymentMethodText}
 
 Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
@@ -256,7 +254,6 @@ CESSIONÁRIO: ${buyerName}
         }
         setIsSendingEmail(true);
         try {
-            // Simulate sending email
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             await updateNegotiationState({
