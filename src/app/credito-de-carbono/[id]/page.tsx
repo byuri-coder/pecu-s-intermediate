@@ -85,7 +85,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl font-headline">
                 Projeto de {credit.creditType} em {credit.location}
               </h1>
-              <Badge className="text-base" variant="default">{credit.status === 'Ativo' ? 'Disponível' : credit.status}</Badge>
+              <Badge className="text-base" variant="default">{credit.status}</Badge>
             </div>
             <p className="text-lg text-muted-foreground">Vendido por {credit.sellerName}</p>
           </div>
