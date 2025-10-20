@@ -20,7 +20,7 @@ import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
 
-type Asset = CarbonCredit | TaxCredit | RuralLand;
+type Asset = CarbonCredit | RuralLand | TaxCredit;
 type UserRole = 'buyer' | 'seller';
 
 
@@ -35,11 +35,14 @@ type NegotiationState = {
   buyerEmail: string;
   paymentMethod: 'vista' | 'parcelado';
   numberOfInstallments: string;
-  authStatus: Record<'buyer' | 'seller', AuthStatus>;
+  authStatus: {
+    buyer: AuthStatus;
+    seller: AuthStatus;
+  };
   contractFields: Record<string, unknown>;
 };
 
-const AuthStatusIndicatorComponent = ({ 
+const AuthStatusIndicator = ({ 
     role, 
     authStatus,
     email,
@@ -100,8 +103,6 @@ const AuthStatusIndicatorComponent = ({
         </div>
     );
 };
-
-const AuthStatusIndicator = React.memo(AuthStatusIndicatorComponent);
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
@@ -141,7 +142,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 contractFields: { },
             };
             setDoc(docRef, initialState).then(() => {
-              setNegotiationState(initialState)
+              setNegotiationState(initialState);
             });
         }
     });
@@ -149,7 +150,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     return () => unsubscribe();
   }, [negotiationId, asset, currentUser?.email]);
 
-  const currentUserRole: UserRole | null = asset && currentUser?.uid === asset.ownerId ? 'seller' : 'buyer';
+  const currentUserRole: UserRole | null = asset && currentUser?.uid === ('ownerId' in asset ? asset.ownerId : undefined) ? 'seller' : 'buyer';
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
@@ -174,7 +175,10 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     const creditType = 'creditType' in asset ? asset.creditType : ('taxType' in asset ? asset.taxType : 'N/A');
     const creditLocation = asset.location;
     const creditVintage = 'vintage' in asset ? asset.vintage : 'N/A';
-    const price = ('pricePerCredit' in asset && asset.pricePerCredit) ? asset.pricePerCredit : (('price' in asset && asset.price) ? asset.price : 0);
+    
+    const price = ('pricePerCredit' in asset && asset.pricePerCredit) 
+                ? asset.pricePerCredit 
+                : (('price' in asset && asset.price) ? asset.price : 0);
     const totalPrice = creditAmount * price;
     
     const paymentMethodText = negotiationState.paymentMethod === 'vista' 
@@ -200,7 +204,7 @@ Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDE
 O ${paymentMethodText}
 
 Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
-A transferência da titularidade dos créditos de carbono será efetivada pelo CEDENTE em favor do CESSIONÁrio em um registro ou plataforma de custódia acordada entre as partes, no prazo de 5 (cinco) dias úteis após a confirmação do pagamento integral.
+A transferência da titularidade dos créditos de carbono será efetivada pelo CEDENTE em favor do CESSIONÁRIO em um registro ou plataforma de custódia acordada entre as partes, no prazo de 5 (cinco) dias úteis após a confirmação do pagamento integral.
 
 Cláusula 4ª. DAS OBRIGAÇÕES
 Compete ao CEDENTE garantir a existência, validade e livre disposição dos créditos de carbono, livres de quaisquer ônus ou gravames.
