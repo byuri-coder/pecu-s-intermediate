@@ -39,7 +39,7 @@ type NegotiationState = {
   contractFields: Record<string, unknown>;
 };
 
-const AuthStatusIndicator = React.memo(({ 
+const AuthStatusIndicator = React.memo(function AuthStatusIndicator({ 
     role, 
     authStatus,
     email,
@@ -53,7 +53,7 @@ const AuthStatusIndicator = React.memo(({
     onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSendVerification: () => void;
     isSendingEmail: boolean;
-}) => {
+}) {
     let content;
     switch (authStatus) {
         case 'validated':
@@ -102,103 +102,50 @@ const AuthStatusIndicator = React.memo(({
 });
 AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
-export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, assetType: AssetType }) {
+export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
-  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   const [negotiationState, setNegotiationState] = React.useState<NegotiationState | null>(null);
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const negotiationId = `neg_${assetId}`;
 
-  // Fetch asset details - optimized with localStorage
+  // Firestore listener
   React.useEffect(() => {
-    async function getAssetDetails(id: string) {
-        setAsset('loading');
-        
-        // 1. Try to get asset from localStorage first for speed
-        const storedAssetData = localStorage.getItem(`asset-for-neg-${id}`);
-        if (storedAssetData) {
-            try {
-                const storedAsset = JSON.parse(storedAssetData);
-                if (storedAsset && storedAsset.id === id) {
-                    setAsset(storedAsset as Asset);
-                    // Clean up localStorage after use
-                    localStorage.removeItem(`asset-for-neg-${id}`);
-                    return;
-                }
-            } catch (e) {
-                console.error("Failed to parse stored asset", e);
-            }
-        }
-        
-        // 2. Fallback to API call if not in localStorage
-        console.log("Asset not in localStorage, fetching from API...");
-        try {
-          const response = await fetch(`/api/anuncios/get/${id}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.ok) {
-                const anuncio = data.anuncio;
-                const formattedAsset = {
-                    ...anuncio,
-                    id: anuncio._id,
-                    ...anuncio.metadados,
-                    ownerId: anuncio.uidFirebase,
-                };
-                if (formattedAsset.tipo === 'carbon-credit') {
-                    formattedAsset.pricePerCredit = formattedAsset.price;
-                }
-                setAsset(formattedAsset as Asset);
-                return;
-            }
-          }
-          setAsset(null);
-        } catch (error) {
-          console.error("Failed to fetch asset details", error);
-          setAsset(null);
-        }
-    }
-    if (assetId) {
-      getAssetDetails(assetId);
-    } else {
-        setAsset(null);
-    }
-  }, [assetId]);
-
-  // Firestore listener, now dependent on the asset being loaded
-  React.useEffect(() => {
-    if (asset === 'loading' || !asset) return;
+    if (!asset) return;
 
     const docRef = doc(db, 'negociacoes', negotiationId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            const initialState: Omit<NegotiationState, 'duplicates'> & { contractFields: Record<string, unknown> } = {
+            // Get seller email from asset data if available, otherwise use placeholder
+            const sellerEmail = (asset && 'email' in asset && typeof asset.email === 'string') ? asset.email : 'vendedor@example.com';
+            
+            const initialState: NegotiationState = {
                 sellerAgrees: false,
                 buyerAgrees: false,
                 isFinalized: false,
                 isTransactionComplete: false,
-                sellerEmail: 'vendedor@example.com',
-                buyerEmail: 'comprador@example.com',
+                sellerEmail: sellerEmail,
+                buyerEmail: currentUser?.email || 'comprador@example.com',
                 paymentMethod: 'vista',
                 numberOfInstallments: '2',
                 authStatus: { buyer: 'pending', seller: 'pending' },
                 contractFields: { },
             };
-            setDoc(docRef, initialState).then(() => setNegotiationState(initialState as NegotiationState));
+            setDoc(docRef, initialState).then(() => setNegotiationState(initialState));
         }
     });
 
     return () => unsubscribe();
-  }, [negotiationId, asset]);
+  }, [negotiationId, asset, currentUser?.email]);
 
-  const currentUserRole: UserRole | null = asset && asset !== 'loading' && currentUser?.uid === asset.ownerId ? 'seller' : 'buyer';
+  const currentUserRole: UserRole | null = asset && currentUser?.uid === asset.ownerId ? 'seller' : 'buyer';
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
@@ -213,7 +160,7 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
   }
   
   const getFinalContractText = React.useCallback(() => {
-    if (asset === 'loading' || !asset || !negotiationState) {
+    if (!negotiationState || !asset) {
         return "Carregando dados do contrato...";
     }
     
@@ -223,8 +170,8 @@ export function AdjustmentClientPage({ assetId, assetType }: { assetId: string, 
     const creditType = 'creditType' in asset ? asset.creditType : ('taxType' in asset ? asset.taxType : 'N/A');
     const creditLocation = asset.location;
     const creditVintage = 'vintage' in asset ? asset.vintage : 'N/A';
-    const creditPrice = 'pricePerCredit' in asset ? asset.pricePerCredit : ('price' in asset ? asset.price : 0);
-    const totalPrice = creditAmount * creditPrice;
+    const price = 'pricePerCredit' in asset ? asset.pricePerCredit : ('price' in asset ? asset.price : 0);
+    const totalPrice = creditAmount * (price || 0);
     
     const paymentMethodText = negotiationState.paymentMethod === 'vista' 
       ? 'pagamento será realizado à vista, no valor total de...'
@@ -245,7 +192,7 @@ Cláusula 1ª. DO OBJETO DO CONTRATO
 O presente contrato tem como OBJETO a cessão e transferência, de forma onerosa, da totalidade dos direitos creditórios relativos a ${creditAmount.toLocaleString()} (quantidade) créditos de carbono, do tipo ${creditType}, vintage ${creditVintage}, localizados em ${creditLocation}.
 
 Cláusula 2ª. DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
-Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${creditPrice.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
+Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${(price || 0).toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
 O ${paymentMethodText}
 
 Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
@@ -318,7 +265,7 @@ CESSIONÁRIO: ${buyerName}
         }
     }
   
-  if (asset === 'loading' || !negotiationState) {
+  if (!negotiationState) {
       return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
@@ -504,7 +451,6 @@ CESSIONÁRIO: ${buyerName}
         </div>
       )}
     </div>
-  </div>
   );
 }
 
