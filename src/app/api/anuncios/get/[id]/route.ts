@@ -1,12 +1,17 @@
 // src/app/api/anuncios/get/[id]/route.ts
 import { NextResponse } from "next/server";
-import { connectMongo } from "@/lib/mongodb";
+import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import mongoose from "mongoose";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    await connectMongo();
+    const db = await connectDB();
+    if (!db) {
+       console.log("📄 Usando dados mockados (sem MongoDB)");
+       return NextResponse.json({ ok: true, anuncio: { _id: params.id, titulo: "Anúncio de Teste (Mock)", tipo: 'carbon-credit', metadados: {} } });
+    }
+
     const { id } = params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {

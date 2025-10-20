@@ -1,10 +1,11 @@
 // src/app/api/anuncios/create/route.ts
 import { NextResponse } from "next/server";
-import { connectMongo } from "@/lib/mongodb";
+import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import redis from "@/lib/redis";
 
 async function clearCachePrefix(prefix: string) {
+  if (DISABLE_MONGO) return; // Não faz nada se o mongo estiver desabilitado
   try {
     const keys = await redis.keys(`${prefix}:*`);
     if (keys.length > 0) {
@@ -18,7 +19,11 @@ async function clearCachePrefix(prefix: string) {
 
 export async function POST(req: Request) {
   try {
-    await connectMongo();
+    const db = await connectDB();
+    if (!db) {
+       return NextResponse.json({ ok: true, anuncio: { _id: "mock_id", ...await req.json() } }, { status: 201 });
+    }
+
     const body = await req.json();
 
     // body deve conter uidFirebase e campos do anúncio

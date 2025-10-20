@@ -1,9 +1,9 @@
 
-import { connectMongo } from "@/lib/mongodb";
+import { connectDB } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  await connectMongo();
+  await connectDB();
   // A partir daqui, você usaria mongoose.model() para fazer consultas.
   // A lógica original de envio de e-mail foi removida conforme a solicitação
   // de adicionar o novo código de conexão.
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 }
 
 export async function OPTIONS(req: Request) {
-    await connectMongo();
+    await connectDB();
     // Lógica de OPTIONS
     return NextResponse.json({ status: "ok" });
 }

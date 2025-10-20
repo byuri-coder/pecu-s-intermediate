@@ -1,6 +1,6 @@
 // src/app/api/anuncios/list/route.ts
 import { NextResponse } from "next/server";
-import { connectMongo } from "@/lib/mongodb";
+import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
 import { Anuncio } from "@/models/Anuncio";
 import redis from "@/lib/redis";
 import crypto from "crypto";
@@ -15,6 +15,12 @@ function generateCacheKey(base: string, queryParams: any) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const queryParams = Object.fromEntries(url.searchParams.entries());
+  
+  if (DISABLE_MONGO) {
+    console.log("📄 Usando dados mockados (sem MongoDB)");
+    return NextResponse.json({ ok: true, page: 1, limit: 10, total: 0, anuncios: [] });
+  }
+  
   const cacheKey = generateCacheKey("anuncios", queryParams);
 
   try {
@@ -25,7 +31,7 @@ export async function GET(req: Request) {
     }
     console.log("❌ Cache miss:", cacheKey);
 
-    await connectMongo();
+    await connectDB();
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
     const limit = Math.min(Number(url.searchParams.get("limit") || "100"), 100);

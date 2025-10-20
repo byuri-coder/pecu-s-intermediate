@@ -2,33 +2,31 @@
 import mongoose from "mongoose";
 
 const MONGO_URL = process.env.MONGO_URL;
+export const DISABLE_MONGO = process.env.DISABLE_MONGO === "true";
 
-if (!MONGO_URL) {
-  throw new Error("MONGO_URL não definida. Defina a variável de ambiente MONGO_URL.");
+if (DISABLE_MONGO) {
+  console.warn("⚠️ MongoDB desativado neste ambiente (modo mock/teste)");
+} else if (!MONGO_URL) {
+  throw new Error("❌ MONGO_URL não definida. Defina a variável de ambiente MONGO_URL.");
 }
 
-/**
- * Mantém a conexão única durante o hot reload do Next.js.
- */
-let cached = (global as any).mongoose;
+let cached: { conn: any; promise: any; } = (global as any).mongoose;
 
 if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-export async function connectMongo() {
-  if (cached.conn) {
-    return cached.conn;
+export async function connectDB() {
+  if (DISABLE_MONGO) {
+    return null;
   }
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    const opts = {
+    cached.promise = mongoose.connect(MONGO_URL!, {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
-    };
-
-    cached.promise = mongoose.connect(MONGO_URL, opts).then((mongoose) => {
-      console.log("✅ Conectado ao MongoDB Atlas!");
+    }).then((mongoose) => {
+      console.log("✅ Conectado ao MongoDB");
       return mongoose;
     });
   }
