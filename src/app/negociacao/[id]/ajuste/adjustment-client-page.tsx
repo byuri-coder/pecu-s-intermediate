@@ -124,6 +124,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         } else {
             let sellerEmail = 'vendedor.desconhecido@example.com';
             if ('ownerId' in asset && asset.ownerId) {
+                // In a real app, you would fetch the seller's email from your user database
+                // For this example, we create a placeholder based on UID
                 sellerEmail = `vendedor+${asset.ownerId.substring(0,5)}@example.com`;
             }
             
@@ -159,6 +161,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   };
   
   const getContractTemplateInfo = () => {
+    // In a real app, this might fetch different templates based on assetType
     return { template: "...", title: 'Contrato de Cessão de Créditos de Carbono' };
   }
   
@@ -167,6 +170,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         return "Carregando dados do contrato...";
     }
     
+    // Safely access properties
     const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
     const buyerName = currentUser?.displayName || "Comprador Anônimo";
     const creditAmount = 'quantity' in asset ? asset.quantity : ('amount' in asset ? asset.amount : 0);
@@ -238,6 +242,7 @@ CESSIONÁRIO: ${buyerName}
   };
     
   const handleDownloadPdf = () => {
+     // Placeholder for PDF download functionality
      toast({ title: "Funcionalidade em desenvolvimento", description: "O download de PDF será implementado em breve."});
   };
     
@@ -253,6 +258,7 @@ CESSIONÁRIO: ${buyerName}
         }
         setIsSendingEmail(true);
         try {
+            // Placeholder for actual email sending logic
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             await updateNegotiationState({
