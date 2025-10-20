@@ -23,7 +23,6 @@ import { getAuth } from 'firebase/auth';
 type Asset = CarbonCredit | RuralLand | TaxCredit;
 type UserRole = 'buyer' | 'seller';
 
-
 type AuthStatus = 'pending' | 'validated' | 'expired';
 
 type NegotiationState = {
@@ -42,14 +41,14 @@ type NegotiationState = {
   contractFields: Record<string, unknown>;
 };
 
-const AuthStatusIndicator = ({ 
-    role, 
+const AuthStatusIndicator = ({
+    role,
     authStatus,
     email,
     onEmailChange,
     onSendVerification,
     isSendingEmail,
-}: { 
+}: {
     role: 'buyer' | 'seller';
     authStatus: AuthStatus;
     email: string;
@@ -84,17 +83,17 @@ const AuthStatusIndicator = ({
                 {content}
             </div>
             <div className="flex items-center gap-2">
-                <Input 
-                  type="email" 
-                  placeholder={`email.${role}@exemplo.com`} 
-                  value={email} 
-                  onChange={onEmailChange} 
+                <Input
+                  type="email"
+                  placeholder={`email.${role}@exemplo.com`}
+                  value={email}
+                  onChange={onEmailChange}
                   disabled={isFieldDisabled}
                 />
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={onSendVerification} 
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onSendVerification}
                   disabled={isFieldDisabled || !email}
                 >
                     {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
@@ -103,7 +102,6 @@ const AuthStatusIndicator = ({
         </div>
     );
 };
-AuthStatusIndicator.displayName = 'AuthStatusIndicator';
 
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
   const searchParams = useSearchParams();
@@ -127,7 +125,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
             // Get seller email from asset data if available, otherwise use placeholder
-            const sellerEmail = 'vendedor@example.com';
+            const sellerEmail = ('ownerId' in asset) ? 'vendedor@example.com' : 'vendedor.desconhecido@example.com';
             
             const initialState: NegotiationState = {
                 sellerAgrees: false,
@@ -142,7 +140,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 contractFields: { },
             };
             setDoc(docRef, initialState).then(() => {
-              setNegotiationState(initialState);
+                setNegotiationState(initialState);
             });
         }
     });
@@ -150,7 +148,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     return () => unsubscribe();
   }, [negotiationId, asset, currentUser?.email]);
 
-  const currentUserRole: UserRole | null = asset && currentUser?.uid === ('ownerId' in asset ? asset.ownerId : undefined) ? 'seller' : 'buyer';
+  const currentUserRole: UserRole | null = (asset && 'ownerId' in asset && currentUser?.uid === asset.ownerId) ? 'seller' : 'buyer';
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
 
