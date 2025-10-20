@@ -24,6 +24,7 @@ import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
@@ -113,28 +114,43 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    async function getAssetDetails(id: string) {
+    async function getAssetDetails(id: string, type: AssetType) {
         setAsset('loading');
         try {
             const res = await fetch(`/api/anuncios/get/${id}`);
-            if (!res.ok) {
-                setAsset(null);
-                return;
+            if (res.ok) {
+              const data = await res.json();
+              if (data.ok) {
+                  const anuncio = data.anuncio;
+                  const formattedAsset = {
+                      ...anuncio,
+                      id: anuncio._id,
+                      ...anuncio.metadados,
+                      ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
+                      price: anuncio.price,
+                  };
+                  setAsset(formattedAsset as Asset);
+                  return; // Exit if found via API
+              }
             }
-            const data = await res.json();
-            if (data.ok) {
-                const anuncio = data.anuncio;
-                const formattedAsset = {
-                    ...anuncio,
-                    id: anuncio._id,
-                    ...anuncio.metadados,
-                    ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
-                    price: anuncio.price,
-                };
-                setAsset(formattedAsset as Asset);
+
+            // Fallback to placeholder data if API fails or doesn't find it
+            console.warn(`Asset with ID ${id} not found via API, falling back to placeholders.`);
+            let placeholderData: Asset | undefined;
+            if (type === 'carbon-credit') {
+              placeholderData = placeholderCredits.find(c => c.id === id);
+            } else if (type === 'rural-land') {
+              placeholderData = placeholderRuralLands.find(l => l.id === id);
+            } else if (type === 'tax-credit') {
+              placeholderData = placeholderTaxCredits.find(t => t.id === id);
+            }
+            
+            if (placeholderData) {
+              setAsset(placeholderData);
             } else {
-                setAsset(null);
+              setAsset(null); // Not found in API or placeholders
             }
+
         } catch(err) {
             console.error("Failed to fetch asset", err);
             setAsset(null);
@@ -142,9 +158,9 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     }
     
     if (params.id) {
-        getAssetDetails(params.id);
+        getAssetDetails(params.id, assetType);
     }
-  }, [params.id]);
+  }, [params.id, assetType]);
 
   if (asset === 'loading') {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
