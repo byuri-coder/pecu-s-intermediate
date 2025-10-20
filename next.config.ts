@@ -47,15 +47,6 @@ const nextConfig: NextConfig = {
     "https://3000-firebase-studio-1756897439170.cluster-j6d3cbsvdbe5uxnhqrfzzeyj7i.cloudworkstations.dev",
     "https://*.cloudworkstations.dev",
   ],
-  env: {
-    NEXT_PUBLIC_PLATFORM_BANK: process.env.PLATFORM_BANK,
-    NEXT_PUBLIC_PLATFORM_AGENCY: process.env.PLATFORM_AGENCY,
-    NEXT_PUBLIC_PLATFORM_ACCOUNT: process.env.PLATFORM_ACCOUNT,
-    NEXT_PUBLIC_PLATFORM_PIX_KEY: process.env.PLATFORM_PIX_KEY,
-    NEXT_PUBLIC_PLATFORM_HOLDER: process.env.PLATFORM_HOLDER,
-    NEXT_PUBLIC_PLATFORM_CNPJ: process.env.PLATFORM_CNPJ,
-    NEXT_PUBLIC_PLATFORM_ACCOUNT_TYPE: process.env.PLATFORM_ACCOUNT_TYPE,
-  },
 };
 
 export default nextConfig;
