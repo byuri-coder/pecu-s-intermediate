@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -457,3 +458,5 @@ CESSIONÁRIO: ${buyerName}
 }
 
 export default AdjustmentClientPage;
+
+    
