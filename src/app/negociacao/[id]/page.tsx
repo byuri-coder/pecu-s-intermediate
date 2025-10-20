@@ -163,20 +163,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     }
   }, [params.id, assetType]);
 
-  const handleGoToAdjustment = () => {
-    if (asset && asset !== 'loading') {
-        // Store asset data in localStorage to be picked up by the adjustment page
-        localStorage.setItem(`asset-for-neg-${asset.id}`, JSON.stringify(asset));
-        router.push(`/negociacao/${params.id}/ajuste?type=${assetType}`);
-    } else {
-        toast({
-            title: "Aguarde um momento",
-            description: "Os dados do ativo ainda estão sendo carregados.",
-            variant: "destructive"
-        });
-    }
-  };
-
   if (asset === 'loading') {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   }
@@ -340,8 +326,10 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                         </SheetContent>
                     </Sheet>
                      <div className="space-x-2">
-                        <Button variant="outline" size="sm" onClick={handleGoToAdjustment}>
-                            <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/negociacao/${params.id}/ajuste?type=${assetType}`}>
+                                <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
+                            </Link>
                         </Button>
                     </div>
                 </CardHeader>
