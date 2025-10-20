@@ -121,7 +121,10 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         if (docSnap.exists()) {
             setNegotiationState(docSnap.data() as NegotiationState);
         } else {
-            const sellerEmail = ('ownerId' in asset && asset.ownerId) ? `vendedor+${asset.ownerId.substring(0,5)}@example.com` : 'vendedor.desconhecido@example.com';
+            let sellerEmail = 'vendedor.desconhecido@example.com';
+            if ('ownerId' in asset && asset.ownerId) {
+                sellerEmail = `vendedor+${asset.ownerId.substring(0,5)}@example.com`;
+            }
             
             const initialState: NegotiationState = {
                 sellerAgrees: false,
@@ -137,7 +140,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             };
             setDoc(docRef, initialState).then(() => {
                  setNegotiationState(initialState);
-            });
+            }).catch(e => console.error("Error setting initial doc: ", e));
         }
     });
 
