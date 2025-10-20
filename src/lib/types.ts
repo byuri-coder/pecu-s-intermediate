@@ -1,5 +1,6 @@
 
 
+
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -112,3 +113,4 @@ export interface CompletedDeal {
 
 
 export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
+export type Asset = CarbonCredit | TaxCredit | RuralLand;
