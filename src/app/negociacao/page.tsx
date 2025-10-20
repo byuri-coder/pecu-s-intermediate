@@ -7,8 +7,20 @@ import { ChatList, type Conversation } from './chat-list';
 import { MessageSquare } from 'lucide-react';
 import { usePersistentState } from './use-persistent-state';
 
+const mockConversations: Conversation[] = [
+  {
+    id: 'cc-003',
+    name: 'Gestão de Resíduos Urbanos',
+    avatar: 'https://picsum.photos/seed/avatar2/40/40',
+    lastMessage: 'Claro, segue o PDF com o relatório...',
+    time: '10:45',
+    unread: 0,
+    type: 'carbon-credit'
+  }
+];
+
 export default function NegotiationHubPage() {
-  const [conversations] = usePersistentState<Conversation[]>('conversations', []);
+  const [conversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
 
   return (
     <div className="flex-1 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">

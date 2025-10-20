@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
-import { NegotiationChat, type Message } from './negotiation-chat';
+import { NegotiationChat, type Message } from '../negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList, type Conversation } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -99,7 +99,7 @@ const mockMessages: Message[] = [
 
 export default function NegotiationPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const assetType = (searchParams?.get('type') as AssetType) || 'carbon-credit';
+  const assetType = (searchParams?.get('type') as AssetType) ?? 'carbon-credit';
   const { toast } = useToast();
   const auth = getAuth(app);
   const currentUser = auth.currentUser;
