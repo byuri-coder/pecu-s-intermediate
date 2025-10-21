@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from 'react';
@@ -124,7 +125,7 @@ export function Header() {
           {isLoggedIn ? (
             <>
               <Button variant="ghost" size="icon" className="relative" asChild>
-                  <Link href="/negociacao">
+                  <Link href="/chat-negociacao">
                     <MessageSquare className="h-5 w-5" />
                     <span className="sr-only">Negociações</span>
                     {/* Notification dot */}

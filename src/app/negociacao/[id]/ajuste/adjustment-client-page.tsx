@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -194,7 +195,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Button variant="outline" asChild>
-            <Link href={`/negociacao/${assetId}?type=${assetType}`}>
+            <Link href={`/chat-negociacao/${assetId}?type=${assetType}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para a Negociação
             </Link>

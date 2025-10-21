@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -221,7 +222,7 @@ export default function DashboardPage({
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
                               {asset.status === 'Vendido' ? (
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/negociacao/${asset.id}/ajuste?type=${asset.assetType}&view=archive`}>Dados da Negociação</Link>
+                                  <Link href={`/chat-negociacao/${asset.id}/ajuste?type=${asset.assetType}&view=archive`}>Dados da Negociação</Link>
                                 </DropdownMenuItem>
                               ) : (
                                 <>

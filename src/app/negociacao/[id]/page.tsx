@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -297,7 +298,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                     </Sheet>
                      <div className="space-x-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/negociacao/${params.id}/ajuste?type=${assetType}`}>
+                            <Link href={`/chat-negociacao/${params.id}/ajuste?type=${assetType}`}>
                                 <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
                             </Link>
                         </Button>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -222,7 +223,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
              
               <div className="space-y-3 pt-4">
                  <Button asChild className="w-full text-base" size="lg" disabled={land.status !== 'Disponível'}>
-                  <Link href={`/negociacao/${land.id}?type=rural-land`}>
+                  <Link href={`/chat-negociacao/${land.id}?type=rural-land`}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Iniciar Negociação
                   </Link>

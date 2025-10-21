@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card } from '@/components/ui/card';
@@ -38,7 +39,7 @@ export function ChatList({ conversations }: { conversations: Conversation[] }) {
           {conversations.map((convo) => {
             const isActive = pathname?.includes(convo.id) ?? false;
             return (
-              <Link key={convo.id} href={`/negociacao/${convo.id}?type=${convo.type}`} className="block">
+              <Link key={convo.id} href={`/chat-negociacao/${convo.id}?type=${convo.type}`} className="block">
                 <div
                   className={cn(
                     'flex items-center gap-4 p-4 cursor-pointer border-b',
