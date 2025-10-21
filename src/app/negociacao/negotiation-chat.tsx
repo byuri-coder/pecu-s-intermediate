@@ -151,3 +151,5 @@ export function NegotiationChat({ messages }: { messages: Message[] }) {
     </>
   );
 }
+
+    
