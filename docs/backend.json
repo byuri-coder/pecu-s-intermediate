@@ -45,91 +45,6 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["buyerId", "sellerId", "listingId", "value", "type", "status", "createdAt"]
-    },
-    "Negotiation": {
-      "title": "Negotiation",
-      "description": "Represents the state of a negotiation for an asset.",
-      "type": "object",
-      "properties": {
-        "assetId": { "type": "string" },
-        "buyerId": { "type": "string" },
-        "sellerId": { "type": "string" },
-        "chatId": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "awaiting_verification", "awaiting_uploads", "completed"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Contract": {
-        "title": "Contract",
-        "description": "Stores the adjustable contract details for a negotiation.",
-        "type": "object",
-        "properties": {
-            "negotiationId": { "type": "string" },
-            "templateId": { "type": "string" },
-            "placeholders": { "type": "object" },
-            "fields": {
-                "type": "object",
-                "properties": {
-                    "seller": { "type": "object" },
-                    "buyer": { "type": "object" }
-                }
-            },
-            "previewHtml": { "type": "string" },
-            "isFrozen": { "type": "boolean" },
-            "frozenAt": { "type": "string", "format": "date-time" },
-            "finalizedAt": { "type": "string", "format": "date-time" },
-            "generatedPdfUrl": { "type": "string", "format": "uri" },
-            "uploads": {
-                "type": "object",
-                "properties": {
-                    "seller": { "type": "array", "items": { "type": "object" } },
-                    "buyer": { "type": "array", "items": { "type": "object" } }
-                }
-            }
-        }
-    },
-    "VerificationToken": {
-        "title": "Verification Token",
-        "description": "Stores a one-time token for email verification.",
-        "type": "object",
-        "properties": {
-            "negotiationId": { "type": "string" },
-            "role": { "type": "string", "enum": ["seller", "buyer"] },
-            "email": { "type": "string", "format": "email" },
-            "tokenHash": { "type": "string" },
-            "expiresAt": { "type": "string", "format": "date-time" },
-            "createdAt": { "type": "string", "format": "date-time" },
-            "usedAt": { "type": "string", "format": "date-time" }
-        }
-    },
-    "AuditLog": {
-        "title": "Audit Log",
-        "description": "Logs critical events for a negotiation.",
-        "type": "object",
-        "properties": {
-            "negotiationId": { "type": "string" },
-            "event": { "type": "string", "enum": ["email_verification", "upload", "finalization", "duplicate_generated"] },
-            "byUserId": { "type": "string" },
-            "meta": { "type": "object" },
-            "createdAt": { "type": "string", "format": "date-time" }
-        }
-    },
-    "Duplicate": {
-        "title": "Duplicate",
-        "description": "Represents an invoice or installment for a transaction.",
-        "type": "object",
-        "properties": {
-            "negotiationId": { "type": "string" },
-            "invoiceNumber": { "type": "string" },
-            "orderNumber": { "type": "string" },
-            "issueDate": { "type": "string", "format": "date-time" },
-            "dueDate": { "type": "string" },
-            "value": { "type": "number" },
-            "qr": { "type": "object" },
-            "pdfUrl": { "type": "string", "format": "uri" },
-            "createdAt": { "type": "string", "format": "date-time" }
-        }
     }
   },
   "auth": {
@@ -148,25 +63,11 @@
       "schema": { "$ref": "#/entities/Transaction" },
       "description": "Stores all completed transactions."
     },
-    "/negociacoes/{negotiationId}": {
-      "schema": { "$ref": "#/entities/Negotiation" },
-      "description": "Stores the state of a negotiation for an asset."
-    },
-    "/contracts/{contractId}": {
-        "schema": { "$ref": "#/entities/Contract" },
-        "description": "Stores the adjustable contract details for a negotiation."
-    },
-    "/verification_tokens/{tokenId}": {
-        "schema": { "$ref": "#/entities/VerificationToken" },
-        "description": "Stores one-time tokens for email verification."
-    },
-    "/audit_logs/{logId}": {
-        "schema": { "$ref": "#/entities/AuditLog" },
-        "description": "Logs critical events for auditing purposes."
-    },
-    "/duplicates/{duplicateId}": {
-        "schema": { "$ref": "#/entities/Duplicate" },
-        "description": "Stores generated invoices/duplicates for a transaction."
+    "/negociacoes/{negotiationId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Stores messages for a specific negotiation chat."
     }
   }
 }

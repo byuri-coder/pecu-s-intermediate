@@ -24,6 +24,7 @@ import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 
 function getAssetTypeRoute(type: AssetType) {
     switch(type) {
@@ -53,6 +54,18 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     async function getAssetDetails(id: string, type: AssetType) {
         setAsset('loading');
         try {
+            // Using placeholder data as a fallback for development
+            const placeholderData = 
+                type === 'carbon-credit' ? placeholderCredits.find(c => c.id === id) :
+                type === 'tax-credit' ? placeholderTaxCredits.find(t => t.id === id) :
+                type === 'rural-land' ? placeholderRuralLands.find(l => l.id === id) :
+                null;
+
+            if (placeholderData) {
+                setAsset(placeholderData as Asset);
+                return;
+            }
+            
             const res = await fetch(`/api/anuncios/get/${id}`);
             if (res.ok) {
               const data = await res.json();
@@ -63,7 +76,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                       id: anuncio._id,
                       owner: anuncio.metadados?.owner,
                       sellerName: anuncio.metadados?.sellerName,
-                      ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
+                      ownerId: anuncio.uidFirebase,
                       price: anuncio.price,
                       pricePerCredit: anuncio.price,
                       images: anuncio.imagens,
@@ -145,7 +158,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
     await addDoc(messagesCollection, {
         senderId: currentUser.uid,
-        receiverId: asset.ownerId, // This should be the other participant's UID
+        receiverId: asset.ownerId,
         content: msg.content,
         type: msg.type,
         timestamp: serverTimestamp(),
@@ -287,13 +300,6 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                             </div>
                         </SheetContent>
                     </Sheet>
-                     <div className="space-x-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={`/negociacao/${params.id}/ajuste-contrato?type=${assetType}`}>
-                                <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
-                            </Link>
-                        </Button>
-                    </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col p-4 pt-0">
                     <NegotiationChat messages={messages} />
