@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Send, Paperclip, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
-import { NegotiationChat, type Message } from './negotiation-chat';
+import { NegotiationChat } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
-import { ChatList, type Conversation } from '../chat-list';
+import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { AssetType, Asset } from '@/lib/types';
+import type { AssetType, Asset, Message, Conversation } from '@/lib/types';
 import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
