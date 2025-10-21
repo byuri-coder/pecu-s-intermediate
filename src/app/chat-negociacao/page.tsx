@@ -3,17 +3,16 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ChatList } from './chat-list';
 import type { Conversation, Message } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MessageSquareText } from 'lucide-react';
-import { NegotiationChat } from './negotiation-chat';
-import { ActiveChatHeader } from './active-chat-header';
 import { db, app } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { ChatList } from './chat-list';
+import { NegotiationChat } from './negotiation-chat';
+import { ActiveChatHeader } from './active-chat-header';
 import { usePersistentState } from './use-persistent-state';
-
 
 const mockConversations: Conversation[] = [
     {
@@ -70,6 +69,7 @@ export default function NegotiationHubPage() {
   const auth = getAuth(app);
   const currentUser = auth.currentUser;
 
+  // Initialize state directly with mock data
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
   const [messages, setMessages] = React.useState<Message[]>([]);
   

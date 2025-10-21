@@ -6,10 +6,8 @@ import { notFound, useSearchParams, useRouter, usePathname } from 'next/navigati
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
-import { NegotiationChat, type Message } from './negotiation-chat';
+import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2, MessageSquareText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { ChatList, type Conversation } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -19,11 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset } from '@/lib/types';
-import { usePersistentState } from '../use-persistent-state';
+import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset, Conversation, Message } from '@/lib/types';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { ChatList } from '../chat-list';
+import { NegotiationChat } from '../negotiation-chat';
+import { ActiveChatHeader } from '../active-chat-header';
+import { usePersistentState } from '../use-persistent-state';
 
 function getAssetTypeName(type: AssetType) {
     switch(type) {
@@ -45,18 +46,20 @@ function getAssetTypeRoute(type: AssetType) {
 export default function NegotiationPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const assetType = (searchParams?.get('type') as AssetType) ?? 'carbon-credit';
   const { toast } = useToast();
   const auth = getAuth(app);
   const currentUser = auth.currentUser;
+  
+  const assetType = (searchParams?.get('type') as AssetType | null);
+  const activeChatId = params.id;
 
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
-  
-  const negotiationId = `neg_${params.id}`;
   const [messages, setMessages] = React.useState<Message[]>([]);
-  const [newMessage, setNewMessage] = React.useState('');
+  
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const activeConversation = React.useMemo(() => {
+    return conversations.find(c => c.id === activeChatId) || null;
+  }, [activeChatId, conversations]);
 
   React.useEffect(() => {
     async function getAssetDetails(id: string, type: AssetType) {
@@ -68,30 +71,36 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
               if (data.ok && data.anuncio?.tipo === type) {
                   const anuncio = data.anuncio;
                   const formattedAsset: Asset = {
-                      ...anuncio,
+                      ...anuncio.metadados, // Spread metadados first
                       id: anuncio._id,
-                      owner: anuncio.metadados?.owner,
-                      sellerName: anuncio.metadados?.sellerName,
-                      ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
+                      ownerId: anuncio.uidFirebase,
                       price: anuncio.price,
-                      pricePerCredit: anuncio.price,
-                      images: anuncio.imagens,
-                      creditType: anuncio.metadados?.credit_type,
-                      quantity: anuncio.metadados?.quantity,
-                      location: anuncio.metadados?.location,
-                      vintage: anuncio.metadados?.vintage,
-                      standard: anuncio.metadados?.standard,
-                      projectOverview: anuncio.descricao,
-                      title: anuncio.titulo,
+                      status: anuncio.status,
                       description: anuncio.descricao,
-                      sizeHa: anuncio.metadados?.sizeHa,
-                      businessType: anuncio.metadados?.businessType,
-                      documentation: anuncio.metadados?.documentation,
-                      registration: anuncio.metadados?.registration,
-                      taxType: anuncio.metadados?.taxType,
-                      amount: anuncio.metadados?.amount,
+                      title: anuncio.titulo,
+                      images: anuncio.imagens || [],
                   };
                   setAsset(formattedAsset);
+
+                   // Add to conversations if it's not there
+                  setConversations(prevConvos => {
+                      if (prevConvos.some(c => c.id === id)) {
+                          return prevConvos;
+                      }
+                      const newConversation: Conversation = {
+                          id: id,
+                          assetId: id,
+                          assetName: anuncio.titulo,
+                          name: anuncio.metadados?.sellerName || anuncio.metadados?.owner || 'Vendedor',
+                          avatar: 'https://picsum.photos/seed/avatar2/40/40',
+                          lastMessage: 'Inicie a conversa...',
+                          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                          unread: 0,
+                          type: type,
+                      };
+                      return [newConversation, ...prevConvos];
+                  });
+
                   return;
               }
             }
@@ -102,252 +111,110 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
         }
     }
     
-    if (params.id) {
-        getAssetDetails(params.id, assetType);
+    if (activeChatId && assetType) {
+        getAssetDetails(activeChatId, assetType);
+    } else {
+        setAsset(null);
     }
-  }, [params.id, assetType]);
+  }, [activeChatId, assetType, setConversations]);
   
   // Real-time message listener
-    React.useEffect(() => {
-        if (!negotiationId) return;
+  React.useEffect(() => {
+    if (!activeChatId || !currentUser) {
+        setMessages([]);
+        return;
+    }
 
-        const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
-        const q = query(messagesCollection, orderBy('timestamp', 'asc'));
+    const negotiationId = `neg_${activeChatId}`;
+    const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
+    const q = query(messagesCollection, orderBy('timestamp', 'asc'));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const newMessages: Message[] = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    sender: data.senderId === currentUser?.uid ? 'me' : 'other',
-                    content: data.content,
-                    type: data.type,
-                    timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '',
-                    avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : 'https://picsum.photos/seed/avatar2/40/40'
-                } as Message;
-            });
-            setMessages(newMessages);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newMessages: Message[] = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                sender: data.senderId === currentUser?.uid ? 'me' : 'other',
+                content: data.content,
+                type: data.type,
+                timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '',
+                avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : activeConversation?.avatar
+            } as Message;
         });
+        setMessages(newMessages);
+    }, (error) => {
+        console.error("Error fetching messages:", error);
+        setMessages([]);
+    });
 
-        return () => unsubscribe();
-    }, [negotiationId, currentUser?.uid, params.id]);
+    return () => unsubscribe();
+  }, [activeChatId, currentUser, activeConversation?.avatar]);
 
-  if (asset === 'loading') {
-    return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
-  }
-  
-  if (!asset) {
-    notFound();
-  }
-
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset && asset.owner ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
-  const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
   const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
-      
-    if (!currentUser || !('ownerId' in asset) || !asset.ownerId) {
+    if (!currentUser || !asset || !('ownerId' in asset) || !asset.ownerId) {
         toast({ title: "Erro de autenticação", description: "Você precisa estar logado para enviar mensagens.", variant: "destructive" });
         return;
     }
     
+    const negotiationId = `neg_${activeChatId}`;
     const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
+    
     await addDoc(messagesCollection, {
         senderId: currentUser.uid,
-        receiverId: asset.ownerId, // This should be the other participant's UID
+        receiverId: asset.ownerId, 
         content: msg.content,
         type: msg.type,
         timestamp: serverTimestamp(),
         status: 'sent',
     });
 
-
     const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
     
-    // Update or create conversation in localStorage
-    const newConversation: Conversation = {
-        id: params.id,
-        name: sellerName,
-        avatar: sellerAvatar,
-        lastMessage: lastMessageText,
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
-        type: assetType,
-    };
-    
+    // Update conversation in localStorage
     setConversations(prevConvos => {
-        const existingConvoIndex = prevConvos.findIndex(c => c.id === newConversation.id);
-        if (existingConvoIndex > -1) {
+        const convoIndex = prevConvos.findIndex(c => c.id === activeChatId);
+        if (convoIndex > -1) {
             const updatedConvos = [...prevConvos];
-            const [existingConvo] = updatedConvos.splice(existingConvoIndex, 1);
-            return [{ ...existingConvo, lastMessage: newConversation.lastMessage, time: newConversation.time }, ...updatedConvos];
+            const [existingConvo] = updatedConvos.splice(convoIndex, 1);
+            return [{ ...existingConvo, lastMessage: lastMessageText, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }, ...updatedConvos];
         }
-        return [newConversation, ...prevConvos];
+        return prevConvos;
     });
   }
 
-  const handleSendMessage = () => {
-    const messageContent = newMessage.trim();
-    if (messageContent === '') return;
-
-    const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
-    const messageType = isGoogleMapsUrl ? 'location' : 'text';
-
-    addMessage({ content: messageContent, type: messageType });
-    setNewMessage('');
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
-      // In a real app, upload the file to Firebase Storage here and get the URL
-      const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
-      addMessage({ content: content, type: fileType });
-    }
-  };
-
-  const handleSendCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "Geolocalização não suportada",
-        description: "Seu navegador não permite o compartilhamento de localização.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        addMessage({ content: url, type: 'location' });
-      },
-      (error) => {
-        toast({
-            title: "Erro ao obter localização",
-            description: "Não foi possível obter sua localização. Verifique as permissões do seu navegador.",
-            variant: "destructive"
-        });
-      }
-    );
-  };
-  
-  const handleChooseOnMap = () => {
-    window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSendMessage();
-    }
-  };
-
 
   return (
-    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
+    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
         <div className="md:col-span-4 lg:col-span-3 h-full">
-             <ChatList conversations={conversations} />
+             <ChatList conversations={conversations} activeChatId={activeChatId} />
         </div>
-        
-        <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">
-            <Card className="flex-grow flex flex-col">
-                <CardHeader className="flex-row items-center justify-between">
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <div className="flex items-center gap-3 cursor-pointer group">
-                                <Avatar className="h-11 w-11">
-                                    <AvatarImage src={sellerAvatar} />
-                                    <AvatarFallback>{sellerName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle className="text-xl group-hover:underline">{sellerName}</CardTitle>
-                                    <CardDescription>
-                                        Negociando: <Link className="text-primary hover:underline" href={`${getAssetTypeRoute(assetType)}/${asset.id}`}>{assetName}</Link>
-                                    </CardDescription>
-                                </div>
-                            </div>
-                        </SheetTrigger>
-                        <SheetContent className="sm:max-w-md">
-                            <SheetHeader>
-                                <SheetTitle>Informações do Vendedor</SheetTitle>
-                                <SheetDescription>
-                                    Perfil e documentos relacionados ao ativo em negociação.
-                                </SheetDescription>
-                            </SheetHeader>
-                            <div className="py-6 space-y-6">
-                                <Card>
-                                    <CardHeader className="p-4">
-                                        <div className="flex items-center gap-4">
-                                             <Avatar className="h-16 w-16">
-                                                <AvatarImage src={sellerAvatar} />
-                                                <AvatarFallback><UserCircle className="h-8 w-8"/></AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <h3 className="text-lg font-semibold">{sellerName}</h3>
-                                                <p className="text-sm text-muted-foreground">Membro desde 2023</p>
-                                                <p className="text-sm text-muted-foreground">Verificado</p>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                </Card>
-
-                            </div>
-                        </SheetContent>
-                    </Sheet>
-                     <div className="space-x-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={`/chat-negociacao/${params.id}/ajuste?type=${assetType}`}>
-                                <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
-                            </Link>
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                    <NegotiationChat messages={messages} />
-                    <div className="mt-4 flex items-center gap-2">
-                        <Input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            onChange={handleFileChange}
-                            accept="image/*,application/pdf"
-                        />
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Paperclip className="h-5 w-5" />
-                                    <span className="sr-only">Anexar arquivo</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                             <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                                    <Paperclip className="mr-2 h-4 w-4"/>
-                                    Imagem ou Documento
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleSendCurrentLocation}>
-                                    <LocateFixed className="mr-2 h-4 w-4"/>
-                                    Localização Atual
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleChooseOnMap}>
-                                    <Map className="mr-2 h-4 w-4"/>
-                                    Escolher no Mapa
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Input 
-                            placeholder="Digite sua mensagem..." 
-                            value={newMessage} 
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                         />
-                        <Button id="send-message-button" onClick={handleSendMessage}>
-                          <Send className="h-5 w-5" />
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+        <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
+            {activeConversation ? (
+                <Card className="h-full w-full flex flex-col">
+                    <ActiveChatHeader 
+                        conversation={activeConversation}
+                        assetId={activeConversation.assetId}
+                    />
+                    <CardContent className="flex-1 flex flex-col p-4 pt-0">
+                       <NegotiationChat messages={messages} onSendMessage={addMessage} />
+                    </CardContent>
+                </Card>
+            ) : asset === 'loading' ? (
+                <Loader2 className="h-10 w-10 animate-spin"/>
+            ) : (
+                <Card className="w-full max-w-md text-center border-dashed">
+                    <CardHeader>
+                        <div className="mx-auto bg-secondary text-secondary-foreground p-4 rounded-full w-fit mb-4">
+                            <MessageSquareText className="h-10 w-10"/>
+                        </div>
+                        <CardTitle>Selecione uma Negociação</CardTitle>
+                        <CardDescription>
+                            Escolha uma conversa da lista para visualizar as mensagens e continuar a negociação.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            )}
         </div>
     </div>
   );
