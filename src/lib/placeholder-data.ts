@@ -1,4 +1,5 @@
 
+
 import type { CarbonCredit, TaxCredit, RuralLand, Operation, Petition, Invoice } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [
@@ -33,6 +34,22 @@ export const placeholderTaxCredits: TaxCredit[] = [
 ];
 
 export const placeholderRuralLands: RuralLand[] = [
+    {
+        id: 'land-001',
+        title: 'Fazenda Rio das Pedras',
+        description: 'Propriedade de 300 hectares, ideal para gado de corte. Possui pastagem formada, casa sede, curral e acesso a rio. Documentação 100% regularizada. Localizada a 50km da cidade mais próxima.',
+        owner: 'João da Silva',
+        sizeHa: 300,
+        businessType: 'Venda',
+        location: 'Mato Grosso, MT',
+        images: [{ url: 'https://picsum.photos/seed/land-001/800/600', type: 'image', alt: 'Vista da Fazenda' }],
+        documentation: 'Completa e regularizada, com CAR e GEO.',
+        registration: 'CRI 12.345',
+        price: 7500000,
+        status: 'Disponível',
+        ownerId: 'user-placeholder-seller-3',
+        createdAt: new Date('2024-01-15T09:00:00Z'),
+    },
     {
         id: 'land-005',
         title: 'Retiro da Serra',

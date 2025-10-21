@@ -29,6 +29,18 @@ import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 type Asset = CarbonCredit | RuralLand | TaxCredit;
 
+// Mock data for a specific test conversation
+const MOCK_NEGOTIATION_ID = 'land-001';
+const mockMessages: Message[] = [
+  { id: '1', sender: 'other', content: 'Boa tarde! Tenho interesse na Fazenda Rio das Pedras. A documentação está toda em dia?', type: 'text', timestamp: '14:30', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '2', sender: 'me', content: 'Boa tarde! Sim, toda a documentação está 100% regularizada, incluindo CAR e georreferenciamento. Posso enviar uma cópia da matrícula se desejar.', type: 'text', timestamp: '14:32', avatar: '' },
+  { id: '3', sender: 'other', content: 'Excelente. O valor de R$7.500.000 é negociável? Aceitaria uma proposta de R$7.2M à vista?', type: 'text', timestamp: '14:35', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '4', sender: 'me', content: 'Agradeço a proposta. Podemos chegar em R$7.35M para fecharmos negócio esta semana. O que me diz?', type: 'text', timestamp: '14:40', avatar: '' },
+  { id: '5', sender: 'other', content: 'Combinado. R$7.350.000. Podemos formalizar no contrato?', type: 'text', timestamp: '14:42', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+  { id: '6', sender: 'me', content: 'Perfeito. Vou preparar a minuta do contrato e te envio para ajuste fino. Basta clicar no botão "ajustar e fechar contrato" acima.', type: 'text', timestamp: '14:45', avatar: '' },
+];
+
+
 function getAssetTypeName(type: AssetType) {
     switch(type) {
         case 'carbon-credit': return 'Crédito de Carbono';
@@ -115,6 +127,12 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   
   // Real-time message listener
     React.useEffect(() => {
+        // Use mock data for the specific test case
+        if (params.id === MOCK_NEGOTIATION_ID) {
+            setMessages(mockMessages);
+            return;
+        }
+
         if (!negotiationId) return;
 
         const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
@@ -136,7 +154,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
         });
 
         return () => unsubscribe();
-    }, [negotiationId, currentUser?.uid]);
+    }, [negotiationId, currentUser?.uid, params.id]);
 
   if (asset === 'loading') {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
@@ -151,6 +169,21 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
   const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
+    // Prevent sending messages in the mock chat
+    if (params.id === MOCK_NEGOTIATION_ID) {
+        const tempId = Date.now().toString();
+        const newMessage: Message = {
+            id: tempId,
+            sender: 'me',
+            avatar: '',
+            timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            ...msg,
+        }
+        setMessages(prev => [...prev, newMessage]);
+        setNewMessage('');
+        return;
+    }
+      
     if (!currentUser || !asset.ownerId) {
         toast({ title: "Erro de autenticação", description: "Você precisa estar logado para enviar mensagens.", variant: "destructive" });
         return;
