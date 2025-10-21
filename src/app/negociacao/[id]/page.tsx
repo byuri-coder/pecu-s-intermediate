@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Send, Paperclip, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
-import { NegotiationChat } from './negotiation-chat';
+import { NegotiationChat } from '../negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';

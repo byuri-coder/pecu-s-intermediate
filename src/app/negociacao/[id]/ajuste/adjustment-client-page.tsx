@@ -3,18 +3,16 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users, UploadCloud, FileUp, Fingerprint, Download, Circle } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, FileUp, Fingerprint, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Asset, AssetType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
@@ -46,7 +44,7 @@ type ContractState = {
   verifications: {
       seller: AuthStatus;
       buyer: AuthStatus;
-  },
+  };
   uploads: {
       seller: any[];
       buyer: any[];
@@ -55,9 +53,9 @@ type ContractState = {
 
 const AuthStatusIndicator = ({ role, status }: { role: UserRole; status: AuthStatus; }) => {
     const statusMap = {
-        pending: { icon: RefreshCw, text: 'Pendente', className: 'text-muted-foreground animate-spin' },
+        pending: { icon: Loader2, text: 'Pendente', className: 'text-muted-foreground animate-spin' },
         validated: { icon: CheckCircle, text: 'Validado', className: 'text-green-600' },
-        expired: { icon: Circle, text: 'Expirado', className: 'text-destructive' },
+        expired: { icon: CheckCircle, text: 'Expirado', className: 'text-destructive' },
     };
     const { icon: Icon, text, className } = statusMap[status];
 
@@ -71,7 +69,7 @@ const AuthStatusIndicator = ({ role, status }: { role: UserRole; status: AuthSta
 };
 
 
-export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
+export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset | null }) {
   const { toast } = useToast();
   
   const auth = getAuth();
@@ -79,7 +77,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const [negotiation, setNegotiation] = React.useState<NegotiationState | null>(null);
   const [contract, setContract] = React.useState<ContractState | null>(null);
-  const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const negotiationId = `neg_${assetId}`;
   const contractId = `contract_${assetId}`;
@@ -119,6 +116,10 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         unsubContract();
     };
   }, [negotiationId, contractId]);
+  
+  if (!asset) {
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
+  }
 
   const currentUserRole: UserRole | null = (asset && 'ownerId' in asset && currentUser?.uid === asset.ownerId) ? 'seller' : 'buyer';
 
@@ -164,19 +165,16 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
     await updateContractState(updates);
 
-    // Check if both have agreed to freeze the contract
     const bothAgreed = (currentUserRole === 'seller' && contract.buyerAgrees) || (currentUserRole === 'buyer' && contract.sellerAgrees);
     if (bothAgreed) {
         await updateContractState({ isFrozen: true, frozenAt: new Date().toISOString() });
-        // Trigger API to send verification emails
-        // POST /api/negotiations/:id/contract/accept
         toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. E-mails de verificação foram enviados." });
     } else {
         toast({ title: "Acordo Registrado", description: "Aguardando a outra parte aceitar para finalizar o contrato." });
     }
   };
 
-  if (!asset || !negotiation || !contract) {
+  if (!negotiation || !contract) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
   
@@ -184,7 +182,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
   const bothVerified = verifications.buyer === 'validated' && verifications.seller === 'validated';
-  const bothUploaded = uploads.buyer.length > 0 && uploads.seller.length > 0;
+  const bothUploaded = uploads.seller.length > 0 && uploads.seller.length > 0;
 
   const handleGenerateDuplicates = () => toast({ title: "Funcionalidade em desenvolvimento."});
   const handleFinalizeContract = () => toast({ title: "Funcionalidade em desenvolvimento."});
@@ -304,7 +302,9 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                                </div>
                            </div>
                        </div>
-                       <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}><Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas</Button>
+                       <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}>
+                            <Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas
+                        </Button>
                     </CardContent>
                     <CardFooter>
                        <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded}>
