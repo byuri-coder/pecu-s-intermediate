@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import { FileText, Users, VenetianMask, FilePlus, ChevronDown, Download, Fingerprint } from 'lucide-react';
+import { FileText, Users, Download, Fingerprint } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -235,7 +235,7 @@ export default function DuplicatasPage() {
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dup.value)}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {numberToWords(dup.value)}
+                              ({numberToWords(dup.value)})
                             </p>
                           </div>
                           <div className="grid md:grid-cols-2 gap-6">
