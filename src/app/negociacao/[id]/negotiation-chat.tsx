@@ -9,16 +9,7 @@ import { FileText, Download, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-
-export interface Message {
-  id: string;
-  sender: 'me' | 'other';
-  content: string;
-  type: 'text' | 'image' | 'pdf' | 'location';
-  timestamp: string;
-  avatar: string;
-}
+import { type Message } from '@/lib/types';
 
 const MessageBubble = ({ msg }: { msg: Message }) => {
     const isMe = msg.sender === 'me';
@@ -98,7 +89,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             {!isMe && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={msg.avatar} />
-                    <AvatarFallback>{msg.sender.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{'V'}</AvatarFallback>
                 </Avatar>
             )}
             <div
@@ -118,7 +109,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             {isMe && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={msg.avatar} />
-                    <AvatarFallback>{msg.sender.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{'Eu'}</AvatarFallback>
                 </Avatar>
             )}
         </div>
@@ -151,5 +142,3 @@ export function NegotiationChat({ messages }: { messages: Message[] }) {
     </>
   );
 }
-
-    

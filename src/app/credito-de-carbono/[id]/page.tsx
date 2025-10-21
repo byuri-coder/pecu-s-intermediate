@@ -147,7 +147,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                 </span>
               </div>
               <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' && credit.status !== 'Ativo'}>
-                  <Link href={`/chat-negociacao/${credit.id}?type=carbon-credit`}>
+                  <Link href={`/negociacao/${credit.id}?type=carbon-credit`}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Iniciar Negociação
                   </Link>

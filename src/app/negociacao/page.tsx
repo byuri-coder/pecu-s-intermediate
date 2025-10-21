@@ -3,9 +3,11 @@
 
 import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChatList, type Conversation } from './chat-list';
+import { ChatList } from './chat-list';
 import { MessageSquare } from 'lucide-react';
 import { usePersistentState } from './use-persistent-state';
+import { type Conversation } from '@/lib/types';
+
 
 export default function NegotiationHubPage() {
   const [conversations] = usePersistentState<Conversation[]>('conversations', []);

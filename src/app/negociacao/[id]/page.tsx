@@ -2,12 +2,12 @@
 'use client';
 
 import * as React from 'react';
-import { notFound, useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
-import { NegotiationChat, type Message } from '../negotiation-chat';
+import { Edit, Send, Paperclip, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
+import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
 import { ChatList, type Conversation } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -19,19 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset } from '@/lib/types';
+import type { AssetType, Asset } from '@/lib/types';
 import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-
-function getAssetTypeName(type: AssetType) {
-    switch(type) {
-        case 'carbon-credit': return 'Crédito de Carbono';
-        case 'tax-credit': return 'Crédito Tributário';
-        case 'rural-land': return 'Terra Rural';
-    }
-}
 
 function getAssetTypeRoute(type: AssetType) {
     switch(type) {
@@ -43,7 +35,6 @@ function getAssetTypeRoute(type: AssetType) {
 
 
 export default function NegotiationPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const assetType = (searchParams?.get('type') as AssetType) ?? 'carbon-credit';
   const { toast } = useToast();
@@ -298,7 +289,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                     </Sheet>
                      <div className="space-x-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/chat-negociacao/${params.id}/ajuste?type=${assetType}`}>
+                            <Link href={`/negociacao/${params.id}/ajuste?type=${assetType}`}>
                                 <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
                             </Link>
                         </Button>
@@ -314,18 +305,18 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                             onChange={handleFileChange}
                             accept="image/*,application/pdf"
                         />
-                         <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
-                            <Paperclip className="h-5 w-5" />
-                            <span className="sr-only">Anexar arquivo</span>
-                        </Button>
-                        <DropdownMenu>
+                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
-                                    <MapPin className="h-5 w-5" />
-                                    <span className="sr-only">Enviar localização</span>
+                                    <Paperclip className="h-5 w-5" />
+                                    <span className="sr-only">Anexar arquivo</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                             <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                                    <Paperclip className="mr-2 h-4 w-4"/>
+                                    Imagem ou Documento
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleSendCurrentLocation}>
                                     <LocateFixed className="mr-2 h-4 w-4"/>
                                     Localização Atual

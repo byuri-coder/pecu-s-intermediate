@@ -125,7 +125,7 @@ export function Header() {
           {isLoggedIn ? (
             <>
               <Button variant="ghost" size="icon" className="relative" asChild>
-                  <Link href="/chat-negociacao">
+                  <Link href="/negociacao">
                     <MessageSquare className="h-5 w-5" />
                     <span className="sr-only">Negociações</span>
                     {/* Notification dot */}

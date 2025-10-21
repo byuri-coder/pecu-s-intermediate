@@ -8,16 +8,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePersistentState } from './use-persistent-state';
+import { type Conversation } from '@/lib/types';
 
-export interface Conversation {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  type: string;
-}
 
 export function ChatList({ conversations }: { conversations: Conversation[] }) {
   const pathname = usePathname();
@@ -39,7 +31,7 @@ export function ChatList({ conversations }: { conversations: Conversation[] }) {
           {conversations.map((convo) => {
             const isActive = pathname?.includes(convo.id) ?? false;
             return (
-              <Link key={convo.id} href={`/chat-negociacao/${convo.id}?type=${convo.type}`} className="block">
+              <Link key={convo.id} href={`/negociacao/${convo.id}?type=${convo.type}`} className="block">
                 <div
                   className={cn(
                     'flex items-center gap-4 p-4 cursor-pointer border-b',

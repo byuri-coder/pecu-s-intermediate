@@ -159,7 +159,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
 
               <div className="space-y-3 pt-4">
                 <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível'}>
-                  <Link href={`/chat-negociacao/${credit.id}?type=tax-credit`}>
+                  <Link href={`/negociacao/${credit.id}?type=tax-credit`}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Iniciar Negociação
                   </Link>
