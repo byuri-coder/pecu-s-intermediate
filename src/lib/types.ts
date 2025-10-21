@@ -134,3 +134,16 @@ export interface Conversation {
 
 export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 export type Asset = CarbonCredit | TaxCredit | RuralLand;
+
+// Adicionando um tipo para Transação vinda do Firestore
+export type FirestoreTransaction = {
+    id: string;
+    buyerId: string;
+    sellerId: string;
+    listingId: string;
+    value: number;
+    type: 'venda' | 'arrendamento' | 'permuta';
+    status: 'completed' | 'pending' | 'cancelled';
+    createdAt: any; // Firestore Timestamp
+    [key: string]: any; // Allow other properties
+}

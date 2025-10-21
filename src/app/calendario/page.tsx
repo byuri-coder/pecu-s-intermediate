@@ -1,16 +1,18 @@
+
 'use client';
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Calendar, TrendingUp, TrendingDown, Leaf, Landmark, Mountain } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Leaf, Landmark, Mountain, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { placeholderOperations } from '@/lib/placeholder-data';
-import type { Operation } from '@/lib/types';
+import type { Operation, FirestoreTransaction } from '@/lib/types';
 import { isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { useUser, useCollection } from '@/firebase';
+import { query, where, or } from 'firebase/firestore';
 
 
 const AssetIcon = ({ assetType }: { assetType: Operation['assetType'] }) => {
@@ -19,7 +21,7 @@ const AssetIcon = ({ assetType }: { assetType: Operation['assetType'] }) => {
         'Crédito Tributário': Landmark,
         'Terra Rural': Mountain,
     };
-    const Icon = icons[assetType];
+    const Icon = icons[assetType] || Leaf;
     return <Icon className="h-5 w-5 flex-shrink-0" />;
 };
 
@@ -27,19 +29,57 @@ const AssetIcon = ({ assetType }: { assetType: Operation['assetType'] }) => {
 export default function CalendarPage() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [selectedDayOperations, setSelectedDayOperations] = React.useState<Operation[]>([]);
+  const { user, loading: userLoading } = useUser();
+  
+  const transactionsQuery = React.useMemo(() => {
+    if (!user) return null;
+    return query(
+        // This is a placeholder for a real collection name, e.g., 'transactions'
+        'transactions',
+        or(
+            where('buyerId', '==', user.uid),
+            where('sellerId', '==', user.uid)
+        )
+    );
+  }, [user]);
+
+  const { data: transactions, loading: transactionsLoading } = useCollection<FirestoreTransaction>(transactionsQuery);
+
+  const allOperations: Operation[] = React.useMemo(() => {
+    if (!transactions || !user) return [];
+    
+    return transactions.map((tx): Operation => {
+        const isSale = tx.sellerId === user.uid;
+        let assetType: Operation['assetType'] = 'Crédito de Carbono'; // Default
+        if (tx.listing?.category === 'tax-credit') assetType = 'Crédito Tributário';
+        if (tx.listing?.category === 'rural-land') assetType = 'Terra Rural';
+
+        return {
+            id: tx.id,
+            date: tx.createdAt.toDate(),
+            type: isSale ? 'Venda' : 'Compra',
+            assetType: assetType,
+            description: tx.listing?.title || `Transação ${tx.id}`,
+            value: tx.value,
+        };
+    });
+  }, [transactions, user]);
+
 
   const operationDates = React.useMemo(() => 
-    placeholderOperations.map((op) => op.date),
-  []);
+    allOperations.map((op) => op.date),
+  [allOperations]);
 
   React.useEffect(() => {
     if (date) {
-      const ops = placeholderOperations.filter((op) => isSameDay(op.date, date));
+      const ops = allOperations.filter((op) => isSameDay(op.date, date));
       setSelectedDayOperations(ops);
     } else {
-        setSelectedDayOperations([]);
+      setSelectedDayOperations([]);
     }
-  }, [date]);
+  }, [date, allOperations]);
+
+  const isLoading = userLoading || transactionsLoading;
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -70,6 +110,7 @@ export default function CalendarPage() {
                             modifiersClassNames={{
                                 hasOperation: 'day-with-operation',
                             }}
+                            disabled={isLoading}
                         />
                     </Card>
                 </div>
@@ -78,7 +119,11 @@ export default function CalendarPage() {
                         Operações para {date ? date.toLocaleDateString('pt-BR') : 'Nenhuma data selecionada'}
                     </h3>
                     <ScrollArea className="h-[380px] pr-4">
-                        {selectedDayOperations.length > 0 ? (
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-full">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        ) : selectedDayOperations.length > 0 ? (
                              <div className="space-y-4">
                                 {selectedDayOperations.map((op, index) => (
                                     <React.Fragment key={op.id}>
