@@ -13,6 +13,7 @@ import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from './theme-toggle';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -122,6 +123,7 @@ export function Header() {
         </Sheet>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
+            <ThemeToggle />
           {isLoggedIn ? (
             <>
               <Button variant="ghost" size="icon" asChild>
