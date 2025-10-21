@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, FileUp, Fingerprint, Download } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, FileUp, Fingerprint, Download, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Asset, AssetType } from '@/lib/types';
@@ -51,19 +51,35 @@ type ContractState = {
   }
 };
 
-const AuthStatusIndicator = ({ role, status }: { role: UserRole; status: AuthStatus; }) => {
+const AuthStatusIndicator = ({ 
+    role, 
+    status,
+    currentUserRole,
+    onSendVerification
+}: { 
+    role: UserRole; 
+    status: AuthStatus;
+    currentUserRole: UserRole | null;
+    onSendVerification: (role: UserRole) => void;
+}) => {
     const statusMap = {
-        pending: { icon: Loader2, text: 'Pendente', className: 'text-muted-foreground animate-spin' },
+        pending: { icon: Clock, text: 'Pendente', className: 'text-muted-foreground' },
         validated: { icon: CheckCircle, text: 'Validado', className: 'text-green-600' },
         expired: { icon: CheckCircle, text: 'Expirado', className: 'text-destructive' },
     };
     const { icon: Icon, text, className } = statusMap[status];
+    const canSend = currentUserRole === role && status === 'pending';
 
     return (
         <div className="flex flex-col items-center gap-2 p-4 border rounded-lg bg-secondary/30">
-            <p className="font-semibold text-sm">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
+            <p className="font-semibold text-sm capitalize">{role}</p>
             <Icon className={cn("h-8 w-8", className)} />
             <p className={cn("text-xs font-medium", className)}>{text}</p>
+            {canSend && (
+                 <Button size="sm" variant="outline" className="mt-2" onClick={() => onSendVerification(role)}>
+                    Enviar Email de Validação
+                </Button>
+            )}
         </div>
     );
 };
@@ -174,6 +190,15 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     }
   };
 
+  const handleSendVerificationEmail = (role: UserRole) => {
+    // In a real app, this would trigger a server-side function
+    console.log(`Simulating sending verification email to ${role}`);
+    toast({
+      title: "E-mail de verificação enviado!",
+      description: `Um e-mail foi enviado para o ${role} com instruções para validar o contrato.`,
+    });
+  };
+
   if (!negotiation || !contract) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
@@ -193,7 +218,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Button variant="outline" asChild>
-            <Link href={`/negociacao/${assetId}?type=${assetType}`}>
+            <Link href={`/negociacao?id=${assetId}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para a Negociação
             </Link>
@@ -274,8 +299,18 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                         <CardDescription>Após o aceite de ambos, a validação por e-mail é necessária para prosseguir.</CardDescription>
                      </CardHeader>
                      <CardContent className="grid grid-cols-2 gap-4">
-                        <AuthStatusIndicator role="seller" status={verifications.seller} />
-                        <AuthStatusIndicator role="buyer" status={verifications.buyer} />
+                        <AuthStatusIndicator 
+                            role="seller" 
+                            status={verifications.seller}
+                            currentUserRole={currentUserRole}
+                            onSendVerification={handleSendVerificationEmail}
+                        />
+                        <AuthStatusIndicator 
+                            role="buyer" 
+                            status={verifications.buyer}
+                            currentUserRole={currentUserRole}
+                            onSendVerification={handleSendVerificationEmail}
+                        />
                      </CardContent>
                  </Card>
 
