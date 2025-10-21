@@ -2,501 +2,334 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, notFound } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, XCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users, UploadCloud, FileUp } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, Banknote, MailCheck, Loader2, Lock, RefreshCw, Users, UploadCloud, FileUp, Fingerprint, Download, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { CarbonCredit, RuralLand, TaxCredit, AssetType } from '@/lib/types';
+import type { Asset, AssetType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
-import { numberToWords } from '@/lib/number-to-words';
+import { getContractTemplate } from '@/lib/contract-template';
 
-type Asset = CarbonCredit | RuralLand | TaxCredit;
 type UserRole = 'buyer' | 'seller';
 type AuthStatus = 'pending' | 'validated' | 'expired';
 
 type NegotiationState = {
-  sellerAgrees: boolean;
-  buyerAgrees: boolean;
-  isFinalized: boolean;
-  isTransactionComplete: boolean;
-  sellerEmail: string;
-  buyerEmail: string;
-  paymentMethod: 'vista' | 'parcelado';
-  numberOfInstallments: string;
-  authStatus: {
-    buyer: AuthStatus;
-    seller: AuthStatus;
-  };
-  contractFields: Record<string, unknown>;
+  status: 'draft' | 'awaiting_verification' | 'awaiting_uploads' | 'completed';
+  [key: string]: any; 
 };
 
-const AuthStatusIndicator = ({
-    role,
-    authStatus,
-    email,
-    onEmailChange,
-    onSendVerification,
-    isSendingEmail,
-}: {
-    role: 'buyer' | 'seller';
-    authStatus: AuthStatus;
-    email: string;
-    onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onSendVerification: () => void;
-    isSendingEmail: boolean;
-}) => {
-    let content;
-    switch (authStatus) {
-        case 'validated':
-            content = <span className="flex items-center gap-1.5 text-xs text-green-700 font-medium"><CheckCircle className="h-4 w-4"/> Validado</span>;
-            break;
-        case 'expired':
-            content = (
-                <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 text-xs text-destructive font-medium"><XCircle className="h-4 w-4"/> Expirado</span>
-                    <Button size="sm" variant="link" className="text-xs h-auto p-0" onClick={onSendVerification}>Reenviar</Button>
-                </div>
-            );
-            break;
-        default: // pending
-            content = <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin"/>Pendente</span>;
-            break;
-    }
+type ContractState = {
+  isFrozen: boolean;
+  fields: {
+    seller: {
+      paymentMethod: 'vista' | 'parcelado';
+      installments: string;
+      interestPercent: string;
+      [key: string]: any;
+    };
+    buyer: {
+      [key: string]: any;
+    };
+  };
+  sellerAgrees: boolean;
+  buyerAgrees: boolean;
+  verifications: {
+      seller: AuthStatus;
+      buyer: AuthStatus;
+  },
+  uploads: {
+      seller: any[];
+      buyer: any[];
+  }
+};
 
-    const isFieldDisabled = isSendingEmail;
+const AuthStatusIndicator = ({ role, status }: { role: UserRole; status: AuthStatus; }) => {
+    const statusMap = {
+        pending: { icon: RefreshCw, text: 'Pendente', className: 'text-muted-foreground animate-spin' },
+        validated: { icon: CheckCircle, text: 'Validado', className: 'text-green-600' },
+        expired: { icon: Circle, text: 'Expirado', className: 'text-destructive' },
+    };
+    const { icon: Icon, text, className } = statusMap[status];
 
     return (
-         <div className={cn("p-4 rounded-lg border", authStatus === 'validated' ? "bg-green-50 border-green-200" : authStatus === 'expired' ? "bg-destructive/10 border-destructive/20" : "bg-secondary/30")}>
-            <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
-                {content}
-            </div>
-            <div className="flex items-center gap-2">
-                <Input
-                  type="email"
-                  placeholder={`email.${role}@exemplo.com`}
-                  value={email}
-                  onChange={onEmailChange}
-                  disabled={isFieldDisabled}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onSendVerification}
-                  disabled={isFieldDisabled || !email}
-                >
-                    {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Verificar'}
-                </Button>
-            </div>
+        <div className="flex flex-col items-center gap-2 p-4 border rounded-lg bg-secondary/30">
+            <p className="font-semibold text-sm">{role === 'buyer' ? 'Comprador' : 'Vendedor'}</p>
+            <Icon className={cn("h-8 w-8", className)} />
+            <p className={cn("text-xs font-medium", className)}>{text}</p>
         </div>
     );
 };
 
 
 export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset }) {
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const auth = getAuth();
   const currentUser = auth.currentUser;
 
-  const [negotiationState, setNegotiationState] = React.useState<NegotiationState | null>(null);
+  const [negotiation, setNegotiation] = React.useState<NegotiationState | null>(null);
+  const [contract, setContract] = React.useState<ContractState | null>(null);
   const [isSendingEmail, setIsSendingEmail] = React.useState(false);
 
   const negotiationId = `neg_${assetId}`;
+  const contractId = `contract_${assetId}`;
 
+  // Data listeners
   React.useEffect(() => {
-    if (!asset) return;
-
-    const docRef = doc(db, 'negociacoes', negotiationId);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+    const unsubNegotiation = onSnapshot(doc(db, 'negociacoes', negotiationId), (docSnap) => {
         if (docSnap.exists()) {
-            setNegotiationState(docSnap.data() as NegotiationState);
+            setNegotiation(docSnap.data() as NegotiationState);
         } else {
-            let sellerEmail = 'vendedor.desconhecido@example.com';
-             if ('ownerId' in asset && asset.ownerId) {
-                // In a real app, you would fetch the seller's email from your user database
-                // For this example, we create a placeholder based on UID
-                sellerEmail = `vendedor+${asset.ownerId.substring(0,5)}@example.com`;
-            }
-            
-            const initialState: NegotiationState = {
+            const initialState = { status: 'draft' };
+            setDoc(doc(db, 'negociacoes', negotiationId), initialState);
+        }
+    });
+
+    const unsubContract = onSnapshot(doc(db, 'contracts', contractId), (docSnap) => {
+        if (docSnap.exists()) {
+            setContract(docSnap.data() as ContractState);
+        } else {
+            const initialState: ContractState = {
+                isFrozen: false,
+                fields: {
+                    seller: { paymentMethod: 'vista', installments: '1', interestPercent: '0' },
+                    buyer: {}
+                },
                 sellerAgrees: false,
                 buyerAgrees: false,
-                isFinalized: false,
-                isTransactionComplete: false,
-                sellerEmail: sellerEmail,
-                buyerEmail: currentUser?.email || 'comprador@example.com',
-                paymentMethod: 'vista',
-                numberOfInstallments: '2',
-                authStatus: { buyer: 'pending', seller: 'pending' },
-                contractFields: { },
+                verifications: { seller: 'pending', buyer: 'pending' },
+                uploads: { seller: [], buyer: [] }
             };
-            setDoc(docRef, initialState).then(() => {
-                 setNegotiationState(initialState);
-            }).catch(e => console.error("Error setting initial doc: ", e));
+            setDoc(doc(db, 'contracts', contractId), initialState);
         }
     });
 
-    return () => unsubscribe();
-  }, [negotiationId, asset, currentUser?.email]);
+    return () => {
+        unsubNegotiation();
+        unsubContract();
+    };
+  }, [negotiationId, contractId]);
 
   const currentUserRole: UserRole | null = (asset && 'ownerId' in asset && currentUser?.uid === asset.ownerId) ? 'seller' : 'buyer';
-  const isSeller = currentUserRole === 'seller';
-  const isBuyer = currentUserRole === 'buyer';
 
-  const updateNegotiationState = async (updates: Partial<NegotiationState>) => {
-    if (!negotiationState) return;
-    const docRef = doc(db, 'negociacoes', negotiationId);
-    await setDoc(docRef, { ...negotiationState, ...updates }, { merge: true });
+  const updateContractState = async (updates: Partial<ContractState> | any) => {
+    if (!contract) return;
+    const docRef = doc(db, 'contracts', contractId);
+    await setDoc(docRef, updates, { merge: true });
   };
   
-  const getContractTemplateInfo = () => {
-    // In a real app, this might fetch different templates based on assetType
-    return { template: "...", title: 'Contrato de Cessão de Créditos de Carbono' };
-  }
-  
-  const getFinalContractText = React.useCallback(() => {
-    if (!negotiationState || !asset) {
-        return "Carregando dados do contrato...";
-    }
+  const handleFieldChange = (role: UserRole, field: string, value: any) => {
+    if (contract?.isFrozen || currentUserRole !== role) return;
+    const path = `fields.${role}.${field}`;
+    updateContractState({ [path]: value });
+  };
+
+  const finalContractText = React.useMemo(() => {
+      if (!asset || !contract) return "Carregando pré-visualização...";
+      const template = getContractTemplate(assetType);
+      const placeholders = {
+        'seller.name': 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor'),
+        'buyer.name': currentUser?.displayName || "Comprador Anônimo",
+        'amount': ('quantity' in asset) ? asset.quantity : (('amount' in asset) ? asset.amount : 0),
+        'asset.type': assetType,
+        'paymentMethod': contract.fields.seller.paymentMethod,
+        'installments': contract.fields.seller.installments,
+      };
+      
+      let populatedText = template;
+      for (const [key, value] of Object.entries(placeholders)) {
+          populatedText = populatedText.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+      }
+      return populatedText;
+
+  }, [asset, assetType, contract, currentUser?.displayName]);
+
+
+  const handleAccept = async () => {
+    if (!contract || !currentUserRole) return;
     
-    // Safely access properties
-    const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
-    const buyerName = currentUser?.displayName || "Comprador Anônimo";
-    const creditAmount = 'quantity' in asset ? asset.quantity : ('amount' in asset ? asset.amount : 0);
-    const creditType = 'creditType' in asset ? asset.creditType : ('taxType' in asset ? asset.taxType : 'N/A');
-    const creditLocation = asset.location;
-    const creditVintage = 'vintage' in asset ? asset.vintage : 'N/A';
-    
-    const price = ('pricePerCredit' in asset && asset.pricePerCredit) 
-                ? asset.pricePerCredit 
-                : (('price' in asset && asset.price) ? asset.price : 0);
+    const updates: Partial<ContractState> = {};
+    if (currentUserRole === 'seller') updates.sellerAgrees = true;
+    if (currentUserRole === 'buyer') updates.buyerAgrees = true;
 
-    const totalPrice = creditAmount * (price || 0);
-    
-    const paymentMethodText = negotiationState.paymentMethod === 'vista' 
-      ? 'pagamento será realizado à vista, no valor total de...'
-      : `pagamento será realizado em ${negotiationState.numberOfInstallments} parcelas de...`;
+    await updateContractState(updates);
 
-    return `
-INSTRUMENTO PARTICULAR DE CONTRATO DE CESSÃO DE CRÉDITOS DE CARBONO
-
-Pelo presente instrumento particular, de um lado:
-
-CEDENTE: ${sellerName}, doravante denominado simplesmente "CEDENTE".
-
-CESSIONÁRIO: ${buyerName}, doravante denominado simplesmente "CESSIONÁRIO".
-
-As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Cessão de Créditos de Carbono, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.
-
-Cláusula 1ª. DO OBJETO DO CONTRATO
-O presente contrato tem como OBJETO a cessão e transferência, de forma onerosa, da totalidade dos direitos creditórios relativos a ${creditAmount.toLocaleString()} (quantidade) créditos de carbono, do tipo ${creditType}, vintage ${creditVintage}, localizados em ${creditLocation}.
-
-Cláusula 2ª. DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
-Pela cessão dos créditos objeto deste contrato, o CESSIONÁRIO pagará ao CEDENTE o valor de R$ ${price?.toFixed(2)} por crédito, totalizando R$ ${totalPrice.toFixed(2)}.
-O ${paymentMethodText}
-
-Cláusula 3ª. DA TRANSFERÊNCIA E DA TRADIÇÃO
-A transferência da titularidade dos créditos de carbono será efetivada pelo CEDENTE em favor do CESSIONÁRIO em um registro ou plataforma de custódia acordada entre as partes, no prazo de 5 (cinco) dias úteis após a confirmação do pagamento integral.
-
-Cláusula 4ª. DAS OBRIGAÇÕES
-Compete ao CEDENTE garantir a existência, validade e livre disposição dos créditos de carbono, livres de quaisquer ônus ou gravames.
-Compete ao CESSIONÁRIO realizar o pagamento nos termos e prazos acordados.
-
-Cláusula 5ª. DO FORO
-Fica eleito o foro da comarca de [Cidade/UF] para dirimir quaisquer controvérsias oriundas do presente contrato.
-
-E, por estarem assim justos e contratados, firmam o presente instrumento em duas vias de igual teor, na presença das testemunhas abaixo.
-
-[Local], ${new Date().toLocaleDateString('pt-BR')}.
-
-_________________________
-CEDENTE: ${sellerName}
-
-_________________________
-CESSIONÁRIO: ${buyerName}
-    `;
-  }, [asset, negotiationState, currentUser?.displayName]);
-
-  const handleFinalize = async () => {
-    await updateNegotiationState({ isFinalized: true });
-    toast({
-        title: "Contrato Finalizado!",
-        description: "O contrato foi bloqueado para edições. Prossiga para a autenticação por e-mail.",
-    });
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Check if both have agreed to freeze the contract
+    const bothAgreed = (currentUserRole === 'seller' && contract.buyerAgrees) || (currentUserRole === 'buyer' && contract.sellerAgrees);
+    if (bothAgreed) {
+        await updateContractState({ isFrozen: true, frozenAt: new Date().toISOString() });
+        // Trigger API to send verification emails
+        // POST /api/negotiations/:id/contract/accept
+        toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. E-mails de verificação foram enviados." });
+    } else {
+        toast({ title: "Acordo Registrado", description: "Aguardando a outra parte aceitar para finalizar o contrato." });
     }
   };
-    
-  const handleDownloadPdf = () => {
-     // Placeholder for PDF download functionality
-     toast({ title: "Funcionalidade em desenvolvimento", description: "O download de PDF será implementado em breve."});
-  };
-    
-  const handleSendVerificationEmail = async (role: 'buyer' | 'seller') => {
-        if (!negotiationState) {
-            toast({ title: "Estado de negociação não carregado.", variant: "destructive"});
-            return;
-        }
-        const email = role === 'buyer' ? negotiationState.buyerEmail : negotiationState.sellerEmail;
-        if (!email) {
-            toast({ title: `E-mail do ${role} não fornecido`, variant: "destructive"});
-            return;
-        }
-        setIsSendingEmail(true);
-        try {
-            const response = await fetch('/api/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email,
-                    subject: 'Confirmação de Acordo - PECU\\'S INTERMEDIATE',
-                    text: `Por favor, clique no link a seguir para confirmar seu acordo no contrato: [link_aqui]`,
-                    // In a real app, you'd generate a unique token and link
-                }),
-            });
-             if (!response.ok) {
-                throw new Error('Falha ao enviar e-mail.');
-            }
-            
-            await updateNegotiationState({
-                authStatus: { ...negotiationState.authStatus, [role]: 'pending' }
-            });
-            toast({ title: "E-mail de verificação enviado!", description: `Um link foi enviado para ${email}.` });
-        } catch (error) {
-            if (error instanceof Error) {
-                toast({ title: "Erro ao enviar e-mail", description: error.message, variant: "destructive" });
-            }
-        } finally {
-            setIsSendingEmail(false);
-        }
-    }
-  
-  if (!asset || !negotiationState) {
+
+  if (!asset || !negotiation || !contract) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
+  
+  const { isFrozen, fields, sellerAgrees, buyerAgrees, verifications, uploads } = contract;
+  const isSeller = currentUserRole === 'seller';
+  const isBuyer = currentUserRole === 'buyer';
+  const bothVerified = verifications.buyer === 'validated' && verifications.seller === 'validated';
+  const bothUploaded = uploads.buyer.length > 0 && uploads.seller.length > 0;
 
-  if (searchParams?.get('view') === 'archive') {
-      return (
-        <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
-            <div className="mb-6">
-                <Button variant="outline" asChild>
-                    <Link href={`/dashboard`}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Voltar para o Dashboard
-                    </Link>
-                </Button>
-            </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Arquivo da Negociação</CardTitle>
-                    <CardDescription>Detalhes e documentos da negociação concluída de {asset && 'title' in asset ? asset.title : 'Ativo'}.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p>Visualização de arquivo de negociação concluída. (Em desenvolvimento)</p>
-                </CardContent>
-             </Card>
-        </div>
-      );
-  }
-
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor');
-  const { title: contractTitle } = getContractTemplateInfo();
-  const { isFinalized, sellerAgrees, buyerAgrees, paymentMethod, numberOfInstallments, authStatus, isTransactionComplete } = negotiationState;
-  const finalContractText = getFinalContractText();
+  const handleGenerateDuplicates = () => toast({ title: "Funcionalidade em desenvolvimento."});
+  const handleFinalizeContract = () => toast({ title: "Funcionalidade em desenvolvimento."});
+  const handleFileUpload = (role: UserRole) => toast({ title: "Funcionalidade em desenvolvimento."});
+  
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-            <Button variant="outline" asChild>
-                <Link href={`/negociacao/${assetId}?type=${assetType}`}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Voltar para a Negociação
-                </Link>
-            </Button>
-        </div>
+      <div className="mb-6">
+        <Button variant="outline" asChild>
+            <Link href={`/negociacao/${assetId}?type=${assetType}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar para a Negociação
+            </Link>
+        </Button>
+      </div>
       <div className="space-y-8">
-          <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                    <FileSignature className="h-8 w-8" />
-                    Ajuste Fino e Fechamento do Contrato
-                </CardTitle>
-                <CardDescription>
-                    Revise os termos, preencha os campos e confirme o acordo para finalizar o contrato.
-                </CardDescription>
-            </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-2xl">
+                <FileSignature className="h-8 w-8" />
+                Ajuste e Fechamento do Contrato
+            </CardTitle>
+            <CardDescription>
+                Revise os termos, preencha seus campos, e confirme o acordo para finalizar o contrato.
+            </CardDescription>
+          </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Coluna da Esquerda: Formulários */}
             <div className="space-y-8">
-                 <Card>
+                {/* --- PASSO 1: PREENCHIMENTO --- */}
+                <Card className={cn(isFrozen && "opacity-60 pointer-events-none")}>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento de Campos</CardTitle>
+                        <CardDescription>Cada parte preenche os campos sob sua responsabilidade.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <Label>Vendedor (Cedente)</Label>
-                            <Input value={sellerName} disabled />
+                    <CardContent className="space-y-6">
+                        {/* Seção do Vendedor */}
+                        <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
+                            <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Método de Pagamento</Label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox id="vista" checked={fields.seller.paymentMethod === 'vista'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'vista')} disabled={!isSeller || isFrozen} />
+                                            <Label htmlFor="vista">À Vista</Label>
+                                        </div>
+                                         <div className="flex items-center gap-2">
+                                            <Checkbox id="parcelado" checked={fields.seller.paymentMethod === 'parcelado'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'parcelado')} disabled={!isSeller || isFrozen}/>
+                                            <Label htmlFor="parcelado">Parcelado</Label>
+                                        </div>
+                                    </div>
+                                </div>
+                                {fields.seller.paymentMethod === 'parcelado' && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="installments">Número de Parcelas</Label>
+                                            <Input id="installments" type="number" value={fields.seller.installments} onChange={(e) => handleFieldChange('seller', 'installments', e.target.value)} disabled={!isSeller || isFrozen}/>
+                                        </div>
+                                         <div className="space-y-2">
+                                            <Label htmlFor="interest">Taxa de Juros Mensal (%)</Label>
+                                            <Input id="interest" type="number" value={fields.seller.interestPercent} onChange={(e) => handleFieldChange('seller', 'interestPercent', e.target.value)} disabled={!isSeller || isFrozen} />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                        <div>
-                            <Label>Comprador (Cessionário)</Label>
-                            <Input value={currentUser?.displayName || "Comprador Anônimo"} disabled />
+                        {/* Seção do Comprador (vazia por enquanto) */}
+                        <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
+                            <h4 className="font-semibold mb-2">Campos do Comprador</h4>
+                            <p className="text-sm text-muted-foreground">Nenhum campo específico para o comprador nesta negociação.</p>
                         </div>
                     </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Banknote className="h-5 w-5"/>Termos de Pagamento</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <div className="flex items-center space-x-4">
-                            <Label>Método de Pagamento:</Label>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="vista" checked={paymentMethod === 'vista'} onCheckedChange={() => !isFinalized && updateNegotiationState({ paymentMethod: 'vista' })} disabled={isFinalized}/>
-                                <Label htmlFor="vista">À Vista</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                 <Checkbox id="parcelado" checked={paymentMethod === 'parcelado'} onCheckedChange={() => !isFinalized && updateNegotiationState({ paymentMethod: 'parcelado' })} disabled={isFinalized}/>
-                                <Label htmlFor="parcelado">Parcelado</Label>
-                            </div>
-                        </div>
-                        {paymentMethod === 'parcelado' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="installments">Número de Parcelas</Label>
-                                <Input id="installments" type="number" value={numberOfInstallments} onChange={(e) => !isFinalized && updateNegotiationState({ numberOfInstallments: e.target.value })} disabled={isFinalized}/>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><CheckCircle className="h-5 w-5"/>Acordo e Assinaturas</CardTitle>
-                        <CardDescription>Ambas as partes devem marcar que concordam com os termos para finalizar o contrato.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className={cn("flex items-center space-x-2 p-4 rounded-md border", isSeller ? 'bg-background' : 'bg-secondary/30')}>
-                            <Checkbox id="seller-agrees" checked={sellerAgrees} onCheckedChange={(checked) => !isFinalized && isSeller && updateNegotiationState({ sellerAgrees: !!checked })} disabled={isFinalized || !isSeller} />
-                            <Label htmlFor="seller-agrees" className="flex-1">O VENDEDOR declara que leu e concorda com todos os termos deste contrato.</Label>
-                        </div>
-                        <div className={cn("flex items-center space-x-2 p-4 rounded-md border", isBuyer ? 'bg-background' : 'bg-secondary/30')}>
-                            <Checkbox id="buyer-agrees" checked={buyerAgrees} onCheckedChange={(checked) => !isFinalized && isBuyer && updateNegotiationState({ buyerAgrees: !!checked })} disabled={isFinalized || !isBuyer} />
-                            <Label htmlFor="buyer-agrees" className="flex-1">O COMPRADOR declara que leu e concorda com todos os termos deste contrato.</Label>
-                        </div>
-                    </CardContent>
-                     <CardFooter className="flex justify-end">
-                        <Button 
-                            size="lg" 
-                            className="w-full" 
-                            disabled={!sellerAgrees || !buyerAgrees || isFinalized}
-                            onClick={handleFinalize}
-                        >
-                            {isFinalized ? <Lock className="mr-2 h-5 w-5"/> : <CheckCircle className="mr-2 h-5 w-5"/>}
-                            {isFinalized ? 'Contrato Finalizado' : 'Aceitar e Finalizar Contrato'}
+                    <CardFooter>
+                        <Button className="w-full" onClick={handleAccept} disabled={isFrozen || (isBuyer && buyerAgrees) || (isSeller && sellerAgrees)}>
+                            <CheckCircle className="mr-2 h-4 w-4"/>
+                            {isFrozen ? "Termos Aceitos" : `Aceitar Termos e Propor Contrato como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
                         </Button>
                     </CardFooter>
                 </Card>
+
+                 {/* --- PASSO 2: VERIFICAÇÃO --- */}
+                 <Card className={cn(!isFrozen && "opacity-60 pointer-events-none")}>
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>2. Verificação por E-mail</CardTitle>
+                        <CardDescription>Após o aceite de ambos, a validação por e-mail é necessária para prosseguir.</CardDescription>
+                     </CardHeader>
+                     <CardContent className="grid grid-cols-2 gap-4">
+                        <AuthStatusIndicator role="seller" status={verifications.seller} />
+                        <AuthStatusIndicator role="buyer" status={verifications.buyer} />
+                     </CardContent>
+                 </Card>
+
+                {/* --- PASSO 3: UPLOADS E FINALIZAÇÃO --- */}
+                <Card className={cn(!bothVerified && "opacity-60 pointer-events-none")}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5"/>3. Documentos e Duplicatas</CardTitle>
+                        <CardDescription>Anexe os documentos assinados e gere as duplicatas para finalizar.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                       <div className="grid grid-cols-2 gap-4">
+                           <div className={cn("space-y-2", isSeller ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                                <h4 className="font-semibold text-sm">Contrato do Vendedor</h4>
+                               <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isSeller && handleFileUpload('seller')}>
+                                   <UploadCloud className="h-6 w-6 text-muted-foreground"/>
+                                   <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
+                               </div>
+                           </div>
+                            <div className={cn("space-y-2", isBuyer ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                               <h4 className="font-semibold text-sm">Contrato do Comprador</h4>
+                               <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isBuyer && handleFileUpload('buyer')}>
+                                   <UploadCloud className="h-6 w-6 text-muted-foreground"/>
+                                   <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
+                               </div>
+                           </div>
+                       </div>
+                       <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}><Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas</Button>
+                    </CardContent>
+                    <CardFooter>
+                       <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded}>
+                           <Lock className="mr-2 h-4 w-4"/>
+                           Finalizar Contrato e Transação
+                       </Button>
+                    </CardFooter>
+                </Card>
             </div>
-             <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Minuta do Contrato</CardTitle>
-                        <div className="flex gap-2">
-                             <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-                                PDF
-                             </Button>
+            
+            {/* Coluna da Direita: Preview */}
+            <div className="sticky top-24">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Pré-visualização</CardTitle>
+                        <Button variant="ghost" size="icon"><Download className="h-4 w-4"/></Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[70vh] overflow-y-auto p-4 border rounded-lg bg-secondary/20 text-xs font-mono">
+                            <p className="whitespace-pre-wrap">{finalContractText}</p>
                         </div>
-                    </div>
-                    <CardDescription>
-                        Pré-visualização do documento de {contractTitle}.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Textarea
-                        value={finalContractText}
-                        readOnly={isFinalized}
-                        rows={25}
-                        className="bg-secondary/20 text-xs font-mono"
-                    />
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-
-       {isFinalized && (
-        <div className="mt-8 space-y-6">
-           <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>Autenticação de Contrato</CardTitle>
-                    <CardDescription>Para segurança, cada parte deve confirmar a autenticidade do contrato via e-mail. O link expira em 24 horas.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                         <AuthStatusIndicator 
-                            role="seller" 
-                            authStatus={authStatus.seller}
-                            email={negotiationState.sellerEmail}
-                            onEmailChange={(e) => updateNegotiationState({ sellerEmail: e.target.value })}
-                            onSendVerification={() => handleSendVerificationEmail('seller')}
-                            isSendingEmail={isSendingEmail}
-                        />
-                        <AuthStatusIndicator 
-                            role="buyer"
-                            authStatus={authStatus.buyer}
-                            email={negotiationState.buyerEmail}
-                            onEmailChange={(e) => updateNegotiationState({ buyerEmail: e.target.value })}
-                            onSendVerification={() => handleSendVerificationEmail('buyer')}
-                            isSendingEmail={isSendingEmail}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-      )}
-
-      {isTransactionComplete && (
-        <div className="mt-8 space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5" />Upload de Documentos Finais</CardTitle>
-                    <CardDescription>Anexe o contrato assinado e o comprovante de pagamento para concluir a transação.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                     <div 
-                        className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
-                        >
-                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-4 text-sm text-muted-foreground">Contrato Assinado</p>
-                        <p className="text-xs text-muted-foreground/70">Anexe o PDF do contrato assinado</p>
-                        <Input type="file" className="hidden" />
-                    </div>
-                     <div 
-                        className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-12 text-center cursor-pointer hover:bg-secondary transition-colors"
-                        >
-                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-4 text-sm text-muted-foreground">Comprovante de Pagamento</p>
-                        <p className="text-xs text-muted-foreground/70">Anexe o comprovante da transferência</p>
-                        <Input type="file" className="hidden" />
-                    </div>
-                </CardContent>
-                 <CardFooter>
-                    <Button size="lg" className="w-full">Concluir Transação</Button>
-                </CardFooter>
-            </Card>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
