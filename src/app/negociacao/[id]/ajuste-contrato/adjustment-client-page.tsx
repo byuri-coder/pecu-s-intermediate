@@ -215,7 +215,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   
 
   return (
-    <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Button variant="outline" asChild>
             <Link href={`/negociacao?id=${assetId}`}>
@@ -236,134 +236,130 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             </CardDescription>
           </CardHeader>
         </Card>
+        
+        {/* Preview Section */}
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Pré-visualização do Contrato</CardTitle>
+                <Button variant="ghost" size="icon"><Download className="h-4 w-4"/></Button>
+            </CardHeader>
+            <CardContent>
+                <div className="h-[50vh] overflow-y-auto p-4 border rounded-lg bg-secondary/20 text-xs font-mono">
+                    <p className="whitespace-pre-wrap">{finalContractText}</p>
+                </div>
+            </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Coluna da Esquerda: Formulários */}
-            <div className="space-y-8">
-                {/* --- PASSO 1: PREENCHIMENTO --- */}
-                <Card className={cn(isFrozen && "opacity-60 pointer-events-none")}>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento de Campos</CardTitle>
-                        <CardDescription>Cada parte preenche os campos sob sua responsabilidade.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Seção do Vendedor */}
-                        <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
-                            <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Método de Pagamento</Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox id="vista" checked={fields.seller.paymentMethod === 'vista'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'vista')} disabled={!isSeller || isFrozen} />
-                                            <Label htmlFor="vista">À Vista</Label>
-                                        </div>
-                                         <div className="flex items-center gap-2">
-                                            <Checkbox id="parcelado" checked={fields.seller.paymentMethod === 'parcelado'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'parcelado')} disabled={!isSeller || isFrozen}/>
-                                            <Label htmlFor="parcelado">Parcelado</Label>
-                                        </div>
+        {/* Form Fields Section */}
+        <div className="space-y-8">
+            {/* --- PASSO 1: PREENCHIMENTO --- */}
+            <Card className={cn(isFrozen && "opacity-60 pointer-events-none")}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento de Campos</CardTitle>
+                    <CardDescription>Cada parte preenche os campos sob sua responsabilidade.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {/* Seção do Vendedor */}
+                    <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
+                        <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Método de Pagamento</Label>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox id="vista" checked={fields.seller.paymentMethod === 'vista'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'vista')} disabled={!isSeller || isFrozen} />
+                                        <Label htmlFor="vista">À Vista</Label>
+                                    </div>
+                                     <div className="flex items-center gap-2">
+                                        <Checkbox id="parcelado" checked={fields.seller.paymentMethod === 'parcelado'} onCheckedChange={() => handleFieldChange('seller', 'paymentMethod', 'parcelado')} disabled={!isSeller || isFrozen}/>
+                                        <Label htmlFor="parcelado">Parcelado</Label>
                                     </div>
                                 </div>
-                                {fields.seller.paymentMethod === 'parcelado' && (
-                                    <>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="installments">Número de Parcelas</Label>
-                                            <Input id="installments" type="number" value={fields.seller.installments} onChange={(e) => handleFieldChange('seller', 'installments', e.target.value)} disabled={!isSeller || isFrozen}/>
-                                        </div>
-                                         <div className="space-y-2">
-                                            <Label htmlFor="interest">Taxa de Juros Mensal (%)</Label>
-                                            <Input id="interest" type="number" value={fields.seller.interestPercent} onChange={(e) => handleFieldChange('seller', 'interestPercent', e.target.value)} disabled={!isSeller || isFrozen} />
-                                        </div>
-                                    </>
-                                )}
                             </div>
+                            {fields.seller.paymentMethod === 'parcelado' && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="installments">Número de Parcelas</Label>
+                                        <Input id="installments" type="number" value={fields.seller.installments} onChange={(e) => handleFieldChange('seller', 'installments', e.target.value)} disabled={!isSeller || isFrozen}/>
+                                    </div>
+                                     <div className="space-y-2">
+                                        <Label htmlFor="interest">Taxa de Juros Mensal (%)</Label>
+                                        <Input id="interest" type="number" value={fields.seller.interestPercent} onChange={(e) => handleFieldChange('seller', 'interestPercent', e.target.value)} disabled={!isSeller || isFrozen} />
+                                    </div>
+                                </>
+                            )}
                         </div>
-                        {/* Seção do Comprador (vazia por enquanto) */}
-                        <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
-                            <h4 className="font-semibold mb-2">Campos do Comprador</h4>
-                            <p className="text-sm text-muted-foreground">Nenhum campo específico para o comprador nesta negociação.</p>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button className="w-full" onClick={handleAccept} disabled={isFrozen || (isBuyer && buyerAgrees) || (isSeller && sellerAgrees)}>
-                            <CheckCircle className="mr-2 h-4 w-4"/>
-                            {isFrozen ? "Termos Aceitos" : `Aceitar Termos e Propor Contrato como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
-                        </Button>
-                    </CardFooter>
-                </Card>
+                    </div>
+                    {/* Seção do Comprador (vazia por enquanto) */}
+                    <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
+                        <h4 className="font-semibold mb-2">Campos do Comprador</h4>
+                        <p className="text-sm text-muted-foreground">Nenhum campo específico para o comprador nesta negociação.</p>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button className="w-full" onClick={handleAccept} disabled={isFrozen || (isBuyer && buyerAgrees) || (isSeller && sellerAgrees)}>
+                        <CheckCircle className="mr-2 h-4 w-4"/>
+                        {isFrozen ? "Termos Aceitos" : `Aceitar Termos e Propor Contrato como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
+                    </Button>
+                </CardFooter>
+            </Card>
 
-                 {/* --- PASSO 2: VERIFICAÇÃO --- */}
-                 <Card className={cn(!isFrozen && "opacity-60 pointer-events-none")}>
-                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>2. Verificação por E-mail</CardTitle>
-                        <CardDescription>Após o aceite de ambos, a validação por e-mail é necessária para prosseguir.</CardDescription>
-                     </CardHeader>
-                     <CardContent className="grid grid-cols-2 gap-4">
-                        <AuthStatusIndicator 
-                            role="seller" 
-                            status={verifications.seller}
-                            currentUserRole={currentUserRole}
-                            onSendVerification={handleSendVerificationEmail}
-                        />
-                        <AuthStatusIndicator 
-                            role="buyer" 
-                            status={verifications.buyer}
-                            currentUserRole={currentUserRole}
-                            onSendVerification={handleSendVerificationEmail}
-                        />
-                     </CardContent>
-                 </Card>
+             {/* --- PASSO 2: VERIFICAÇÃO --- */}
+             <Card className={cn(!isFrozen && "opacity-60 pointer-events-none")}>
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>2. Verificação por E-mail</CardTitle>
+                    <CardDescription>Após o aceite de ambos, a validação por e-mail é necessária para prosseguir.</CardDescription>
+                 </CardHeader>
+                 <CardContent className="grid grid-cols-2 gap-4">
+                    <AuthStatusIndicator 
+                        role="seller" 
+                        status={verifications.seller}
+                        currentUserRole={currentUserRole}
+                        onSendVerification={handleSendVerificationEmail}
+                    />
+                    <AuthStatusIndicator 
+                        role="buyer" 
+                        status={verifications.buyer}
+                        currentUserRole={currentUserRole}
+                        onSendVerification={handleSendVerificationEmail}
+                    />
+                 </CardContent>
+             </Card>
 
-                {/* --- PASSO 3: UPLOADS E FINALIZAÇÃO --- */}
-                <Card className={cn(!bothVerified && "opacity-60 pointer-events-none")}>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5"/>3. Documentos e Duplicatas</CardTitle>
-                        <CardDescription>Anexe os documentos assinados e gere as duplicatas para finalizar.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                       <div className="grid grid-cols-2 gap-4">
-                           <div className={cn("space-y-2", isSeller ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
-                                <h4 className="font-semibold text-sm">Contrato do Vendedor</h4>
-                               <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isSeller && handleFileUpload('seller')}>
-                                   <UploadCloud className="h-6 w-6 text-muted-foreground"/>
-                                   <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
-                               </div>
-                           </div>
-                            <div className={cn("space-y-2", isBuyer ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
-                               <h4 className="font-semibold text-sm">Contrato do Comprador</h4>
-                               <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isBuyer && handleFileUpload('buyer')}>
-                                   <UploadCloud className="h-6 w-6 text-muted-foreground"/>
-                                   <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
-                               </div>
+            {/* --- PASSO 3: UPLOADS E FINALIZAÇÃO --- */}
+            <Card className={cn(!bothVerified && "opacity-60 pointer-events-none")}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5"/>3. Documentos e Duplicatas</CardTitle>
+                    <CardDescription>Anexe os documentos assinados e gere as duplicatas para finalizar.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                   <div className="grid grid-cols-2 gap-4">
+                       <div className={cn("space-y-2", isSeller ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                            <h4 className="font-semibold text-sm">Contrato do Vendedor</h4>
+                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isSeller && handleFileUpload('seller')}>
+                               <UploadCloud className="h-6 w-6 text-muted-foreground"/>
+                               <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
                            </div>
                        </div>
-                       <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}>
-                            <Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas
-                        </Button>
-                    </CardContent>
-                    <CardFooter>
-                       <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded}>
-                           <Lock className="mr-2 h-4 w-4"/>
-                           Finalizar Contrato e Transação
-                       </Button>
-                    </CardFooter>
-                </Card>
-            </div>
-            
-            {/* Coluna da Direita: Preview */}
-            <div className="sticky top-24">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Pré-visualização</CardTitle>
-                        <Button variant="ghost" size="icon"><Download className="h-4 w-4"/></Button>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[70vh] overflow-y-auto p-4 border rounded-lg bg-secondary/20 text-xs font-mono">
-                            <p className="whitespace-pre-wrap">{finalContractText}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        <div className={cn("space-y-2", isBuyer ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                           <h4 className="font-semibold text-sm">Contrato do Comprador</h4>
+                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isBuyer && handleFileUpload('buyer')}>
+                               <UploadCloud className="h-6 w-6 text-muted-foreground"/>
+                               <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
+                           </div>
+                       </div>
+                   </div>
+                   <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}>
+                        <Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas
+                    </Button>
+                </CardContent>
+                <CardFooter>
+                   <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded}>
+                       <Lock className="mr-2 h-4 w-4"/>
+                       Finalizar Contrato e Transação
+                   </Button>
+                </CardFooter>
+            </Card>
         </div>
       </div>
     </div>
