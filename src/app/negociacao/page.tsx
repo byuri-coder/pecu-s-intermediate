@@ -1,25 +1,13 @@
-
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList, type Conversation } from './chat-list';
 import { MessageSquare } from 'lucide-react';
-
-const mockConversations: Conversation[] = [
-  {
-    id: 'cc-003',
-    name: 'Gestão de Resíduos Urbanos',
-    avatar: 'https://picsum.photos/seed/avatar2/40/40',
-    lastMessage: 'Claro, segue o PDF com o relatório...',
-    time: '10:45',
-    unread: 0,
-    type: 'carbon-credit'
-  }
-];
+import { usePersistentState } from './use-persistent-state';
 
 export default function NegotiationHubPage() {
-  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
+  const [conversations] = usePersistentState<Conversation[]>('conversations', []);
 
   return (
     <div className="flex-1 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
