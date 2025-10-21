@@ -3,7 +3,7 @@ import type { Asset, AssetType } from './types';
 import { numberToWords } from './number-to-words';
 
 // This function returns a detailed contract template string based on the asset type.
-// The placeholders `{{...}}` will be replaced with actual data.
+// The placeholders `[...]` will be replaced with actual data.
 
 interface Parties {
     seller: { name: string; doc: string; address: string; ie: string; repName: string; repDoc: string; repRole: string };
@@ -19,9 +19,14 @@ interface ContractState {
       [key: string]: any;
     };
     buyer: {
+      razaoSocial: string;
+      cnpj: string;
+      ie: string;
+      endereco: string;
       [key: string]: any;
     };
   };
+  frozenAt?: string; // Add frozenAt for the date
   [key: string]: any;
 }
 
@@ -37,7 +42,7 @@ Pelo presente instrumento particular, de um lado:
 
 CEDENTE: ${parties.seller.name}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.seller.doc}, com sede na ${parties.seller.address}, doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
-CESSIONÁRIO: ${parties.buyer.name || '[Razão Social do Comprador]'}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.buyer.doc || '[CNPJ do Comprador]'}, com sede em ${parties.buyer.address || '[Endereço do Comprador]'}, doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
+CESSIONÁRIO: ${contract.fields.buyer.razaoSocial || '[Razão Social do Comprador]'}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${contract.fields.buyer.cnpj || '[CNPJ do Comprador]'}, com sede em ${contract.fields.buyer.endereco || '[Endereço do Comprador]'}, doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
 Resolvem as partes, de comum acordo, celebrar o presente Contrato de Cessão de Direitos Creditórios e Outras Avenças ("Contrato"), que se regerá pelas seguintes cláusulas e condições:
 `;
@@ -57,17 +62,22 @@ CNPJ: ${parties.seller.doc}
 
 
 _________________________________________
-CESSIONÁRIO: ${parties.buyer.name || '[Razão Social do Comprador]'}
-CNPJ: ${parties.buyer.doc || '[CNPJ do Comprador]'}
+CESSIONÁRIO: ${contract.fields.buyer.razaoSocial || '[Razão Social do Comprador]'}
+CNPJ: ${contract.fields.buyer.cnpj || '[CNPJ do Comprador]'}
 `;
 
     const getPaymentClause = () => {
+        const totalValue = ('price' in asset && asset.price) 
+            ? asset.price 
+            : ('pricePerCredit' in asset && 'quantity' in asset && asset.pricePerCredit && asset.quantity) 
+                ? asset.pricePerCredit * asset.quantity
+                : 0;
+
         if (contract.fields.seller.paymentMethod === 'vista') {
-            return `O pagamento será efetuado à vista, via transferência bancária (TED/PIX) para a conta de titularidade da CEDENTE, no prazo de até 5 (cinco) dias úteis após a assinatura deste instrumento e a devida verificação dos documentos.`;
+            return `O pagamento será efetuado à vista, no valor de ${formatCurrency(totalValue)} (${numberToWords(totalValue)}), via transferência bancária (TED/PIX) para a conta de titularidade da CEDENTE, no prazo de até 5 (cinco) dias úteis após a assinatura deste instrumento e a devida verificação dos documentos.`;
         } else {
             const installments = parseInt(contract.fields.seller.installments, 10) || 1;
             const interest = parseFloat(contract.fields.seller.interestPercent) || 0;
-            const totalValue = ('price' in asset ? asset.price : ('amount' in asset ? asset.amount : 0)) || 0;
             
             if (interest > 0) {
                  return `O pagamento será realizado em ${installments} parcela(s) mensais, iguais e sucessivas, no valor de [Valor da Parcela], com a primeira parcela vencendo em [Data de Vencimento da 1ª Parcela] e as demais nos mesmos dias dos meses subsequentes, acrescidas de juros de ${interest}% ao mês, calculados pela Tabela Price.`;
@@ -84,10 +94,10 @@ CLÁUSULA PRIMEIRA – DO OBJETO
 1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, da totalidade dos direitos creditórios relativos a ${'quantity' in asset ? asset.quantity.toLocaleString() : 'N/A'} (${numberToWords('quantity' in asset ? asset.quantity : 0)}) créditos de carbono, do tipo ${'creditType' in asset ? asset.creditType : 'N/A'}, vintage ${'vintage' in asset ? asset.vintage : 'N/A'}, registrados sob o padrão ${'standard' in asset ? asset.standard : '[Padrão do Crédito, ex: Verra]'} com o ID [ID do Projeto], localizados em ${'location' in asset ? asset.location : 'N/A'} ("Créditos").
 
 CLÁUSULA SEGUNDA – DO PREÇO E DA FORMA DE PAGAMENTO
-2.1. Pela cessão dos Créditos objeto deste Contrato, o CESSIONÁRIO pagará à CEDENTE o valor total de ${formatCurrency('pricePerCredit' in asset ? asset.pricePerCredit * asset.quantity : 0)} (${numberToWords('pricePerCredit' in asset ? asset.pricePerCredit * asset.quantity : 0)}).
+2.1. Pela cessão dos Créditos objeto deste Contrato, o CESSIONÁRIO pagará à CEDENTE o valor total de ${formatCurrency('pricePerCredit' in asset && 'quantity' in asset ? asset.pricePerCredit * asset.quantity : 0)} (${numberToWords('pricePerCredit' in asset && 'quantity' in asset ? asset.pricePerCredit * asset.quantity : 0)}).
 2.2. ${getPaymentClause()}
 
-CLÁSULA TERCEIRA – DA TRANSFERÊNCIA E DA TRADIÇÃO DOS CRÉDITOS
+CLÁUSULA TERCEIRA – DA TRANSFERÊNCIA E DA TRADIÇÃO DOS CRÉDITOS
 3.1. A CEDENTE compromete-se a realizar todos os atos necessários para a transferência da titularidade dos Créditos para a conta do CESSIONÁRIO na plataforma de registro [Nome da Plataforma, ex: Verra Registry], no prazo de até 2 (dois) dias úteis após a confirmação do pagamento integral previsto na Cláusula Segunda.
 `,
         'tax-credit': `
@@ -125,7 +135,7 @@ CLÁUSULA QUARTA – DECLARAÇÕES DA CEDENTE
 CLÁUSULA QUINTA – OBRIGAÇÕES DAS PARTES
 5.1. Compete à CEDENTE:
     a) Fornecer toda a documentação necessária para a comprovação da titularidade e validade dos créditos.
-    b) Realizar todos os procedimentos necessários para a efetiva transferência dos créditos ao CESSIONÁRIOS.
+    b) Realizar todos os procedimentos necessários para a efetiva transferência dos créditos ao CESSIONÁRIO.
 5.2. Compete ao CESSIONÁRIO:
     a) Realizar o pagamento do preço nos termos e condições aqui estabelecidos.
     b) Fornecer as informações necessárias para o registro da transferência dos créditos em seu nome.

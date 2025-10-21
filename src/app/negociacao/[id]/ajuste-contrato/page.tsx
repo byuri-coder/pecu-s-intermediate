@@ -3,26 +3,36 @@
 import AdjustmentClientPage from './adjustment-client-page';
 import type { Asset, AssetType } from '@/lib/types';
 import { notFound } from 'next/navigation';
-import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
-
 
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
   // This is a placeholder. In a real app, you would fetch this from your database.
-  const placeholderData = 
-      type === 'carbon-credit' ? placeholderCredits.find(c => c.id === id) :
-      type === 'tax-credit' ? placeholderTaxCredits.find(t => t.id === id) :
-      type === 'rural-land' ? placeholderRuralLands.find(l => l.id === id) :
-      null;
-
-  if (placeholderData) {
-     return {
-        ...placeholderData,
-        ownerId: placeholderData.ownerId,
-        // Ensure all required fields for Asset are mapped
-    } as Asset;
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/anuncios/get/${id}`, { cache: 'no-store' });
+    if (!response.ok) {
+      console.error(`Failed to fetch asset ${id}, status: ${response.status}`);
+      return null;
+    }
+    const data = await response.json();
+    if (data.ok && data.anuncio.tipo === type) {
+        const anuncio = data.anuncio;
+        return {
+            ...anuncio.metadados,
+            id: anuncio._id,
+            ownerId: anuncio.uidFirebase,
+            title: anuncio.titulo,
+            description: anuncio.descricao,
+            status: anuncio.status,
+            price: anuncio.price,
+            pricePerCredit: anuncio.price, // Assuming price can be pricePerCredit
+            images: anuncio.imagens || [],
+            createdAt: anuncio.createdAt,
+        } as Asset;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch asset details", error);
+    return null;
   }
-  
-  return null;
 }
 
 
