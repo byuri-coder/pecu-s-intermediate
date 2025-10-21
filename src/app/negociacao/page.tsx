@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -7,8 +6,21 @@ import { usePersistentState } from './use-persistent-state';
 import { MessageSquareText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
+const mockConversations: Conversation[] = [
+    {
+        id: 'tax-001',
+        name: 'José Carlos Pereira',
+        avatar: 'https://picsum.photos/seed/jcp/40/40',
+        lastMessage: 'Olá! Tenho interesse no crédito de ICMS.',
+        time: '14:30',
+        unread: 1,
+        type: 'tax-credit',
+    }
+];
+
+
 export default function NegotiationHubPage() {
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
