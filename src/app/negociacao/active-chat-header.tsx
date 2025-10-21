@@ -21,7 +21,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Conversation, AssetType, Asset } from '@/lib/types';
+import type { Conversation, AssetType } from '@/lib/types';
 
 function getAssetTypeRoute(type: AssetType) {
   switch (type) {

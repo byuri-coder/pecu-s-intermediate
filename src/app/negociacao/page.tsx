@@ -8,7 +8,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { MessageSquareText } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
-import { usePersistentState } from './use-persistent-state';
+import { db, app } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const mockConversations: Conversation[] = [
     {
@@ -58,24 +60,59 @@ const mockTestMessages: Message[] = [
     },
 ];
 
+
 export default function NegotiationHubPage() {
   const searchParams = useSearchParams();
   const activeChatId = searchParams.get('id');
+  const auth = getAuth(app);
+  const currentUser = auth.currentUser;
 
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
+  // Initialize state directly with mock data
+  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
   const [messages, setMessages] = React.useState<Message[]>([]);
-
+  
   const activeConversation = React.useMemo(() => {
     return conversations.find(c => c.id === activeChatId) || null;
   }, [activeChatId, conversations]);
 
+  // Effect for fetching real messages from Firestore
   React.useEffect(() => {
-    if (activeChatId === 'tax-001') {
-      setMessages(mockTestMessages);
-    } else {
-      setMessages([]); // Clear messages for other chats
+    if (!activeChatId || !currentUser) {
+        setMessages([]); // Clear messages if no chat is selected
+        return;
     }
-  }, [activeChatId]);
+    
+    // Use mock messages for the test chat
+    if (activeChatId === 'tax-001') {
+        setMessages(mockTestMessages);
+        return;
+    }
+
+    // Firestore listener for real chats
+    const negotiationId = `neg_${activeChatId}`;
+    const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
+    const q = query(messagesCollection, orderBy('timestamp', 'asc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newMessages: Message[] = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                sender: data.senderId === currentUser?.uid ? 'me' : 'other',
+                content: data.content,
+                type: data.type,
+                timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '',
+                avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : activeConversation?.avatar
+            } as Message;
+        });
+        setMessages(newMessages);
+    }, (error) => {
+        console.error("Error fetching messages:", error);
+        setMessages([]);
+    });
+
+    return () => unsubscribe();
+  }, [activeChatId, currentUser, activeConversation?.avatar]);
 
   const addMessage = (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
     const newMessage: Message = {

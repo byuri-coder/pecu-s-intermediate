@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -25,7 +24,8 @@ export function ChatList({ conversations, activeChatId }: { conversations: Conve
   const router = useRouter();
 
   const handleSelectChat = (conversation: Conversation) => {
-    router.push(`/negociacao?id=${conversation.id}&type=${conversation.type}`);
+    // Use query params to switch chats without full page reload if possible
+    router.push(`/negociacao?id=${conversation.id}`);
   };
 
   return (
