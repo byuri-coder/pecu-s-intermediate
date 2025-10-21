@@ -10,9 +10,14 @@ export function usePersistentState<T>(key: string, initialState: T): [T, React.D
         }
         try {
             const storedValue = window.localStorage.getItem(key);
-            return storedValue ? JSON.parse(storedValue) : initialState;
+            if (storedValue) {
+                return JSON.parse(storedValue);
+            }
+            // If no stored value, set the initial state in localStorage
+            window.localStorage.setItem(key, JSON.stringify(initialState));
+            return initialState;
         } catch (error) {
-            console.error(`Error reading localStorage key “${key}”:`, error);
+            console.error(`Error reading or setting localStorage key “${key}”:`, error);
             return initialState;
         }
     });
