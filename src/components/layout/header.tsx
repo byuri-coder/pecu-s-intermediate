@@ -124,17 +124,6 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           {isLoggedIn ? (
             <>
-              <Button variant="ghost" size="icon" className="relative" asChild>
-                  <Link href="/negociacao">
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="sr-only">Negociações</span>
-                    {/* Notification dot */}
-                    <span className="absolute top-1 right-1.5 flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/90"></span>
-                    </span>
-                  </Link>
-              </Button>
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
