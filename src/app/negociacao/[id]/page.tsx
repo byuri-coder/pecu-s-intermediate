@@ -1,8 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
-import { notFound, useSearchParams, useRouter } from 'next/navigation';
+import { notFound, useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,17 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset } from '@/lib/types';
 import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
-
-
-type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
-type Asset = CarbonCredit | RuralLand | TaxCredit;
-
 
 function getAssetTypeName(type: AssetType) {
     switch(type) {
@@ -73,37 +66,35 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
               const data = await res.json();
               if (data.ok && data.anuncio?.tipo === type) {
                   const anuncio = data.anuncio;
-                  const formattedAsset = {
+                  const formattedAsset: Asset = {
                       ...anuncio,
                       id: anuncio._id,
-                      ...anuncio.metadados,
+                      owner: anuncio.metadados?.owner,
+                      sellerName: anuncio.metadados?.sellerName,
                       ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
                       price: anuncio.price,
                       pricePerCredit: anuncio.price,
                       images: anuncio.imagens,
+                      creditType: anuncio.metadados?.credit_type,
+                      quantity: anuncio.metadados?.quantity,
+                      location: anuncio.metadados?.location,
+                      vintage: anuncio.metadados?.vintage,
+                      standard: anuncio.metadados?.standard,
+                      projectOverview: anuncio.descricao,
+                      title: anuncio.titulo,
+                      description: anuncio.descricao,
+                      sizeHa: anuncio.metadados?.sizeHa,
+                      businessType: anuncio.metadados?.businessType,
+                      documentation: anuncio.metadados?.documentation,
+                      registration: anuncio.metadados?.registration,
+                      taxType: anuncio.metadados?.taxType,
+                      amount: anuncio.metadados?.amount,
                   };
-                  setAsset(formattedAsset as Asset);
-                  return; // Exit if found via API
+                  setAsset(formattedAsset);
+                  return;
               }
             }
-
-            // Fallback to placeholder data if API fails or doesn't find it
-            console.warn(`Asset with ID ${id} not found via API, falling back to placeholders.`);
-            let placeholderData: Asset | undefined;
-            if (type === 'carbon-credit') {
-              placeholderData = placeholderCredits.find(c => c.id === id);
-            } else if (type === 'rural-land') {
-              placeholderData = placeholderRuralLands.find(l => l.id === id);
-            } else if (type === 'tax-credit') {
-              placeholderData = placeholderTaxCredits.find(t => t.id === id);
-            }
-            
-            if (placeholderData) {
-              setAsset(placeholderData);
-            } else {
-              setAsset(null); // Not found in API or placeholders
-            }
-
+            setAsset(null); // Not found
         } catch(err) {
             console.error("Failed to fetch asset", err);
             setAsset(null);
@@ -149,7 +140,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   }
 
   const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
+  const sellerName = 'owner' in asset && asset.owner ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
   const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {

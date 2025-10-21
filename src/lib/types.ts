@@ -1,6 +1,4 @@
 
-
-
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -114,3 +112,24 @@ export interface CompletedDeal {
 
 export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
 export type Asset = CarbonCredit | TaxCredit | RuralLand;
+
+
+export interface Message {
+  id: string;
+  sender: 'me' | 'other';
+  senderId?: string;
+  content: string;
+  type: 'text' | 'image' | 'pdf' | 'location';
+  timestamp: string;
+  avatar?: string;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  type: AssetType;
+}
