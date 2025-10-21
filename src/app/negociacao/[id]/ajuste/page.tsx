@@ -3,21 +3,15 @@
 import AdjustmentClientPage from './adjustment-client-page';
 import type { Asset, AssetType } from '@/lib/types';
 import { notFound } from 'next/navigation';
-import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from '@/lib/placeholder-data';
 
 
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
+  // This is a placeholder. In a real app, you would fetch this from your database.
   try {
     const response = await fetch(`http://localhost:3000/api/anuncios/get/${id}`, { cache: 'no-store' });
     if (!response.ok) {
-        // If API fails, try to find in placeholder data as a fallback for development
-        console.warn(`API call failed, falling back to placeholder data for asset ${id}`);
-        const placeholderData = 
-            type === 'carbon-credit' ? placeholderCredits.find(c => c.id === id) :
-            type === 'tax-credit' ? placeholderTaxCredits.find(t => t.id === id) :
-            type === 'rural-land' ? placeholderRuralLands.find(l => l.id === id) :
-            null;
-        return placeholderData || null;
+        console.warn(`API call failed for asset ${id}, using fallback. This is expected in production if the server is not running locally.`);
+        return null;
     }
     const data = await response.json();
     if (data.ok && data.anuncio) {
@@ -36,13 +30,8 @@ async function getAssetDetails(id: string, type: AssetType): Promise<Asset | nul
     }
     return null;
   } catch (error) {
-    console.error("Failed to fetch asset details, falling back to placeholders:", error);
-    const placeholderData = 
-        type === 'carbon-credit' ? placeholderCredits.find(c => c.id === id) :
-        type === 'tax-credit' ? placeholderTaxCredits.find(t => t.id === id) :
-        type === 'rural-land' ? placeholderRuralLands.find(l => l.id === id) :
-        null;
-    return placeholderData || null;
+    console.error("Failed to fetch asset details via API, not using fallback:", error);
+    return null;
   }
 }
 
