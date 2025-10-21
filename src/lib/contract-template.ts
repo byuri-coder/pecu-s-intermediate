@@ -1,85 +1,121 @@
 
-
 import type { Asset, AssetType } from './types';
 import { numberToWords } from './number-to-words';
 
 // This function returns a detailed contract template string based on the asset type.
 // The placeholders `{{...}}` will be replaced with actual data.
 
-export function getContractTemplate(assetType: AssetType): string {
-  // Common sections for all contracts
-  const header = `
+interface Parties {
+    seller: { name: string; doc: string; address: string; ie: string; repName: string; repDoc: string; repRole: string };
+    buyer: { name: string; doc: string; address: string; ie: string; };
+}
+
+interface ContractState {
+  fields: {
+    seller: {
+      paymentMethod: 'vista' | 'parcelado';
+      installments: string;
+      interestPercent: string;
+      [key: string]: any;
+    };
+    buyer: {
+      [key: string]: any;
+    };
+  };
+  [key: string]: any;
+}
+
+
+export function getContractTemplate(assetType: AssetType, asset: Asset, contract: ContractState, parties: Parties): string {
+    const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+    // Common sections for all contracts
+    const header = `
 CONTRATO DE CESSÃO DE DIREITOS CREDITÓRIOS E OUTRAS AVENÇAS
 
 Pelo presente instrumento particular, de um lado:
 
-CEDENTE: [Razão Social do Vendedor], pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº [CNPJ do Vendedor], com sede na [Endereço do Vendedor], doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
+CEDENTE: ${parties.seller.name}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.seller.doc}, com sede na ${parties.seller.address}, doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
-CESSIONÁRIO: [Razão Social do Comprador], pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº [CNPJ do Comprador], com sede na [Endereço do Comprador], doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
+CESSIONÁRIO: ${parties.buyer.name || '[Razão Social do Comprador]'}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.buyer.doc || '[CNPJ do Comprador]'}, com sede em ${parties.buyer.address || '[Endereço do Comprador]'}, doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
 Resolvem as partes, de comum acordo, celebrar o presente Contrato de Cessão de Direitos Creditórios e Outras Avenças ("Contrato"), que se regerá pelas seguintes cláusulas e condições:
 `;
 
-  const footer = `
+    const footer = `
 CLÁUSULA DÉCIMA – FORO
-10.1. Fica eleito o foro da Comarca de [Cidade da Jurisdição], para dirimir quaisquer dúvidas ou litígios oriundos do presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+10.1. Fica eleito o foro da Comarca de ${parties.seller.address.split(',').pop()?.trim()}, para dirimir quaisquer dúvidas ou litígios oriundos do presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
 
 E, por estarem assim justas e contratadas, as partes assinam o presente Contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.
 
-[Local], {{contract.date}}.
+[Local], ${new Date(contract.frozenAt || Date.now()).toLocaleDateString('pt-BR')}.
 
 
 _________________________________________
-CEDENTE: {{seller.name}}
-CNPJ: {{seller.doc}}
+CEDENTE: ${parties.seller.name}
+CNPJ: ${parties.seller.doc}
 
 
 _________________________________________
-CESSIONÁRIO: {{buyer.name}}
-CNPJ: {{buyer.doc}}
+CESSIONÁRIO: ${parties.buyer.name || '[Razão Social do Comprador]'}
+CNPJ: ${parties.buyer.doc || '[CNPJ do Comprador]'}
 `;
 
-  // Specific clauses for each asset type
-  const clauses: { [key in AssetType]: string } = {
-    'carbon-credit': `
+    const getPaymentClause = () => {
+        if (contract.fields.seller.paymentMethod === 'vista') {
+            return `O pagamento será efetuado à vista, via transferência bancária (TED/PIX) para a conta de titularidade da CEDENTE, no prazo de até 5 (cinco) dias úteis após a assinatura deste instrumento e a devida verificação dos documentos.`;
+        } else {
+            const installments = parseInt(contract.fields.seller.installments, 10) || 1;
+            const interest = parseFloat(contract.fields.seller.interestPercent) || 0;
+            const totalValue = ('price' in asset ? asset.price : ('amount' in asset ? asset.amount : 0)) || 0;
+            
+            if (interest > 0) {
+                 return `O pagamento será realizado em ${installments} parcela(s) mensais, iguais e sucessivas, no valor de [Valor da Parcela], com a primeira parcela vencendo em [Data de Vencimento da 1ª Parcela] e as demais nos mesmos dias dos meses subsequentes, acrescidas de juros de ${interest}% ao mês, calculados pela Tabela Price.`;
+            }
+            return `O pagamento será realizado em ${installments} parcela(s) mensais, iguais e sucessivas de ${formatCurrency(totalValue / installments)}, com a primeira parcela vencendo em [Data de Vencimento da 1ª Parcela] e as demais nos mesmos dias dos meses subsequentes.`;
+        }
+    };
+
+
+    // Specific clauses for each asset type
+    const clauses: { [key in AssetType]: string } = {
+        'carbon-credit': `
 CLÁUSULA PRIMEIRA – DO OBJETO
-1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, da totalidade dos direitos creditórios relativos a {{amount}} ({{amount.extenso}}) créditos de carbono, do tipo {{asset.type}}, vintage {{asset.vintage}}, registrados sob o padrão [Padrão do Crédito, ex: Verra] com o ID [ID do Projeto], localizados em {{asset.location}} ("Créditos").
+1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, da totalidade dos direitos creditórios relativos a ${'quantity' in asset ? asset.quantity.toLocaleString() : 'N/A'} (${numberToWords('quantity' in asset ? asset.quantity : 0)}) créditos de carbono, do tipo ${'creditType' in asset ? asset.creditType : 'N/A'}, vintage ${'vintage' in asset ? asset.vintage : 'N/A'}, registrados sob o padrão ${'standard' in asset ? asset.standard : '[Padrão do Crédito, ex: Verra]'} com o ID [ID do Projeto], localizados em ${'location' in asset ? asset.location : 'N/A'} ("Créditos").
 
 CLÁUSULA SEGUNDA – DO PREÇO E DA FORMA DE PAGAMENTO
-2.1. Pela cessão dos Créditos objeto deste Contrato, o CESSIONÁRIO pagará à CEDENTE o valor total de R$ {{negotiation.value}} ({{negotiation.value.extenso}}).
-2.2. O pagamento será efetuado da seguinte forma: [Detalhar forma de pagamento, ex: à vista, via transferência bancária (TED/PIX) para a conta de titularidade da CEDENTE, no prazo de até 5 (cinco) dias úteis após a assinatura deste instrumento].
+2.1. Pela cessão dos Créditos objeto deste Contrato, o CESSIONÁRIO pagará à CEDENTE o valor total de ${formatCurrency('pricePerCredit' in asset ? asset.pricePerCredit * asset.quantity : 0)} (${numberToWords('pricePerCredit' in asset ? asset.pricePerCredit * asset.quantity : 0)}).
+2.2. ${getPaymentClause()}
 
 CLÁSULA TERCEIRA – DA TRANSFERÊNCIA E DA TRADIÇÃO DOS CRÉDITOS
 3.1. A CEDENTE compromete-se a realizar todos os atos necessários para a transferência da titularidade dos Créditos para a conta do CESSIONÁRIO na plataforma de registro [Nome da Plataforma, ex: Verra Registry], no prazo de até 2 (dois) dias úteis após a confirmação do pagamento integral previsto na Cláusula Segunda.
 `,
-    'tax-credit': `
+        'tax-credit': `
 CLÁUSULA PRIMEIRA – DO OBJETO
-1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, dos direitos creditórios decorrentes de saldo credor de {{asset.type}}, no valor de R$ {{credit.balance}} ({{credit.balance.extenso}}), devidamente apurado e escriturado nos livros fiscais da CEDENTE, referente ao período de [Período de Apuração], originado de [Origem do crédito, ex: operações de exportação], doravante denominado "Crédito Fiscal".
+1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, dos direitos creditórios decorrentes de saldo credor de ${'taxType' in asset ? asset.taxType : 'N/A'}, no valor de ${formatCurrency('amount' in asset ? asset.amount : 0)} (${numberToWords('amount' in asset ? asset.amount : 0)}), devidamente apurado e escriturado nos livros fiscais da CEDENTE, referente ao período de [Período de Apuração], originado de [Origem do crédito, ex: operações de exportação], doravante denominado "Crédito Fiscal".
 
 CLÁUSULA SEGUNDA – DO PREÇO E DO DESÁGIO
-2.1. Pela cessão do Crédito Fiscal, o CESSIONÁRIO pagará à CEDENTE o valor de R$ {{negotiation.value}} ({{negotiation.value.extenso}}), correspondente à aplicação de um deságio de {{negotiation.percentage}}% sobre o valor de face do crédito.
-2.2. O pagamento será realizado em {{payment.method}}, [descrever condições].
+2.1. Pela cessão do Crédito Fiscal, o CESSIONÁRIO pagará à CEDENTE o valor de ${formatCurrency('price' in asset ? asset.price || 0 : 0)} (${numberToWords('price' in asset ? asset.price || 0 : 0)}), correspondente à aplicação de um deságio de ${'amount' in asset && 'price' in asset && asset.price && asset.amount ? (((asset.amount - asset.price) / asset.amount) * 100).toFixed(2) : '0.00'}% sobre o valor de face do crédito.
+2.2. ${getPaymentClause()}
 
 CLÁUSULA TERCEIRA – DA HOMOLOGAÇÃO E TRANSFERÊNCIA
 3.1. A eficácia da presente cessão fica condicionada à prévia habilitação do crédito pela autoridade fiscal competente e à homologação do pedido de transferência, nos termos da legislação aplicável (ex: Portaria CAT no Estado de São Paulo).
 3.2. A CEDENTE se obriga a protocolar o pedido de transferência do Crédito Fiscal em favor do CESSIONÁRIO no prazo de 10 (dez) dias úteis a contar da assinatura deste instrumento, fornecendo todos os documentos necessários.
 `,
-    'rural-land': `
+        'rural-land': `
 CLÁUSULA PRIMEIRA – DO OBJETO
-1.1. O presente Contrato tem por objeto a promessa de {{asset.businessType}} do imóvel rural denominado "{{asset.title}}", com área de {{asset.sizeHa}} hectares, localizado em {{asset.location}}, devidamente registrado na matrícula nº {{asset.registration}} do Cartório de Registro de Imóveis de [Comarca do Imóvel] ("Imóvel").
+1.1. O presente Contrato tem por objeto a promessa de ${'businessType' in asset ? asset.businessType : 'N/A'} do imóvel rural denominado "${'title' in asset ? asset.title : 'N/A'}", com área de ${'sizeHa' in asset ? asset.sizeHa.toLocaleString() : 'N/A'} hectares, localizado em ${'location' in asset ? asset.location : 'N/A'}, devidamente registrado na matrícula nº ${'registration' in asset ? asset.registration : '[Matrícula do Imóvel]'} do Cartório de Registro de Imóveis de [Comarca do Imóvel] ("Imóvel").
 
-CLÁzula SEGUNDA – DO PREÇO E CONDIÇÕES DE PAGAMENTO
-2.1. Pela aquisição do Imóvel, o CESSIONÁRIO pagará ao CEDENTE o valor total de R$ {{negotiation.value}} ({{negotiation.value.extenso}}).
-2.2. O pagamento será realizado da seguinte forma:
-    a) Sinal e princípio de pagamento: R$ [Valor do Sinal], a ser pago na data da assinatura deste contrato.
-    b) Saldo remanescente: R$ [Valor do Saldo], a ser pago em {{payment.installments}} parcela(s), com vencimento em [Datas], através de [Forma de Pagamento].
+CLÁUSULA SEGUNDA – DO PREÇO E CONDIÇÕES DE PAGAMENTO
+2.1. Pela aquisição do Imóvel, o CESSIONÁRIO pagará ao CEDENTE o valor total de ${formatCurrency('price' in asset ? asset.price || 0 : 0)} (${numberToWords('price' in asset ? asset.price || 0 : 0)}).
+2.2. ${getPaymentClause()}
 
 CLÁUSULA TERCEIRA – DA POSSE E DA ESCRITURA
 3.1. A posse do Imóvel será transferida ao CESSIONÁRIO após a quitação integral do preço, momento em que a CEDENTE se obriga a outorgar a competente Escritura Pública de Compra e Venda.
 `
-  };
+    };
 
-  const commonClauses = `
+    const commonClauses = `
 CLÁUSULA QUARTA – DECLARAÇÕES DA CEDENTE
 4.1. A CEDENTE declara, sob as penas da lei, que:
     a) É a legítima titular e detentora dos direitos e créditos objeto deste Contrato, estando eles livres e desembaraçados de quaisquer ônus, gravames, dívidas ou contestações judiciais ou administrativas.
@@ -108,7 +144,5 @@ CLÁUSULA NONA – SUCESSÃO
 9.1. Este Contrato obriga as partes e seus sucessores a qualquer título.
 `;
   
-  return header + (clauses[assetType] || '') + commonClauses + footer;
+    return header + (clauses[assetType] || '') + commonClauses + footer;
 }
-
-    

@@ -36,6 +36,10 @@ type ContractState = {
       [key: string]: any;
     };
     buyer: {
+      razaoSocial: string;
+      cnpj: string;
+      ie: string;
+      endereco: string;
       [key: string]: any;
     };
   };
@@ -116,7 +120,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 isFrozen: false,
                 fields: {
                     seller: { paymentMethod: 'vista', installments: '1', interestPercent: '0' },
-                    buyer: {}
+                    buyer: { razaoSocial: '', cnpj: '', ie: '', endereco: '' }
                 },
                 sellerAgrees: false,
                 buyerAgrees: false,
@@ -156,11 +160,16 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
       // Mock party data
       const mockParties = {
         seller: { name: 'Fazenda Rio Verde', doc: '12.345.678/0001-99', address: 'Zona Rural, s/n, Alta Floresta, MT', ie: '123456789', repName: 'João da Silva', repDoc: '111.222.333-44', repRole: 'Sócio Administrador' },
-        buyer: { name: currentUser?.displayName || 'Empresa Compradora LTDA', doc: '98.765.432/0001-11', address: 'Av. Paulista, 1000, São Paulo, SP', ie: '987654321' }
+        buyer: { 
+            name: contract.fields.buyer.razaoSocial, 
+            doc: contract.fields.buyer.cnpj, 
+            address: contract.fields.buyer.endereco,
+            ie: contract.fields.buyer.ie
+        }
       }
       return getContractTemplate(assetType, asset, contract, mockParties);
 
-  }, [asset, assetType, contract, currentUser?.displayName]);
+  }, [asset, assetType, contract]);
 
 
   const handleAccept = async () => {
@@ -281,10 +290,27 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                             )}
                         </div>
                     </div>
-                    {/* Seção do Comprador (vazia por enquanto) */}
+                    {/* Seção do Comprador */}
                     <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
                         <h4 className="font-semibold mb-2">Campos do Comprador</h4>
-                        <p className="text-sm text-muted-foreground">Nenhum campo específico para o comprador nesta negociação.</p>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="buyer-razao-social">Razão Social</Label>
+                                <Input id="buyer-razao-social" value={fields.buyer.razaoSocial} onChange={(e) => handleFieldChange('buyer', 'razaoSocial', e.target.value)} disabled={!isBuyer || isFrozen} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="buyer-cnpj">CNPJ</Label>
+                                <Input id="buyer-cnpj" value={fields.buyer.cnpj} onChange={(e) => handleFieldChange('buyer', 'cnpj', e.target.value)} disabled={!isBuyer || isFrozen} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="buyer-ie">Inscrição Estadual</Label>
+                                <Input id="buyer-ie" value={fields.buyer.ie} onChange={(e) => handleFieldChange('buyer', 'ie', e.target.value)} disabled={!isBuyer || isFrozen} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="buyer-endereco">Endereço Completo</Label>
+                                <Input id="buyer-endereco" value={fields.buyer.endereco} onChange={(e) => handleFieldChange('buyer', 'endereco', e.target.value)} disabled={!isBuyer || isFrozen} />
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -358,5 +384,3 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 }
 
 export default AdjustmentClientPage;
-
-    
