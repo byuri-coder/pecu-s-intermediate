@@ -8,7 +8,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Leaf, Landmark, Mountain } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
-import { useRouter, usePathname, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const AssetTypeIcon = ({ type }: { type: AssetType }) => {
     const iconMap = {
@@ -21,13 +21,11 @@ const AssetTypeIcon = ({ type }: { type: AssetType }) => {
 };
 
 
-export function ChatList({ conversations }: { conversations: Conversation[] }) {
+export function ChatList({ conversations, activeChatId }: { conversations: Conversation[], activeChatId: string | null }) {
   const router = useRouter();
-  const params = useParams();
-  const activeChatId = params.id;
 
   const handleSelectChat = (conversation: Conversation) => {
-    router.push(`/negociacao/${conversation.id}?type=${conversation.type}`);
+    router.push(`/negociacao?id=${conversation.id}&type=${conversation.type}`);
   };
 
   return (
