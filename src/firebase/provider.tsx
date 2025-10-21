@@ -1,3 +1,4 @@
+'use client';
 // src/firebase/provider.tsx
 import {
   FirebaseApp,

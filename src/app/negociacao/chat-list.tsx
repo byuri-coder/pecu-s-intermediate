@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { usePersistentState } from './use-persistent-state';
 
 export interface Conversation {
   id: string;
