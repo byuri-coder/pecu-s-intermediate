@@ -8,7 +8,6 @@ import { placeholderCredits, placeholderRuralLands, placeholderTaxCredits } from
 
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
   // This is a placeholder. In a real app, you would fetch this from your database.
-  // The fetch call to localhost was removed to prevent build errors in production environments.
   const placeholderData = 
       type === 'carbon-credit' ? placeholderCredits.find(c => c.id === id) :
       type === 'tax-credit' ? placeholderTaxCredits.find(t => t.id === id) :

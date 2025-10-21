@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -151,6 +152,12 @@
     "/negociacoes/{negotiationId}": {
       "schema": { "$ref": "#/entities/Negotiation" },
       "description": "Stores the state of a negotiation for an asset."
+    },
+    "/negociacoes/{negotiationId}/messages/{messageId}": {
+        "schema": {
+          "$ref": "#/entities/Message"
+        },
+        "description": "Stores messages for a specific negotiation chat."
     },
     "/contracts/{contractId}": {
         "schema": { "$ref": "#/entities/Contract" },
