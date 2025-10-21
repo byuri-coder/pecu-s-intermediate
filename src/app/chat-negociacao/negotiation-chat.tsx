@@ -208,6 +208,11 @@ export function NegotiationChat({ messages, onSendMessage }: { messages: Message
                 {messages.map((msg) => (
                     <MessageBubble key={msg.id} msg={msg}/>
                 ))}
+                 {messages.length === 0 && (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <p>Nenhuma mensagem ainda. Envie a primeira!</p>
+                    </div>
+                )}
             </div>
         </ScrollArea>
         <div className="mt-4 flex items-center gap-2">
