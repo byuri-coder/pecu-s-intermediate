@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChatList } from './chat-list';
-import type { Conversation, Message, AssetType } from '@/lib/types';
+import type { Conversation, Message } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MessageSquareText } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
+import { usePersistentState } from './use-persistent-state';
 
 const mockConversations: Conversation[] = [
     {
@@ -61,7 +62,7 @@ export default function NegotiationHubPage() {
   const searchParams = useSearchParams();
   const activeChatId = searchParams.get('id');
 
-  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
   const [messages, setMessages] = React.useState<Message[]>([]);
 
   const activeConversation = React.useMemo(() => {
