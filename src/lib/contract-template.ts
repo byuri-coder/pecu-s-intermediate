@@ -1,123 +1,114 @@
 
+
 import type { Asset, AssetType } from './types';
 import { numberToWords } from './number-to-words';
 
 // This function returns a detailed contract template string based on the asset type.
 // The placeholders `{{...}}` will be replaced with actual data.
 
-export function getContractTemplate(
-    assetType: AssetType, 
-    asset: Asset,
-    contract: any, // Basic contract state with fields
-    parties: { seller: any, buyer: any } // Detailed party info
-): string {
+export function getContractTemplate(assetType: AssetType): string {
+  // Common sections for all contracts
+  const header = `
+CONTRATO DE CESSÃO DE DIREITOS CREDITÓRIOS E OUTRAS AVENÇAS
 
-    const formatCurrency = (value: number | undefined) => {
-        if (value === undefined || isNaN(value)) return 'R$ 0,00';
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    }
-    
-    const negotiatedValue = contract.fields?.seller?.paymentMethod === 'vista' 
-        ? ('price' in asset ? asset.price : 0) || 0
-        : (parseFloat(contract.fields?.seller?.installments) || 1) * (('price' in asset ? asset.price : 0) || 0) ;
+Pelo presente instrumento particular, de um lado:
 
-    const creditBalance = 'amount' in asset ? asset.amount : negotiatedValue;
-    
-    const replacements: { [key: string]: string | number } = {
-        '{{asset.title}}': 'title' in asset ? asset.title : 'Ativo sem Título',
-        '{{asset.type}}': assetType,
-        '{{asset.location}}': 'location' in asset ? asset.location : 'N/A',
-        '{{asset.id}}': asset.id,
-        
-        '{{seller.name}}': parties.seller.name || 'Vendedor [Nome]',
-        '{{seller.doc}}': parties.seller.doc || 'Vendedor [CNPJ/CPF]',
-        '{{seller.address}}': parties.seller.address || 'Vendedor [Endereço]',
-        '{{seller.ie}}': parties.seller.ie || 'Vendedor [IE]',
-        '{{seller.rep.name}}': parties.seller.repName || 'Representante do Vendedor',
-        '{{seller.rep.cpf}}': parties.seller.repDoc || 'Representante [CPF]',
-        '{{seller.rep.role}}': parties.seller.repRole || 'Representante [Cargo]',
+CEDENTE: [Razão Social do Vendedor], pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº [CNPJ do Vendedor], com sede na [Endereço do Vendedor], doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
-        '{{buyer.name}}': parties.buyer.name || 'Comprador [Nome]',
-        '{{buyer.doc}}': parties.buyer.doc || 'Comprador [CNPJ/CPF]',
-        '{{buyer.address}}': parties.buyer.address || 'Comprador [Endereço]',
-        '{{buyer.ie}}': parties.buyer.ie || 'Comprador [IE]',
+CESSIONÁRIO: [Razão Social do Comprador], pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº [CNPJ do Comprador], com sede na [Endereço do Comprador], doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
-        '{{credit.balance}}': formatCurrency(creditBalance),
-        '{{credit.balance.extenso}}': numberToWords(creditBalance),
-        
-        '{{negotiation.value}}': formatCurrency(negotiatedValue),
-        '{{negotiation.value.extenso}}': numberToWords(negotiatedValue),
-        '{{negotiation.percentage}}': creditBalance > 0 ? ((negotiatedValue / creditBalance) * 100).toFixed(2) : '0.00',
-
-        '{{payment.method}}': contract.fields?.seller?.paymentMethod === 'vista' ? 'À Vista' : 'Parcelado',
-        '{{payment.installments}}': contract.fields?.seller?.installments || '1',
-        
-        '{{contract.date}}': new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
-        '{{contract.city}}': ('location' in asset ? asset.location.split(',')[0] : 'São Paulo'),
-    };
-    
-    const template = `
-À SECRETARIA DA FAZENDA E PLANEJAMENTO DO ESTADO DE SÃO PAULO
-Coordenadoria de Administração Tributária – CAT
-
-Ref.: REQUERIMENTO DE TRANSFERÊNCIA DE CRÉDITO ACUMULADO DE ICMS — PEDIDO DE HOMOLOGAÇÃO
-
-CEDENTE (VENDEDOR):
-Razão Social: {{seller.name}}
-CNPJ: {{seller.doc}}
-Inscrição Estadual: {{seller.ie}}
-Endereço: {{seller.address}}
-Representante Legal: {{seller.rep.name}} — CPF: {{seller.rep.cpf}} — Cargo: {{seller.rep.role}}
-
-CESSIONÁRIO (COMPRADOR):
-Razão Social: {{buyer.name}}
-CNPJ: {{buyer.doc}}
-Inscrição Estadual: {{buyer.ie}}
-Endereço: {{buyer.address}}
-
-
-I — DOS FATOS
-
-O(A) Cedente declara ser titular de créditos acumulados de ICMS no valor nominal de {{credit.balance}} ({{credit.balance.extenso}}), gerados em decorrência de suas operações fiscais, devidamente escriturados e validados perante esta Secretaria.
-
-Em decorrência de negociação comercial com o(a) Cessionário(a), as partes acordaram a cessão onerosa dos referidos créditos, pelo valor negociado de {{negotiation.value}} ({{negotiation.value.extenso}}), correspondente a {{negotiation.percentage}}% do saldo total, mediante pagamento na modalidade "{{payment.method}}"${contract.fields?.seller?.paymentMethod === 'parcelado' ? ' em {{payment.installments}} parcelas' : ''}.
-
-O presente requerimento visa obter a homologação desta cessão para que o crédito seja transferido da conta fiscal do Cedente para a do Cessionário, nos termos da legislação vigente.
-
-II — DO DIREITO
-
-O presente pedido funda-se na Lei Complementar nº 87/1996 (Lei Kandir) e, no âmbito do Estado de São Paulo, na Lei Estadual nº 6.374/1989 e no Regulamento do ICMS (Decreto nº 45.490/2000), que disciplinam a sistemática de apuração e utilização do crédito acumulado. A Portaria CAT nº 26/2010 e suas correlatas estabelecem os procedimentos para a transferência de crédito acumulado a terceiros através do sistema e-CredAc.
-
-Requer-se, assim, a análise e o deferimento dos atos administrativos necessários para a efetivação da transferência do crédito.
-
-III — DO PEDIDO
-
-Diante do exposto, o Cedente requer a Vossa Senhoria:
-
-a) O recebimento e processamento deste requerimento;
-b) A análise e homologação da transferência do crédito de ICMS no valor de {{negotiation.value}} para o Cessionário acima qualificado;
-c) A expedição do ato administrativo que oficialize a transferência, para todos os fins de direito.
-
-Nestes termos, pede deferimento.
-
-{{contract.city}}, {{contract.date}}.
-
-
-_________________________________________
-{{seller.rep.name}}
-{{seller.name}}
-(Cedente)
-
-
-_________________________________________
-{{buyer.name}}
-(Cessionário)
+Resolvem as partes, de comum acordo, celebrar o presente Contrato de Cessão de Direitos Creditórios e Outras Avenças ("Contrato"), que se regerá pelas seguintes cláusulas e condições:
 `;
 
-    let populatedTemplate = template;
-    for (const [key, value] of Object.entries(replacements)) {
-        populatedTemplate = populatedTemplate.replace(new RegExp(key, 'g'), String(value));
-    }
-    
-    return populatedTemplate;
+  const footer = `
+CLÁUSULA DÉCIMA – FORO
+10.1. Fica eleito o foro da Comarca de [Cidade da Jurisdição], para dirimir quaisquer dúvidas ou litígios oriundos do presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+
+E, por estarem assim justas e contratadas, as partes assinam o presente Contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.
+
+[Local], {{contract.date}}.
+
+
+_________________________________________
+CEDENTE: {{seller.name}}
+CNPJ: {{seller.doc}}
+
+
+_________________________________________
+CESSIONÁRIO: {{buyer.name}}
+CNPJ: {{buyer.doc}}
+`;
+
+  // Specific clauses for each asset type
+  const clauses: { [key in AssetType]: string } = {
+    'carbon-credit': `
+CLÁUSULA PRIMEIRA – DO OBJETO
+1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, da totalidade dos direitos creditórios relativos a {{amount}} ({{amount.extenso}}) créditos de carbono, do tipo {{asset.type}}, vintage {{asset.vintage}}, registrados sob o padrão [Padrão do Crédito, ex: Verra] com o ID [ID do Projeto], localizados em {{asset.location}} ("Créditos").
+
+CLÁUSULA SEGUNDA – DO PREÇO E DA FORMA DE PAGAMENTO
+2.1. Pela cessão dos Créditos objeto deste Contrato, o CESSIONÁRIO pagará à CEDENTE o valor total de R$ {{negotiation.value}} ({{negotiation.value.extenso}}).
+2.2. O pagamento será efetuado da seguinte forma: [Detalhar forma de pagamento, ex: à vista, via transferência bancária (TED/PIX) para a conta de titularidade da CEDENTE, no prazo de até 5 (cinco) dias úteis após a assinatura deste instrumento].
+
+CLÁSULA TERCEIRA – DA TRANSFERÊNCIA E DA TRADIÇÃO DOS CRÉDITOS
+3.1. A CEDENTE compromete-se a realizar todos os atos necessários para a transferência da titularidade dos Créditos para a conta do CESSIONÁRIO na plataforma de registro [Nome da Plataforma, ex: Verra Registry], no prazo de até 2 (dois) dias úteis após a confirmação do pagamento integral previsto na Cláusula Segunda.
+`,
+    'tax-credit': `
+CLÁUSULA PRIMEIRA – DO OBJETO
+1.1. O presente Contrato tem por objeto a cessão e transferência, pela CEDENTE ao CESSIONÁRIO, dos direitos creditórios decorrentes de saldo credor de {{asset.type}}, no valor de R$ {{credit.balance}} ({{credit.balance.extenso}}), devidamente apurado e escriturado nos livros fiscais da CEDENTE, referente ao período de [Período de Apuração], originado de [Origem do crédito, ex: operações de exportação], doravante denominado "Crédito Fiscal".
+
+CLÁUSULA SEGUNDA – DO PREÇO E DO DESÁGIO
+2.1. Pela cessão do Crédito Fiscal, o CESSIONÁRIO pagará à CEDENTE o valor de R$ {{negotiation.value}} ({{negotiation.value.extenso}}), correspondente à aplicação de um deságio de {{negotiation.percentage}}% sobre o valor de face do crédito.
+2.2. O pagamento será realizado em {{payment.method}}, [descrever condições].
+
+CLÁUSULA TERCEIRA – DA HOMOLOGAÇÃO E TRANSFERÊNCIA
+3.1. A eficácia da presente cessão fica condicionada à prévia habilitação do crédito pela autoridade fiscal competente e à homologação do pedido de transferência, nos termos da legislação aplicável (ex: Portaria CAT no Estado de São Paulo).
+3.2. A CEDENTE se obriga a protocolar o pedido de transferência do Crédito Fiscal em favor do CESSIONÁRIO no prazo de 10 (dez) dias úteis a contar da assinatura deste instrumento, fornecendo todos os documentos necessários.
+`,
+    'rural-land': `
+CLÁUSULA PRIMEIRA – DO OBJETO
+1.1. O presente Contrato tem por objeto a promessa de {{asset.businessType}} do imóvel rural denominado "{{asset.title}}", com área de {{asset.sizeHa}} hectares, localizado em {{asset.location}}, devidamente registrado na matrícula nº {{asset.registration}} do Cartório de Registro de Imóveis de [Comarca do Imóvel] ("Imóvel").
+
+CLÁzula SEGUNDA – DO PREÇO E CONDIÇÕES DE PAGAMENTO
+2.1. Pela aquisição do Imóvel, o CESSIONÁRIO pagará ao CEDENTE o valor total de R$ {{negotiation.value}} ({{negotiation.value.extenso}}).
+2.2. O pagamento será realizado da seguinte forma:
+    a) Sinal e princípio de pagamento: R$ [Valor do Sinal], a ser pago na data da assinatura deste contrato.
+    b) Saldo remanescente: R$ [Valor do Saldo], a ser pago em {{payment.installments}} parcela(s), com vencimento em [Datas], através de [Forma de Pagamento].
+
+CLÁUSULA TERCEIRA – DA POSSE E DA ESCRITURA
+3.1. A posse do Imóvel será transferida ao CESSIONÁRIO após a quitação integral do preço, momento em que a CEDENTE se obriga a outorgar a competente Escritura Pública de Compra e Venda.
+`
+  };
+
+  const commonClauses = `
+CLÁUSULA QUARTA – DECLARAÇÕES DA CEDENTE
+4.1. A CEDENTE declara, sob as penas da lei, que:
+    a) É a legítima titular e detentora dos direitos e créditos objeto deste Contrato, estando eles livres e desembaraçados de quaisquer ônus, gravames, dívidas ou contestações judiciais ou administrativas.
+    b) Possui capacidade jurídica para celebrar o presente Contrato e cumprir com todas as obrigações aqui assumidas.
+    c) As informações prestadas sobre a origem e a validade dos créditos são verdadeiras, precisas e completas.
+
+CLÁUSULA QUINTA – OBRIGAÇÕES DAS PARTES
+5.1. Compete à CEDENTE:
+    a) Fornecer toda a documentação necessária para a comprovação da titularidade e validade dos créditos.
+    b) Realizar todos os procedimentos necessários para a efetiva transferência dos créditos ao CESSIONÁRIOS.
+5.2. Compete ao CESSIONÁRIO:
+    a) Realizar o pagamento do preço nos termos e condições aqui estabelecidos.
+    b) Fornecer as informações necessárias para o registro da transferência dos créditos em seu nome.
+
+CLÁUSULA SEXTA – CONFIDENCIALIDADE
+6.1. As partes se obrigam a manter em absoluto sigilo todas as informações comerciais, financeiras e técnicas a que tiverem acesso em razão deste Contrato, não podendo revelá-las a terceiros sem o prévio consentimento por escrito da outra parte, salvo quando exigido por lei ou autoridade competente.
+
+CLÁUSULA SÉTIMA – RESCISÃO
+7.1. O presente Contrato poderá ser rescindido de pleno direito, independentemente de notificação judicial ou extrajudicial, em caso de inadimplemento de qualquer de suas cláusulas ou condições, sujeitando a parte infratora ao pagamento de multa de 10% (dez por cento) sobre o valor total da negociação, sem prejuízo da apuração de perdas e danos.
+
+CLÁUSULA OITAVA – DISPOSIÇÕES GERAIS
+8.1. O presente Contrato constitui o acordo integral entre as partes, substituindo quaisquer entendimentos, acordos ou representações anteriores, verbais ou escritas.
+8.2. A eventual tolerância de qualquer das partes quanto ao descumprimento de quaisquer cláusulas deste Contrato não constituirá novação, renúncia ou precedente.
+
+CLÁUSULA NONA – SUCESSÃO
+9.1. Este Contrato obriga as partes e seus sucessores a qualquer título.
+`;
+  
+  return header + (clauses[assetType] || '') + commonClauses + footer;
 }
+
+    

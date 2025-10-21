@@ -153,21 +153,12 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const finalContractText = React.useMemo(() => {
       if (!asset || !contract) return "Carregando pré-visualização...";
-      const template = getContractTemplate(assetType);
-      const placeholders = {
-        'seller.name': 'owner' in asset ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor'),
-        'buyer.name': currentUser?.displayName || "Comprador Anônimo",
-        'amount': ('quantity' in asset) ? asset.quantity : (('amount' in asset) ? asset.amount : 0),
-        'asset.type': assetType,
-        'paymentMethod': contract.fields.seller.paymentMethod,
-        'installments': contract.fields.seller.installments,
-      };
-      
-      let populatedText = template;
-      for (const [key, value] of Object.entries(placeholders)) {
-          populatedText = populatedText.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+      // Mock party data
+      const mockParties = {
+        seller: { name: 'Fazenda Rio Verde', doc: '12.345.678/0001-99', address: 'Zona Rural, s/n, Alta Floresta, MT', ie: '123456789', repName: 'João da Silva', repDoc: '111.222.333-44', repRole: 'Sócio Administrador' },
+        buyer: { name: currentUser?.displayName || 'Empresa Compradora LTDA', doc: '98.765.432/0001-11', address: 'Av. Paulista, 1000, São Paulo, SP', ie: '987654321' }
       }
-      return populatedText;
+      return getContractTemplate(assetType, asset, contract, mockParties);
 
   }, [asset, assetType, contract, currentUser?.displayName]);
 
@@ -367,3 +358,5 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 }
 
 export default AdjustmentClientPage;
+
+    
