@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChatList } from './chat-list';
 import type { Conversation, Message, AssetType } from '@/lib/types';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MessageSquareText } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
@@ -12,6 +12,8 @@ import { ActiveChatHeader } from './active-chat-header';
 const mockConversations: Conversation[] = [
     {
         id: 'tax-001',
+        assetId: 'tax-001',
+        assetName: 'Crédito de ICMS',
         name: 'José Carlos Pereira',
         avatar: 'https://picsum.photos/seed/jcp/40/40',
         lastMessage: 'Ofereço R$ 220.000,00 para pagamento à vista.',
@@ -95,7 +97,7 @@ export default function NegotiationHubPage() {
                  <Card className="h-full w-full flex flex-col">
                     <ActiveChatHeader 
                         conversation={activeConversation}
-                        assetId={activeChatId || ''}
+                        assetId={activeConversation.assetId}
                     />
                     <CardContent className="flex-1 flex flex-col p-4 pt-0">
                        <NegotiationChat messages={messages} onSendMessage={addMessage} />

@@ -121,6 +121,8 @@ export interface Message {
 
 export interface Conversation {
   id: string;
+  assetId: string;
+  assetName: string;
   name: string;
   avatar: string;
   lastMessage: string;

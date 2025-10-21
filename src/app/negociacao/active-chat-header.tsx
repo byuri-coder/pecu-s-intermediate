@@ -60,7 +60,7 @@ export function ActiveChatHeader({
                   className="text-primary hover:underline"
                   href={`${getAssetTypeRoute(conversation.type)}/${assetId}`}
                 >
-                  {conversation.lastMessage}
+                  {conversation.assetName}
                 </Link>
               </CardDescription>
             </div>
