@@ -14,53 +14,8 @@ import { getAuth } from 'firebase/auth';
 import { usePersistentState } from './use-persistent-state';
 
 
-const mockConversations: Conversation[] = [
-    {
-        id: 'tax-001',
-        assetId: 'tax-001',
-        assetName: 'Crédito de ICMS',
-        name: 'José Carlos Pereira',
-        avatar: 'https://picsum.photos/seed/jcp/40/40',
-        lastMessage: 'Ofereço R$ 220.000,00 para pagamento à vista.',
-        time: '14:36',
-        unread: 1,
-        type: 'tax-credit',
-    }
-];
-
-const mockTestMessages: Message[] = [
-    {
-        id: 'msg-1',
-        sender: 'other',
-        content: 'Olá! Tenho interesse no crédito de ICMS. Ele ainda está disponível?',
-        type: 'text',
-        timestamp: '14:30',
-        avatar: 'https://picsum.photos/seed/jcp/40/40',
-    },
-    {
-        id: 'msg-2',
-        sender: 'me',
-        content: 'Olá, José Carlos! Sim, está disponível. Qual seria a sua proposta?',
-        type: 'text',
-        timestamp: '14:32',
-    },
-     {
-        id: 'msg-3',
-        sender: 'other',
-        content: 'https://picsum.photos/seed/doc/400/300',
-        type: 'image',
-        timestamp: '14:35',
-        avatar: 'https://picsum.photos/seed/jcp/40/40',
-    },
-    {
-        id: 'msg-4',
-        sender: 'other',
-        content: 'Ofereço R$ 220.000,00 para pagamento à vista.',
-        type: 'text',
-        timestamp: '14:36',
-        avatar: 'https://picsum.photos/seed/jcp/40/40',
-    },
-];
+const mockConversations: Conversation[] = [];
+const mockTestMessages: Message[] = [];
 
 
 export default function NegotiationHubPage() {
