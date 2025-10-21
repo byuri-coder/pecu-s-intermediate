@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { ChatList, type Conversation } from './chat-list';
-import { usePersistentState } from './use-persistent-state';
+import { ChatList } from './chat-list';
+import type { Conversation } from '@/lib/types';
 import { MessageSquareText } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const mockConversations: Conversation[] = [
     {
@@ -20,7 +20,8 @@ const mockConversations: Conversation[] = [
 
 
 export default function NegotiationHubPage() {
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', mockConversations);
+  // Use simple state instead of persistent state to guarantee mock data is always present.
+  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">

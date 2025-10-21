@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { notFound, useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { notFound, useSearchParams, useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset } from '@/lib/types';
-import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -59,6 +58,18 @@ const mockTestMessages: Message[] = [
     },
 ];
 
+const mockConversations: Conversation[] = [
+    {
+        id: 'tax-001',
+        name: 'José Carlos Pereira',
+        avatar: 'https://picsum.photos/seed/jcp/40/40',
+        lastMessage: 'Olá! Tenho interesse no crédito de ICMS.',
+        time: '14:30',
+        unread: 1,
+        type: 'tax-credit',
+    }
+];
+
 
 function getAssetTypeName(type: AssetType) {
     switch(type) {
@@ -90,7 +101,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
   const negotiationId = `neg_${params.id}`;
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const [conversations, setConversations] = React.useState<Conversation[]>(mockConversations);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
