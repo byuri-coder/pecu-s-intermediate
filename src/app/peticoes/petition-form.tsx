@@ -500,7 +500,7 @@ export function PetitionForm({ petition, onSuccess }: PetitionFormProps) {
 
             <div className="flex justify-between items-center pt-4 border-t">
                 <div>
-                    <Button type="button" variant="outline" onClick={handleDownloadPdf} disabled={form.getValues('status') !== 'finalizado' || isPending}>
+                    <Button type="button" variant="outline" onClick={handleDownloadPdf} disabled={isPending}>
                         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                         Baixar PDF
                     </Button>
