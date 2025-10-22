@@ -7,6 +7,23 @@
     "publicData": {
       ".read": true,
       ".write": false
+    },
+    "negociacoes": {
+      "$negotiationId": {
+        // Apenas participantes ou admin podem ler os dados da negociação
+        ".read": "(root.child('negociacoes').child($negotiationId).child('buyerId').val() === auth.uid || root.child('negociacoes').child($negotiationId).child('sellerId').val() === auth.uid) || (auth !== null && auth.token.admin === true)",
+        // Apenas participantes podem escrever
+        ".write": "root.child('negociacoes').child($negotiationId).child('buyerId').val() === auth.uid || root.child('negociacoes').child($negotiationId).child('sellerId').val() === auth.uid",
+        "messages": {
+           // Regras para a subcoleção de mensagens
+          "$messageId": {
+            // Admin pode ler, participantes podem ler
+            ".read": "root.parent().child('buyerId').val() === auth.uid || root.parent().child('sellerId').val() === auth.uid || (auth !== null && auth.token.admin === true)",
+            // Apenas o remetente pode escrever a sua própria mensagem
+            ".write": "newData.child('senderId').val() === auth.uid && (root.parent().child('buyerId').val() === auth.uid || root.parent().child('sellerId').val() === auth.uid)"
+          }
+        }
+      }
     }
   }
 }
