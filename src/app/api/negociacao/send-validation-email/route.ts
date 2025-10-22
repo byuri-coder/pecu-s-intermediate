@@ -1,6 +1,5 @@
 // src/app/api/negociacao/send-validation-email/route.ts
 import { NextResponse } from 'next/server';
-import SibApiV3Sdk from 'sib-api-v3-sdk';
 import jwt from 'jsonwebtoken';
 import { Contrato } from '@/models/Contrato';
 import { connectDB } from '@/lib/mongodb';
@@ -40,13 +39,6 @@ export async function POST(req: Request) {
 
     const validationUrl = `${BASE_URL}/api/negociacao/verify-acceptance?token=${token}`;
 
-    // Configura SDK Brevo
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = BREVO_API_KEY;
-
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
     const emailData = {
       sender: { email: 'no-reply@pecusintermediate.com', name: 'PECU’S INTERMEDIATE' },
       to: [{ email: userEmail, name: userName || 'Usuário' }],
@@ -68,11 +60,26 @@ export async function POST(req: Request) {
       `,
     };
 
-    await apiInstance.sendTransacEmail(emailData);
+    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'content-type': 'application/json',
+            'api-key': BREVO_API_KEY,
+        },
+        body: JSON.stringify(emailData),
+    });
+
+    if (!brevoResponse.ok) {
+        const errorText = await brevoResponse.text();
+        console.error('Erro ao enviar e-mail pela Brevo:', errorText);
+        throw new Error('Falha no serviço de envio de e-mails.');
+    }
+
 
     return NextResponse.json({ ok: true, message: 'Email de validação enviado com sucesso!' });
   } catch (error: any) {
-    console.error('Erro ao enviar email de validação:', error.response ? error.response.body : error);
+    console.error('Erro ao enviar email de validação:', error);
     return NextResponse.json({ ok: false, error: error.message || 'Erro interno do servidor' }, { status: 500 });
   }
 }
