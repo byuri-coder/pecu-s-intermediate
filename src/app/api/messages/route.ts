@@ -1,52 +1,57 @@
 import { NextResponse } from 'next/server';
+import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
+import { Mensagem } from "@/models/Mensagem";
 
-// This is a temporary in-memory store for messages.
-// In a real application, you would use a database like Firestore.
-let messages: any[] = [];
-
+// POST: Salva uma nova mensagem no banco de dados para um chat específico
 export async function POST(req: Request) {
+  if (DISABLE_MONGO) {
+    return NextResponse.json({ ok: true, message: 'Message stored in-memory (mock)' });
+  }
+
   try {
+    await connectDB();
     const body = await req.json();
     
-    // Basic validation
-    if (!body.chatId || !body.message) {
-      return NextResponse.json({ ok: false, error: 'chatId and message are required' }, { status: 400 });
+    // Validação básica
+    if (!body.chatId || !body.message || !body.senderId) {
+      return NextResponse.json({ ok: false, error: 'chatId, message, e senderId são obrigatórios' }, { status: 400 });
     }
 
-    const newMessage = {
+    const newMessage = await Mensagem.create({
       chatId: body.chatId,
-      sender: body.sender, // 'me' or 'other' - in a real app, this would be a user ID
-      text: body.message,
-      createdAt: new Date(),
-    };
+      senderId: body.senderId,
+      content: body.message,
+      type: body.type || 'text', // Default para texto se não especificado
+    });
     
-    messages.push(newMessage);
-    console.log('New message received and stored in memory:', newMessage);
-    
-    // In a real-time system (like with WebSockets), you would broadcast this message to the other user in the chat.
-    // Since we're using HTTP polling for this example, the client will fetch messages.
-
-    return NextResponse.json({ ok: true, message: 'Message stored' });
-  } catch (error) {
-    console.error('Error in /api/messages/route.ts:', error);
-    return NextResponse.json({ ok: false, error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ ok: true, message: 'Message stored in MongoDB', data: newMessage });
+  } catch (error: any) {
+    console.error('Erro em /api/messages (POST):', error);
+    return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
+// GET: Obtém todas as mensagens de um chat específico
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const chatId = searchParams.get('chatId');
+
+  if (!chatId) {
+    return NextResponse.json({ ok: false, error: 'chatId é um parâmetro obrigatório' }, { status: 400 });
+  }
+
+  if (DISABLE_MONGO) {
+    return NextResponse.json({ ok: true, messages: [] });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const chatId = searchParams.get('chatId');
+    await connectDB();
+    
+    const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
 
-    if (!chatId) {
-      return NextResponse.json({ ok: false, error: 'chatId is required' }, { status: 400 });
-    }
-
-    const chatMessages = messages.filter(m => m.chatId === chatId);
-
-    return NextResponse.json({ ok: true, messages: chatMessages });
-  } catch (error) {
-    console.error('Error in /api/messages/route.ts (GET):', error);
-    return NextResponse.json({ ok: false, error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ ok: true, messages });
+  } catch (error: any) {
+    console.error('Erro em /api/messages (GET):', error);
+    return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
