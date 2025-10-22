@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info, AlertCircle, Fingerprint } from "lucide-react";
+import { MoreHorizontal, FileText, Download, DollarSign, Receipt, Copy, Banknote, UploadCloud, Info, AlertCircle, Fingerprint, Loader2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -42,6 +42,7 @@ import Link from "next/link";
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useUser } from "@/firebase";
 
 type InvoiceStatus = "Paga" | "Pendente" | "Em Análise" | "Negado";
 
@@ -69,19 +70,43 @@ type InvoiceWithOptionalCharges = Invoice & {
 
 export default function InvoicesPage() {
     const { toast } = useToast();
-    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>(initialInvoices);
+    const [invoices, setInvoices] = React.useState<InvoiceWithOptionalCharges[]>([]);
     const [isPaymentDialog, setPaymentDialog] = React.useState(false);
     const [isUploadDialog, setUploadDialog] = React.useState(false);
     const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceWithOptionalCharges | null>(null);
+    const { user } = useUser();
+    const [loading, setLoading] = React.useState(true);
+
 
     React.useEffect(() => {
-        // Clear the notification dot when the page is visited
         if (typeof window !== 'undefined') {
             localStorage.removeItem('newInvoicesAvailable');
-            // Dispatch a storage event to notify other components (like the header)
             window.dispatchEvent(new Event('storage'));
         }
-    }, []);
+
+        async function fetchInvoices() {
+            if (!user) {
+                setLoading(false);
+                return;
+            };
+
+            try {
+                const response = await fetch(`/api/faturas?userId=${user.uid}`);
+                if (!response.ok) throw new Error("Failed to fetch invoices");
+                const data = await response.json();
+                if (data.ok) {
+                    setInvoices(data.invoices);
+                }
+            } catch (error) {
+                console.error(error);
+                toast({ title: "Erro ao buscar faturas", variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchInvoices();
+    }, [user, toast]);
 
     const handleUploadConfirmation = () => {
         if (!selectedInvoice) return;
@@ -144,7 +169,11 @@ export default function InvoicesPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {invoices.length > 0 ? (
+                        {loading ? (
+                             <div className="flex items-center justify-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        ) : invoices.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -213,7 +242,7 @@ export default function InvoicesPage() {
                                                             </>
                                                         )}
                                                         <DropdownMenuItem asChild>
-                                                            <Link href={`/negociacao/${invoice.transactionId}/ajuste?view=archive`}>
+                                                            <Link href={`/negociacao/${invoice.transactionId}/ajuste-contrato`}>
                                                                 <FileText className="mr-2 h-4 w-4" />
                                                                 <span>Contrato</span>
                                                             </Link>

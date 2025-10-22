@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import { FileText, Users, Download, Fingerprint } from 'lucide-react';
+import { FileText, Users, Download, Fingerprint, Loader2 } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -23,35 +23,44 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useToast } from '@/hooks/use-toast';
 import { Seal } from '@/components/ui/seal';
+import { useUser } from '@/firebase';
 
-
-const DUPLICATAS_STORAGE_KEY = 'completed_deals_with_duplicates';
 
 export default function DuplicatasPage() {
   const [completedDeals, setCompletedDeals] = React.useState<CompletedDeal[]>([]);
   const { toast } = useToast();
+  const { user } = useUser();
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // Clear the notification dot when the page is visited
     if (typeof window !== 'undefined') {
         localStorage.removeItem('newDuplicatesAvailable');
-        // Dispatch a storage event to notify other components (like the header)
         window.dispatchEvent(new Event('storage'));
     }
 
-    if (typeof window !== 'undefined') {
-      const storedDeals = window.localStorage.getItem(DUPLICATAS_STORAGE_KEY);
-      if (storedDeals) {
+    async function fetchDuplicates() {
+        if (!user) {
+            setLoading(false);
+            return;
+        };
+
         try {
-            const parsedDeals: CompletedDeal[] = JSON.parse(storedDeals);
-            setCompletedDeals(parsedDeals);
-        } catch (e) {
-            console.error("Failed to parse deals from localStorage", e);
-            setCompletedDeals([]);
+            const response = await fetch(`/api/duplicatas?userId=${user.uid}`);
+            if (!response.ok) throw new Error("Failed to fetch duplicates");
+            const data = await response.json();
+            if (data.ok) {
+                setCompletedDeals(data.deals);
+            }
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Erro ao buscar duplicatas", variant: "destructive" });
+        } finally {
+            setLoading(false);
         }
-      }
     }
-  }, []);
+
+    fetchDuplicates();
+  }, [user, toast]);
 
   const handleDownloadPdf = (deal: CompletedDeal) => {
     const doc = new jsPDF();
@@ -152,7 +161,11 @@ export default function DuplicatasPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {completedDeals.length > 0 ? (
+          {loading ? (
+             <div className="flex items-center justify-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : completedDeals.length > 0 ? (
             <Accordion type="single" collapsible className="w-full space-y-4">
               {completedDeals.map((deal) => {
                 const isParcelado = deal.duplicates.length > 1;
