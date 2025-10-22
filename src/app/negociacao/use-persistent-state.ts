@@ -1,29 +1,24 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 
-export function usePersistentState<T>(key: string, initialState: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const [state, setState] = useState<T>(() => {
-        try {
-            if (typeof window !== 'undefined') {
-                const storedValue = localStorage.getItem(key);
-                return storedValue ? JSON.parse(storedValue) : initialState;
-            }
-        } catch (error) {
-            console.error(`Error reading localStorage key “${key}”:`, error);
-        }
-        return initialState;
-    });
-    
-    useEffect(() => {
-        try {
-            if (typeof window !== 'undefined') {
-                localStorage.setItem(key, JSON.stringify(state));
-            }
-        } catch (error) {
-            console.error(`Error setting localStorage key “${key}”:`, error);
-        }
-    }, [key, state]);
+export function usePersistentState<T>(key: string, initialValue: T): readonly [T, (value: T | ((val: T) => T)) => void] {
+  const [state, setState] = useState<T>(() => {
+    if (typeof window === 'undefined') return initialValue;
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
 
-    return [state, setState];
+  useEffect(() => {
+    try {
+        localStorage.setItem(key, JSON.stringify(state));
+    } catch (e) {
+        console.error("Failed to save state to localStorage", e);
+    }
+  }, [key, state]);
+
+  return [state, setState] as const;
 }
