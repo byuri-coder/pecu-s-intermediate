@@ -54,7 +54,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
                 )
             case 'image':
                 return (
-                     <div className="w-full aspect-video rounded-md overflow-hidden relative group">
+                     <div className="w-full max-w-xs aspect-video rounded-md overflow-hidden relative group">
                         <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover" data-ai-hint="farm field" />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button 
@@ -104,7 +104,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             <div
                 className={cn(
                 'rounded-lg p-3 text-sm relative',
-                 msg.type === 'image' ? 'w-full max-w-xl p-0' : 'max-w-md',
+                 msg.type === 'image' ? 'w-full max-w-xs p-0' : 'max-w-md',
                 isMe
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-background border'
@@ -156,10 +156,25 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
+      
+      if (file.size > 10 * 1024 * 1024) { // 10 MB limit
+          toast({
+              title: "Arquivo muito grande",
+              description: "Por favor, selecione um arquivo com menos de 10MB.",
+              variant: "destructive"
+          });
+          return;
+      }
+      
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
       // In a real app, upload the file to Firebase Storage here and get the URL
+      // For this demo, we simulate it. For images, we create a temporary local URL to show a preview.
+      // For PDFs, we just use the name as content, as there's no preview.
       const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
       onSendMessage({ content: content, type: fileType });
+      
+      // Reset file input
+      if(fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -190,7 +205,12 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
   };
   
   const handleChooseOnMap = () => {
+    // Opens Google Maps in a new tab for the user to pick a location and copy the URL
     window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
+    toast({
+        title: "Escolha e cole o link",
+        description: "Escolha a localização no Google Maps, copie o link do navegador e cole na caixa de mensagem.",
+    })
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -221,7 +241,7 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
                 ref={fileInputRef}
                 className="hidden"
                 onChange={handleFileChange}
-                accept="image/*,application/pdf"
+                accept="image/jpeg,image/png,application/pdf"
             />
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -233,15 +253,15 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
                  <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
                         <Paperclip className="mr-2 h-4 w-4"/>
-                        Imagem ou Documento
+                        Imagem ou Documento (PDF)
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSendCurrentLocation}>
                         <LocateFixed className="mr-2 h-4 w-4"/>
-                        Localização Atual
+                        Minha Localização Atual
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleChooseOnMap}>
                         <Map className="mr-2 h-4 w-4"/>
-                        Escolher no Mapa
+                        Escolher no Mapa e Colar Link
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -252,7 +272,7 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
                 onKeyDown={handleKeyDown}
                 disabled={isSending}
              />
-            <Button id="send-message-button" onClick={handleSendMessage} disabled={isSending}>
+            <Button id="send-message-button" onClick={handleSendMessage} disabled={isSending || newMessage.trim() === ''}>
               {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
         </div>
