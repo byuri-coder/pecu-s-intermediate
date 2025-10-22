@@ -342,7 +342,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                     <CardDescription>Ambas as partes devem preencher seus campos e aceitar os termos para congelar o contrato e prosseguir.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40', isFrozen && "opacity-60 pointer-events-none")}>
+                    <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
                         <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -368,7 +368,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                             )}
                         </div>
                     </div>
-                    <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40', isFrozen && "opacity-60 pointer-events-none")}>
+                    <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
                         <h4 className="font-semibold mb-2">Campos do Comprador</h4>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -490,5 +490,3 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 }
 
 export default AdjustmentClientPage;
-
-    
