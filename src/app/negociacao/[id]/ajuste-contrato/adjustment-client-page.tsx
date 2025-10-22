@@ -8,15 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, FileUp, Fingerprint, Download, Clock } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, FileUp, Fingerprint, Download, Clock, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { Asset, AssetType } from '@/lib/types';
+import type { Asset, AssetType, Duplicata, CompletedDeal } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
 import { getContractTemplate } from '@/lib/contract-template';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { numberToWords } from '@/lib/number-to-words';
+import { Seal } from '@/components/ui/seal';
+
 
 type UserRole = 'buyer' | 'seller';
 type AuthStatus = 'pending' | 'validated' | 'expired';
@@ -97,6 +102,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const [negotiation, setNegotiation] = React.useState<NegotiationState | null>(null);
   const [contract, setContract] = React.useState<ContractState | null>(null);
+  const [generatedDeal, setGeneratedDeal] = React.useState<CompletedDeal | null>(null);
 
   const negotiationId = `neg_${assetId}`;
   const contractId = `contract_${assetId}`;
@@ -182,7 +188,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     await updateContractState(updates);
 
     const bothAgreed = (currentUserRole === 'seller' && contract.buyerAgrees) || (currentUserRole === 'buyer' && contract.sellerAgrees);
-    if (bothAgreed) {
+    if (bothAgreed || (updates.sellerAgrees && contract.buyerAgrees) || (updates.buyerAgrees && contract.sellerAgrees)) {
         await updateContractState({ isFrozen: true, frozenAt: new Date().toISOString() });
         toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. E-mails de verificação foram enviados." });
     } else {
@@ -199,6 +205,85 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     });
   };
 
+  const handleFileUpload = (role: UserRole) => {
+    if (currentUserRole !== role) return;
+     toast({ title: "Funcionalidade em desenvolvimento."});
+     // Simulate upload
+     updateContractState({ uploads: { ...contract?.uploads, [role]: [{ name: `contrato_${role}.pdf`, url: '#'}] } });
+  };
+  
+  const handleGenerateDuplicates = () => {
+    if (!contract || !asset) return;
+    const totalValue = ('price' in asset && asset.price) || (('pricePerCredit' in asset && 'quantity' in asset) ? (asset.pricePerCredit * asset.quantity) : 0);
+    const installments = parseInt(contract.fields.seller.installments, 10) || 1;
+    const installmentValue = totalValue / installments;
+    const today = new Date();
+
+    const duplicates: Duplicata[] = Array.from({ length: installments }, (_, i) => {
+        const dueDate = new Date(today);
+        dueDate.setMonth(today.getMonth() + i + 1);
+        return {
+            orderNumber: `${i + 1}/${installments}`,
+            invoiceNumber: `NF-${assetId.substring(0, 6)}-${i+1}`,
+            issueDate: today.toLocaleDateString('pt-BR'),
+            dueDate: dueDate.toLocaleDateString('pt-BR'),
+            value: installmentValue
+        }
+    });
+    
+    const deal: CompletedDeal = {
+        assetId: assetId,
+        assetName: 'title' in asset ? asset.title : 'Crédito',
+        duplicates,
+        seller: { name: "Fazenda Rio Verde", doc: "12.345.678/0001-99", address: "Zona Rural, s/n, Alta Floresta, MT" },
+        buyer: { name: contract.fields.buyer.razaoSocial, doc: contract.fields.buyer.cnpj, address: contract.fields.buyer.endereco },
+        blockchain: {
+            transactionHash: '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            blockTimestamp: new Date().toISOString()
+        }
+    };
+    
+    setGeneratedDeal(deal);
+
+    // Save to local storage for the duplicates page
+    localStorage.setItem('completed_deals_with_duplicates', JSON.stringify([deal]));
+    localStorage.setItem('newDuplicatesAvailable', 'true');
+    window.dispatchEvent(new Event('storage'));
+
+    toast({ title: "Duplicatas Geradas!", description: "As duplicatas foram criadas e estão prontas para visualização."});
+  };
+
+  const handleDownloadDuplicatesPdf = (deal: CompletedDeal) => {
+    if (!deal) return;
+    const doc = new jsPDF();
+    let yPos = 15;
+
+    doc.setFontSize(18);
+    doc.text(`Duplicatas do Negócio: ${deal.assetName}`, doc.internal.pageSize.getWidth() / 2, yPos, { align: 'center' });
+    yPos += 15;
+
+    deal.duplicates.forEach((dup, index) => {
+        if (index > 0) yPos += 10;
+        (doc as any).autoTable({
+            startY: yPos,
+            theme: 'striped',
+            headStyles: { fillColor: [34, 139, 34] },
+            head: [[`Duplicata ${dup.orderNumber}`]],
+            body: [
+                ['Fatura Ref.', dup.invoiceNumber],
+                ['Vencimento', dup.dueDate],
+                ['Valor', formatCurrency(dup.value)],
+            ],
+            didDrawPage: (data: any) => { yPos = data.cursor.y }
+        });
+        yPos = (doc as any).autoTable.previous.finalY;
+    });
+
+    doc.save(`duplicatas_${deal.assetId}.pdf`);
+  };
+
+  const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
   if (!negotiation || !contract) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
   }
@@ -206,14 +291,12 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   const { isFrozen, fields, sellerAgrees, buyerAgrees, verifications, uploads } = contract;
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
+  const bothAgreed = sellerAgrees && buyerAgrees;
   const bothVerified = verifications.buyer === 'validated' && verifications.seller === 'validated';
-  const bothUploaded = uploads.seller.length > 0 && uploads.seller.length > 0;
+  const bothUploaded = uploads.seller.length > 0 && uploads.buyer.length > 0;
 
-  const handleGenerateDuplicates = () => toast({ title: "Funcionalidade em desenvolvimento."});
   const handleFinalizeContract = () => toast({ title: "Funcionalidade em desenvolvimento."});
-  const handleFileUpload = (role: UserRole) => toast({ title: "Funcionalidade em desenvolvimento."});
   
-
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -237,7 +320,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
           </CardHeader>
         </Card>
         
-        {/* Preview Section */}
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Pré-visualização do Contrato</CardTitle>
@@ -250,19 +332,16 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             </CardContent>
         </Card>
 
-        {/* Form Fields Section */}
         <div className="space-y-8">
-            {/* --- PASSO 1: PREENCHIMENTO --- */}
             <Card className={cn(isFrozen && "opacity-60 pointer-events-none")}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento de Campos</CardTitle>
-                    <CardDescription>Cada parte preenche os campos sob sua responsabilidade.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento e Acordo</CardTitle>
+                    <CardDescription>Ambas as partes devem preencher seus campos e aceitar os termos para congelar o contrato e prosseguir.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {/* Seção do Vendedor */}
                     <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
                         <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Método de Pagamento</Label>
                                 <div className="flex items-center gap-4">
@@ -282,15 +361,10 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                                         <Label htmlFor="installments">Número de Parcelas</Label>
                                         <Input id="installments" type="number" value={fields.seller.installments} onChange={(e) => handleFieldChange('seller', 'installments', e.target.value)} disabled={!isSeller || isFrozen}/>
                                     </div>
-                                     <div className="space-y-2">
-                                        <Label htmlFor="interest">Taxa de Juros Mensal (%)</Label>
-                                        <Input id="interest" type="number" value={fields.seller.interestPercent} onChange={(e) => handleFieldChange('seller', 'interestPercent', e.target.value)} disabled={!isSeller || isFrozen} />
-                                    </div>
                                 </>
                             )}
                         </div>
                     </div>
-                    {/* Seção do Comprador */}
                     <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
                         <h4 className="font-semibold mb-2">Campos do Comprador</h4>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -316,13 +390,12 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 <CardFooter>
                     <Button className="w-full" onClick={handleAccept} disabled={isFrozen || (isBuyer && buyerAgrees) || (isSeller && sellerAgrees)}>
                         <CheckCircle className="mr-2 h-4 w-4"/>
-                        {isFrozen ? "Termos Aceitos" : `Aceitar Termos e Propor Contrato como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
+                        {isFrozen ? "Termos Aceitos" : `Aceitar Termos como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
                     </Button>
                 </CardFooter>
             </Card>
 
-             {/* --- PASSO 2: VERIFICAÇÃO --- */}
-             <Card className={cn(!isFrozen && "opacity-60 pointer-events-none")}>
+             <Card className={cn(!bothAgreed && "opacity-50 pointer-events-none")}>
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>2. Verificação por E-mail</CardTitle>
                     <CardDescription>Após o aceite de ambos, a validação por e-mail é necessária para prosseguir.</CardDescription>
@@ -343,40 +416,70 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                  </CardContent>
              </Card>
 
-            {/* --- PASSO 3: UPLOADS E FINALIZAÇÃO --- */}
-            <Card className={cn(!bothVerified && "opacity-60 pointer-events-none")}>
+            <Card className={cn(!bothVerified && "opacity-50 pointer-events-none")}>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5"/>3. Documentos e Duplicatas</CardTitle>
                     <CardDescription>Anexe os documentos assinados e gere as duplicatas para finalizar.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                    <div className="grid grid-cols-2 gap-4">
-                       <div className={cn("space-y-2", isSeller ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                       <div className={cn("space-y-2 p-4 rounded-lg border", isSeller ? 'bg-background' : 'bg-muted/40')}>
                             <h4 className="font-semibold text-sm">Contrato do Vendedor</h4>
-                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isSeller && handleFileUpload('seller')}>
-                               <UploadCloud className="h-6 w-6 text-muted-foreground"/>
-                               <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
+                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer hover:bg-secondary" onClick={() => handleFileUpload('seller')}>
+                               {uploads.seller.length > 0 ? <CheckCircle className="h-6 w-6 text-green-500"/> : <UploadCloud className="h-6 w-6 text-muted-foreground"/>}
+                               <p className="text-xs text-muted-foreground mt-1">{uploads.seller.length > 0 ? 'Contrato Anexado' : 'Anexar Contrato Assinado'}</p>
                            </div>
                        </div>
-                        <div className={cn("space-y-2", isBuyer ? 'bg-background' : 'bg-muted/40', "p-4 rounded-lg border")}>
+                        <div className={cn("space-y-2 p-4 rounded-lg border", isBuyer ? 'bg-background' : 'bg-muted/40')}>
                            <h4 className="font-semibold text-sm">Contrato do Comprador</h4>
-                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer" onClick={() => isBuyer && handleFileUpload('buyer')}>
-                               <UploadCloud className="h-6 w-6 text-muted-foreground"/>
-                               <p className="text-xs text-muted-foreground mt-1">Anexar Contrato Assinado</p>
+                           <div className="h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2 cursor-pointer hover:bg-secondary" onClick={() => handleFileUpload('buyer')}>
+                                {uploads.buyer.length > 0 ? <CheckCircle className="h-6 w-6 text-green-500"/> : <UploadCloud className="h-6 w-6 text-muted-foreground"/>}
+                               <p className="text-xs text-muted-foreground mt-1">{uploads.buyer.length > 0 ? 'Contrato Anexado' : 'Anexar Contrato Assinado'}</p>
                            </div>
                        </div>
                    </div>
-                   <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified}>
+                   <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={!bothVerified || generatedDeal !== null}>
                         <Fingerprint className="mr-2 h-4 w-4"/>Gerar Duplicatas Autenticadas
                     </Button>
                 </CardContent>
                 <CardFooter>
-                   <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded}>
+                   <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={!bothUploaded || !generatedDeal}>
                        <Lock className="mr-2 h-4 w-4"/>
                        Finalizar Contrato e Transação
                    </Button>
                 </CardFooter>
             </Card>
+
+            {generatedDeal && (
+                <Card className={cn(!bothUploaded && "opacity-50 pointer-events-none")}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5"/>4. Duplicatas Geradas</CardTitle>
+                        <CardDescription>As duplicatas abaixo foram geradas com base nos termos do contrato. Faça o download e utilize para pagamento.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">Resumo do Negócio</h4>
+                             <Button onClick={() => handleDownloadDuplicatesPdf(generatedDeal)} size="sm">
+                                <Download className="mr-2 h-4 w-4" /> Baixar PDF
+                            </Button>
+                        </div>
+                        <div className="p-4 border rounded-lg bg-muted/30 space-y-2 text-sm">
+                            <p><strong>Ativo:</strong> {generatedDeal.assetName}</p>
+                            <p><strong>Vendedor:</strong> {generatedDeal.seller.name}</p>
+                            <p><strong>Comprador:</strong> {generatedDeal.buyer.name}</p>
+                        </div>
+                         {generatedDeal.duplicates.map((dup, index) => (
+                             <div key={index} className="grid grid-cols-4 gap-4 items-center border-b pb-2">
+                                <p className="text-sm"><strong>Parcela:</strong> {dup.orderNumber}</p>
+                                <p className="text-sm"><strong>Fatura:</strong> {dup.invoiceNumber}</p>
+                                <p className="text-sm"><strong>Vencimento:</strong> {dup.dueDate}</p>
+                                <p className="text-sm font-bold text-right">{formatCurrency(dup.value)}</p>
+                             </div>
+                         ))}
+                    </CardContent>
+                </Card>
+            )}
+
         </div>
       </div>
     </div>
