@@ -2,16 +2,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe, User, FileText, Fingerprint, MessageSquare, Film, Loader2 } from 'lucide-react';
-import type { RuralLand } from '@/lib/types';
+import type { RuralLand, Conversation } from '@/lib/types';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
+import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
+import { useUser } from '@/firebase';
 
 const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType'], className?: string }) => {
     const icons = {
@@ -76,6 +78,10 @@ async function getLandDetails(id: string): Promise<RuralLand | null> {
 
 export default function RuralLandDetailPage({ params }: { params: { id: string } }) {
   const [land, setLand] = useState<RuralLand | null | 'loading'>('loading');
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if(params.id) {
@@ -84,6 +90,33 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
         });
     }
   }, [params.id]);
+
+  const handleStartNegotiation = () => {
+    if (!user || !land) return;
+
+    setIsStartingChat(true);
+
+    const existingConversation = conversations.find(c => c.assetId === land.id);
+    if (existingConversation) {
+        router.push(`/chat-negociacao?id=${existingConversation.id}`);
+        return;
+    }
+    
+    const newConversation: Conversation = {
+        id: land.id,
+        assetId: land.id,
+        assetName: land.title,
+        name: land.owner,
+        avatar: `https://picsum.photos/seed/avatar${land.ownerId}/100/100`,
+        lastMessage: 'Negociação iniciada...',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        unread: 0,
+        type: 'rural-land',
+    };
+
+    setConversations(prev => [newConversation, ...prev]);
+    router.push(`/chat-negociacao?id=${land.id}`);
+  };
 
 
   if (land === 'loading') {
@@ -222,11 +255,13 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
               )}
              
               <div className="space-y-3 pt-4">
-                 <Button asChild className="w-full text-base" size="lg" disabled={land.status !== 'Disponível'}>
-                  <Link href={`/negociacao/${land.id}?type=rural-land`}>
-                    <MessageSquare className="mr-2 h-5 w-5" />
+                 <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={land.status !== 'Disponível' || isStartingChat}>
+                    {isStartingChat ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                        <MessageSquare className="mr-2 h-5 w-5" />
+                    )}
                     Iniciar Negociação
-                  </Link>
                 </Button>
               </div>
             </CardContent>

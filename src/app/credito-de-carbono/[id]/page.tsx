@@ -2,14 +2,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare, Loader2 } from 'lucide-react';
-import type { CarbonCredit } from '@/lib/types';
+import type { CarbonCredit, Conversation } from '@/lib/types';
+import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
+import { useUser } from '@/firebase';
 
 async function getCreditDetails(id: string): Promise<CarbonCredit | null> {
   try {
@@ -45,6 +47,10 @@ async function getCreditDetails(id: string): Promise<CarbonCredit | null> {
 
 export default function CreditDetailPage({ params }: { params: { id: string } }) {
   const [credit, setCredit] = useState<CarbonCredit | null | 'loading'>('loading');
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (params.id) {
@@ -53,6 +59,39 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         });
     }
   }, [params.id]);
+
+  const handleStartNegotiation = () => {
+    if (!user || !credit) return;
+
+    setIsStartingChat(true);
+
+    // Check if a conversation for this asset already exists
+    const existingConversation = conversations.find(c => c.assetId === credit.id);
+    if (existingConversation) {
+        router.push(`/chat-negociacao?id=${existingConversation.id}`);
+        return;
+    }
+    
+    // Create a new conversation object
+    const newConversation: Conversation = {
+        id: credit.id, // Use asset id as conversation id for simplicity
+        assetId: credit.id,
+        assetName: `Projeto de ${credit.creditType} em ${credit.location}`,
+        name: credit.sellerName,
+        avatar: `https://picsum.photos/seed/avatar${credit.ownerId}/100/100`,
+        lastMessage: 'Negociação iniciada...',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        unread: 0,
+        type: 'carbon-credit',
+    };
+
+    // Add to the beginning of the conversations list
+    setConversations(prev => [newConversation, ...prev]);
+
+    // In a real app, you would also create a negotiation record in your DB here.
+    
+    router.push(`/chat-negociacao?id=${credit.id}`);
+  };
 
 
   if (credit === 'loading') {
@@ -146,11 +185,13 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(credit.pricePerCredit)}
                 </span>
               </div>
-              <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' && credit.status !== 'Ativo'}>
-                  <Link href={`/negociacao/${credit.id}?type=carbon-credit`}>
-                    <MessageSquare className="mr-2 h-5 w-5" />
+              <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' && credit.status !== 'Ativo' || isStartingChat}>
+                    {isStartingChat ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                        <MessageSquare className="mr-2 h-5 w-5" />
+                    )}
                     Iniciar Negociação
-                  </Link>
               </Button>
             </CardContent>
           </Card>

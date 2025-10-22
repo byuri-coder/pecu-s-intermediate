@@ -2,14 +2,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Landmark, MapPin, Building, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TaxCredit } from '@/lib/types';
+import type { TaxCredit, Conversation } from '@/lib/types';
+import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
+import { useUser } from '@/firebase';
 
 
 const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendido' }) => {
@@ -58,6 +60,10 @@ async function getCreditDetails(id: string): Promise<TaxCredit | null> {
 
 export default function TaxCreditDetailPage({ params }: { params: { id: string } }) {
   const [credit, setCredit] = useState<TaxCredit | null | 'loading'>('loading');
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if(params.id) {
@@ -66,6 +72,33 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
         });
     }
   }, [params.id]);
+
+   const handleStartNegotiation = () => {
+    if (!user || !credit) return;
+
+    setIsStartingChat(true);
+
+    const existingConversation = conversations.find(c => c.assetId === credit.id);
+    if (existingConversation) {
+        router.push(`/chat-negociacao?id=${existingConversation.id}`);
+        return;
+    }
+    
+    const newConversation: Conversation = {
+        id: credit.id,
+        assetId: credit.id,
+        assetName: `Crédito de ${credit.taxType} - ${credit.location}`,
+        name: credit.sellerName,
+        avatar: `https://picsum.photos/seed/avatar${credit.ownerId}/100/100`,
+        lastMessage: 'Negociação iniciada...',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        unread: 0,
+        type: 'tax-credit',
+    };
+
+    setConversations(prev => [newConversation, ...prev]);
+    router.push(`/chat-negociacao?id=${credit.id}`);
+  };
 
   if (credit === 'loading') {
     return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;
@@ -158,11 +191,13 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
               </div>
 
               <div className="space-y-3 pt-4">
-                <Button asChild className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível'}>
-                  <Link href={`/negociacao/${credit.id}?type=tax-credit`}>
-                    <MessageSquare className="mr-2 h-5 w-5" />
+                <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' || isStartingChat}>
+                    {isStartingChat ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                        <MessageSquare className="mr-2 h-5 w-5" />
+                    )}
                     Iniciar Negociação
-                  </Link>
                 </Button>
               </div>
             </CardContent>
