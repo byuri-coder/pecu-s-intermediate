@@ -2,14 +2,14 @@
 'use client';
 
 import * as React from 'react';
-import { notFound, useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { notFound, useSearchParams, useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Landmark, Handshake, Edit, Send, Paperclip, ShieldCheck, UserCircle, MapPin, LocateFixed, Map, Loader2 } from 'lucide-react';
 import { NegotiationChat, type Message } from './negotiation-chat';
 import { Input } from '@/components/ui/input';
-import { ChatList, type Conversation } from '../chat-list';
+import { ChatList } from '../chat-list';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -19,19 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset } from '@/lib/types';
+import type { CarbonCredit, RuralLand, TaxCredit, AssetType, Asset, Conversation } from '@/lib/types';
 import { usePersistentState } from '../use-persistent-state';
 import { db, app } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-
-function getAssetTypeName(type: AssetType) {
-    switch(type) {
-        case 'carbon-credit': return 'Crédito de Carbono';
-        case 'tax-credit': return 'Crédito Tributário';
-        case 'rural-land': return 'Terra Rural';
-    }
-}
 
 function getAssetTypeRoute(type: AssetType) {
     switch(type) {
@@ -42,18 +34,22 @@ function getAssetTypeRoute(type: AssetType) {
 }
 
 
-export default function NegotiationPage({ params }: { params: { id: string } }) {
+export default function NegotiationPage() {
   const router = useRouter();
+  const params = useParams();
   const searchParams = useSearchParams();
-  const assetType = (searchParams?.get('type') as AssetType) ?? 'carbon-credit';
+  
+  const assetId = params.id as string;
+  const assetType = searchParams.get('type') as AssetType | null;
+  
   const { toast } = useToast();
   const auth = getAuth(app);
   const currentUser = auth.currentUser;
 
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   
-  const negotiationId = `neg_${params.id}`;
-  const [messages, setMessages] = React.useState<Message[]>([]);
+  const negotiationId = `neg_${assetId}`;
+  const [messages, setMessages] = usePersistentState<Message[]>(`chat-${assetId}`, []);
   const [newMessage, setNewMessage] = React.useState('');
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -68,28 +64,14 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
               if (data.ok && data.anuncio?.tipo === type) {
                   const anuncio = data.anuncio;
                   const formattedAsset: Asset = {
-                      ...anuncio,
+                      ...anuncio.metadados,
                       id: anuncio._id,
-                      owner: anuncio.metadados?.owner,
-                      sellerName: anuncio.metadados?.sellerName,
                       ownerId: anuncio.uidFirebase, // Ensure ownerId is mapped
-                      price: anuncio.price,
-                      pricePerCredit: anuncio.price,
-                      images: anuncio.imagens,
-                      creditType: anuncio.metadados?.credit_type,
-                      quantity: anuncio.metadados?.quantity,
-                      location: anuncio.metadados?.location,
-                      vintage: anuncio.metadados?.vintage,
-                      standard: anuncio.metadados?.standard,
-                      projectOverview: anuncio.descricao,
                       title: anuncio.titulo,
                       description: anuncio.descricao,
-                      sizeHa: anuncio.metadados?.sizeHa,
-                      businessType: anuncio.metadados?.businessType,
-                      documentation: anuncio.metadados?.documentation,
-                      registration: anuncio.metadados?.registration,
-                      taxType: anuncio.metadados?.taxType,
-                      amount: anuncio.metadados?.amount,
+                      price: anuncio.price,
+                      pricePerCredit: anuncio.price,
+                      images: anuncio.imagens || [],
                   };
                   setAsset(formattedAsset);
                   return;
@@ -102,99 +84,56 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
         }
     }
     
-    if (params.id) {
-        getAssetDetails(params.id, assetType);
+    if (assetId && assetType) {
+        getAssetDetails(assetId, assetType);
+    } else {
+        setAsset(null)
     }
-  }, [params.id, assetType]);
+  }, [assetId, assetType]);
   
-  // Real-time message listener
-    React.useEffect(() => {
-        if (!negotiationId) return;
-
-        const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
-        const q = query(messagesCollection, orderBy('timestamp', 'asc'));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const newMessages: Message[] = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    sender: data.senderId === currentUser?.uid ? 'me' : 'other',
-                    content: data.content,
-                    type: data.type,
-                    timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '',
-                    avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : 'https://picsum.photos/seed/avatar2/40/40'
-                } as Message;
-            });
-            setMessages(newMessages);
-        });
-
-        return () => unsubscribe();
-    }, [negotiationId, currentUser?.uid, params.id]);
-
   if (asset === 'loading') {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin"/></div>;
   }
   
-  if (!asset) {
+  if (!asset || !assetType) {
     notFound();
   }
 
-  const assetName = 'title' in asset ? asset.title : `Crédito de ${'taxType' in asset ? asset.taxType : 'creditType' in asset ? asset.creditType : ''}`;
-  const sellerName = 'owner' in asset && asset.owner ? asset.owner : ('sellerName' in asset ? asset.sellerName : 'Vendedor Desconhecido');
+  const assetName = 'title' in asset ? asset.title : `Crédito`;
+  const sellerName = ('sellerName' in asset && asset.sellerName) ? asset.sellerName : (('owner' in asset && asset.owner) ? asset.owner : 'Vendedor');
   const sellerAvatar = 'https://picsum.photos/seed/avatar2/40/40';
 
-  const addMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
-      
-    if (!currentUser || !('ownerId' in asset) || !asset.ownerId) {
-        toast({ title: "Erro de autenticação", description: "Você precisa estar logado para enviar mensagens.", variant: "destructive" });
-        return;
-    }
-    
-    const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
-    await addDoc(messagesCollection, {
-        senderId: currentUser.uid,
-        receiverId: asset.ownerId, // This should be the other participant's UID
-        content: msg.content,
-        type: msg.type,
-        timestamp: serverTimestamp(),
-        status: 'sent',
-    });
-
-
-    const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
-    
-    // Update or create conversation in localStorage
-    const newConversation: Conversation = {
-        id: params.id,
-        name: sellerName,
-        avatar: sellerAvatar,
-        lastMessage: lastMessageText,
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
-        type: assetType,
-    };
-    
-    setConversations(prevConvos => {
-        const existingConvoIndex = prevConvos.findIndex(c => c.id === newConversation.id);
-        if (existingConvoIndex > -1) {
-            const updatedConvos = [...prevConvos];
-            const [existingConvo] = updatedConvos.splice(existingConvoIndex, 1);
-            return [{ ...existingConvo, lastMessage: newConversation.lastMessage, time: newConversation.time }, ...updatedConvos];
-        }
-        return [newConversation, ...prevConvos];
-    });
-  }
-
-  const handleSendMessage = () => {
-    const messageContent = newMessage.trim();
-    if (messageContent === '') return;
-
-    const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+    const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(newMessage);
     const messageType = isGoogleMapsUrl ? 'location' : 'text';
 
-    addMessage({ content: messageContent, type: messageType });
-    setNewMessage('');
+    const newMsg: Message = { 
+        id: `msg-${Date.now()}`,
+        sender: 'me', 
+        content: newMessage,
+        type: messageType,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, newMsg]);
+    
+    try {
+        await fetch(`/api/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                chatId: assetId, 
+                message: newMessage,
+                sender: 'me' // In a real app, send user ID
+            }),
+        });
+        setNewMessage('');
+    } catch(error) {
+        console.error("Failed to send message:", error);
+        toast({ title: "Erro", description: "Não foi possível enviar a mensagem.", variant: "destructive"});
+        // Optionally remove the message from local state if it fails to send
+        setMessages(prev => prev.filter(m => m.id !== newMsg.id));
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,7 +142,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
       // In a real app, upload the file to Firebase Storage here and get the URL
       const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
-      addMessage({ content: content, type: fileType });
+      // addMessage({ content: content, type: fileType });
     }
   };
 
@@ -221,7 +160,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
       (position) => {
         const { latitude, longitude } = position.coords;
         const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        addMessage({ content: url, type: 'location' });
+        // addMessage({ content: url, type: 'location' });
       },
       (error) => {
         toast({
@@ -247,11 +186,11 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-full">
-        <div className="md:col-span-4 lg:col-span-3 h-full">
-             <ChatList conversations={conversations} />
+        <div className="hidden md:block md:col-span-4 lg:col-span-3 h-full">
+             <ChatList conversations={conversations} activeChatId={assetId}/>
         </div>
         
-        <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">
+        <div className="col-span-1 md:col-span-8 lg:col-span-9 h-full flex flex-col gap-4">
             <Card className="flex-grow flex flex-col">
                 <CardHeader className="flex-row items-center justify-between">
                     <Sheet>
@@ -298,7 +237,7 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
                     </Sheet>
                      <div className="space-x-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/chat-negociacao/${params.id}/ajuste?type=${assetType}`}>
+                            <Link href={`/negociacao/${assetId}/ajuste-contrato?type=${assetType}`}>
                                 <Edit className="mr-2 h-4 w-4"/> ajustar e fechar contrato
                             </Link>
                         </Button>
@@ -352,5 +291,3 @@ export default function NegotiationPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-    

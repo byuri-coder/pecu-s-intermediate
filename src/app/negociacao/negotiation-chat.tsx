@@ -5,18 +5,10 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Download, MapPin, Send, Paperclip, LocateFixed, Map } from 'lucide-react';
+import { FileText, Download, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from '@/components/ui/input';
 import type { Message } from '@/lib/types';
 
 
@@ -126,11 +118,8 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 }
 
 
-export function NegotiationChat({ messages, onSendMessage }: { messages: Message[], onSendMessage: (msg: Omit<Message, 'id'|'sender'|'timestamp'|'avatar'>) => void }) {
+export function NegotiationChat({ messages }: { messages: Message[] }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [newMessage, setNewMessage] = React.useState('');
   
   // Auto-scroll to bottom
   React.useEffect(() => {
@@ -142,116 +131,19 @@ export function NegotiationChat({ messages, onSendMessage }: { messages: Message
     }
   }, [messages.length]);
 
-  const handleSendMessage = () => {
-    const messageContent = newMessage.trim();
-    if (messageContent === '') return;
-
-    const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
-    const messageType = isGoogleMapsUrl ? 'location' : 'text';
-
-    onSendMessage({ content: messageContent, type: messageType });
-    setNewMessage('');
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
-      // In a real app, upload the file to Firebase Storage here and get the URL
-      const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
-      onSendMessage({ content: content, type: fileType });
-    }
-  };
-
-  const handleSendCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "Geolocalização não suportada",
-        description: "Seu navegador não permite o compartilhamento de localização.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        onSendMessage({ content: url, type: 'location' });
-      },
-      (error) => {
-        toast({
-            title: "Erro ao obter localização",
-            description: "Não foi possível obter sua localização. Verifique as permissões do seu navegador.",
-            variant: "destructive"
-        });
-      }
-    );
-  };
-  
-  const handleChooseOnMap = () => {
-    window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-
   return (
     <>
         <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20" ref={scrollAreaRef}>
             <div className="space-y-6">
-                {messages.map((msg) => (
+                {messages.length > 0 ? messages.map((msg) => (
                     <MessageBubble key={msg.id} msg={msg}/>
-                ))}
+                )) : (
+                     <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <p>Nenhuma mensagem ainda. Envie a primeira!</p>
+                    </div>
+                )}
             </div>
         </ScrollArea>
-        <div className="mt-4 flex items-center gap-2">
-            <Input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileChange}
-                accept="image/*,application/pdf"
-            />
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Paperclip className="h-5 w-5" />
-                        <span className="sr-only">Anexar arquivo</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                        <Paperclip className="mr-2 h-4 w-4"/>
-                        Imagem ou Documento
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSendCurrentLocation}>
-                        <LocateFixed className="mr-2 h-4 w-4"/>
-                        Localização Atual
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleChooseOnMap}>
-                        <Map className="mr-2 h-4 w-4"/>
-                        Escolher no Mapa
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <Input 
-                placeholder="Digite sua mensagem..." 
-                value={newMessage} 
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-             />
-            <Button id="send-message-button" onClick={handleSendMessage}>
-              <Send className="h-5 w-5" />
-            </Button>
-        </div>
     </>
   );
 }
-
-    

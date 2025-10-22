@@ -7,7 +7,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Leaf, Landmark, Mountain } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const AssetTypeIcon = ({ type }: { type: AssetType }) => {
     const iconMap = {
@@ -24,8 +24,7 @@ export function ChatList({ conversations, activeChatId }: { conversations: Conve
   const router = useRouter();
 
   const handleSelectChat = (conversation: Conversation) => {
-    // Use query params to switch chats without full page reload if possible
-    router.push(`/negociacao?id=${conversation.id}`);
+    router.push(`/negociacao/${conversation.id}?type=${conversation.type}`);
   };
 
   return (
