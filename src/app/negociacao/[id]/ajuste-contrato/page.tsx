@@ -1,13 +1,15 @@
 
+'use client';
 
-import AdjustmentClientPage from './adjustment-client-page';
 import type { Asset, AssetType } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import { notFound, useParams, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
 async function getAssetDetails(id: string, type: AssetType): Promise<Asset | null> {
-  // This is a placeholder. In a real app, you would fetch this from your database.
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/anuncios/get/${id}`, { cache: 'no-store' });
+    const response = await fetch(`/api/anuncios/get/${id}`, { cache: 'no-store' });
     if (!response.ok) {
       console.error(`Failed to fetch asset ${id}, status: ${response.status}`);
       return null;
@@ -23,7 +25,7 @@ async function getAssetDetails(id: string, type: AssetType): Promise<Asset | nul
             description: anuncio.descricao,
             status: anuncio.status,
             price: anuncio.price,
-            pricePerCredit: anuncio.price, // Assuming price can be pricePerCredit
+            pricePerCredit: anuncio.price, 
             images: anuncio.imagens || [],
             createdAt: anuncio.createdAt,
         } as Asset;
@@ -35,29 +37,52 @@ async function getAssetDetails(id: string, type: AssetType): Promise<Asset | nul
   }
 }
 
+const AdjustmentClientPage = dynamic(
+  () => import('./adjustment-client-page').then(mod => mod.AdjustmentClientPage),
+  { 
+    ssr: false,
+    loading: () => (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
+    )
+  }
+);
 
-// This is a Server Component. It fetches data on the server and passes it to the client component.
-export default async function AdjustmentPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const id = params.id;
-  const assetType = (searchParams?.type as AssetType);
+
+export default function AdjustmentPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id ?? '';
+  const assetType = (searchParams?.get('type') as AssetType);
+
+  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
+
+  React.useEffect(() => {
+    if (id && assetType) {
+        getAssetDetails(id, assetType).then(setAsset);
+    } else {
+        setAsset(null);
+    }
+  }, [id, assetType]);
 
   if (!assetType) {
     console.warn("Asset type is missing in search params.");
     notFound();
   }
 
-  const asset = await getAssetDetails(id, assetType);
+  if (asset === 'loading') {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
+    )
+  }
 
   if (!asset) {
     notFound();
   }
 
-  // Pass the server-fetched props to the client component.
   return <AdjustmentClientPage assetId={id} assetType={assetType} asset={asset} />;
 }
