@@ -10,8 +10,21 @@ import { MessageSquareText, Loader2 } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
 import { useUser } from '@/firebase';
-import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
+
+// This is a mock function, replace with your actual data fetching logic
+async function fetchConversationsForUser(userId: string): Promise<Conversation[]> {
+    try {
+        const response = await fetch(`/api/chat/list?userId=${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch conversations");
+        const data = await response.json();
+        return data.conversations || [];
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
 
 export function NegotiationHubPageClient() {
   const searchParams = useSearchParams();
@@ -19,35 +32,39 @@ export function NegotiationHubPageClient() {
   const { user: currentUser, loading: userLoading } = useUser();
   const { toast } = useToast();
 
-  const conversationKey = currentUser ? `conversations_${currentUser.uid}` : 'conversations_guest';
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   const [isSending, setIsSending] = React.useState(false);
   const [messagesLoading, setMessagesLoading] = React.useState(true);
+  const [conversationsLoading, setConversationsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (!currentUser && !userLoading) {
-        setConversations([]);
+    if (currentUser) {
+      setConversationsLoading(true);
+      fetchConversationsForUser(currentUser.uid)
+        .then(setConversations)
+        .finally(() => setConversationsLoading(false));
+    } else if (!userLoading) {
+      setConversations([]);
+      setConversationsLoading(false);
     }
-  }, [currentUser, userLoading, setConversations]);
+  }, [currentUser, userLoading]);
 
 
   const activeConversation = React.useMemo(() => {
     return conversations.find(c => c.id === activeChatId) || null;
   }, [activeChatId, conversations]);
 
-  const assetType = activeConversation?.type;
-
   // Effect to fetch asset details when chat changes
   React.useEffect(() => {
-    async function getAssetDetails(id: string, type: AssetType) {
+    async function getAssetDetails(assetId: string) {
         setAsset('loading');
         try {
-            const res = await fetch(`/api/anuncios/get/${id}`);
+            const res = await fetch(`/api/anuncios/get/${assetId}`);
             if (res.ok) {
               const data = await res.json();
-              if (data.ok && data.anuncio?.tipo === type) {
+              if (data.ok) {
                   const anuncio = data.anuncio;
                   const formattedAsset: Asset = {
                       ...anuncio.metadados,
@@ -70,12 +87,12 @@ export function NegotiationHubPageClient() {
         }
     }
     
-    if (activeChatId && assetType) {
-        getAssetDetails(activeChatId, assetType);
+    if (activeConversation?.assetId) {
+        getAssetDetails(activeConversation.assetId);
     } else {
         setAsset(null);
     }
-  }, [activeChatId, assetType]);
+  }, [activeConversation]);
 
 
   // Real-time message fetching
@@ -92,7 +109,7 @@ export function NegotiationHubPageClient() {
     const fetchMessages = async () => {
       if (!isMounted) return;
       try {
-        setMessagesLoading(true);
+        if (isMounted) setMessagesLoading(true);
         const response = await fetch(`/api/messages?chatId=${activeChatId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch messages');
@@ -108,12 +125,6 @@ export function NegotiationHubPageClient() {
               avatar: msg.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar,
           }));
           setMessages(newMessages);
-           if (newMessages.length > messages.length) {
-                const latestMessage = newMessages[newMessages.length - 1];
-                if (latestMessage.sender === 'other') {
-                    setConversations(prev => prev.map(c => c.id === activeChatId ? {...c, unread: (c.unread || 0) + 1} : c))
-                }
-           }
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -123,17 +134,14 @@ export function NegotiationHubPageClient() {
     };
     
     fetchMessages(); // initial fetch
-    intervalId = setInterval(fetchMessages, 3000); // poll every 3 seconds
-    
-    // Mark as read when opening chat
-    setConversations(prev => prev.map(c => c.id === activeChatId ? {...c, unread: 0} : c));
+    intervalId = setInterval(fetchMessages, 5000); // poll every 5 seconds
     
     return () => {
         isMounted = false;
         clearInterval(intervalId);
     };
 
-  }, [activeChatId, currentUser, activeConversation?.avatar, setConversations, messages.length]);
+  }, [activeChatId, currentUser, activeConversation?.avatar]);
 
   const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
     if (!currentUser || !asset || !('ownerId' in asset) || !asset.ownerId || !activeChatId) {
@@ -142,9 +150,7 @@ export function NegotiationHubPageClient() {
     }
     setIsSending(true);
 
-    const receiverId = currentUser.uid === asset.ownerId 
-      ? conversations.find(c => c.id === activeChatId)?.participants?.find(p => p !== currentUser.uid) ?? 'unknown_buyer'
-      : asset.ownerId;
+    const receiverId = activeConversation?.participants?.find(p => p !== currentUser.uid);
       
     if(!receiverId) {
        toast({ title: "Erro", description: "Não foi possível identificar o destinatário.", variant: "destructive" });
@@ -176,11 +182,11 @@ export function NegotiationHubPageClient() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
       });
-      if(!response.ok) throw new Error("Failed to send message");
+      const sentMessage = await response.json();
+      if(!response.ok) throw new Error(sentMessage.error || "Failed to send message");
 
-      const tempId = Date.now().toString();
       const optimisticMessage: Message = {
-        id: tempId,
+        id: sentMessage.message._id,
         sender: 'me',
         content: msg.content,
         type: msg.type,
@@ -188,19 +194,6 @@ export function NegotiationHubPageClient() {
         avatar: currentUser.photoURL,
       }
       setMessages(prev => [...prev, optimisticMessage]);
-
-
-      // Update conversation in localStorage
-      const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
-      setConversations(prevConvos => {
-          const convoIndex = prevConvos.findIndex(c => c.id === activeChatId);
-          if (convoIndex > -1) {
-              const updatedConvos = [...prevConvos];
-              const [existingConvo] = updatedConvos.splice(convoIndex, 1);
-              return [{ ...existingConvo, lastMessage: lastMessageText, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), unread: 0 }, ...updatedConvos];
-          }
-          return prevConvos;
-      });
 
     } catch(error) {
         console.error("Error sending message:", error);
@@ -214,7 +207,7 @@ export function NegotiationHubPageClient() {
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
         <div className="md:col-span-4 lg:col-span-3 h-full">
-             <ChatList conversations={conversations} activeChatId={activeChatId} />
+             <ChatList conversations={conversations} activeChatId={activeChatId} isLoading={conversationsLoading} />
         </div>
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
             {asset === 'loading' || userLoading ? (

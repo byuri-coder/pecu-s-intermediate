@@ -122,10 +122,10 @@ export interface Message {
 }
 
 export interface Conversation {
-  id: string;
+  id: string; // Corresponds to the ChatRoom _id from MongoDB
   assetId: string;
   assetName: string;
-  name: string;
+  name: string; // Name of the other participant
   avatar: string;
   lastMessage: string;
   time: string;

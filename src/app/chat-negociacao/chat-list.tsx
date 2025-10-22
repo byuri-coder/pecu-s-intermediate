@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Leaf, Landmark, Mountain } from 'lucide-react';
+import { Search, Leaf, Landmark, Mountain, Loader2 } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -21,11 +21,11 @@ const AssetTypeIcon = ({ type }: { type: AssetType }) => {
 };
 
 
-export function ChatList({ conversations, activeChatId }: { conversations: Conversation[], activeChatId: string | null }) {
+export function ChatList({ conversations, activeChatId, isLoading }: { conversations: Conversation[], activeChatId: string | null, isLoading: boolean }) {
   const router = useRouter();
 
-  const handleSelectChat = (conversation: Conversation) => {
-    router.push(`/chat-negociacao?id=${conversation.id}`);
+  const handleSelectChat = (conversationId: string) => {
+    router.push(`/chat-negociacao?id=${conversationId}`);
   };
 
   return (
@@ -37,44 +37,50 @@ export function ChatList({ conversations, activeChatId }: { conversations: Conve
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-2 overflow-y-auto">
-        <div className="space-y-1">
-          {conversations.length > 0 ? conversations.map((convo) => (
-            <button
-              key={convo.id}
-              className={cn(
-                'flex w-full items-start gap-3 rounded-lg p-3 text-left transition-all hover:bg-secondary',
-                activeChatId === convo.id && 'bg-secondary'
-              )}
-              onClick={() => handleSelectChat(convo)}
-            >
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={convo.avatar} />
-                <AvatarFallback>{convo.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold truncate">{convo.name}</p>
-                  <time className="text-xs text-muted-foreground">{convo.time}</time>
-                </div>
-                <div className="flex items-center justify-between">
-                   <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
-                   <div className="flex items-center gap-1.5">
-                    <AssetTypeIcon type={convo.type} />
-                    {convo.unread > 0 && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                            {convo.unread}
-                        </span>
-                    )}
-                   </div>
-                </div>
-              </div>
-            </button>
-          )) : (
-            <div className="text-center text-sm text-muted-foreground py-10">
-                Nenhuma negociação ativa. Inicie uma a partir da página de um ativo.
+        {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          )}
-        </div>
+        ) : (
+            <div className="space-y-1">
+            {conversations.length > 0 ? conversations.map((convo) => (
+                <button
+                key={convo.id}
+                className={cn(
+                    'flex w-full items-start gap-3 rounded-lg p-3 text-left transition-all hover:bg-secondary',
+                    activeChatId === convo.id && 'bg-secondary'
+                )}
+                onClick={() => handleSelectChat(convo.id)}
+                >
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={convo.avatar} />
+                    <AvatarFallback>{convo.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                    <div className="flex items-center justify-between">
+                    <p className="font-semibold truncate">{convo.name}</p>
+                    <time className="text-xs text-muted-foreground">{convo.time}</time>
+                    </div>
+                    <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
+                    <div className="flex items-center gap-1.5">
+                        <AssetTypeIcon type={convo.type} />
+                        {convo.unread > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                {convo.unread}
+                            </span>
+                        )}
+                    </div>
+                    </div>
+                </div>
+                </button>
+            )) : (
+                <div className="text-center text-sm text-muted-foreground py-10">
+                    Nenhuma negociação ativa. Inicie uma a partir da página de um ativo.
+                </div>
+            )}
+            </div>
+        )}
       </CardContent>
     </Card>
   );

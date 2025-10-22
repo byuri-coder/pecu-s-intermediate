@@ -14,7 +14,6 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 
 const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType'], className?: string }) => {
     const icons = {
@@ -83,12 +82,8 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [_, setConversations] = usePersistentState<Conversation[]>(
-    user ? `conversations_${user.uid}` : 'conversations_guest',
-    []
-  );
 
-  const handleStartNegotiation = () => {
+  const handleStartNegotiation = async () => {
     if (!user || !land || land === 'loading') {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
         router.push('/login');
@@ -96,36 +91,35 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
     }
 
     setIsStartingChat(true);
-
-    const conversationKey = `conversations_${user.uid}`;
-    const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
     
-    const existingConversation = currentConversations.find(c => c.id === land.id);
-    if (existingConversation) {
-        router.push(`/chat-negociacao?id=${existingConversation.id}`);
-        return;
+    try {
+      const response = await fetch('/api/chat/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyerId: user.uid,
+          assetId: land.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Não foi possível iniciar o chat.');
+      }
+
+      const { chatId } = data;
+      router.push(`/chat-negociacao?id=${chatId}`);
+
+    } catch (error: any) {
+      console.error("Erro ao iniciar negociação:", error);
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsStartingChat(false);
     }
-    
-    const newConversation: Conversation = {
-        id: land.id,
-        assetId: land.id,
-        assetName: land.title,
-        name: land.owner,
-        avatar: `https://avatar.vercel.sh/${land.ownerId}.png`,
-        lastMessage: 'Negociação iniciada...',
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
-        type: 'rural-land',
-        participants: [user.uid, land.ownerId],
-    };
-
-    const updatedConversations = [newConversation, ...currentConversations];
-    localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
-    
-    window.dispatchEvent(new Event('storage'));
-    setConversations(updatedConversations);
-
-    router.push(`/chat-negociacao?id=${land.id}`);
   };
 
 

@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare, Loader2 } from 'lucide-react';
 import type { CarbonCredit, Conversation } from '@/lib/types';
-import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -53,15 +52,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { toast } = useToast();
   
-  // Note: We are not using setConversations here directly, but usePersistentState needs it.
-  // The logic inside handleStartNegotiation manually gets and sets from localStorage.
-  const [_, setConversations] = usePersistentState<Conversation[]>(
-    user ? `conversations_${user.uid}` : 'conversations_guest',
-    []
-  );
-
-
-  const handleStartNegotiation = () => {
+  const handleStartNegotiation = async () => {
     if (!user || !credit || credit === 'loading') {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
         router.push('/login');
@@ -69,44 +60,36 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
     }
 
     setIsStartingChat(true);
-    
-    const conversationKey = `conversations_${user.uid}`;
-    
-    // Manually read from localStorage to get the most up-to-date state
-    const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
-    
-    const existingConversation = currentConversations.find(c => c.id === credit.id);
-    
-    if (existingConversation) {
-        router.push(`/chat-negociacao?id=${existingConversation.id}`);
-        return;
+
+    try {
+      const response = await fetch('/api/chat/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyerId: user.uid,
+          assetId: credit.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Não foi possível iniciar o chat.');
+      }
+
+      const { chatId } = data;
+      // Redirect to the chat page with the unique chatId
+      router.push(`/chat-negociacao?id=${chatId}`);
+
+    } catch (error: any) {
+      console.error("Erro ao iniciar negociação:", error);
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsStartingChat(false);
     }
-    
-    // Create new conversation and add it to the beginning of the list
-    const newConversation: Conversation = {
-        id: credit.id, 
-        assetId: credit.id,
-        assetName: `Projeto de ${credit.creditType} em ${credit.location}`,
-        name: credit.sellerName,
-        avatar: `https://avatar.vercel.sh/${credit.ownerId}.png`,
-        lastMessage: 'Negociação iniciada...',
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
-        type: 'carbon-credit',
-        participants: [user.uid, credit.ownerId],
-    };
-
-    const updatedConversations = [newConversation, ...currentConversations];
-
-    // Manually write back to localStorage and notify other tabs
-    localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
-    window.dispatchEvent(new Event('storage'));
-
-    // The usePersistentState hook will eventually sync, but this ensures it's available for the next page
-    setConversations(updatedConversations);
-
-    // Redirect to the chat page
-    router.push(`/chat-negociacao?id=${credit.id}`);
   };
 
 
