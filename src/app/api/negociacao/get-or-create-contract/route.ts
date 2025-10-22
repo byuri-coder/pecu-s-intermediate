@@ -39,12 +39,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, contract });
 
   } catch (error: any) {
-    console.error("Erro em /api/negociacao/get-or-create-contract:", error);
+    console.error("Erro em /api/negociacao/get-or-create-contract (POST):", error);
     // Handle potential race condition where two requests create the same contract
     if (error.code === 11000) {
         const contract = await Contrato.findOne({ negotiationId: (await req.json()).negotiationId });
         return NextResponse.json({ ok: true, contract });
     }
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+      await connectDB();
+      const { searchParams } = new URL(req.url);
+      const negotiationId = searchParams.get('negotiationId');
+
+      if (!negotiationId) {
+          return NextResponse.json({ ok: false, error: 'negotiationId é obrigatório' }, { status: 400 });
+      }
+
+      const contract = await Contrato.findOne({ negotiationId });
+
+      if (!contract) {
+          return NextResponse.json({ ok: false, message: 'Contrato não encontrado' }, { status: 404 });
+      }
+
+      return NextResponse.json({ ok: true, contract });
+  } catch (error: any) {
+      console.error("Erro em /api/negociacao/get-or-create-contract (GET):", error);
+      return NextResponse.json({ ok: false, error: "Erro interno do servidor" }, { status: 500 });
   }
 }
