@@ -149,7 +149,7 @@ export function NegotiationHubPageClient() {
 
 
     try {
-      // Ensure negotiation document exists
+      // Ensure negotiation document exists in Firestore for contract management
       const negDocRef = doc(db, 'negociacoes', negotiationId);
       await setDoc(negDocRef, { 
           buyerId: receiverId === asset.ownerId ? currentUser.uid : receiverId,
@@ -168,11 +168,12 @@ export function NegotiationHubPageClient() {
         throw new Error("Falha ao enviar mensagem para a API.");
       }
 
-      const sentMessage = await response.json();
+      // The polling mechanism will fetch the new message, so an optimistic update isn't strictly necessary
+      // but can make the UI feel faster.
 
       // Optimistically update UI
       const optimisticMessage: Message = {
-        id: sentMessage.message._id || `temp-${Date.now()}`,
+        id: `temp-${Date.now()}`,
         sender: 'me',
         content: msg.content,
         type: msg.type,

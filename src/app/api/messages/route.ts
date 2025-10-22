@@ -7,7 +7,9 @@ export async function POST(req: Request) {
   try {
     const db = await connectDB();
     if (!db) {
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...await req.json() } }, { status: 201 });
+      // Mock response for environments without MongoDB
+      const body = await req.json();
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -30,6 +32,7 @@ export async function POST(req: Request) {
       status: 'sent',
     });
 
+    // We don't need to emit from here if the client is polling
     return NextResponse.json({ ok: true, message: newMessage });
   } catch (error: any) {
     console.error('Error in /api/messages (POST):', error);
@@ -41,6 +44,7 @@ export async function GET(req: Request) {
   try {
     const db = await connectDB();
     if (!db) {
+       // Return empty array for mocked environments
       return NextResponse.json({ ok: true, messages: [] });
     }
 
