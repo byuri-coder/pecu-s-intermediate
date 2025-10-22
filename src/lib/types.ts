@@ -117,6 +117,8 @@ export interface Message {
   type: 'text' | 'image' | 'pdf' | 'location';
   timestamp: string;
   avatar?: string;
+  status?: 'sent' | 'delivered' | 'read';
+  receiverId?: string;
 }
 
 export interface Conversation {
