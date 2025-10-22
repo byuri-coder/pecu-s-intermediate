@@ -49,16 +49,35 @@
     },
     "Negotiation": {
       "title": "Negotiation",
-      "description": "Represents the state of a negotiation for an asset.",
+      "description": "Represents the state of a negotiation for an asset, including the chat status.",
       "type": "object",
       "properties": {
         "assetId": { "type": "string" },
         "buyerId": { "type": "string" },
         "sellerId": { "type": "string" },
         "chatId": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "awaiting_verification", "awaiting_uploads", "completed"] },
+        "status": { 
+          "type": "string", 
+          "enum": ["aguardando_resposta", "em_andamento", "encerrado", "arquivado"],
+          "description": "aguardando_resposta: Chat criado, vendedor ainda não respondeu. em_andamento: Ambos podem enviar mensagens. encerrado: Negociação finalizada, chat somente leitura. arquivado: Chat fora da lista ativa, pode ser reaberto."
+        },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Represents a single message within a negotiation chat.",
+      "type": "object",
+      "properties": {
+          "messageId": { "type": "string" },
+          "chatId": { "type": "string" },
+          "senderId": { "type": "string" },
+          "receiverId": { "type": "string" },
+          "content": { "type": "string", "description": "Contains text or a URL to a file." },
+          "type": { "type": "string", "enum": ["text", "image", "document", "voice"] },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "status": { "type": "string", "enum": ["sent", "delivered", "read"] }
       }
     },
     "Contract": {
