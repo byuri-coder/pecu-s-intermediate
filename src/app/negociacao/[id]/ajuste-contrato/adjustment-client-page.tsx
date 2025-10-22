@@ -187,10 +187,12 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
     await updateContractState(updates);
 
-    const bothAgreed = (currentUserRole === 'seller' && contract.buyerAgrees) || (currentUserRole === 'buyer' && contract.sellerAgrees);
-    if (bothAgreed || (updates.sellerAgrees && contract.buyerAgrees) || (updates.buyerAgrees && contract.sellerAgrees)) {
+    // Check if the update will result in both parties agreeing
+    const bothWillAgree = (updates.sellerAgrees && contract.buyerAgrees) || (updates.buyerAgrees && contract.sellerAgrees);
+
+    if (bothWillAgree) {
         await updateContractState({ isFrozen: true, frozenAt: new Date().toISOString() });
-        toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. E-mails de verificação foram enviados." });
+        toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. Agora, proceda com a verificação por e-mail." });
     } else {
         toast({ title: "Acordo Registrado", description: "Aguardando a outra parte aceitar para finalizar o contrato." });
     }
