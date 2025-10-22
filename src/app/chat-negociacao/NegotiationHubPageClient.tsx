@@ -9,7 +9,7 @@ import { MessageSquareText, Loader2 } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
 import { db, app } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, addDoc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
@@ -109,9 +109,25 @@ export function NegotiationHubPageClient() {
     }
     
     const negotiationId = `neg_${activeChatId}`;
-    const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
+    const negotiationDocRef = doc(db, 'negociacoes', negotiationId);
     
     try {
+      // Ensure the parent negotiation document exists
+      const negotiationDoc = await getDoc(negotiationDocRef);
+      if (!negotiationDoc.exists()) {
+          await setDoc(negotiationDocRef, {
+              assetId: activeChatId,
+              buyerId: currentUser.uid,
+              sellerId: asset.ownerId,
+              status: "em_andamento",
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              chatId: negotiationId, // Link to itself or a separate chat collection
+          });
+      }
+
+      // Add the message to the subcollection
+      const messagesCollection = collection(negotiationDocRef, 'messages');
       await addDoc(messagesCollection, {
           senderId: currentUser.uid,
           receiverId: asset.ownerId, 
