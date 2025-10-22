@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, Landmark, MapPin, Building, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TaxCredit, Conversation } from '@/lib/types';
-import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,36 +63,9 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  
-  const conversationKey = user ? `conversations_${user.uid}` : null;
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations_guest', []);
-  
-  useEffect(() => {
-    if (user && conversationKey) {
-      const storedData = localStorage.getItem(conversationKey);
-      if (storedData) {
-        try {
-          setConversations(JSON.parse(storedData));
-        } catch(e) {
-          console.error("Failed to parse conversations from localStorage", e);
-          setConversations([]);
-        }
-      } else {
-        setConversations([]);
-      }
-    }
-  }, [user, conversationKey, setConversations]);
-
-  useEffect(() => {
-    if(params.id) {
-        getCreditDetails(params.id).then(data => {
-            setCredit(data);
-        });
-    }
-  }, [params.id]);
 
    const handleStartNegotiation = () => {
-    if (!user || !credit || credit === 'loading' || !conversationKey) {
+    if (!user || !credit || credit === 'loading') {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
         router.push('/login');
         return;
@@ -101,7 +73,10 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
 
     setIsStartingChat(true);
 
-    const existingConversation = conversations.find(c => c.assetId === credit.id);
+    const conversationKey = `conversations_${user.uid}`;
+    const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
+
+    const existingConversation = currentConversations.find(c => c.assetId === credit.id);
     if (existingConversation) {
         router.push(`/chat-negociacao?id=${existingConversation.id}`);
         return;
@@ -120,12 +95,22 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
         participants: [user.uid, credit.ownerId],
     };
 
-    setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
-    
-    setTimeout(() => {
-        router.push(`/chat-negociacao?id=${credit.id}`);
-    }, 100);
+    const updatedConversations = [newConversation, ...currentConversations];
+    localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
+
+    window.dispatchEvent(new Event('storage'));
+
+    router.push(`/chat-negociacao?id=${credit.id}`);
   };
+
+  useEffect(() => {
+    if(params.id) {
+        getCreditDetails(params.id).then(data => {
+            setCredit(data);
+        });
+    }
+  }, [params.id]);
+
 
   if (credit === 'loading') {
     return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;

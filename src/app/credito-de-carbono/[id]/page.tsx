@@ -53,44 +53,21 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { toast } = useToast();
 
-  const conversationKey = user ? `conversations_${user.uid}` : null;
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations_guest', []);
-  
-  useEffect(() => {
-    if (user && conversationKey) {
-      const storedData = localStorage.getItem(conversationKey);
-      if (storedData) {
-        try {
-          setConversations(JSON.parse(storedData));
-        } catch(e) {
-          console.error("Failed to parse conversations from localStorage", e);
-          setConversations([]);
-        }
-      } else {
-        setConversations([]);
-      }
-    }
-  }, [user, conversationKey, setConversations]);
-
-
-  useEffect(() => {
-    if (params.id) {
-        getCreditDetails(params.id).then(data => {
-            setCredit(data);
-        });
-    }
-  }, [params.id]);
-
   const handleStartNegotiation = () => {
-    if (!user || !credit || credit === 'loading' || !conversationKey) {
+    if (!user || !credit || credit === 'loading') {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
         router.push('/login');
         return;
     }
 
     setIsStartingChat(true);
-
-    const existingConversation = conversations.find(c => c.assetId === credit.id);
+    
+    // Always use a user-specific key
+    const conversationKey = `conversations_${user.uid}`;
+    const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
+    
+    const existingConversation = currentConversations.find(c => c.assetId === credit.id);
+    
     if (existingConversation) {
         router.push(`/chat-negociacao?id=${existingConversation.id}`);
         return;
@@ -109,14 +86,23 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         participants: [user.uid, credit.ownerId],
     };
 
-    setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
+    const updatedConversations = [newConversation, ...currentConversations];
+    localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
     
-    // Give localStorage a moment to update before redirecting
-    setTimeout(() => {
-        router.push(`/chat-negociacao?id=${credit.id}`);
-    }, 100);
+    // We can dispatch a storage event to notify other tabs/windows if needed
+    window.dispatchEvent(new Event('storage'));
+
+    router.push(`/chat-negociacao?id=${credit.id}`);
   };
 
+
+  useEffect(() => {
+    if (params.id) {
+        getCreditDetails(params.id).then(data => {
+            setCredit(data);
+        });
+    }
+  }, [params.id]);
 
   if (credit === 'loading') {
     return <div className="container mx-auto py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto"/></div>;
