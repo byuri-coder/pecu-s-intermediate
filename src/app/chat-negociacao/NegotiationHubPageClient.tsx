@@ -11,7 +11,7 @@ import { ActiveChatHeader } from './active-chat-header';
 import { useUser } from '@/firebase';
 import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function NegotiationHubPageClient() {
@@ -20,10 +20,19 @@ export function NegotiationHubPageClient() {
   const { user: currentUser, loading: userLoading } = useUser();
   const { toast } = useToast();
 
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
+  const conversationKey = currentUser ? `conversations_${currentUser.uid}` : 'conversations';
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
   const [isSending, setIsSending] = React.useState(false);
+  const [messagesLoading, setMessagesLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!currentUser) {
+        setConversations([]);
+    }
+  }, [currentUser, setConversations]);
+
 
   const activeConversation = React.useMemo(() => {
     return conversations.find(c => c.id === activeChatId) || null;
@@ -70,44 +79,40 @@ export function NegotiationHubPageClient() {
   }, [activeChatId, assetType]);
 
 
-  // Effect for fetching messages from MongoDB via API (polling)
+  // Effect for fetching messages from Firestore in real-time
   React.useEffect(() => {
     if (!activeChatId || !currentUser) {
         setMessages([]);
+        setMessagesLoading(false);
         return;
     }
-
-    const negotiationId = `neg_${activeChatId}`;
-
-    const fetchMessages = async () => {
-        try {
-            const res = await fetch(`/api/messages?chatId=${negotiationId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.ok) {
-                    const formattedMessages: Message[] = data.messages.map((m: any) => ({
-                        id: m._id,
-                        sender: m.senderId === currentUser.uid ? 'me' : 'other',
-                        content: m.text || m.fileUrl || `https://www.google.com/maps?q=${m.location?.latitude},${m.location?.longitude}`,
-                        type: m.type,
-                        timestamp: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                        avatar: m.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar
-                    }));
-                    setMessages(formattedMessages);
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching messages:", error);
-            toast({ title: "Erro ao carregar mensagens", variant: "destructive" });
-        }
-    };
     
-    fetchMessages(); // Initial fetch
+    setMessagesLoading(true);
+    const negotiationId = `neg_${activeChatId}`;
+    const messagesRef = collection(db, "negociacoes", negotiationId, "messages");
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
 
-    // Poll for new messages every 3 seconds to simulate real-time
-    const intervalId = setInterval(fetchMessages, 3000);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newMessages: Message[] = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                sender: data.senderId === currentUser.uid ? 'me' : 'other',
+                content: data.text || data.fileUrl || (data.location ? `https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}` : 'Conteúdo inválido'),
+                type: data.type,
+                timestamp: data.timestamp?.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                avatar: data.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar
+            }
+        });
+        setMessages(newMessages);
+        setMessagesLoading(false);
+    }, (error) => {
+        console.error("Error listening to messages: ", error);
+        toast({ title: "Erro ao carregar mensagens", variant: "destructive" });
+        setMessagesLoading(false);
+    });
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    return () => unsubscribe();
 
   }, [activeChatId, currentUser, activeConversation?.avatar, toast]);
 
@@ -135,12 +140,11 @@ export function NegotiationHubPageClient() {
         senderId: currentUser.uid,
         receiverId: receiverId,
         type: msg.type,
+        timestamp: new Date(),
     };
     
     if (msg.type === 'text') payload.text = msg.content;
     else if (msg.type === 'image' || msg.type === 'pdf') {
-        // In a real app, you would upload the file here and get a permanent URL.
-        // For this demo, we'll just pass the temporary blob URL or file name.
         payload.fileUrl = msg.content;
         payload.fileName = msg.content.split('/').pop();
         payload.fileType = msg.type;
@@ -151,7 +155,6 @@ export function NegotiationHubPageClient() {
 
 
     try {
-      // Ensure negotiation document exists in Firestore for contract management
       const negDocRef = doc(db, 'negociacoes', negotiationId);
       await setDoc(negDocRef, { 
           buyerId: receiverId === asset.ownerId ? currentUser.uid : receiverId,
@@ -159,27 +162,11 @@ export function NegotiationHubPageClient() {
           assetId: activeChatId,
           updatedAt: new Date(),
        }, { merge: true });
-
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
       
-      if (!response.ok) {
-        throw new Error("Falha ao enviar mensagem para a API.");
-      }
+      const messagesColRef = collection(db, 'negociacoes', negotiationId, 'messages');
+      await setDoc(doc(messagesColRef), payload);
 
-      // Optimistically update UI
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        sender: 'me',
-        content: msg.content,
-        type: msg.type,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        avatar: currentUser.photoURL || undefined,
-      };
-      setMessages(prev => [...prev, optimisticMessage]);
+      // No optimistic update needed, onSnapshot will handle it.
 
       // Update conversation in localStorage
       const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
@@ -217,7 +204,7 @@ export function NegotiationHubPageClient() {
                         assetId={activeConversation.assetId}
                     />
                     <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                       <NegotiationChat messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
+                       <NegotiationChat messages={messages} onSendMessage={handleSendMessage} isSending={isSending} isLoading={messagesLoading} />
                     </CardContent>
                 </Card>
             ) : (
@@ -237,5 +224,3 @@ export function NegotiationHubPageClient() {
     </div>
   );
 }
-
-    

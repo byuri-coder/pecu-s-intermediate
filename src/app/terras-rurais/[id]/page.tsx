@@ -79,9 +79,17 @@ async function getLandDetails(id: string): Promise<RuralLand | null> {
 export default function RuralLandDetailPage({ params }: { params: { id: string } }) {
   const [land, setLand] = useState<RuralLand | null | 'loading'>('loading');
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const { user } = useUser();
   const router = useRouter();
+
+  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+
+  useEffect(() => {
+    if (user && conversationKey === 'conversations') {
+      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    }
+  }, [user, conversationKey, setConversations]);
 
   useEffect(() => {
     if(params.id) {
@@ -92,7 +100,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   }, [params.id]);
 
   const handleStartNegotiation = () => {
-    if (!user || !land) return;
+    if (!user || !land || land === 'loading') return;
 
     setIsStartingChat(true);
 
@@ -112,6 +120,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         unread: 0,
         type: 'rural-land',
+        participants: [user.uid, land.ownerId],
     };
 
     setConversations(prev => [newConversation, ...prev]);

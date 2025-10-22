@@ -126,7 +126,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 }
 
 
-export function NegotiationChat({ messages, onSendMessage, isSending }: { messages: Message[], onSendMessage: (msg: Omit<Message, 'id'|'sender'|'timestamp'|'avatar'>) => void, isSending: boolean }) {
+export function NegotiationChat({ messages, onSendMessage, isSending, isLoading }: { messages: Message[], onSendMessage: (msg: Omit<Message, 'id'|'sender'|'timestamp'|'avatar'>) => void, isSending: boolean, isLoading: boolean }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -167,13 +167,9 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
       }
       
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
-      // In a real app, upload the file to Firebase Storage here and get the URL
-      // For this demo, we simulate it. For images, we create a temporary local URL to show a preview.
-      // For PDFs, we just use the name as content, as there's no preview.
-      const content = fileType === 'image' ? URL.createObjectURL(file) : file.name;
+      const content = URL.createObjectURL(file); // In a real app, upload file to storage and get URL
       onSendMessage({ content: content, type: fileType });
       
-      // Reset file input
       if(fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -205,7 +201,6 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
   };
   
   const handleChooseOnMap = () => {
-    // Opens Google Maps in a new tab for the user to pick a location and copy the URL
     window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
     toast({
         title: "Escolha e cole o link",
@@ -225,10 +220,15 @@ export function NegotiationChat({ messages, onSendMessage, isSending }: { messag
     <>
         <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20" ref={scrollAreaRef}>
             <div className="space-y-6">
-                {messages.map((msg) => (
-                    <MessageBubble key={msg.id} msg={msg}/>
-                ))}
-                 {messages.length === 0 && (
+                {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                ) : messages.length > 0 ? (
+                    messages.map((msg) => (
+                        <MessageBubble key={msg.id} msg={msg}/>
+                    ))
+                ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                         <p>Nenhuma mensagem ainda. Envie a primeira!</p>
                     </div>

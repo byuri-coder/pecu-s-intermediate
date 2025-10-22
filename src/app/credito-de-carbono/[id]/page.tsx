@@ -48,9 +48,19 @@ async function getCreditDetails(id: string): Promise<CarbonCredit | null> {
 export default function CreditDetailPage({ params }: { params: { id: string } }) {
   const [credit, setCredit] = useState<CarbonCredit | null | 'loading'>('loading');
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const { user } = useUser();
   const router = useRouter();
+
+  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  
+  useEffect(() => {
+    if (user && conversationKey === 'conversations') {
+      // Re-initialize if user loads after initial state is set
+      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    }
+  }, [user, conversationKey, setConversations]);
+
 
   useEffect(() => {
     if (params.id) {
@@ -61,20 +71,18 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   }, [params.id]);
 
   const handleStartNegotiation = () => {
-    if (!user || !credit) return;
+    if (!user || !credit || credit === 'loading') return;
 
     setIsStartingChat(true);
 
-    // Check if a conversation for this asset already exists
     const existingConversation = conversations.find(c => c.assetId === credit.id);
     if (existingConversation) {
         router.push(`/chat-negociacao?id=${existingConversation.id}`);
         return;
     }
     
-    // Create a new conversation object
     const newConversation: Conversation = {
-        id: credit.id, // Use asset id as conversation id for simplicity
+        id: credit.id, 
         assetId: credit.id,
         assetName: `Projeto de ${credit.creditType} em ${credit.location}`,
         name: credit.sellerName,
@@ -83,12 +91,10 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         unread: 0,
         type: 'carbon-credit',
+        participants: [user.uid, credit.ownerId],
     };
 
-    // Add to the beginning of the conversations list
     setConversations(prev => [newConversation, ...prev]);
-
-    // In a real app, you would also create a negotiation record in your DB here.
     
     router.push(`/chat-negociacao?id=${credit.id}`);
   };

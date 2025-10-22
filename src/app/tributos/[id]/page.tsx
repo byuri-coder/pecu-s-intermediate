@@ -61,9 +61,17 @@ async function getCreditDetails(id: string): Promise<TaxCredit | null> {
 export default function TaxCreditDetailPage({ params }: { params: { id: string } }) {
   const [credit, setCredit] = useState<TaxCredit | null | 'loading'>('loading');
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const { user } = useUser();
   const router = useRouter();
+  
+  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  
+  useEffect(() => {
+    if (user && conversationKey === 'conversations') {
+      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    }
+  }, [user, conversationKey, setConversations]);
 
   useEffect(() => {
     if(params.id) {
@@ -74,7 +82,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
   }, [params.id]);
 
    const handleStartNegotiation = () => {
-    if (!user || !credit) return;
+    if (!user || !credit || credit === 'loading') return;
 
     setIsStartingChat(true);
 
@@ -94,6 +102,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         unread: 0,
         type: 'tax-credit',
+        participants: [user.uid, credit.ownerId],
     };
 
     setConversations(prev => [newConversation, ...prev]);
