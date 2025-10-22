@@ -185,17 +185,18 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     if (currentUserRole === 'seller') updates.sellerAgrees = true;
     if (currentUserRole === 'buyer') updates.buyerAgrees = true;
 
-    await updateContractState(updates);
-
     // Check if the update will result in both parties agreeing
-    const bothWillAgree = (updates.sellerAgrees && contract.buyerAgrees) || (updates.buyerAgrees && contract.sellerAgrees);
+    const bothWillAgree = (currentUserRole === 'seller' && contract.buyerAgrees) || (currentUserRole === 'buyer' && contract.sellerAgrees) || (updates.sellerAgrees && contract.buyerAgrees) || (updates.buyerAgrees && contract.sellerAgrees);
 
     if (bothWillAgree) {
-        await updateContractState({ isFrozen: true, frozenAt: new Date().toISOString() });
+        updates.isFrozen = true;
+        updates.frozenAt = new Date().toISOString();
         toast({ title: "Contrato Congelado!", description: "Ambas as partes aceitaram. Agora, proceda com a verificação por e-mail." });
     } else {
         toast({ title: "Acordo Registrado", description: "Aguardando a outra parte aceitar para finalizar o contrato." });
     }
+    
+    await updateContractState(updates);
   };
 
   const handleSendVerificationEmail = (role: UserRole) => {
@@ -335,13 +336,13 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         </Card>
 
         <div className="space-y-8">
-            <Card className={cn(isFrozen && "opacity-60 pointer-events-none")}>
+            <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>1. Preenchimento e Acordo</CardTitle>
                     <CardDescription>Ambas as partes devem preencher seus campos e aceitar os termos para congelar o contrato e prosseguir.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
+                    <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40', isFrozen && "opacity-60 pointer-events-none")}>
                         <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -367,7 +368,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                             )}
                         </div>
                     </div>
-                    <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
+                    <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40', isFrozen && "opacity-60 pointer-events-none")}>
                         <h4 className="font-semibold mb-2">Campos do Comprador</h4>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -392,7 +393,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 <CardFooter>
                     <Button className="w-full" onClick={handleAccept} disabled={isFrozen || (isBuyer && buyerAgrees) || (isSeller && sellerAgrees)}>
                         <CheckCircle className="mr-2 h-4 w-4"/>
-                        {isFrozen ? "Termos Aceitos" : `Aceitar Termos como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
+                        {isFrozen ? "Termos Aceitos por Ambos" : `Aceitar Termos como ${currentUserRole === 'buyer' ? 'Comprador' : 'Vendedor'}`}
                     </Button>
                 </CardFooter>
             </Card>
@@ -489,3 +490,5 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 }
 
 export default AdjustmentClientPage;
+
+    
