@@ -15,7 +15,7 @@ export default function AcceptanceErrorPage() {
                     </div>
                     <CardTitle className="text-2xl font-bold">Ocorreu um Problema</CardTitle>
                     <CardDescription>
-                        O link de validação que você usou é inválido, expirou ou já foi utilizado. Por favor, tente solicitar um novo e-mail de verificação.
+                        O link de validação que você usou é inválido, expirou ou já foi utilizado. Por favor, tente solicitar um novo e-mail de verificação a partir da página de negociação.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

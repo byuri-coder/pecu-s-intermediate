@@ -50,6 +50,7 @@ const ContratoSchema = new Schema({
           cnpj: { type: String, default: '' },
           ie: { type: String, default: '' },
           endereco: { type: String, default: '' },
+          email: { type: String, default: '' },
           paymentMethod: { type: String, enum: ['vista', 'parcelado'], default: 'vista' },
           installments: { type: String, default: '1' },
           interestPercent: { type: String, default: '0' }
@@ -58,7 +59,8 @@ const ContratoSchema = new Schema({
           razaoSocial: { type: String, default: '' },
           cnpj: { type: String, default: '' },
           ie: { type: String, default: '' },
-          endereco: { type: String, default: '' }
+          endereco: { type: String, default: '' },
+          email: { type: String, default: '' }
       }
   },
   

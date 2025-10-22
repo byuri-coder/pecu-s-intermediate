@@ -7,21 +7,29 @@ import { connectDB } from '@/lib/mongodb';
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
-if (!BREVO_API_KEY || !JWT_SECRET) {
-  console.error("Variáveis de ambiente BREVO_API_KEY ou JWT_SECRET não definidas.");
+if (!BREVO_API_KEY) {
+  console.error("Variável de ambiente BREVO_API_KEY não definida.");
+}
+if (JWT_SECRET === 'supersecretjwtkey') {
+  console.warn("Atenção: JWT_SECRET está usando um valor padrão. Defina uma chave segura em produção.");
 }
 
+
 export async function POST(req: Request) {
+  if (!BREVO_API_KEY) {
+    return NextResponse.json({ ok: false, error: "Brevo API Key não configurada." }, { status: 500 });
+  }
+
   try {
+    await connectDB();
     const { negotiationId, role, userEmail, userName } = await req.json();
 
     if (!negotiationId || !userEmail || !role) {
       return NextResponse.json({ ok: false, error: 'Dados obrigatórios ausentes' }, { status: 400 });
     }
-
-    await connectDB();
+    
     const contract = await Contrato.findOne({ negotiationId });
     if (!contract) {
         return NextResponse.json({ ok: false, error: 'Contrato não encontrado' }, { status: 404 });
@@ -44,13 +52,13 @@ export async function POST(req: Request) {
       to: [{ email: userEmail, name: userName || 'Usuário' }],
       subject: 'Confirmação de Aceite do Contrato',
       htmlContent: `
-        <div style="font-family:Arial, sans-serif; text-align:center; padding: 20px;">
-          <h2 style="color: #333;">Confirme seu aceite de contrato</h2>
-          <p style="color: #555;">Olá, ${userName || 'Usuário'}!</p>
-          <p style="color: #555;">Seu contrato foi validado e aguarda seu aceite. Por favor, clique no botão abaixo para confirmar sua concordância com os termos.</p>
+        <div style="font-family:Arial, sans-serif; text-align:center; padding: 20px; color: #333;">
+          <h2 style="color: #22c55e;">Confirme seu aceite de contrato</h2>
+          <p>Olá, ${userName || 'Usuário'}!</p>
+          <p>Seu contrato referente à negociação <strong>#${negotiationId}</strong> foi validado e aguarda seu aceite. Por favor, clique no botão abaixo para confirmar sua concordância com os termos.</p>
           <p style="margin: 30px 0;">
             <a href="${validationUrl}" 
-               style="background-color:#10b981; color:white; padding:12px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">
+               style="background-color:#22c55e; color:white; padding:12px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">
                Confirmar Aceite e Prosseguir
             </a>
           </p>

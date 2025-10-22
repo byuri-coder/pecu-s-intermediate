@@ -4,12 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React from 'react';
 
 export default function AcceptanceSuccessPage() {
-    const router = useRouter();
-
     return (
         <div className="container mx-auto flex items-center justify-center min-h-[60vh]">
             <Card className="w-full max-w-lg text-center">
@@ -19,12 +15,12 @@ export default function AcceptanceSuccessPage() {
                     </div>
                     <CardTitle className="text-2xl font-bold">Aceite Confirmado!</CardTitle>
                     <CardDescription>
-                        Sua validação foi registrada com sucesso. Você pode retornar à página de negociação para continuar.
+                        Sua validação foi registrada com sucesso. Você pode retornar à página de negociação para continuar o processo.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
-                        <Link href="/dashboard">Voltar ao Início</Link>
+                        <Link href="/dashboard">Voltar ao Painel</Link>
                     </Button>
                 </CardContent>
             </Card>

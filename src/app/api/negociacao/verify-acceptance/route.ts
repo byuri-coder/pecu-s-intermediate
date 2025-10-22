@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { Contrato } from '@/models/Contrato';
 import { connectDB } from '@/lib/mongodb';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export async function GET(req: Request) {
@@ -29,7 +29,10 @@ export async function GET(req: Request) {
     }
 
     if (role === 'buyer' || role === 'seller') {
-        contract.emailValidation[role] = { validated: true, timestamp: new Date() };
+        // Evita re-escrever se já foi validado
+        if (!contract.emailValidation[role].validated) {
+            contract.emailValidation[role] = { validated: true, timestamp: new Date() };
+        }
     } else {
         console.log(`Role inválida: ${role}`);
         return NextResponse.redirect(`${BASE_URL}/aceite-erro`);
@@ -44,8 +47,7 @@ export async function GET(req: Request) {
     await contract.save();
 
     // Redireciona para a página de sucesso
-    const redirectUrl = `${BASE_URL}/negociacao/${contract.anuncioId.toString()}/ajuste-contrato`;
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(`${BASE_URL}/aceite-sucesso`);
 
   } catch (err: any) {
     console.error("Erro ao validar token:", err);
