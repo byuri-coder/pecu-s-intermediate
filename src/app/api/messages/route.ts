@@ -7,7 +7,6 @@ export async function POST(req: Request) {
   try {
     const db = await connectDB();
     if (!db) {
-      // Mock response for environments without MongoDB
       const body = await req.json();
       return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body } }, { status: 201 });
     }
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
       fileName,
       fileType,
       location,
-      status: 'sent',
     });
 
     return NextResponse.json({ ok: true, message: newMessage });
@@ -43,7 +41,6 @@ export async function GET(req: Request) {
   try {
     const db = await connectDB();
     if (!db) {
-       // Return empty array for mocked environments
       return NextResponse.json({ ok: true, messages: [] });
     }
 
@@ -62,5 +59,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
-
     

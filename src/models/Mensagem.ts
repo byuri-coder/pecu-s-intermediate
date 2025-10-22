@@ -1,7 +1,7 @@
 // src/models/Mensagem.ts
 import mongoose, { Schema, models } from "mongoose";
 
-const MensagemSchema = new Schema({
+const ChatMessageSchema = new mongoose.Schema({
   chatId: { type: String, required: true, index: true },
   senderId: { type: String, required: true, index: true },
   receiverId: { type: String, required: true, index: true },
@@ -18,9 +18,7 @@ const MensagemSchema = new Schema({
     latitude: Number,
     longitude: Number,
   },
-  status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
 }, { timestamps: true });
 
-export const Mensagem = models.Mensagem || mongoose.model("Mensagem", MensagemSchema);
 
-    
+export const Mensagem = models.ChatMessage || mongoose.model("ChatMessage", ChatMessageSchema);

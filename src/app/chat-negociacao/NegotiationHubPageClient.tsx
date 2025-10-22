@@ -11,8 +11,6 @@ import { ActiveChatHeader } from './active-chat-header';
 import { useUser } from '@/firebase';
 import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export function NegotiationHubPageClient() {
   const searchParams = useSearchParams();
@@ -79,42 +77,52 @@ export function NegotiationHubPageClient() {
   }, [activeChatId, assetType]);
 
 
-  // Effect for fetching messages from Firestore in real-time
+  // Real-time message fetching simulation
   React.useEffect(() => {
     if (!activeChatId || !currentUser) {
-        setMessages([]);
-        setMessagesLoading(false);
-        return;
+      setMessages([]);
+      setMessagesLoading(false);
+      return;
     }
+
+    let isMounted = true;
+    let intervalId: NodeJS.Timeout;
+
+    const fetchMessages = async () => {
+      try {
+        setMessagesLoading(true);
+        const response = await fetch(`/api/messages?chatId=${activeChatId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+        const data = await response.json();
+        if (isMounted && data.ok) {
+          const newMessages: Message[] = data.messages.map((msg: any) => ({
+              id: msg._id,
+              sender: msg.senderId === currentUser.uid ? 'me' : 'other',
+              content: msg.text || msg.fileUrl || (msg.location ? `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}` : 'Conteúdo inválido'),
+              type: msg.type,
+              timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              avatar: msg.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar,
+          }));
+          setMessages(newMessages);
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      } finally {
+        if(isMounted) setMessagesLoading(false);
+      }
+    };
     
-    setMessagesLoading(true);
-    const negotiationId = `neg_${activeChatId}`;
-    const messagesRef = collection(db, "negociacoes", negotiationId, "messages");
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    fetchMessages(); // initial fetch
+    intervalId = setInterval(fetchMessages, 3000); // poll every 3 seconds
+    
+    return () => {
+        isMounted = false;
+        clearInterval(intervalId);
+    };
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const newMessages: Message[] = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                sender: data.senderId === currentUser.uid ? 'me' : 'other',
-                content: data.text || data.fileUrl || (data.location ? `https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}` : 'Conteúdo inválido'),
-                type: data.type,
-                timestamp: data.timestamp?.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                avatar: data.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar
-            }
-        });
-        setMessages(newMessages);
-        setMessagesLoading(false);
-    }, (error) => {
-        console.error("Error listening to messages: ", error);
-        toast({ title: "Erro ao carregar mensagens", variant: "destructive" });
-        setMessagesLoading(false);
-    });
-
-    return () => unsubscribe();
-
-  }, [activeChatId, currentUser, activeConversation?.avatar, toast]);
+  }, [activeChatId, currentUser, activeConversation?.avatar]);
 
   const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
     if (!currentUser || !asset || !('ownerId' in asset) || !asset.ownerId || !activeChatId) {
@@ -122,8 +130,6 @@ export function NegotiationHubPageClient() {
         return;
     }
     setIsSending(true);
-
-    const negotiationId = `neg_${activeChatId}`;
 
     const receiverId = currentUser.uid === asset.ownerId 
       ? conversations.find(c => c.id === activeChatId)?.participants?.find(p => p !== currentUser.uid) ?? 'unknown_buyer'
@@ -136,11 +142,10 @@ export function NegotiationHubPageClient() {
     }
 
     const payload: any = {
-        chatId: negotiationId,
+        chatId: activeChatId,
         senderId: currentUser.uid,
         receiverId: receiverId,
         type: msg.type,
-        timestamp: new Date(),
     };
     
     if (msg.type === 'text') payload.text = msg.content;
@@ -155,18 +160,25 @@ export function NegotiationHubPageClient() {
 
 
     try {
-      const negDocRef = doc(db, 'negociacoes', negotiationId);
-      await setDoc(negDocRef, { 
-          buyerId: receiverId === asset.ownerId ? currentUser.uid : receiverId,
-          sellerId: asset.ownerId,
-          assetId: activeChatId,
-          updatedAt: new Date(),
-       }, { merge: true });
-      
-      const messagesColRef = collection(db, 'negociacoes', negotiationId, 'messages');
-      await setDoc(doc(messagesColRef), payload);
+      const response = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+      if(!response.ok) throw new Error("Failed to send message");
 
-      // No optimistic update needed, onSnapshot will handle it.
+      // Optimistic update locally for instant feedback
+      const tempId = Date.now().toString();
+      const optimisticMessage: Message = {
+        id: tempId,
+        sender: 'me',
+        content: msg.content,
+        type: msg.type,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        avatar: currentUser.photoURL,
+      }
+      setMessages(prev => [...prev, optimisticMessage]);
+
 
       // Update conversation in localStorage
       const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
