@@ -27,25 +27,22 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
     
-    // Refs e state para o scroll inteligente
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
     const [autoScroll, setAutoScroll] = React.useState(true);
 
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
         const target = event.currentTarget;
-        const atBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50; // Margem de 50px
+        const atBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50; 
         setAutoScroll(atBottom);
     };
 
-    // Effect para scroll inteligente
     React.useEffect(() => {
         if (autoScroll && messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, autoScroll]);
 
-    // Effect for fetching messages (initial load and polling)
     React.useEffect(() => {
         let isMounted = true;
         let intervalId: NodeJS.Timeout;
@@ -77,8 +74,8 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
             }
         };
 
-        fetchMessages(); // Initial fetch
-        intervalId = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+        fetchMessages();
+        intervalId = setInterval(fetchMessages, 3000);
 
         return () => {
             isMounted = false;
@@ -120,7 +117,6 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
             const sentMessage = await response.json();
             if(!response.ok) throw new Error(sentMessage.error || "Failed to send message");
 
-            // Ativa o auto-scroll antes de adicionar a nova mensagem
             setAutoScroll(true);
 
             const optimisticMessage: Message = {
@@ -188,13 +184,6 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
         toast({ title: "Escolha e cole o link", description: "Copie o link do mapa e cole na caixa de mensagem." });
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            handleTextSend();
-        }
-    };
-
     return (
         <>
             <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20" onScroll={handleScroll} ref={scrollAreaRef}>
@@ -244,7 +233,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                     placeholder="Digite sua mensagem..." 
                     value={newMessage} 
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onFocus={(e) => e.stopPropagation()} // Evita re-renders
+                    onFocus={(e) => e.stopPropagation()} 
                     disabled={isSending}
                 />
                 <Button type="submit" id="send-message-button" disabled={isSending || newMessage.trim() === ''}>

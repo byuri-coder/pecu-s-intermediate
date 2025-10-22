@@ -70,6 +70,7 @@ export default function AdjustmentPage() {
   if (!assetType) {
     console.warn("Asset type is missing in search params.");
     notFound();
+    return null; // Adicionado para garantir que nada é retornado
   }
 
   if (asset === 'loading') {
@@ -82,6 +83,7 @@ export default function AdjustmentPage() {
 
   if (!asset) {
     notFound();
+    return null; // Adicionado para garantir que nada é retornado
   }
 
   return <AdjustmentClientPage assetId={id} assetType={assetType} asset={asset} />;
