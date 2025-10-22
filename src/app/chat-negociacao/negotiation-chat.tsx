@@ -5,7 +5,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Download, MapPin, Send, Paperclip, LocateFixed, Map } from 'lucide-react';
+import { FileText, Download, MapPin, Send, Paperclip, LocateFixed, Map, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -126,7 +126,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 }
 
 
-export function NegotiationChat({ messages, onSendMessage }: { messages: Message[], onSendMessage: (msg: Omit<Message, 'id'|'sender'|'timestamp'|'avatar'>) => void }) {
+export function NegotiationChat({ messages, onSendMessage, isSending }: { messages: Message[], onSendMessage: (msg: Omit<Message, 'id'|'sender'|'timestamp'|'avatar'>) => void, isSending: boolean }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -144,7 +144,7 @@ export function NegotiationChat({ messages, onSendMessage }: { messages: Message
 
   const handleSendMessage = () => {
     const messageContent = newMessage.trim();
-    if (messageContent === '') return;
+    if (messageContent === '' || isSending) return;
 
     const isGoogleMapsUrl = /^(https?:\/\/)?(www\.)?(google\.com\/maps|maps\.app\.goo\.gl)\/.+/.test(messageContent);
     const messageType = isGoogleMapsUrl ? 'location' : 'text';
@@ -225,7 +225,7 @@ export function NegotiationChat({ messages, onSendMessage }: { messages: Message
             />
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" disabled={isSending}>
                         <Paperclip className="h-5 w-5" />
                         <span className="sr-only">Anexar arquivo</span>
                     </Button>
@@ -250,9 +250,10 @@ export function NegotiationChat({ messages, onSendMessage }: { messages: Message
                 value={newMessage} 
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
+                disabled={isSending}
              />
-            <Button id="send-message-button" onClick={handleSendMessage}>
-              <Send className="h-5 w-5" />
+            <Button id="send-message-button" onClick={handleSendMessage} disabled={isSending}>
+              {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
         </div>
     </>

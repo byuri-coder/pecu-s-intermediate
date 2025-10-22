@@ -45,9 +45,11 @@
     "axios": "^1.7.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "dotenv": "^16.6.1",
     "embla-carousel-react": "^8.6.0",
+    "express": "^5.1.0",
     "firebase": "^11.9.1",
     "genkit": "^1.14.1",
     "ioredis": "^5.8.1",
@@ -58,7 +60,7 @@
     "lucide-react": "^0.475.0",
     "mitt": "^3.0.1",
     "mongodb": "^6.20.0",
-    "mongoose": "^8.19.1",
+    "mongoose": "^8.19.2",
     "next": "^15.5.6",
     "next-themes": "^0.3.0",
     "nodemailer": "^7.0.9",
@@ -69,6 +71,7 @@
     "react-hook-form": "^7.54.2",
     "react-markdown": "^9.0.1",
     "recharts": "^2.15.1",
+    "socket.io": "^4.8.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3",
@@ -89,5 +92,13 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript-eslint": "^8.46.1"
-  }
+  },
+  "description": "This is a NextJS starter in Firebase Studio.",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

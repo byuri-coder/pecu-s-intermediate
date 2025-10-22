@@ -131,6 +131,7 @@ export interface Conversation {
   time: string;
   unread: number;
   type: AssetType;
+  participants?: string[];
 }
 
 

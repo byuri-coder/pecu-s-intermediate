@@ -8,7 +8,6 @@ const MensagemSchema = new Schema({
   content: { type: String, required: true },
   type: { type: String, enum: ['text', 'image', 'pdf', 'location'], default: 'text' },
   status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
-  // O Mongoose adiciona 'createdAt' e 'updatedAt' automaticamente com a opção timestamps
 }, { timestamps: true });
 
 export const Mensagem = models.Mensagem || mongoose.model("Mensagem", MensagemSchema);

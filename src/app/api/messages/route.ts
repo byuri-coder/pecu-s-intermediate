@@ -1,31 +1,32 @@
+// src/app/api/messages/route.ts
 import { NextResponse } from 'next/server';
-
-// This is a temporary in-memory store.
-// In a real application, you would use a database like MongoDB or Firestore.
-let messages: any[] = [];
+import { connectDB, DISABLE_MONGO } from '@/lib/mongodb';
+import { Mensagem } from '@/models/Mensagem';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const db = await connectDB();
+    if (!db) {
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...await req.json() } }, { status: 201 });
+    }
     
-    // Basic validation
-    if (!body.chatId || !body.message) {
-      return NextResponse.json({ ok: false, error: 'chatId and message are required' }, { status: 400 });
+    const body = await req.json();
+    const { chatId, senderId, receiverId, content, type } = body;
+
+    if (!chatId || !senderId || !receiverId || !content) {
+      return NextResponse.json({ ok: false, error: 'chatId, senderId, receiverId, e content são obrigatórios' }, { status: 400 });
     }
 
-    const newMessage = {
-      chatId: body.chatId,
-      ...body.message,
-      // In a real backend, you'd assign a proper ID and timestamp
-      id: `server-${Date.now()}`,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'}),
-      sender: 'other', // Simulate it comes from the other user for the receiver
-    };
+    const newMessage = await Mensagem.create({
+      chatId,
+      senderId,
+      receiverId,
+      content,
+      type: type || 'text',
+      status: 'sent',
+    });
 
-    messages.push(newMessage);
-    console.log('New message received and stored in-memory:', newMessage);
-    
-    return NextResponse.json({ ok: true, message: 'Message stored' });
+    return NextResponse.json({ ok: true, message: newMessage });
   } catch (error: any) {
     console.error('Error in /api/messages (POST):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
@@ -34,16 +35,21 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const db = await connectDB();
+    if (!db) {
+      return NextResponse.json({ ok: true, messages: [] });
+    }
+
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get('chatId');
 
     if (!chatId) {
-      return NextResponse.json({ ok: false, error: 'chatId is a required query parameter' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'chatId é um parâmetro de busca obrigatório' }, { status: 400 });
     }
 
-    const filteredMessages = messages.filter((m) => m.chatId === chatId);
+    const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
-    return NextResponse.json(filteredMessages);
+    return NextResponse.json({ ok: true, messages });
   } catch (error: any) {
     console.error('Error in /api/messages (GET):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });

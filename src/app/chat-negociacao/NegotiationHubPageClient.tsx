@@ -8,22 +8,20 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { MessageSquareText, Loader2 } from 'lucide-react';
 import { NegotiationChat } from './negotiation-chat';
 import { ActiveChatHeader } from './active-chat-header';
-import { db, app } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, addDoc, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { useUser } from '@/firebase';
 import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
 
 export function NegotiationHubPageClient() {
   const searchParams = useSearchParams();
   const activeChatId = searchParams.get('id');
-  const auth = getAuth(app);
-  const currentUser = auth.currentUser;
+  const { user: currentUser, loading: userLoading } = useUser();
   const { toast } = useToast();
 
   const [conversations, setConversations] = usePersistentState<Conversation[]>('conversations', []);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
+  const [isSending, setIsSending] = React.useState(false);
 
   const activeConversation = React.useMemo(() => {
     return conversations.find(c => c.id === activeChatId) || null;
@@ -70,76 +68,98 @@ export function NegotiationHubPageClient() {
   }, [activeChatId, assetType]);
 
 
-  // Effect for fetching real messages from Firestore
+  // Effect for fetching messages from MongoDB via API
   React.useEffect(() => {
     if (!activeChatId || !currentUser) {
-        setMessages([]); // Clear messages if no chat is selected
+        setMessages([]);
         return;
     }
 
-    const negotiationId = `neg_${activeChatId}`;
-    const messagesCollection = collection(db, 'negociacoes', negotiationId, 'messages');
-    const q = query(messagesCollection, orderBy('timestamp', 'asc'));
+    const fetchMessages = async () => {
+        try {
+            const res = await fetch(`/api/messages?chatId=${activeChatId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.ok) {
+                    const formattedMessages: Message[] = data.messages.map((m: any) => ({
+                        id: m._id,
+                        sender: m.senderId === currentUser.uid ? 'me' : 'other',
+                        content: m.content,
+                        type: m.type,
+                        timestamp: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                        avatar: m.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar
+                    }));
+                    setMessages(formattedMessages);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+            toast({ title: "Erro ao carregar mensagens", variant: "destructive" });
+        }
+    };
+    
+    fetchMessages(); // Initial fetch
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const newMessages: Message[] = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                sender: data.senderId === currentUser?.uid ? 'me' : 'other',
-                content: data.content,
-                type: data.type,
-                timestamp: data.timestamp?.toDate()?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '',
-                avatar: data.senderId === currentUser?.uid ? currentUser?.photoURL : activeConversation?.avatar
-            } as Message;
-        });
-        setMessages(newMessages);
-    }, (error) => {
-        console.error("Error fetching messages:", error);
-        setMessages([]);
-    });
+    // Poll for new messages every 3 seconds to simulate real-time
+    const intervalId = setInterval(fetchMessages, 3000);
 
-    return () => unsubscribe();
-  }, [activeChatId, currentUser, activeConversation?.avatar]);
+    return () => clearInterval(intervalId); // Cleanup on unmount
+
+  }, [activeChatId, currentUser, activeConversation?.avatar, toast]);
 
   const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
     if (!currentUser || !asset || !('ownerId' in asset) || !asset.ownerId || !activeChatId) {
         toast({ title: "Erro de autenticação ou de negociação", description: "Não é possível enviar a mensagem.", variant: "destructive" });
         return;
     }
-    
-    const negotiationId = `neg_${activeChatId}`;
-    const negotiationDocRef = doc(db, 'negociacoes', negotiationId);
+    setIsSending(true);
+
+    const receiverId = currentUser.uid === asset.ownerId 
+      ? conversations.find(c => c.id === activeChatId)?.participants?.find(p => p !== currentUser.uid) // Needs logic to find other participant
+      : asset.ownerId;
+      
+    if(!receiverId) {
+       toast({ title: "Erro", description: "Não foi possível identificar o destinatário.", variant: "destructive" });
+       setIsSending(false);
+       return;
+    }
+
+    const payload = {
+        chatId: activeChatId,
+        senderId: currentUser.uid,
+        receiverId: receiverId,
+        content: msg.content,
+        type: msg.type,
+    };
     
     try {
-      // Ensure the parent negotiation document exists
-      const negotiationDoc = await getDoc(negotiationDocRef);
-      if (!negotiationDoc.exists()) {
-          await setDoc(negotiationDocRef, {
-              assetId: activeChatId,
-              buyerId: currentUser.uid,
-              sellerId: asset.ownerId,
-              status: "em_andamento",
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-              chatId: negotiationId, // Link to itself or a separate chat collection
-          });
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Falha ao enviar mensagem para a API.");
       }
 
-      // Add the message to the subcollection
-      const messagesCollection = collection(negotiationDocRef, 'messages');
-      await addDoc(messagesCollection, {
-          senderId: currentUser.uid,
-          receiverId: asset.ownerId, 
-          content: msg.content,
-          type: msg.type,
-          timestamp: serverTimestamp(),
-          status: 'sent',
-      });
+      const sentMessage = await response.json();
 
-      const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
-      
+      // Optimistically update UI
+      const optimisticMessage: Message = {
+        id: sentMessage.message._id || `temp-${Date.now()}`,
+        sender: 'me',
+        content: msg.content,
+        type: msg.type,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        avatar: currentUser.photoURL || undefined,
+      };
+      setMessages(prev => [...prev, optimisticMessage]);
+
       // Update conversation in localStorage
+      const lastMessageText = msg.type === 'text' ? msg.content : `Anexo: ${msg.type}`;
       setConversations(prevConvos => {
           const convoIndex = prevConvos.findIndex(c => c.id === activeChatId);
           if (convoIndex > -1) {
@@ -149,9 +169,12 @@ export function NegotiationHubPageClient() {
           }
           return prevConvos;
       });
+
     } catch(error) {
         console.error("Error sending message:", error);
         toast({ title: "Erro ao Enviar", description: "Não foi possível enviar a sua mensagem.", variant: "destructive" });
+    } finally {
+        setIsSending(false);
     }
   };
 
@@ -162,7 +185,7 @@ export function NegotiationHubPageClient() {
              <ChatList conversations={conversations} activeChatId={activeChatId} />
         </div>
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
-            {asset === 'loading' ? (
+            {asset === 'loading' || userLoading ? (
                  <Loader2 className="h-10 w-10 animate-spin"/>
             ) : activeConversation ? (
                  <Card className="h-full w-full flex flex-col">
@@ -171,7 +194,7 @@ export function NegotiationHubPageClient() {
                         assetId={activeConversation.assetId}
                     />
                     <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                       <NegotiationChat messages={messages} onSendMessage={handleSendMessage} />
+                       <NegotiationChat messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
                     </CardContent>
                 </Card>
             ) : (
