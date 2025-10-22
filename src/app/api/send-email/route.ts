@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import SibApiV3Sdk from 'sib-api-v3-sdk';
+import Brevo from "brevo";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
@@ -21,18 +21,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing required email parameters." }, { status: 400 });
     }
 
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = BREVO_API_KEY;
-
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+    apiInstance.authentications['apiKey'].apiKey = BREVO_API_KEY;
     
-    const sendSmtpEmail = {
-        sender: { email: "no-reply@pecusintermediate.com", name: "PECU'S INTERMEDIATE" },
-        to: [{ email: to_email, name: to_name || 'Usuário' }],
-        subject: subject,
-        htmlContent: html_content,
-    };
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = { email: "no-reply@pecusintermediate.com", name: "PECU'S INTERMEDIATE" };
+    sendSmtpEmail.to = [{ email: to_email, name: to_name || 'Usuário' }];
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html_content;
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
     

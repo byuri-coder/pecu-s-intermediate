@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { Contrato } from '@/models/Contrato';
 import { connectDB } from '@/lib/mongodb';
+import Brevo from 'brevo';
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -39,11 +40,14 @@ export async function POST(req: Request) {
 
     const validationUrl = `${BASE_URL}/api/negociacao/verify-acceptance?token=${token}`;
 
-    const emailData = {
-      sender: { email: 'no-reply@pecusintermediate.com', name: 'PECU’S INTERMEDIATE' },
-      to: [{ email: userEmail, name: userName || 'Usuário' }],
-      subject: 'Confirmação de Aceite do Contrato',
-      htmlContent: `
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+    apiInstance.authentications['apiKey'].apiKey = BREVO_API_KEY;
+
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = { email: 'no-reply@pecusintermediate.com', name: 'PECU’S INTERMEDIATE' };
+    sendSmtpEmail.to = [{ email: userEmail, name: userName || 'Usuário' }];
+    sendSmtpEmail.subject = 'Confirmação de Aceite do Contrato';
+    sendSmtpEmail.htmlContent = `
         <div style="font-family:Arial, sans-serif; text-align:center; padding: 20px; color: #333;">
           <h2 style="color: #22c55e;">Confirme seu aceite de contrato</h2>
           <p>Olá, ${userName || 'Usuário'}!</p>
@@ -57,25 +61,9 @@ export async function POST(req: Request) {
           <p style="color: #777; font-size: 12px;">Se você não iniciou esta negociação, por favor, ignore este e-mail.</p>
           <p style="color: #999; font-size: 12px;">Este link de confirmação expira em 24 horas.</p>
         </div>
-      `,
-    };
-
-    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-            'accept': 'application/json',
-            'content-type': 'application/json',
-            'api-key': BREVO_API_KEY,
-        },
-        body: JSON.stringify(emailData),
-    });
-
-    if (!brevoResponse.ok) {
-        const errorText = await brevoResponse.text();
-        console.error('Erro ao enviar e-mail pela Brevo:', errorText);
-        throw new Error('Falha no serviço de envio de e-mails.');
-    }
-
+      `;
+    
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
 
     return NextResponse.json({ ok: true, message: 'Email de validação enviado com sucesso!' });
   } catch (error: any) {
