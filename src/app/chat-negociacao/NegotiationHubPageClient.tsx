@@ -11,6 +11,8 @@ import { ActiveChatHeader } from './active-chat-header';
 import { useUser } from '@/firebase';
 import { usePersistentState } from './use-persistent-state';
 import { useToast } from '@/hooks/use-toast';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function NegotiationHubPageClient() {
   const searchParams = useSearchParams();
@@ -68,23 +70,25 @@ export function NegotiationHubPageClient() {
   }, [activeChatId, assetType]);
 
 
-  // Effect for fetching messages from MongoDB via API
+  // Effect for fetching messages from MongoDB via API (polling)
   React.useEffect(() => {
     if (!activeChatId || !currentUser) {
         setMessages([]);
         return;
     }
 
+    const negotiationId = `neg_${activeChatId}`;
+
     const fetchMessages = async () => {
         try {
-            const res = await fetch(`/api/messages?chatId=${activeChatId}`);
+            const res = await fetch(`/api/messages?chatId=${negotiationId}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.ok) {
                     const formattedMessages: Message[] = data.messages.map((m: any) => ({
                         id: m._id,
                         sender: m.senderId === currentUser.uid ? 'me' : 'other',
-                        content: m.content,
+                        content: m.text || m.fileUrl || `https://www.google.com/maps?q=${m.location?.latitude},${m.location?.longitude}`,
                         type: m.type,
                         timestamp: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                         avatar: m.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar
@@ -114,8 +118,10 @@ export function NegotiationHubPageClient() {
     }
     setIsSending(true);
 
+    const negotiationId = `neg_${activeChatId}`;
+
     const receiverId = currentUser.uid === asset.ownerId 
-      ? conversations.find(c => c.id === activeChatId)?.participants?.find(p => p !== currentUser.uid) // Needs logic to find other participant
+      ? conversations.find(c => c.id === activeChatId)?.participants?.find(p => p !== currentUser.uid) ?? 'unknown_buyer'
       : asset.ownerId;
       
     if(!receiverId) {
@@ -124,20 +130,37 @@ export function NegotiationHubPageClient() {
        return;
     }
 
-    const payload = {
-        chatId: activeChatId,
+    const payload: any = {
+        chatId: negotiationId,
         senderId: currentUser.uid,
         receiverId: receiverId,
-        content: msg.content,
         type: msg.type,
     };
     
+    if (msg.type === 'text') payload.text = msg.content;
+    else if (msg.type === 'image' || msg.type === 'pdf') {
+        payload.fileUrl = msg.content; // The content is the URL/filename
+        payload.fileName = msg.content.split('/').pop();
+        payload.fileType = msg.type;
+    } else if (msg.type === 'location') {
+        const [lat, lng] = msg.content.split('?q=')[1].split(',');
+        payload.location = { latitude: parseFloat(lat), longitude: parseFloat(lng) };
+    }
+
+
     try {
+      // Ensure negotiation document exists
+      const negDocRef = doc(db, 'negociacoes', negotiationId);
+      await setDoc(negDocRef, { 
+          buyerId: receiverId === asset.ownerId ? currentUser.uid : receiverId,
+          sellerId: asset.ownerId,
+          assetId: activeChatId,
+          updatedAt: new Date(),
+       }, { merge: true });
+
       const response = await fetch('/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       

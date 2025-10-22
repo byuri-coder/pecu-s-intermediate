@@ -11,18 +11,22 @@ export async function POST(req: Request) {
     }
     
     const body = await req.json();
-    const { chatId, senderId, receiverId, content, type } = body;
+    const { chatId, senderId, receiverId, type, text, fileUrl, fileName, fileType, location } = body;
 
-    if (!chatId || !senderId || !receiverId || !content) {
-      return NextResponse.json({ ok: false, error: 'chatId, senderId, receiverId, e content são obrigatórios' }, { status: 400 });
+    if (!chatId || !senderId || !receiverId || !type) {
+      return NextResponse.json({ ok: false, error: 'chatId, senderId, receiverId, e type são obrigatórios' }, { status: 400 });
     }
 
     const newMessage = await Mensagem.create({
       chatId,
       senderId,
       receiverId,
-      content,
-      type: type || 'text',
+      type,
+      text,
+      fileUrl,
+      fileName,
+      fileType,
+      location,
       status: 'sent',
     });
 
