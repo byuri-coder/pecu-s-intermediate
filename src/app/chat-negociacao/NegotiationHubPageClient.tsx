@@ -108,7 +108,6 @@ export function NegotiationHubPageClient() {
                           chatId={activeChatId!}
                           currentUser={currentUser}
                           receiverId={activeConversation.participants?.find(p => p !== currentUser.uid)}
-                          receiverAvatar={activeConversation.avatar}
                        />
                     </CardContent>
                 </Card>

@@ -2,13 +2,15 @@
 import { NextResponse } from 'next/server';
 import { connectDB, DISABLE_MONGO } from '@/lib/mongodb';
 import { Mensagem } from '@/models/Mensagem';
+import { Usuario } from '@/models/Usuario'; // Importar o modelo de usuário
 
 export async function POST(req: Request) {
   try {
     const db = await connectDB();
     if (!db) {
       const body = await req.json();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body } }, { status: 201 });
+      const user = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.photoURL || '' } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -17,6 +19,9 @@ export async function POST(req: Request) {
     if (!chatId || !senderId || !receiverId || !type) {
       return NextResponse.json({ ok: false, error: 'chatId, senderId, receiverId, e type são obrigatórios' }, { status: 400 });
     }
+    
+    // Buscar o usuário para embutir os dados
+    const senderUser = await Usuario.findOne({ uidFirebase: senderId }).lean();
 
     const newMessage = await Mensagem.create({
       chatId,
@@ -28,6 +33,10 @@ export async function POST(req: Request) {
       fileName,
       fileType,
       location,
+      user: { // Embutir dados do usuário na mensagem
+          name: senderUser?.nome || 'Usuário Desconhecido',
+          profileImage: senderUser?.photoURL || null,
+      }
     });
 
     return NextResponse.json({ ok: true, message: newMessage });

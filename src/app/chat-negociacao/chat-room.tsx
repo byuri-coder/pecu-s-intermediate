@@ -16,10 +16,9 @@ interface ChatRoomProps {
     chatId: string;
     currentUser: User;
     receiverId?: string;
-    receiverAvatar?: string;
 }
 
-export function ChatRoom({ chatId, currentUser, receiverId, receiverAvatar }: ChatRoomProps) {
+export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
     const { toast } = useToast();
     const [messages, setMessages] = React.useState<Message[]>([]);
     const [newMessage, setNewMessage] = React.useState('');
@@ -49,11 +48,11 @@ export function ChatRoom({ chatId, currentUser, receiverId, receiverAvatar }: Ch
                 if (isMounted && data.ok) {
                     const newMessages: Message[] = data.messages.map((msg: any) => ({
                         id: msg._id,
-                        sender: msg.senderId === currentUser.uid ? 'me' : 'other',
+                        senderId: msg.senderId,
                         content: msg.text || msg.fileUrl || (msg.location ? `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}` : 'Conteúdo inválido'),
                         type: msg.type,
                         timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                        avatar: msg.senderId === currentUser.uid ? currentUser.photoURL : receiverAvatar,
+                        user: msg.user || { name: msg.senderId === currentUser.uid ? currentUser.displayName : 'Destinatário', profileImage: msg.senderId === currentUser.uid ? currentUser.photoURL : null }
                     }));
                     setMessages(newMessages);
                 }
@@ -72,10 +71,10 @@ export function ChatRoom({ chatId, currentUser, receiverId, receiverAvatar }: Ch
             isMounted = false;
             clearInterval(intervalId);
         };
-    }, [chatId, currentUser.uid, receiverAvatar, toast]);
+    }, [chatId, currentUser.uid, currentUser.displayName, currentUser.photoURL, toast]);
 
 
-    const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
+    const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'senderId' | 'user'> & { type: Message['type'], content: string}) => {
         if (!receiverId) {
             toast({ title: "Erro", description: "Não foi possível identificar o destinatário.", variant: "destructive" });
             return;
@@ -110,11 +109,14 @@ export function ChatRoom({ chatId, currentUser, receiverId, receiverAvatar }: Ch
 
             const optimisticMessage: Message = {
                 id: sentMessage.message._id,
-                sender: 'me',
+                senderId: currentUser.uid,
                 content: msg.content,
                 type: msg.type,
                 timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                avatar: currentUser.photoURL,
+                user: {
+                    name: currentUser.displayName || 'Eu',
+                    profileImage: currentUser.photoURL
+                }
             };
             setMessages(prev => [...prev, optimisticMessage]);
             setNewMessage('');
@@ -186,7 +188,7 @@ export function ChatRoom({ chatId, currentUser, receiverId, receiverAvatar }: Ch
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
                     ) : messages.length > 0 ? (
-                        messages.map((msg) => <MessageBubble key={msg.id} msg={msg}/>)
+                        messages.map((msg) => <MessageBubble key={msg.id} msg={msg} currentUserId={currentUser.uid} />)
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
                             <p>Nenhuma mensagem ainda. Envie a primeira!</p>

@@ -18,6 +18,8 @@ const ChatMessageSchema = new mongoose.Schema({
     latitude: Number,
     longitude: Number,
   },
+  // Campo de dados do remetente para ser populado
+  user: { type: Schema.Types.Mixed }
 }, { timestamps: true });
 
 

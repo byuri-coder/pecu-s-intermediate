@@ -112,14 +112,19 @@ export interface CompletedDeal {
 
 export interface Message {
   id: string;
-  sender: 'me' | 'other';
+  senderId: string; // Keep senderId to identify who sent it
   content: string;
   type: 'text' | 'image' | 'pdf' | 'location';
   timestamp: string;
-  avatar?: string;
+  // user object containing sender's public info
+  user: {
+    name: string;
+    profileImage?: string | null;
+  };
   status?: 'sent' | 'delivered' | 'read';
   receiverId?: string;
 }
+
 
 export interface Conversation {
   id: string; // Corresponds to the ChatRoom _id from MongoDB

@@ -3,14 +3,14 @@
 
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Download, MapPin } from 'lucide-react';
+import { FileText, Download, MapPin, UserCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Message } from '@/lib/types';
 
-export const MessageBubble = ({ msg }: { msg: Message }) => {
-    const isMe = msg.sender === 'me';
+export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUserId: string }) => {
+    const isMe = msg.senderId === currentUserId;
     
     const handleDownload = (url: string, filename: string) => {
       const a = document.createElement('a');
@@ -76,6 +76,9 @@ export const MessageBubble = ({ msg }: { msg: Message }) => {
                 return null;
         }
     }
+    
+    const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
+    const senderInitial = senderName.charAt(0).toUpperCase();
 
     return (
          <div
@@ -86,28 +89,31 @@ export const MessageBubble = ({ msg }: { msg: Message }) => {
             >
             {!isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={msg.avatar} />
-                    <AvatarFallback>{'V'}</AvatarFallback>
+                    <AvatarImage src={msg.user?.profileImage || undefined} />
+                    <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
-            <div
-                className={cn(
-                'rounded-lg p-3 text-sm relative',
-                 msg.type === 'image' ? 'w-full max-w-xs p-0' : 'max-w-md',
-                isMe
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background border'
-                )}
-            >
-                {renderContent()}
-                {msg.type !== 'image' && (
-                    <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground/70", isMe ? 'text-right' : 'text-left')}>{msg.timestamp}</p>
-                )}
+            <div className="flex flex-col gap-1" style={{ alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                 <span className="text-xs text-muted-foreground px-1">{senderName}</span>
+                <div
+                    className={cn(
+                    'rounded-lg p-3 text-sm relative',
+                    msg.type === 'image' ? 'w-full max-w-xs p-0' : 'max-w-md',
+                    isMe
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-background border'
+                    )}
+                >
+                    {renderContent()}
+                    {msg.type !== 'image' && (
+                        <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground/70", isMe ? 'text-right' : 'text-left')}>{msg.timestamp}</p>
+                    )}
+                </div>
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={msg.avatar} />
-                    <AvatarFallback>{'Eu'}</AvatarFallback>
+                    <AvatarImage src={msg.user?.profileImage || undefined} />
+                    <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
         </div>
