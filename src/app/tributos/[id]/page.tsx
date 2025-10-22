@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import type { TaxCredit, Conversation } from '@/lib/types';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 
 const StatusBadge = ({ status }: { status: 'Disponível' | 'Negociando' | 'Vendido' }) => {
   const variant = {
@@ -63,6 +64,10 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [_, setConversations] = usePersistentState<Conversation[]>(
+    user ? `conversations_${user.uid}` : 'conversations_guest',
+    []
+  );
 
    const handleStartNegotiation = () => {
     if (!user || !credit || credit === 'loading') {
@@ -76,7 +81,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
     const conversationKey = `conversations_${user.uid}`;
     const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
 
-    const existingConversation = currentConversations.find(c => c.assetId === credit.id);
+    const existingConversation = currentConversations.find(c => c.id === credit.id);
     if (existingConversation) {
         router.push(`/chat-negociacao?id=${existingConversation.id}`);
         return;
@@ -99,6 +104,7 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
     localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
 
     window.dispatchEvent(new Event('storage'));
+    setConversations(updatedConversations);
 
     router.push(`/chat-negociacao?id=${credit.id}`);
   };

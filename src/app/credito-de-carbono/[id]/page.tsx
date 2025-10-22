@@ -52,6 +52,14 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // Note: We are not using setConversations here directly, but usePersistentState needs it.
+  // The logic inside handleStartNegotiation manually gets and sets from localStorage.
+  const [_, setConversations] = usePersistentState<Conversation[]>(
+    user ? `conversations_${user.uid}` : 'conversations_guest',
+    []
+  );
+
 
   const handleStartNegotiation = () => {
     if (!user || !credit || credit === 'loading') {
@@ -62,17 +70,19 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
 
     setIsStartingChat(true);
     
-    // Always use a user-specific key
     const conversationKey = `conversations_${user.uid}`;
+    
+    // Manually read from localStorage to get the most up-to-date state
     const currentConversations: Conversation[] = JSON.parse(localStorage.getItem(conversationKey) || '[]');
     
-    const existingConversation = currentConversations.find(c => c.assetId === credit.id);
+    const existingConversation = currentConversations.find(c => c.id === credit.id);
     
     if (existingConversation) {
         router.push(`/chat-negociacao?id=${existingConversation.id}`);
         return;
     }
     
+    // Create new conversation and add it to the beginning of the list
     const newConversation: Conversation = {
         id: credit.id, 
         assetId: credit.id,
@@ -87,11 +97,15 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
     };
 
     const updatedConversations = [newConversation, ...currentConversations];
+
+    // Manually write back to localStorage and notify other tabs
     localStorage.setItem(conversationKey, JSON.stringify(updatedConversations));
-    
-    // We can dispatch a storage event to notify other tabs/windows if needed
     window.dispatchEvent(new Event('storage'));
 
+    // The usePersistentState hook will eventually sync, but this ensures it's available for the next page
+    setConversations(updatedConversations);
+
+    // Redirect to the chat page
     router.push(`/chat-negociacao?id=${credit.id}`);
   };
 
