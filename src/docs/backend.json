@@ -175,5 +175,14 @@
         "schema": { "$ref": "#/entities/Duplicate" },
         "description": "Stores generated invoices/duplicates for a transaction."
     }
+  },
+  "recommendedTechnicalStack": {
+      "database": "MongoDB (collections: Users, Negotiations, Chats, Messages)",
+      "realtime": "Socket.IO (Node) or Firebase Realtime Database",
+      "fileStorage": "Firebase Storage or AWS S3",
+      "backend": "Next.js API Routes + Express (for WebSocket server)",
+      "frontend": "Next.js + Zustand (store) + Shadcn UI + Tailwind",
+      "security": "JWT + AES-256 encryption for messages",
+      "notifications": "Firebase Cloud Messaging (Push Notifications)"
   }
 }
