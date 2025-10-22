@@ -20,9 +20,9 @@ export async function POST(req: Request) {
     if (!to_email || !subject || !html_content) {
         return NextResponse.json({ error: "Missing required email parameters." }, { status: 400 });
     }
-
+    
     const apiInstance = new Brevo.TransactionalEmailsApi();
-    apiInstance.authentications['apiKey'].apiKey = BREVO_API_KEY;
+    apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
     
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
     sendSmtpEmail.sender = { email: "no-reply@pecusintermediate.com", name: "PECU'S INTERMEDIATE" };
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error("Brevo API Error:", error.response ? error.response.body : error);
+    console.error("Brevo API Error:", error);
     return NextResponse.json({ error: error.message || "Failed to send email." }, { status: 500 });
   }
 }

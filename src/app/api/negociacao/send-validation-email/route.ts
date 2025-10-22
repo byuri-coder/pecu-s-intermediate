@@ -1,9 +1,9 @@
 // src/app/api/negociacao/send-validation-email/route.ts
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { Contrato } from '@/models/Contrato';
-import { connectDB } from '@/lib/mongodb';
 import Brevo from 'brevo';
+import jwt from 'jsonwebtoken';
+import { connectDB } from '@/lib/mongodb';
+import { Contrato } from '@/models/Contrato';
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -15,7 +15,6 @@ if (!BREVO_API_KEY) {
 if (JWT_SECRET === 'supersecretjwtkey') {
   console.warn("Atenção: JWT_SECRET está usando um valor padrão. Defina uma chave segura em produção.");
 }
-
 
 export async function POST(req: Request) {
   if (!BREVO_API_KEY) {
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
     const validationUrl = `${BASE_URL}/api/negociacao/verify-acceptance?token=${token}`;
 
     const apiInstance = new Brevo.TransactionalEmailsApi();
-    apiInstance.authentications['apiKey'].apiKey = BREVO_API_KEY;
+    apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
 
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
     sendSmtpEmail.sender = { email: 'no-reply@pecusintermediate.com', name: 'PECU’S INTERMEDIATE' };
@@ -67,7 +66,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, message: 'Email de validação enviado com sucesso!' });
   } catch (error: any) {
-    console.error('Erro ao enviar email de validação:', error.response ? error.response.body : error);
+    console.error('Erro ao enviar email de validação:', error);
     return NextResponse.json({ ok: false, error: error.message || 'Erro interno do servidor' }, { status: 500 });
   }
 }
