@@ -1,6 +1,6 @@
 // src/app/api/negociacao/send-validation-email/route.ts
 import { NextResponse } from 'next/server';
-import Brevo from 'brevo';
+import * as Brevo from '@getbrevo/brevo';
 import jwt from 'jsonwebtoken';
 import { connectDB } from '@/lib/mongodb';
 import { Contrato } from '@/models/Contrato';

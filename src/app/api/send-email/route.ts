@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import Brevo from "brevo";
+import * as Brevo from "@getbrevo/brevo";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
