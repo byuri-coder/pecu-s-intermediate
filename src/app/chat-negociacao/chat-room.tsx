@@ -26,11 +26,24 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
     const [isSending, setIsSending] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
+    
+    // Refs e state para o scroll inteligente
+    const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+    const [autoScroll, setAutoScroll] = React.useState(true);
 
-    // Effect to scroll to the bottom when new messages arrive
+
+    const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+        const target = event.currentTarget;
+        const atBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50; // Margem de 50px
+        setAutoScroll(atBottom);
+    };
+
+    // Effect para scroll inteligente
     React.useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (autoScroll && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, autoScroll]);
 
     // Effect for fetching messages (initial load and polling)
     React.useEffect(() => {
@@ -107,6 +120,9 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
             const sentMessage = await response.json();
             if(!response.ok) throw new Error(sentMessage.error || "Failed to send message");
 
+            // Ativa o auto-scroll antes de adicionar a nova mensagem
+            setAutoScroll(true);
+
             const optimisticMessage: Message = {
                 id: sentMessage.message._id,
                 senderId: currentUser.uid,
@@ -181,7 +197,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
 
     return (
         <>
-            <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20">
+            <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20" onScroll={handleScroll} ref={scrollAreaRef}>
                 <div className="space-y-6">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
@@ -197,11 +213,17 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                 </div>
                 <div ref={messagesEndRef} />
             </ScrollArea>
-            <div className="mt-4 flex items-center gap-2" onFocus={(e) => e.stopPropagation()}>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleTextSend();
+                }}
+                className="mt-4 flex items-center gap-2"
+            >
                 <Input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/jpeg,image/png,application/pdf" />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={isSending}>
+                        <Button type="button" variant="ghost" size="icon" disabled={isSending}>
                             <Paperclip className="h-5 w-5" />
                             <span className="sr-only">Anexar</span>
                         </Button>
@@ -222,13 +244,13 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                     placeholder="Digite sua mensagem..." 
                     value={newMessage} 
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                    onFocus={(e) => e.stopPropagation()} // Evita re-renders
                     disabled={isSending}
                 />
-                <Button id="send-message-button" onClick={handleTextSend} disabled={isSending || newMessage.trim() === ''}>
+                <Button type="submit" id="send-message-button" disabled={isSending || newMessage.trim() === ''}>
                     {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                 </Button>
-            </div>
+            </form>
         </>
     );
 }
