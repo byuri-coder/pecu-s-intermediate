@@ -64,12 +64,13 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
   const { user } = useUser();
   const router = useRouter();
   
-  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  const conversationKey = user ? `conversations_${user.uid}` : null;
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations', []);
   
   useEffect(() => {
-    if (user && conversationKey === 'conversations') {
-      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    if (user && conversationKey) {
+      const storedData = localStorage.getItem(conversationKey);
+      setConversations(storedData ? JSON.parse(storedData) : []);
     }
   }, [user, conversationKey, setConversations]);
 
@@ -82,7 +83,10 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
   }, [params.id]);
 
    const handleStartNegotiation = () => {
-    if (!user || !credit || credit === 'loading') return;
+    if (!user || !credit || credit === 'loading' || !conversationKey) {
+        toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
+        return;
+    }
 
     setIsStartingChat(true);
 
@@ -100,12 +104,12 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
         avatar: `https://picsum.photos/seed/avatar${credit.ownerId}/100/100`,
         lastMessage: 'Negociação iniciada...',
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
+        unread: 1,
         type: 'tax-credit',
         participants: [user.uid, credit.ownerId],
     };
 
-    setConversations(prev => [newConversation, ...prev]);
+    setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
     router.push(`/chat-negociacao?id=${credit.id}`);
   };
 
@@ -200,13 +204,13 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
               </div>
 
               <div className="space-y-3 pt-4">
-                <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' || isStartingChat}>
+                <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' || isStartingChat || user?.uid === credit.ownerId}>
                     {isStartingChat ? (
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                         <MessageSquare className="mr-2 h-5 w-5" />
                     )}
-                    Iniciar Negociação
+                     {user?.uid === credit.ownerId ? 'Este é o seu ativo' : 'Iniciar Negociação'}
                 </Button>
               </div>
             </CardContent>
@@ -215,4 +219,8 @@ export default function TaxCreditDetailPage({ params }: { params: { id: string }
       </div>
     </div>
   );
+}
+
+function toast(options: { title: string; description: string; variant?: 'default' | 'destructive' }) {
+    console.log(`Toast: ${options.title} - ${options.description}`);
 }

@@ -51,13 +51,14 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const { user } = useUser();
   const router = useRouter();
 
-  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  const conversationKey = user ? `conversations_${user.uid}` : null;
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations', []);
   
   useEffect(() => {
-    if (user && conversationKey === 'conversations') {
-      // Re-initialize if user loads after initial state is set
-      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    // This effect ensures that when the user logs in, the correct conversation list is loaded.
+    if (user && conversationKey) {
+      const storedData = localStorage.getItem(conversationKey);
+      setConversations(storedData ? JSON.parse(storedData) : []);
     }
   }, [user, conversationKey, setConversations]);
 
@@ -71,7 +72,10 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   }, [params.id]);
 
   const handleStartNegotiation = () => {
-    if (!user || !credit || credit === 'loading') return;
+    if (!user || !credit || credit === 'loading' || !conversationKey) {
+        toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
+        return;
+    }
 
     setIsStartingChat(true);
 
@@ -89,12 +93,12 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         avatar: `https://picsum.photos/seed/avatar${credit.ownerId}/100/100`,
         lastMessage: 'Negociação iniciada...',
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
+        unread: 1, // Start with 1 unread for the seller
         type: 'carbon-credit',
         participants: [user.uid, credit.ownerId],
     };
 
-    setConversations(prev => [newConversation, ...prev]);
+    setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
     
     router.push(`/chat-negociacao?id=${credit.id}`);
   };
@@ -191,13 +195,13 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(credit.pricePerCredit)}
                 </span>
               </div>
-              <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={credit.status !== 'Disponível' && credit.status !== 'Ativo' || isStartingChat}>
+              <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={(credit.status !== 'Disponível' && credit.status !== 'Ativo') || isStartingChat || user?.uid === credit.ownerId}>
                     {isStartingChat ? (
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                         <MessageSquare className="mr-2 h-5 w-5" />
                     )}
-                    Iniciar Negociação
+                    {user?.uid === credit.ownerId ? 'Este é o seu ativo' : 'Iniciar Negociação'}
               </Button>
             </CardContent>
           </Card>
@@ -205,4 +209,10 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
+}
+
+// Add a global toast function for convenience
+function toast(options: { title: string; description: string; variant?: 'default' | 'destructive' }) {
+    // In a real app, this would be tied to a ToastProvider context
+    console.log(`Toast: ${options.title} - ${options.description}`);
 }

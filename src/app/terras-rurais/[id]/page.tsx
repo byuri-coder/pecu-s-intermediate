@@ -82,12 +82,13 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   const { user } = useUser();
   const router = useRouter();
 
-  const conversationKey = user ? `conversations_${user.uid}` : 'conversations';
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
+  const conversationKey = user ? `conversations_${user.uid}` : null;
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations', []);
 
   useEffect(() => {
-    if (user && conversationKey === 'conversations') {
-      setConversations(JSON.parse(localStorage.getItem(`conversations_${user.uid}`) || '[]'));
+    if (user && conversationKey) {
+      const storedData = localStorage.getItem(conversationKey);
+      setConversations(storedData ? JSON.parse(storedData) : []);
     }
   }, [user, conversationKey, setConversations]);
 
@@ -100,7 +101,10 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   }, [params.id]);
 
   const handleStartNegotiation = () => {
-    if (!user || !land || land === 'loading') return;
+    if (!user || !land || land === 'loading' || !conversationKey) {
+        toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
+        return;
+    }
 
     setIsStartingChat(true);
 
@@ -118,12 +122,12 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
         avatar: `https://picsum.photos/seed/avatar${land.ownerId}/100/100`,
         lastMessage: 'Negociação iniciada...',
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
+        unread: 1,
         type: 'rural-land',
         participants: [user.uid, land.ownerId],
     };
 
-    setConversations(prev => [newConversation, ...prev]);
+    setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
     router.push(`/chat-negociacao?id=${land.id}`);
   };
 
@@ -264,13 +268,13 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
               )}
              
               <div className="space-y-3 pt-4">
-                 <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={land.status !== 'Disponível' || isStartingChat}>
+                 <Button onClick={handleStartNegotiation} className="w-full text-base" size="lg" disabled={land.status !== 'Disponível' || isStartingChat || user?.uid === land.ownerId}>
                     {isStartingChat ? (
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     ) : (
                         <MessageSquare className="mr-2 h-5 w-5" />
                     )}
-                    Iniciar Negociação
+                    {user?.uid === land.ownerId ? 'Este é o seu ativo' : 'Iniciar Negociação'}
                 </Button>
               </div>
             </CardContent>
@@ -279,4 +283,9 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
       </div>
     </div>
   );
+}
+
+
+function toast(options: { title: string; description: string; variant?: 'default' | 'destructive' }) {
+    console.log(`Toast: ${options.title} - ${options.description}`);
 }
