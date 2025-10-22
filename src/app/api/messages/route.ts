@@ -32,7 +32,6 @@ export async function POST(req: Request) {
       status: 'sent',
     });
 
-    // We don't need to emit from here if the client is polling
     return NextResponse.json({ ok: true, message: newMessage });
   } catch (error: any) {
     console.error('Error in /api/messages (POST):', error);
@@ -63,3 +62,5 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+
+    

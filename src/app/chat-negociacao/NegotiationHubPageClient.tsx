@@ -139,7 +139,9 @@ export function NegotiationHubPageClient() {
     
     if (msg.type === 'text') payload.text = msg.content;
     else if (msg.type === 'image' || msg.type === 'pdf') {
-        payload.fileUrl = msg.content; // The content is the URL/filename
+        // In a real app, you would upload the file here and get a permanent URL.
+        // For this demo, we'll just pass the temporary blob URL or file name.
+        payload.fileUrl = msg.content;
         payload.fileName = msg.content.split('/').pop();
         payload.fileType = msg.type;
     } else if (msg.type === 'location') {
@@ -167,9 +169,6 @@ export function NegotiationHubPageClient() {
       if (!response.ok) {
         throw new Error("Falha ao enviar mensagem para a API.");
       }
-
-      // The polling mechanism will fetch the new message, so an optimistic update isn't strictly necessary
-      // but can make the UI feel faster.
 
       // Optimistically update UI
       const optimisticMessage: Message = {
@@ -238,3 +237,5 @@ export function NegotiationHubPageClient() {
     </div>
   );
 }
+
+    

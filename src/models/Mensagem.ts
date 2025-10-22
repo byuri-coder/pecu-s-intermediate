@@ -22,3 +22,5 @@ const MensagemSchema = new Schema({
 }, { timestamps: true });
 
 export const Mensagem = models.Mensagem || mongoose.model("Mensagem", MensagemSchema);
+
+    
