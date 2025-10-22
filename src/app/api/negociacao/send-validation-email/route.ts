@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, message: 'Email de validação enviado com sucesso!' });
   } catch (error: any) {
-    console.error('Erro ao enviar email de validação:', error);
+    console.error('Erro ao enviar email de validação:', error.response ? error.response.body : error);
     return NextResponse.json({ ok: false, error: error.message || 'Erro interno do servidor' }, { status: 500 });
   }
 }
