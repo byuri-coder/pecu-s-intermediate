@@ -14,6 +14,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { cn } from '@/lib/utils';
 import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const BusinessTypeIcon = ({ type, className }: { type: RuralLand['businessType'], className?: string }) => {
     const icons = {
@@ -81,14 +82,24 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   const [isStartingChat, setIsStartingChat] = useState(false);
   const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   const conversationKey = user ? `conversations_${user.uid}` : null;
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations', []);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations_guest', []);
 
   useEffect(() => {
     if (user && conversationKey) {
-      const storedData = localStorage.getItem(conversationKey);
-      setConversations(storedData ? JSON.parse(storedData) : []);
+       const storedData = localStorage.getItem(conversationKey);
+      if (storedData) {
+        try {
+          setConversations(JSON.parse(storedData));
+        } catch(e) {
+          console.error("Failed to parse conversations from localStorage", e);
+          setConversations([]);
+        }
+      } else {
+        setConversations([]);
+      }
     }
   }, [user, conversationKey, setConversations]);
 
@@ -103,6 +114,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   const handleStartNegotiation = () => {
     if (!user || !land || land === 'loading' || !conversationKey) {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
+        router.push('/login');
         return;
     }
 
@@ -119,16 +131,19 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
         assetId: land.id,
         assetName: land.title,
         name: land.owner,
-        avatar: `https://picsum.photos/seed/avatar${land.ownerId}/100/100`,
+        avatar: `https://avatar.vercel.sh/${land.ownerId}.png`,
         lastMessage: 'Negociação iniciada...',
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 1,
+        unread: 0,
         type: 'rural-land',
         participants: [user.uid, land.ownerId],
     };
 
     setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
-    router.push(`/chat-negociacao?id=${land.id}`);
+    
+    setTimeout(() => {
+        router.push(`/chat-negociacao?id=${land.id}`);
+    }, 100);
   };
 
 
@@ -283,9 +298,4 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
       </div>
     </div>
   );
-}
-
-
-function toast(options: { title: string; description: string; variant?: 'default' | 'destructive' }) {
-    console.log(`Toast: ${options.title} - ${options.description}`);
 }

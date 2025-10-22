@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -18,7 +19,7 @@ export function NegotiationHubPageClient() {
   const { user: currentUser, loading: userLoading } = useUser();
   const { toast } = useToast();
 
-  const conversationKey = currentUser ? `conversations_${currentUser.uid}` : 'conversations';
+  const conversationKey = currentUser ? `conversations_${currentUser.uid}` : 'conversations_guest';
   const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey, []);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
@@ -26,10 +27,10 @@ export function NegotiationHubPageClient() {
   const [messagesLoading, setMessagesLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser && !userLoading) {
         setConversations([]);
     }
-  }, [currentUser, setConversations]);
+  }, [currentUser, userLoading, setConversations]);
 
 
   const activeConversation = React.useMemo(() => {
@@ -77,7 +78,7 @@ export function NegotiationHubPageClient() {
   }, [activeChatId, assetType]);
 
 
-  // Real-time message fetching simulation
+  // Real-time message fetching
   React.useEffect(() => {
     if (!activeChatId || !currentUser) {
       setMessages([]);
@@ -89,6 +90,7 @@ export function NegotiationHubPageClient() {
     let intervalId: NodeJS.Timeout;
 
     const fetchMessages = async () => {
+      if (!isMounted) return;
       try {
         setMessagesLoading(true);
         const response = await fetch(`/api/messages?chatId=${activeChatId}`);
@@ -106,6 +108,12 @@ export function NegotiationHubPageClient() {
               avatar: msg.senderId === currentUser.uid ? currentUser.photoURL : activeConversation?.avatar,
           }));
           setMessages(newMessages);
+           if (newMessages.length > messages.length) {
+                const latestMessage = newMessages[newMessages.length - 1];
+                if (latestMessage.sender === 'other') {
+                    setConversations(prev => prev.map(c => c.id === activeChatId ? {...c, unread: (c.unread || 0) + 1} : c))
+                }
+           }
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -117,12 +125,15 @@ export function NegotiationHubPageClient() {
     fetchMessages(); // initial fetch
     intervalId = setInterval(fetchMessages, 3000); // poll every 3 seconds
     
+    // Mark as read when opening chat
+    setConversations(prev => prev.map(c => c.id === activeChatId ? {...c, unread: 0} : c));
+    
     return () => {
         isMounted = false;
         clearInterval(intervalId);
     };
 
-  }, [activeChatId, currentUser, activeConversation?.avatar]);
+  }, [activeChatId, currentUser, activeConversation?.avatar, setConversations, messages.length]);
 
   const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'avatar' | 'sender'>) => {
     if (!currentUser || !asset || !('ownerId' in asset) || !asset.ownerId || !activeChatId) {
@@ -167,7 +178,6 @@ export function NegotiationHubPageClient() {
       });
       if(!response.ok) throw new Error("Failed to send message");
 
-      // Optimistic update locally for instant feedback
       const tempId = Date.now().toString();
       const optimisticMessage: Message = {
         id: tempId,
@@ -187,7 +197,7 @@ export function NegotiationHubPageClient() {
           if (convoIndex > -1) {
               const updatedConvos = [...prevConvos];
               const [existingConvo] = updatedConvos.splice(convoIndex, 1);
-              return [{ ...existingConvo, lastMessage: lastMessageText, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }, ...updatedConvos];
+              return [{ ...existingConvo, lastMessage: lastMessageText, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), unread: 0 }, ...updatedConvos];
           }
           return prevConvos;
       });

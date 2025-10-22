@@ -12,6 +12,7 @@ import { ChevronRight, Leaf, Tag, BarChart, Calendar, Globe, MessageSquare, Load
 import type { CarbonCredit, Conversation } from '@/lib/types';
 import { usePersistentState } from '@/app/chat-negociacao/use-persistent-state';
 import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 async function getCreditDetails(id: string): Promise<CarbonCredit | null> {
   try {
@@ -50,15 +51,24 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const [isStartingChat, setIsStartingChat] = useState(false);
   const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   const conversationKey = user ? `conversations_${user.uid}` : null;
-  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations', []);
+  const [conversations, setConversations] = usePersistentState<Conversation[]>(conversationKey || 'conversations_guest', []);
   
   useEffect(() => {
-    // This effect ensures that when the user logs in, the correct conversation list is loaded.
     if (user && conversationKey) {
       const storedData = localStorage.getItem(conversationKey);
-      setConversations(storedData ? JSON.parse(storedData) : []);
+      if (storedData) {
+        try {
+          setConversations(JSON.parse(storedData));
+        } catch(e) {
+          console.error("Failed to parse conversations from localStorage", e);
+          setConversations([]);
+        }
+      } else {
+        setConversations([]);
+      }
     }
   }, [user, conversationKey, setConversations]);
 
@@ -74,6 +84,7 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
   const handleStartNegotiation = () => {
     if (!user || !credit || credit === 'loading' || !conversationKey) {
         toast({ title: "Ação necessária", description: "Por favor, faça login para iniciar uma negociação.", variant: "destructive" });
+        router.push('/login');
         return;
     }
 
@@ -90,17 +101,20 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
         assetId: credit.id,
         assetName: `Projeto de ${credit.creditType} em ${credit.location}`,
         name: credit.sellerName,
-        avatar: `https://picsum.photos/seed/avatar${credit.ownerId}/100/100`,
+        avatar: `https://avatar.vercel.sh/${credit.ownerId}.png`,
         lastMessage: 'Negociação iniciada...',
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 1, // Start with 1 unread for the seller
+        unread: 0,
         type: 'carbon-credit',
         participants: [user.uid, credit.ownerId],
     };
 
     setConversations(prev => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
     
-    router.push(`/chat-negociacao?id=${credit.id}`);
+    // Give localStorage a moment to update before redirecting
+    setTimeout(() => {
+        router.push(`/chat-negociacao?id=${credit.id}`);
+    }, 100);
   };
 
 
@@ -209,10 +223,4 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
-}
-
-// Add a global toast function for convenience
-function toast(options: { title: string; description: string; variant?: 'default' | 'destructive' }) {
-    // In a real app, this would be tied to a ToastProvider context
-    console.log(`Toast: ${options.title} - ${options.description}`);
 }
