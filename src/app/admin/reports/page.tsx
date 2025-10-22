@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { File, ListFilter, MoreHorizontal, PlusCircle } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -36,18 +37,32 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-const mockTransactions: { id: string; user: string; email: string; type: string; value: number; date: string; status: string }[] = []
-
-
 export default function ReportsPage() {
+    const [transactions, setTransactions] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        async function fetchTransactions() {
+            try {
+                const response = await fetch('/api/admin/transactions');
+                const data = await response.json();
+                if (data.ok) {
+                    setTransactions(data.transactions);
+                }
+            } catch (error) {
+                console.error("Failed to fetch transactions", error);
+            }
+        }
+        fetchTransactions();
+    }, []);
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="concluido">Concluído</TabsTrigger>
-          <TabsTrigger value="pendente">Pendente</TabsTrigger>
-          <TabsTrigger value="cancelado" className="hidden sm:flex">
+          <TabsTrigger value="Vendido">Concluído</TabsTrigger>
+          <TabsTrigger value="Negociando">Pendente</TabsTrigger>
+          <TabsTrigger value="Cancelado" className="hidden sm:flex">
             Cancelado
           </TabsTrigger>
         </TabsList>
@@ -113,25 +128,25 @@ export default function ReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockTransactions.length > 0 ? mockTransactions.map((tx) => (
-                <TableRow key={tx.id}>
+                {transactions.length > 0 ? transactions.map((tx) => (
+                <TableRow key={tx._id}>
                   <TableCell className="hidden sm:table-cell">
                     {/* Placeholder for asset type icon */}
                   </TableCell>
-                  <TableCell className="font-medium">{tx.user}</TableCell>
+                  <TableCell className="font-medium">{tx.buyer?.nome || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={tx.status === "Concluído" ? "default" : tx.status === "Pendente" ? "secondary" : "destructive"}>
+                    <Badge variant={tx.status === "Vendido" ? "default" : tx.status === "Negociando" ? "secondary" : "destructive"}>
                       {tx.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {tx.type}
+                    {tx.anuncio?.tipo}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.value)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.price || 0)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {tx.date}
+                    {new Date(tx.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -163,7 +178,7 @@ export default function ReportsPage() {
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Mostrando <strong>0</strong> de <strong>0</strong>{" "}
+              Mostrando <strong>{transactions.length}</strong> de <strong>{transactions.length}</strong>{" "}
               transações
             </div>
           </CardFooter>

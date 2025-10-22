@@ -1,6 +1,7 @@
 "use client"
 
-import { File, ListFilter, MoreHorizontal, PlusCircle, UploadCloud } from "lucide-react"
+import * as React from "react"
+import { File, MoreHorizontal, PlusCircle, UploadCloud } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/card"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -39,10 +39,24 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-const mockInvoices: { id: string; user: string; value: number; date: string; status: string; xmlUrl: string; pdfUrl: string }[] = []
-
-
 export default function InvoicesPage() {
+    const [invoices, setInvoices] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        async function fetchInvoices() {
+            try {
+                const response = await fetch('/api/admin/invoices');
+                const data = await response.json();
+                if (data.ok) {
+                    setInvoices(data.invoices);
+                }
+            } catch (error) {
+                console.error("Failed to fetch invoices", error);
+            }
+        }
+        fetchInvoices();
+    }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -102,20 +116,20 @@ export default function InvoicesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockInvoices.length > 0 ? mockInvoices.map((invoice) => (
+            {invoices.length > 0 ? invoices.map((invoice) => (
             <TableRow key={invoice.id}>
-              <TableCell className="font-medium">{invoice.id}</TableCell>
-              <TableCell>{invoice.user}</TableCell>
+              <TableCell className="font-medium">{invoice.numero}</TableCell>
+              <TableCell>{invoice.tomador.nome}</TableCell>
               <TableCell>
                 <Badge variant={invoice.status === "Emitida" ? "default" : "secondary"}>
                   {invoice.status}
                 </Badge>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(invoice.value)}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(invoice.valor)}
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {invoice.date}
+                {new Date(invoice.dataEmissao).toLocaleDateString()}
               </TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -148,7 +162,7 @@ export default function InvoicesPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Mostrando <strong>0</strong> de <strong>0</strong> notas
+          Mostrando <strong>{invoices.length}</strong> de <strong>{invoices.length}</strong> notas
         </div>
       </CardFooter>
     </Card>

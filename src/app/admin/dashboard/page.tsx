@@ -41,6 +41,7 @@ import {
 import Link from "next/link"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Anuncio, Usuario } from "@/models"
 
 
 const transactionsData: { month: string; total: number }[] = []
@@ -50,6 +51,24 @@ const revenueData: { name: string; receita: number; taxas: number }[] = []
 
 export default function Dashboard() {
   const [showAlert, setShowAlert] = React.useState(false);
+  const [stats, setStats] = React.useState<any>(null);
+  const [recentTransactions, setRecentTransactions] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    async function fetchData() {
+        try {
+            const response = await fetch('/api/admin/stats');
+            const data = await response.json();
+            if(data.ok) {
+                setStats(data.stats);
+                setRecentTransactions(data.recentTransactions);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin stats", error);
+        }
+    }
+    fetchData();
+  }, []);
   
   return (
     <>
@@ -81,7 +100,7 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$0,00</div>
+            <div className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats?.totalRevenue || 0)}</div>
             <p className="text-xs text-muted-foreground">
               +0.0% em relação ao mês passado
             </p>
@@ -95,7 +114,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+0</div>
+            <div className="text-2xl font-bold">+{stats?.userCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               +0.0% em relação ao mês passado
             </p>
@@ -107,7 +126,7 @@ export default function Dashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+0</div>
+            <div className="text-2xl font-bold">+{stats?.transactionsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               +0% em relação ao mês passado
             </p>
@@ -119,7 +138,7 @@ export default function Dashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+0</div>
+            <div className="text-2xl font-bold">+{stats?.negotiatingCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               +0 desde a última hora
             </p>
@@ -160,9 +179,30 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">Nenhuma transação recente.</TableCell>
-                </TableRow>
+                 {recentTransactions.length > 0 ? recentTransactions.map(tx => (
+                    <TableRow key={tx._id}>
+                        <TableCell>
+                            <div className="font-medium">{tx.buyer?.nome || 'N/A'}</div>
+                            <div className="hidden text-sm text-muted-foreground md:inline">
+                                {tx.buyer?.email || 'N/A'}
+                            </div>
+                        </TableCell>
+                         <TableCell className="hidden xl:table-cell">{tx.anuncio?.tipo || 'N/A'}</TableCell>
+                         <TableCell className="hidden xl:table-cell">
+                            <Badge className="text-xs" variant="outline">
+                                {tx.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell lg:hidden xl:table-cell">
+                            {new Date(tx.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.price || 0)}</TableCell>
+                    </TableRow>
+                 )) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">Nenhuma transação recente.</TableCell>
+                    </TableRow>
+                 )}
               </TableBody>
             </Table>
           </CardContent>

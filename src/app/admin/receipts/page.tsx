@@ -23,36 +23,61 @@ import { CheckCircle, Eye, ThumbsDown, ThumbsUp, XCircle } from "lucide-react"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-
-const initialReceipts: {
-    id: string;
-    invoiceId: string;
-    userId: string;
-    userName: string;
-    date: string;
+type Receipt = {
+    _id: string;
+    faturaId: string;
+    usuario: { nome: string; uidFirebase: string; };
+    dataEnvio: string;
     status: "Pendente" | "Aprovado" | "Negado";
-    fileUrl: string;
-    rejectionReason: string;
-}[] = []
-
-type Receipt = typeof initialReceipts[0];
+    urlComprovante: string;
+    motivoRecusa: string;
+};
 
 export default function ReceiptsPage() {
-  const [receipts, setReceipts] = React.useState(initialReceipts);
+  const [receipts, setReceipts] = React.useState<Receipt[]>([]);
   const { toast } = useToast();
 
-  const handleUpdateStatus = (receiptId: string, newStatus: Receipt['status'], reason = "") => {
-    setReceipts(prevReceipts => 
-      prevReceipts.map(receipt => 
-        receipt.id === receiptId 
-          ? { ...receipt, status: newStatus, rejectionReason: reason } 
-          : receipt
-      )
-    );
-    toast({
-      title: `Comprovante ${newStatus.toLowerCase()}`,
-      description: `O status do comprovante ${receiptId} foi atualizado.`,
-    });
+  React.useEffect(() => {
+    async function fetchReceipts() {
+        try {
+            const response = await fetch('/api/admin/receipts');
+            const data = await response.json();
+            if (data.ok) {
+                setReceipts(data.receipts);
+            }
+        } catch (error) {
+            console.error("Failed to fetch receipts", error);
+        }
+    }
+    fetchReceipts();
+  }, []);
+
+  const handleUpdateStatus = async (receiptId: string, newStatus: Receipt['status'], reason = "") => {
+    try {
+        const response = await fetch(`/api/admin/receipts/${receiptId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus, motivoRecusa: reason })
+        });
+        const data = await response.json();
+        if(data.ok) {
+            setReceipts(prevReceipts => 
+              prevReceipts.map(receipt => 
+                receipt._id === receiptId 
+                  ? { ...receipt, status: newStatus, motivoRecusa: reason } 
+                  : receipt
+              )
+            );
+            toast({
+              title: `Comprovante ${newStatus.toLowerCase()}`,
+              description: `O status do comprovante ${receiptId} foi atualizado.`,
+            });
+        } else {
+            throw new Error(data.error || "Falha ao atualizar status");
+        }
+    } catch (error: any) {
+        toast({ title: "Erro", description: error.message, variant: 'destructive' });
+    }
   };
 
   const getStatusInfo = (status: Receipt['status']) => {
@@ -113,16 +138,16 @@ export default function ReceiptsPage() {
                 const isPending = receipt.status === 'Pendente';
 
                 return (
-                  <TableRow key={receipt.id}>
+                  <TableRow key={receipt._id}>
                     <TableCell>
-                      <div className="font-medium">{receipt.userName}</div>
-                      <div className="text-sm text-muted-foreground">{receipt.userId}</div>
+                      <div className="font-medium">{receipt.usuario?.nome}</div>
+                      <div className="text-sm text-muted-foreground">{receipt.usuario?.uidFirebase}</div>
                     </TableCell>
-                    <TableCell>{receipt.invoiceId}</TableCell>
+                    <TableCell>{receipt.faturaId}</TableCell>
                     <TableCell>{badge}</TableCell>
                     <TableCell>
                       <Button variant="outline" size="sm" asChild>
-                        <a href={receipt.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <a href={receipt.urlComprovante} target="_blank" rel="noopener noreferrer">
                           <Eye className="mr-2 h-4 w-4" />
                           Visualizar
                         </a>
@@ -131,16 +156,16 @@ export default function ReceiptsPage() {
                     <TableCell>
                         {isPending ? (
                             <Textarea 
-                                id={`reason-${receipt.id}`}
+                                id={`reason-${receipt._id}`}
                                 placeholder="Adicione uma justificativa para a recusa aqui..." 
                                 disabled={!isPending}
                             />
                         ) : (
                            action
                         )}
-                        {receipt.status === 'Negado' && receipt.rejectionReason && (
+                        {receipt.status === 'Negado' && receipt.motivoRecusa && (
                              <p className="text-xs text-muted-foreground mt-1 italic">
-                                <strong>Justificativa:</strong> {receipt.rejectionReason}
+                                <strong>Justificativa:</strong> {receipt.motivoRecusa}
                             </p>
                         )}
                     </TableCell>
@@ -151,7 +176,7 @@ export default function ReceiptsPage() {
                             variant="outline" 
                             size="sm" 
                             className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800"
-                            onClick={() => handleUpdateStatus(receipt.id, 'Aprovado')}
+                            onClick={() => handleUpdateStatus(receipt._id, 'Aprovado')}
                           >
                             <ThumbsUp className="mr-2 h-4 w-4" /> Aceitar
                           </Button>
@@ -159,7 +184,7 @@ export default function ReceiptsPage() {
                             variant="destructive" 
                             size="sm"
                             onClick={() => {
-                                const reasonInput = document.getElementById(`reason-${receipt.id}`) as HTMLTextAreaElement;
+                                const reasonInput = document.getElementById(`reason-${receipt._id}`) as HTMLTextAreaElement;
                                 if (!reasonInput.value) {
                                     toast({
                                         title: 'Justificativa necessária',
@@ -168,7 +193,7 @@ export default function ReceiptsPage() {
                                     });
                                     return;
                                 }
-                                handleUpdateStatus(receipt.id, 'Negado', reasonInput.value);
+                                handleUpdateStatus(receipt._id, 'Negado', reasonInput.value);
                             }}
                           >
                             <ThumbsDown className="mr-2 h-4 w-4" /> Negar

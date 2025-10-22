@@ -1,6 +1,7 @@
 "use client"
 
-import { File, ListFilter } from "lucide-react"
+import * as React from "react"
+import { File } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,9 +22,24 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 
-const mockAuditLogs: { id: string; user: string; ip: string; action: string; timestamp: string }[] = []
-
 export default function AuditPage() {
+    const [logs, setLogs] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        async function fetchAuditLogs() {
+            try {
+                const response = await fetch('/api/admin/audit');
+                const data = await response.json();
+                if (data.ok) {
+                    setLogs(data.logs);
+                }
+            } catch (error) {
+                console.error("Failed to fetch audit logs", error);
+            }
+        }
+        fetchAuditLogs();
+    }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -53,12 +69,12 @@ export default function AuditPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockAuditLogs.length > 0 ? mockAuditLogs.map((log) => (
-                <TableRow key={log.id}>
-                <TableCell className="font-medium">{log.user}</TableCell>
+            {logs.length > 0 ? logs.map((log) => (
+                <TableRow key={log._id}>
+                <TableCell className="font-medium">{log.user?.nome || log.userId}</TableCell>
                 <TableCell>{log.action}</TableCell>
-                <TableCell className="hidden md:table-cell">{log.ip}</TableCell>
-                <TableCell className="hidden md:table-cell">{log.timestamp}</TableCell>
+                <TableCell className="hidden md:table-cell">{log.ipAddress}</TableCell>
+                <TableCell className="hidden md:table-cell">{new Date(log.createdAt).toLocaleString()}</TableCell>
                 </TableRow>
             )) : (
               <TableRow>
@@ -70,7 +86,7 @@ export default function AuditPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Mostrando <strong>0</strong> de <strong>0</strong> logs
+          Mostrando <strong>{logs.length}</strong> de <strong>{logs.length}</strong> logs
         </div>
       </CardFooter>
     </Card>
