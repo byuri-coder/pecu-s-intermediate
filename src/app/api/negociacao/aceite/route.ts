@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     if (contract.acceptances.buyer.accepted && contract.acceptances.seller.accepted) {
       contract.status = 'frozen';
       contract.step = 2;
+      contract.frozenAt = new Date();
     }
 
     await contract.save();

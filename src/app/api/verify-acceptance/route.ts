@@ -1,11 +1,7 @@
-
-import { connectDB } from "@/lib/mongodb";
+// This file is deprecated and will be removed. 
+// The logic has been moved to /api/negociacao/verify-acceptance/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  await connectDB();
-  // A lógica original de verificação de aceite foi removida.
-  console.log("Endpoint verify-acceptance agora tenta conectar ao MongoDB.");
-  // A rota agora retornaria um JSON em vez de redirecionar.
-  return NextResponse.json({ status: "ok", message: "Conexão com DB estabelecida (simulado)." });
+  return NextResponse.json({ status: "deprecated" });
 }
