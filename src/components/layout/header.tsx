@@ -127,7 +127,7 @@ export function Header() {
           {isLoggedIn ? (
             <>
               <Button variant="ghost" size="icon" asChild>
-                <Link href="/negociacao" title="Chat de Negociação">
+                <Link href="/chat-negociacao" title="Chat de Negociação">
                   <MessageSquare className="h-5 w-5" />
                   <span className="sr-only">Negociações</span>
                 </Link>
