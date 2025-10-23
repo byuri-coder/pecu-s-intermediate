@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, Fingerprint, Clock } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, Fingerprint, Clock, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Asset, AssetType, CompletedDeal } from '@/lib/types';
@@ -30,6 +30,9 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   const [loading, setLoading] = React.useState(true);
   const [isActionPending, setIsActionPending] = React.useState(false);
 
+  const [sellerEmail, setSellerEmail] = React.useState('');
+  const [buyerEmail, setBuyerEmail] = React.useState('');
+
   const negotiationId = `neg_${assetId}`;
 
   // Auth listener
@@ -52,6 +55,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         
         if (response.ok && data.ok) {
             setContract(data.contract);
+            setSellerEmail(data.contract.fields.seller.email || '');
+            setBuyerEmail(data.contract.fields.buyer.email || '');
         } else if (response.status === 404) {
             const createResponse = await fetch('/api/negociacao/get-or-create-contract', {
                 method: 'POST',
@@ -66,6 +71,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             const createData = await createResponse.json();
              if (createData.ok) {
                 setContract(createData.contract);
+                setSellerEmail(createData.contract.fields.seller.email || '');
+                setBuyerEmail(createData.contract.fields.buyer.email || '');
             } else {
                 throw new Error(createData.error || "Falha ao criar contrato");
             }
@@ -90,7 +97,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const currentUserRole: UserRole | null = (asset && 'ownerId' in asset && user?.uid === asset.ownerId) ? 'seller' : 'buyer';
   
-  const handleUpdateContractAPI = async (endpoint: string, body: object) => {
+  const handleUpdateContractAPI = async (endpoint: string, body: object, showToast = false) => {
     setIsActionPending(true);
     try {
         const response = await fetch(endpoint, {
@@ -101,6 +108,9 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         setContract(data.contract); // Update local state with the new contract from the backend
+        if (showToast) {
+             toast({ title: "Sucesso!", description: 'Operação realizada com sucesso.' });
+        }
         return data;
     } finally {
         setIsActionPending(false);
@@ -109,61 +119,48 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   
   const handleAccept = async () => {
     if (!currentUserRole || !user || !contract) return;
-
-    // Determine the other party's role and details
-    const otherPartyRole = currentUserRole === 'seller' ? 'buyer' : 'seller';
-    const otherPartyEmail = contract.fields[otherPartyRole]?.email || (otherPartyRole === 'buyer' ? contract.buyerId : contract.sellerId);
     
-    // Find the other user's name (this is a simplification, ideally you fetch this)
-    const otherPartyName = "Outra Parte"; 
-
     try {
-        // 1. Register my acceptance
-        const acceptResponse = await handleUpdateContractAPI('/api/negociacao/aceite', { role: currentUserRole });
-        toast({ title: "Sucesso", description: 'Seu aceite foi registrado.' });
-        
-        // 2. If my acceptance froze the contract, send validation email to the OTHER party
-        if (acceptResponse.contract?.step === 2) {
-             toast({ title: "Contrato Congelado!", description: `Enviando e-mail de validação para ${otherPartyEmail}...` });
-             await fetch('/api/negociacao/send-validation-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId,
-                    role: otherPartyRole, // Send to the OTHER user
-                    userEmail: otherPartyEmail,
-                    userName: otherPartyName,
-                }),
-            });
-        }
-        // 3. If I am the second person to accept, send email to myself as well
-        else if (acceptResponse.contract?.step === 1 && contract.acceptances[otherPartyRole].accepted) {
-            toast({ title: "Aguardando Validação", description: `Enviando e-mail de validação para ${user.email}...` });
-             await fetch('/api/negociacao/send-validation-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId,
-                    role: currentUserRole, // Send to MYSELF
-                    userEmail: user.email,
-                    userName: user.displayName,
-                }),
-            });
-        }
-
+        await handleUpdateContractAPI('/api/negociacao/aceite', { role: currentUserRole }, true);
     } catch (error: any) {
         toast({ title: "Erro", description: error.message || 'Falha ao registrar aceite.', variant: "destructive" });
     }
   };
+
+  const handleSendValidationEmail = async (role: UserRole, email: string) => {
+      if(!email) {
+          toast({ title: "Erro", description: "O campo de e-mail não pode estar vazio.", variant: "destructive"});
+          return;
+      }
+      setIsActionPending(true);
+      try {
+          const response = await fetch('/api/negociacao/send-validation-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  negotiationId,
+                  role: role,
+                  userEmail: email,
+                  userName: role === 'buyer' ? contract?.fields.buyer.razaoSocial : contract?.fields.seller.razaoSocial,
+              }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error);
+          toast({ title: "E-mail Enviado!", description: `O e-mail de validação para o ${role} foi enviado para ${email}.` });
+      } catch (error: any) {
+          toast({ title: "Erro ao Enviar", description: error.message || 'Falha ao enviar o e-mail de validação.', variant: "destructive" });
+      } finally {
+          setIsActionPending(false);
+      }
+  }
 
 
   const handleFinalizeContract = async () => {
      try {
       await handleUpdateContractAPI(
           '/api/negociacao/finalizar',
-          {},
+          {}, true
       );
-       toast({ title: "Sucesso!", description: 'Contrato finalizado com sucesso!' });
     } catch(error: any) {
        toast({ title: "Erro", description: error.message || 'Falha ao finalizar o contrato.', variant: "destructive" });
     }
@@ -326,17 +323,29 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                 <CardTitle className="flex items-center gap-2"><MailCheck className="h-5 w-5"/>2. Verificação por E-mail</CardTitle>
                 {bothValidated && <Seal text="Validado"/>}
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-                 <div className="flex flex-col items-center gap-2 p-4 border rounded-lg bg-secondary/30">
-                     <p className="font-semibold text-sm capitalize">Vendedor</p>
-                     {emailValidation.seller.validated ? <CheckCircle className="h-8 w-8 text-green-600"/> : <Clock className="h-8 w-8 text-muted-foreground"/>}
-                     <p className={cn("text-xs font-medium", emailValidation.seller.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.seller.validated ? 'Validado' : 'Pendente'}</p>
-                 </div>
-                 <div className="flex flex-col items-center gap-2 p-4 border rounded-lg bg-secondary/30">
-                     <p className="font-semibold text-sm capitalize">Comprador</p>
-                     {emailValidation.buyer.validated ? <CheckCircle className="h-8 w-8 text-green-600"/> : <Clock className="h-8 w-8 text-muted-foreground"/>}
-                     <p className={cn("text-xs font-medium", emailValidation.buyer.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.buyer.validated ? 'Validado' : 'Pendente'}</p>
-                 </div>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2 p-4 border rounded-lg bg-secondary/30">
+                     <div className="flex justify-between items-center">
+                        <p className="font-semibold text-sm capitalize">Vendedor</p>
+                        {emailValidation.seller.validated ? <CheckCircle className="h-6 w-6 text-green-600"/> : <Clock className="h-6 w-6 text-muted-foreground"/>}
+                     </div>
+                     <p className={cn("text-xs font-medium", emailValidation.seller.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.seller.validated ? `Validado em ${new Date(emailValidation.seller.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
+                     <div className="flex items-center gap-2 pt-2 border-t mt-2">
+                        <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="E-mail do vendedor" disabled={isActionPending}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('seller', sellerEmail)} disabled={isActionPending || emailValidation.seller.validated}><Send className="h-4 w-4"/></Button>
+                     </div>
+                </div>
+                <div className="flex flex-col gap-2 p-4 border rounded-lg bg-secondary/30">
+                     <div className="flex justify-between items-center">
+                        <p className="font-semibold text-sm capitalize">Comprador</p>
+                        {emailValidation.buyer.validated ? <CheckCircle className="h-6 w-6 text-green-600"/> : <Clock className="h-6 w-6 text-muted-foreground"/>}
+                     </div>
+                     <p className={cn("text-xs font-medium", emailValidation.buyer.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.buyer.validated ? `Validado em ${new Date(emailValidation.buyer.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
+                      <div className="flex items-center gap-2 pt-2 border-t mt-2">
+                        <Input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="E-mail do comprador" disabled={isActionPending}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('buyer', buyerEmail)} disabled={isActionPending || emailValidation.buyer.validated}><Send className="h-4 w-4"/></Button>
+                     </div>
+                </div>
             </CardContent>
              <CardFooter className="text-center text-xs text-muted-foreground">
                 <p>Após ambos aceitarem os termos, um e-mail de validação será enviado. Clique no link do e-mail para confirmar sua identidade e prosseguir.</p>

@@ -6,7 +6,7 @@ import { connectDB } from '@/lib/mongodb';
 import { Contrato } from '@/models/Contrato';
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
 if (!BREVO_API_KEY) {
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     // Cria token de validação com expiração de 24h
     const token = jwt.sign({ contractId: contract._id, userEmail, role }, JWT_SECRET, { expiresIn: '24h' });
 
-    const validationUrl = `${BASE_URL}/api/negociacao/verify-acceptance?token=${token}`;
+    const validationUrl = `${NEXT_PUBLIC_API_URL}/api/negociacao/verify-acceptance?token=${token}`;
 
     const apiInstance = new Brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);

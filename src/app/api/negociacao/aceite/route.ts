@@ -18,16 +18,20 @@ export async function POST(req: Request) {
     }
 
     if (role === 'buyer' || role === 'seller') {
-        contract.acceptances[role] = { accepted: true, date: new Date() };
+        // Prevent re-accepting
+        if (!contract.acceptances[role].accepted) {
+            contract.acceptances[role] = { accepted: true, date: new Date() };
+        }
     } else {
         return NextResponse.json({ ok: false, error: 'Role inválida' }, { status: 400 });
     }
 
-    // Se ambos aceitaram, avança o estado
+    // If both have now accepted, advance the step to freeze the contract terms
     if (contract.acceptances.buyer.accepted && contract.acceptances.seller.accepted) {
-      contract.status = 'frozen';
-      contract.step = 2;
-      contract.frozenAt = new Date();
+      if (contract.step < 2) {
+        contract.step = 2; // Move to email validation step
+        contract.status = 'frozen';
+      }
     }
 
     await contract.save();
