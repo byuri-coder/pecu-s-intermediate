@@ -51,11 +51,17 @@ export async function POST(req: Request) {
     const feeDueDate = new Date();
     feeDueDate.setDate(today.getDate() + 7); // 7 days to pay
 
+    // Find the contract by the business ID (negotiationId), not the MongoDB _id
+    const relatedContract = await Contrato.findOne({ negotiationId: negotiationId }).lean();
+    if (!relatedContract) {
+      throw new Error(`Contrato com negotiationId ${negotiationId} não encontrado para gerar fatura.`);
+    }
+
     const newFatura = await Fatura.create({
         // This needs to be the MongoDB ObjectId of the user, not the Firebase UID.
         // For this demo, we'll leave it out, but a real app needs to resolve this.
         // usuarioId: resolvedUserId, 
-        contratoId: (await Contrato.findOne({ _id: `contract_${assetId}` }))?._id,
+        contratoId: relatedContract._id, // Use the actual MongoDB _id
         numero: `FEE-${assetId.substring(0, 8)}`,
         valor: serviceFee,
         dataVencimento: feeDueDate,

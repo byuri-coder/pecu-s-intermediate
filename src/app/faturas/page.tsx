@@ -192,10 +192,10 @@ export default function InvoicesPage() {
                                         <TableRow key={invoice.id}>
                                             <TableCell className="font-medium">
                                                 <p>{invoice.id}</p>
-                                                {invoice.transactionHash && (
-                                                    <p className="text-xs text-muted-foreground font-mono flex items-center gap-1 mt-1" title={invoice.transactionHash}>
-                                                        <Fingerprint className="h-3 w-3"/>
-                                                        {invoice.transactionHash.substring(0, 10)}...
+                                                {invoice.transactionId && (
+                                                    <p className="text-xs text-muted-foreground font-mono flex items-center gap-1 mt-1" title={invoice.transactionId}>
+                                                        <FileText className="h-3 w-3"/>
+                                                        Ref: {invoice.transactionId}
                                                     </p>
                                                 )}
                                             </TableCell>
