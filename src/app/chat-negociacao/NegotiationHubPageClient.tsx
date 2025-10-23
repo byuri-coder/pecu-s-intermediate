@@ -95,11 +95,52 @@ export function NegotiationHubPageClient() {
     return receiverId ? { id: receiverId } : null;
   }, [activeConversation, currentUser]);
 
-  // Debugging logs
-  console.log("activeConversation:", activeConversation);
-  console.log("currentUser:", currentUser);
-  console.log("receiver:", receiver);
 
+  const renderChatContent = () => {
+    // Main loading state
+    if (userLoading) {
+        return <Loader2 className="h-10 w-10 animate-spin"/>;
+    }
+
+    // No active chat selected
+    if (!activeChatId) {
+        return (
+            <Card className="w-full max-w-md text-center border-dashed">
+                <CardHeader>
+                    <div className="mx-auto bg-secondary text-secondary-foreground p-4 rounded-full w-fit mb-4">
+                        <MessageSquareText className="h-10 w-10"/>
+                    </div>
+                    <CardTitle>Selecione uma Negociação</CardTitle>
+                    <CardDescription>
+                        Escolha uma conversa da lista para visualizar as mensagens e continuar a negociação.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
+    
+    // Active chat selected, but still loading data
+    if (conversationsLoading || !activeConversation || !currentUser || !receiver) {
+         return <Loader2 className="h-10 w-10 animate-spin"/>;
+    }
+
+    // All data is ready, render the chat room
+    return (
+        <Card className="h-full w-full flex flex-col">
+            <ActiveChatHeader 
+                conversation={activeConversation}
+                assetId={activeConversation.assetId}
+            />
+            <CardContent className="flex-1 flex flex-col p-4 pt-0">
+                <ChatRoom 
+                    chatId={activeChatId}
+                    currentUser={currentUser}
+                    receiverId={receiver.id}
+                />
+            </CardContent>
+        </Card>
+    );
+  };
 
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
@@ -107,35 +148,7 @@ export function NegotiationHubPageClient() {
              <ChatList conversations={conversations} activeChatId={activeChatId} isLoading={conversationsLoading} />
         </div>
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
-            {userLoading || (activeChatId && conversationsLoading) ? (
-                 <Loader2 className="h-10 w-10 animate-spin"/>
-            ) : activeConversation && currentUser && receiver ? (
-                 <Card className="h-full w-full flex flex-col">
-                    <ActiveChatHeader 
-                        conversation={activeConversation}
-                        assetId={activeConversation.assetId}
-                    />
-                    <CardContent className="flex-1 flex flex-col p-4 pt-0">
-                       <ChatRoom 
-                          chatId={activeChatId!}
-                          currentUser={currentUser}
-                          receiverId={receiver.id}
-                       />
-                    </CardContent>
-                </Card>
-            ) : (
-                <Card className="w-full max-w-md text-center border-dashed">
-                    <CardHeader>
-                        <div className="mx-auto bg-secondary text-secondary-foreground p-4 rounded-full w-fit mb-4">
-                            <MessageSquareText className="h-10 w-10"/>
-                        </div>
-                        <CardTitle>Selecione uma Negociação</CardTitle>
-                        <CardDescription>
-                            Escolha uma conversa da lista para visualizar as mensagens e continuar a negociação.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-            )}
+            {renderChatContent()}
         </div>
     </div>
   );
