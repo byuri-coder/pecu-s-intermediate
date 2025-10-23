@@ -16,9 +16,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "uidFirebase e email são obrigatórios" }, { status: 400 });
     }
 
+    const { uidFirebase, ...updateData } = data;
+
     const usuario = await Usuario.findOneAndUpdate(
-      { uidFirebase: data.uidFirebase },
-      { $set: data }, // Use $set to update only the fields provided in `data`
+      { uidFirebase: uidFirebase },
+      { $set: updateData }, // Use $set to update only the fields provided in `data`
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 

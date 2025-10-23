@@ -75,6 +75,7 @@ export function ProfileForm() {
   const [dbUser, setDbUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -152,13 +153,10 @@ export function ProfileForm() {
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // In a real app, you would upload this file to Firebase Storage
-      // and get the download URL. For now, we just show a preview.
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
-        // Here, you would call your upload function.
-        // e.g. uploadAvatar(file).then(url => updateUserProfile({ photoURL: url }))
       };
       reader.readAsDataURL(file);
     }
@@ -173,18 +171,26 @@ export function ProfileForm() {
         }
 
         try {
+            // SIMULATE UPLOAD: In a real app, upload avatarFile to Firebase Storage and get URL
+            // For now, we'll just use a placeholder if a new file was selected.
+            let photoURL = user.photoURL; // Keep the old one by default
+            if (avatarFile) {
+                // This is where you would get the real URL from storage
+                // const storageUrl = await uploadAvatarToStorage(avatarFile);
+                photoURL = `https://avatar.vercel.sh/${user.uid}.png?text=OK`; // Placeholder
+                await updateProfile(user, { photoURL });
+            }
+            
             // Update Firebase Auth display name if it changed
             if (data.fullName !== user.displayName) {
                 await updateProfile(user, { displayName: data.fullName });
             }
-
-            // In a real app, handle avatar upload here, get the URL
-            // and add it to the payload
             
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
+                photoURL: photoURL, // Send the new or existing URL to your backend
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -213,6 +219,10 @@ export function ProfileForm() {
                 title: "Perfil Atualizado!",
                 description: "Suas informações foram salvas com sucesso.",
             });
+            
+            // Force a reload of the user object to get fresh data everywhere
+             window.location.reload();
+
 
         } catch (error: any) {
             console.error("Failed to update profile:", error);
