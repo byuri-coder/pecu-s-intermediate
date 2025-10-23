@@ -89,7 +89,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             >
             {!isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={msg.user?.profileImage || undefined} />
+                    {msg.user?.profileImage && <AvatarImage src={msg.user.profileImage} />}
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
@@ -112,7 +112,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={msg.user?.profileImage || undefined} />
+                    {msg.user?.profileImage && <AvatarImage src={msg.user.profileImage} />}
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}

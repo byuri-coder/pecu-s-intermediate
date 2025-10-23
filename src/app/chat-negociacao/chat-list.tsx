@@ -92,7 +92,7 @@ export function ChatList({
                 onClick={() => handleSelectChat(convo.id)}
               >
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={convo.avatar || undefined} />
+                  {convo.avatar && <AvatarImage src={convo.avatar} />}
                   <AvatarFallback>{convo.name?.charAt(0) || '?'}</AvatarFallback>
                 </Avatar>
 

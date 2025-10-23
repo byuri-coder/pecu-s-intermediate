@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -117,7 +118,7 @@ export function RegisterRuralLandForm() {
               descricao: data.description,
               tipo: 'rural-land',
               price: data.price,
-              imagens: uploadedMedia,
+              imagens: uploadedMedia.map(m => m.url), // Send only URLs
               metadados: {
                 owner: data.owner,
                 registration: data.registration,

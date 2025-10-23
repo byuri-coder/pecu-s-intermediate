@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -177,7 +178,8 @@ export function ProfileForm() {
             if (avatarFile) {
                 // This is where you would get the real URL from storage
                 // const storageUrl = await uploadAvatarToStorage(avatarFile);
-                photoURL = `https://avatar.vercel.sh/${user.uid}.png?text=OK`; // Placeholder
+                // For demonstration, we use a service that generates an avatar from the user's ID.
+                photoURL = `https://avatar.vercel.sh/${user.uid}.png`;
                 await updateProfile(user, { photoURL });
             }
             
