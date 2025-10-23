@@ -9,6 +9,8 @@ const FaturaSchema = new Schema({
   dataEmissao: { type: Date, default: Date.now },
   dataVencimento: { type: Date, required: true },
   status: { type: String, enum: ['Pendente', 'Paga', 'Atrasada', 'Cancelada'], default: 'Pendente' },
+  description: { type: String },
+  motivoRecusa: { type: String }
 }, { timestamps: true });
 
 export const Fatura = models.Fatura || mongoose.model("Fatura", FaturaSchema);

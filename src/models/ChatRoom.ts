@@ -1,4 +1,3 @@
-
 // src/models/ChatRoom.ts
 import mongoose, { Schema, models } from "mongoose";
 

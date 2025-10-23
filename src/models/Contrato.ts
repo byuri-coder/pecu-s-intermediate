@@ -21,7 +21,7 @@ const ContratoSchema = new Schema({
   negotiationId: { type: String, required: true, unique: true, index: true },
   buyerId: { type: String, required: true, index: true },
   sellerId: { type: String, required: true, index: true },
-  anuncioId: { type: Schema.Types.ObjectId, ref: "Anuncio", required: true },
+  anuncioId: { type: String, required: true },
 
   step: { type: Number, default: 1 }, // 1=Preenchimento, 2=Validação Email, 3=Documentos, 4=Finalizado
   status: { type: String, enum: ["in-progress", "frozen", "validated", "completed"], default: "in-progress" },
