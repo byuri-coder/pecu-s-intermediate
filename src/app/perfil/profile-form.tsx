@@ -26,6 +26,7 @@ import { states } from '@/lib/states';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAuth, onAuthStateChanged, updateProfile, type User } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import { Usuario as UserModel } from '@/models/Usuario'; // Assuming this is your mongoose model type
 
 
 const profileSchema = z.object({
@@ -71,6 +72,7 @@ export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [dbUser, setDbUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,16 +97,47 @@ export function ProfileForm() {
 
   useEffect(() => {
     const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
-            form.reset({
-                fullName: currentUser.displayName || '',
-                email: currentUser.email || '',
-                // Here you would fetch and set other profile data from your DB (Firestore/Mongo)
-            });
-            if (currentUser.photoURL) {
-                setAvatarPreview(currentUser.photoURL);
+            try {
+                // Fetch user data from your DB
+                const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
+                const data = await res.json();
+
+                if (data.ok) {
+                    const fetchedUser = data.usuario;
+                    setDbUser(fetchedUser);
+                    form.reset({
+                        fullName: currentUser.displayName || fetchedUser.nome || '',
+                        email: currentUser.email || fetchedUser.email || '',
+                        stateRegistration: fetchedUser.inscricaoEstadual || '',
+                        registrationState: fetchedUser.estadoFiscal || '',
+                        address: fetchedUser.endereco || '',
+                        city: fetchedUser.cidade || '',
+                        state: fetchedUser.estado || '',
+                        zipCode: fetchedUser.cep || '',
+                        specialRegistration: fetchedUser.autorizacoesEspeciais?.join(', ') || '',
+                        bankName: fetchedUser.banco || '',
+                        agency: fetchedUser.agencia || '',
+                        account: fetchedUser.conta || '',
+                        pixKey: fetchedUser.chavePix || '',
+                    });
+                     if (currentUser.photoURL) {
+                        setAvatarPreview(currentUser.photoURL);
+                    }
+                } else {
+                     form.reset({
+                        fullName: currentUser.displayName || '',
+                        email: currentUser.email || '',
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to fetch user data from DB", e);
+                 form.reset({
+                    fullName: currentUser.displayName || '',
+                    email: currentUser.email || '',
+                });
             }
         }
     });
@@ -119,9 +152,13 @@ export function ProfileForm() {
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // In a real app, you would upload this file to Firebase Storage
+      // and get the download URL. For now, we just show a preview.
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
+        // Here, you would call your upload function.
+        // e.g. uploadAvatar(file).then(url => updateUserProfile({ photoURL: url }))
       };
       reader.readAsDataURL(file);
     }
@@ -130,24 +167,61 @@ export function ProfileForm() {
 
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
-      // Here you would typically send the data to your backend
-      console.log(data);
-      
-      // Placeholder: in a real app, you would upload the avatarPreview (if it's a new file) to a storage service
-      // and get a URL, then update the user's profile with that URL.
-      // For this example, we'll just log it.
-      if (avatarPreview && user && avatarPreview !== user.photoURL) {
-          console.log("New avatar to upload:", avatarPreview);
-          // Example: await updateProfile(user, { photoURL: 'new_url_from_storage' });
-      }
+        if (!user) {
+            toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
+            return;
+        }
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            // Update Firebase Auth display name if it changed
+            if (data.fullName !== user.displayName) {
+                await updateProfile(user, { displayName: data.fullName });
+            }
 
-      toast({
-        title: "Perfil Atualizado!",
-        description: "Suas informações foram salvas com sucesso.",
-      });
-      // form.reset(data); // reset with new values
+            // In a real app, handle avatar upload here, get the URL
+            // and add it to the payload
+            
+            const payload = {
+                uidFirebase: user.uid,
+                nome: data.fullName,
+                email: data.email,
+                banco: data.bankName,
+                agencia: data.agency,
+                conta: data.account,
+                chavePix: data.pixKey,
+                inscricaoEstadual: data.stateRegistration,
+                estadoFiscal: data.registrationState,
+                endereco: data.address,
+                cidade: data.city,
+                estado: data.state,
+                cep: data.zipCode,
+                autorizacoesEspeciais: data.specialRegistration?.split(',').map(s => s.trim()).filter(Boolean) || [],
+            };
+
+            const response = await fetch('/api/usuarios/salvar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
+            }
+
+            toast({
+                title: "Perfil Atualizado!",
+                description: "Suas informações foram salvas com sucesso.",
+            });
+
+        } catch (error: any) {
+            console.error("Failed to update profile:", error);
+            toast({
+                title: "Erro ao Atualizar",
+                description: error.message,
+                variant: "destructive",
+            });
+        }
     });
   };
 
@@ -188,7 +262,7 @@ export function ProfileForm() {
                         <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="email" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} readOnly disabled /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
             </div>
@@ -238,7 +312,7 @@ export function ProfileForm() {
               )} />
               <FormField name="registrationState" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Estado de Inscrição</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
                   <SelectContent>
                     {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
@@ -260,7 +334,7 @@ export function ProfileForm() {
               )} />
               <FormField name="state" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Estado</FormLabel>
-                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
                   <SelectContent>
                     {states.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}

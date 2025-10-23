@@ -18,11 +18,7 @@ export async function POST(req: Request) {
 
     const usuario = await Usuario.findOneAndUpdate(
       { uidFirebase: data.uidFirebase },
-      {
-        nome: data.nome || undefined,
-        email: data.email,
-        tipo: data.tipo || "comprador",
-      },
+      { $set: data }, // Use $set to update only the fields provided in `data`
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
