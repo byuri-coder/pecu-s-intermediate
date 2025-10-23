@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import { Duplicata } from '@/models/Duplicata';
 import { Fatura } from '@/models/Fatura';
 import { Contrato } from '@/models/Contrato';
+import { Usuario } from '@/models/Usuario';
 import type { Asset, CompletedDeal } from '@/lib/types';
 import mongoose from 'mongoose';
 
@@ -57,10 +58,14 @@ export async function POST(req: Request) {
       throw new Error(`Contrato com negotiationId ${negotiationId} não encontrado para gerar fatura.`);
     }
 
+    // Find the seller's user document to get their MongoDB ObjectId
+    const sellerUser = await Usuario.findOne({ uidFirebase: contract.sellerId }).lean();
+    if (!sellerUser) {
+        throw new Error(`Usuário vendedor com uidFirebase ${contract.sellerId} não encontrado.`);
+    }
+
     const newFatura = await Fatura.create({
-        // This needs to be the MongoDB ObjectId of the user, not the Firebase UID.
-        // For this demo, we'll leave it out, but a real app needs to resolve this.
-        // usuarioId: resolvedUserId, 
+        usuarioId: sellerUser._id, // Use the seller's MongoDB ObjectId
         contratoId: relatedContract._id, // Use the actual MongoDB _id
         numero: `FEE-${assetId.substring(0, 8)}`,
         valor: serviceFee,
