@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type Asset = {
+    _id: string;
     id: string;
     titulo: string;
     price?: number;
@@ -70,6 +71,7 @@ export default function DashboardPage({
   const { toast } = useToast();
   const [allAssets, setAllAssets] = React.useState<Asset[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [actionLoading, setActionLoading] = React.useState<string | null>(null);
   const [isAlertOpen, setAlertOpen] = React.useState(false);
   const [assetToDelete, setAssetToDelete] = React.useState<Asset | null>(null);
 
@@ -113,8 +115,24 @@ export default function DashboardPage({
   }, [fetchAssets]);
 
   const updateAssetStatus = async (asset: Asset, newStatus: Asset['status']) => {
-    // A API de update ainda precisa ser criada.
-    toast({ title: "Funcionalidade em desenvolvimento", description: "A atualização de status será implementada em breve."});
+    setActionLoading(asset._id);
+    try {
+        const response = await fetch(`/api/anuncios/${asset._id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Falha ao atualizar status.');
+
+        setAllAssets(prevAssets => prevAssets.map(a => a._id === asset._id ? { ...a, status: newStatus } : a));
+        toast({ title: "Sucesso!", description: `Ativo foi ${newStatus === 'Pausado' ? 'pausado' : 'ativado'}.` });
+
+    } catch (error: any) {
+        toast({ title: "Erro", description: error.message, variant: 'destructive' });
+    } finally {
+        setActionLoading(null);
+    }
   };
   
   const handleTogglePause = (asset: Asset) => {
@@ -129,10 +147,26 @@ export default function DashboardPage({
 
   const handleDelete = async () => {
     if (!assetToDelete) return;
-    // A API de delete ainda precisa ser criada.
-     toast({ title: "Funcionalidade em desenvolvimento", description: "A exclusão de ativos será implementada em breve."});
-    setAlertOpen(false);
-    setAssetToDelete(null);
+    setActionLoading(assetToDelete._id);
+    try {
+      const response = await fetch(`/api/anuncios/${assetToDelete._id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Falha ao excluir o ativo.');
+      }
+      
+      setAllAssets(prevAssets => prevAssets.filter(a => a._id !== assetToDelete._id));
+      toast({ title: "Sucesso!", description: "O ativo foi excluído permanentemente." });
+
+    } catch (error: any) {
+       toast({ title: "Erro", description: error.message, variant: 'destructive' });
+    } finally {
+       setActionLoading(null);
+       setAlertOpen(false);
+       setAssetToDelete(null);
+    }
   };
 
   const getAssetDetails = (asset: Asset) => {
@@ -203,7 +237,7 @@ export default function DashboardPage({
                     ) : allAssets.length > 0 ? allAssets.map((asset) => {
                       const { name, value } = getAssetDetails(asset);
                       return (
-                      <TableRow key={asset.id}>
+                      <TableRow key={asset._id}>
                         <TableCell className="font-medium">{name}</TableCell>
                         <TableCell><AssetTypeBadge type={asset.assetType}/></TableCell>
                         <TableCell>{value}</TableCell>
@@ -211,6 +245,9 @@ export default function DashboardPage({
                             <StatusBadge status={asset.status} />
                         </TableCell>
                         <TableCell>
+                          {actionLoading === asset._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin"/>
+                          ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -222,12 +259,12 @@ export default function DashboardPage({
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
                               {asset.status === 'Vendido' ? (
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/negociacao/${asset.id}/ajuste?type=${asset.assetType}&view=archive`}>Dados da Negociação</Link>
+                                  <Link href={`/negociacao/${asset._id}/ajuste-contrato?type=${asset.assetType}`}>Dados da Negociação</Link>
                                 </DropdownMenuItem>
                               ) : (
                                 <>
                                   <DropdownMenuItem asChild>
-                                      <Link href={`/editar-ativo/${asset.id}?type=${asset.assetType}`}>
+                                      <Link href={`/editar-ativo/${asset._id}?type=${asset.assetType}`}>
                                         <Edit className="mr-2 h-4 w-4"/> Editar
                                       </Link>
                                   </DropdownMenuItem>
@@ -250,6 +287,7 @@ export default function DashboardPage({
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          )}
                         </TableCell>
                       </TableRow>
                     )}) : (
@@ -292,3 +330,5 @@ export default function DashboardPage({
     </>
   );
 }
+
+    
