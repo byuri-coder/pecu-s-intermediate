@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useSearchParams, useParams } from 'next/navigation';
+import { notFound, useSearchParams, useParams, useRouter } from 'next/navigation';
 import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
 import * as React from 'react';
 import Link from 'next/link';
