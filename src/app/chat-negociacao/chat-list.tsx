@@ -23,17 +23,28 @@ const AssetTypeIcon = ({ type }: { type: AssetType }) => {
 
 export function ChatList({ conversations, activeChatId, isLoading }: { conversations: Conversation[], activeChatId: string | null, isLoading: boolean }) {
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const handleSelectChat = (conversationId: string) => {
     router.push(`/chat-negociacao?id=${conversationId}`);
   };
+
+  const filteredConversations = conversations.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.assetName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="p-4">
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Pesquisar negociação..." className="pl-8" />
+          <Input 
+            placeholder="Pesquisar negociação..." 
+            className="pl-8" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-2 overflow-y-auto">
@@ -43,7 +54,7 @@ export function ChatList({ conversations, activeChatId, isLoading }: { conversat
             </div>
         ) : (
             <div className="space-y-1">
-            {conversations.length > 0 ? conversations.map((convo) => (
+            {filteredConversations.length > 0 ? filteredConversations.map((convo) => (
                 <button
                 key={convo.id}
                 className={cn(
@@ -76,7 +87,10 @@ export function ChatList({ conversations, activeChatId, isLoading }: { conversat
                 </button>
             )) : (
                 <div className="text-center text-sm text-muted-foreground py-10">
-                    Nenhuma negociação ativa. Inicie uma a partir da página de um ativo.
+                    {conversations.length === 0 
+                      ? 'Nenhuma negociação ativa. Inicie uma a partir da página de um ativo.' 
+                      : 'Nenhuma negociação encontrada para sua busca.'
+                    }
                 </div>
             )}
             </div>

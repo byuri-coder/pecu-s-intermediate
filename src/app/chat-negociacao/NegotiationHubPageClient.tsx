@@ -97,9 +97,23 @@ export function NegotiationHubPageClient() {
 
 
   const renderChatContent = () => {
-    // Main loading state
+    // Main loading state for user auth
     if (userLoading) {
         return <Loader2 className="h-10 w-10 animate-spin"/>;
+    }
+    
+    // User not logged in
+    if (!currentUser) {
+        return (
+             <Card className="w-full max-w-md text-center border-dashed">
+                <CardHeader>
+                    <CardTitle>Acesso Necessário</CardTitle>
+                    <CardDescription>
+                       Por favor, faça login para ver suas negociações.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        )
     }
 
     // No active chat selected
@@ -119,8 +133,8 @@ export function NegotiationHubPageClient() {
         );
     }
     
-    // Active chat selected, but still loading data
-    if (conversationsLoading || !activeConversation || !currentUser || !receiver) {
+    // Active chat selected, but still loading conversation data
+    if (conversationsLoading || !activeConversation || !receiver) {
          return <Loader2 className="h-10 w-10 animate-spin"/>;
     }
 
@@ -145,7 +159,7 @@ export function NegotiationHubPageClient() {
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
         <div className="md:col-span-4 lg:col-span-3 h-full">
-             <ChatList conversations={conversations} activeChatId={activeChatId} isLoading={conversationsLoading} />
+             <ChatList conversations={conversations} activeChatId={activeChatId} isLoading={conversationsLoading || userLoading} />
         </div>
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
             {renderChatContent()}
