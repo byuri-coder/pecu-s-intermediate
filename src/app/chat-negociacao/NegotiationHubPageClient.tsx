@@ -95,6 +95,12 @@ export function NegotiationHubPageClient() {
     return receiverId ? { id: receiverId } : null;
   }, [activeConversation, currentUser]);
 
+  // Debugging logs
+  console.log("activeConversation:", activeConversation);
+  console.log("currentUser:", currentUser);
+  console.log("receiver:", receiver);
+
+
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
         <div className="md:col-span-4 lg:col-span-3 h-full">
