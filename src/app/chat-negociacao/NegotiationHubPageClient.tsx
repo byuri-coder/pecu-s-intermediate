@@ -89,15 +89,21 @@ export function NegotiationHubPageClient() {
     }
   }, [activeConversation]);
 
+  const receiver = React.useMemo(() => {
+    if (!activeConversation || !currentUser) return null;
+    const receiverId = activeConversation.participants?.find(p => p !== currentUser.uid);
+    return receiverId ? { id: receiverId } : null;
+  }, [activeConversation, currentUser]);
+
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh_-_theme(spacing.14))]">
         <div className="md:col-span-4 lg:col-span-3 h-full">
              <ChatList conversations={conversations} activeChatId={activeChatId} isLoading={conversationsLoading} />
         </div>
         <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col items-center justify-center">
-            {userLoading ? (
+            {userLoading || (activeChatId && conversationsLoading) ? (
                  <Loader2 className="h-10 w-10 animate-spin"/>
-            ) : activeConversation && currentUser ? (
+            ) : activeConversation && currentUser && receiver ? (
                  <Card className="h-full w-full flex flex-col">
                     <ActiveChatHeader 
                         conversation={activeConversation}
@@ -107,7 +113,7 @@ export function NegotiationHubPageClient() {
                        <ChatRoom 
                           chatId={activeChatId!}
                           currentUser={currentUser}
-                          receiverId={activeConversation.participants?.find(p => p !== currentUser.uid)}
+                          receiverId={receiver.id}
                        />
                     </CardContent>
                 </Card>

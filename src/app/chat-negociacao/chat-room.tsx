@@ -15,7 +15,7 @@ import type { Message } from '@/lib/types';
 interface ChatRoomProps {
     chatId: string;
     currentUser: User;
-    receiverId?: string;
+    receiverId: string;
 }
 
 export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
