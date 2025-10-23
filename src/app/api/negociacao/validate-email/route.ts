@@ -1,3 +1,4 @@
+
 // /src/app/api/negociacao/validate-email/route.ts
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
@@ -20,6 +21,11 @@ export async function GET(req: Request) {
     const payload = jwt.verify(token, EMAIL_JWT_SECRET) as any;
     const { contractId, userId, role } = payload;
 
+    if (!contractId || !role) {
+        console.error("Payload do token inválido:", payload);
+        return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
+    }
+
     await connectDB();
     const contract = await Contrato.findById(contractId);
 
@@ -28,7 +34,14 @@ export async function GET(req: Request) {
         return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
     }
 
+    // Garante que a etapa anterior foi concluída
+    if (contract.step < 2) {
+        console.log(`Tentativa de validação de e-mail antes do acordo de termos para o contrato ${contractId}.`);
+        return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
+    }
+
     if (role === 'buyer' || role === 'seller') {
+        // Evita revalidar
         if (!contract.emailValidation[role].validated) {
             contract.emailValidation[role] = { validated: true, timestamp: new Date() };
         }
@@ -37,6 +50,7 @@ export async function GET(req: Request) {
         return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
     }
 
+    // Se ambos validaram, avança para a próxima etapa.
     if (contract.emailValidation.buyer.validated && contract.emailValidation.seller.validated) {
       contract.status = 'validated';
       contract.step = 3;
@@ -44,9 +58,13 @@ export async function GET(req: Request) {
 
     await contract.save();
     
+    // Redireciona para uma página de sucesso
     return NextResponse.redirect(`${SITE_URL}/aceite-sucesso`);
   } catch (err: any) {
-    console.error('validate-email error', err);
+    console.error('Erro na validação de e-mail:', err.message);
+    if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
+        return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
+    }
     return NextResponse.redirect(`${SITE_URL}/aceite-erro`);
   }
 }
