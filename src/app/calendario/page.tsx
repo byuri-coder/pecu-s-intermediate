@@ -54,9 +54,12 @@ export default function CalendarPage() {
         if (tx.listing?.category === 'tax-credit') assetType = 'Crédito Tributário';
         if (tx.listing?.category === 'rural-land') assetType = 'Terra Rural';
 
+        // Firestore Timestamps need to be converted to JS Date objects
+        const txDate = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date();
+
         return {
             id: tx.id,
-            date: tx.createdAt.toDate(),
+            date: txDate,
             type: isSale ? 'Venda' : 'Compra',
             assetType: assetType,
             description: tx.listing?.title || `Transação ${tx.id}`,
