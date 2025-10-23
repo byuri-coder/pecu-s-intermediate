@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     }
     
     // --- 1. Generate and Save Duplicates ---
-    const totalValue = (asset.price || asset.pricePerCredit * asset.quantity) || 0;
+    const totalValue = (asset.price || (asset.pricePerCredit && asset.quantity ? asset.pricePerCredit * asset.quantity : 0)) || 0;
     const installments = parseInt(contract.fields.seller.installments, 10) || 1;
     const installmentValue = totalValue / installments;
     const today = new Date();
@@ -39,8 +39,8 @@ export async function POST(req: Request) {
             issueDate: today,
             dueDate: dueDate,
             value: installmentValue,
-            buyerId: contract.fields.buyer.cnpj, // Using CNPJ as an identifier
-            sellerId: contract.fields.seller.cnpj, // Using CNPJ as an identifier
+            buyerId: contract.buyerId, // Correctly use the user ID from the contract
+            sellerId: contract.sellerId, // Correctly use the user ID from the contract
         });
     }
 
