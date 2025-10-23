@@ -127,8 +127,13 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     }
   };
 
-  const handleSendValidationEmail = async (role: UserRole, email: string) => {
-      if(!email) {
+  const handleSendValidationEmail = async (role: UserRole) => {
+      if (!user || !contract) return;
+      const targetEmail = role === 'seller' ? sellerEmail : buyerEmail;
+      const targetName = role === 'seller' ? contract.fields.seller.razaoSocial : contract.fields.buyer.razaoSocial;
+      const targetUserId = role === 'seller' ? contract.sellerId : contract.buyerId;
+
+      if(!targetEmail) {
           toast({ title: "Erro", description: "O campo de e-mail não pode estar vazio.", variant: "destructive"});
           return;
       }
@@ -138,15 +143,16 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  negotiationId,
+                  toEmail: targetEmail,
+                  toName: targetName,
+                  contractId: contract._id,
+                  userId: targetUserId,
                   role: role,
-                  userEmail: email,
-                  userName: role === 'buyer' ? contract?.fields.buyer.razaoSocial : contract?.fields.seller.razaoSocial,
               }),
           });
           const data = await response.json();
-          if (!response.ok) throw new Error(data.error);
-          toast({ title: "E-mail Enviado!", description: `O e-mail de validação para o ${role} foi enviado para ${email}.` });
+          if (!response.ok) throw new Error(data.error || data.details);
+          toast({ title: "E-mail Enviado!", description: `O e-mail de validação para o ${role} foi enviado para ${targetEmail}.` });
       } catch (error: any) {
           toast({ title: "Erro ao Enviar", description: error.message || 'Falha ao enviar o e-mail de validação.', variant: "destructive" });
       } finally {
@@ -292,7 +298,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                         <div className="space-y-2"><Label>CNPJ</Label><Input onBlur={(e) => handleFieldChange('seller', 'cnpj', e.target.value)} defaultValue={fields.seller.cnpj} disabled={!isSeller || isFrozen} /></div>
                         <div className="space-y-2"><Label>Inscrição Estadual</Label><Input onBlur={(e) => handleFieldChange('seller', 'ie', e.target.value)} defaultValue={fields.seller.ie} disabled={!isSeller || isFrozen} /></div>
                         <div className="space-y-2"><Label>Endereço Completo</Label><Input onBlur={(e) => handleFieldChange('seller', 'endereco', e.target.value)} defaultValue={fields.seller.endereco} disabled={!isSeller || isFrozen} /></div>
-                        <div className="space-y-2"><Label>E-mail para Validação</Label><Input onBlur={(e) => handleFieldChange('seller', 'email', e.target.value)} defaultValue={fields.seller.email} disabled={!isSeller || isFrozen} /></div>
                      </div>
                 </div>
                  <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>
@@ -302,7 +307,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                         <div className="space-y-2"><Label>CNPJ</Label><Input onBlur={(e) => handleFieldChange('buyer', 'cnpj', e.target.value)} defaultValue={fields.buyer.cnpj} disabled={!isBuyer || isFrozen} /></div>
                         <div className="space-y-2"><Label>Inscrição Estadual</Label><Input onBlur={(e) => handleFieldChange('buyer', 'ie', e.target.value)} defaultValue={fields.buyer.ie} disabled={!isBuyer || isFrozen} /></div>
                         <div className="space-y-2"><Label>Endereço Completo</Label><Input onBlur={(e) => handleFieldChange('buyer', 'endereco', e.target.value)} defaultValue={fields.buyer.endereco} disabled={!isBuyer || isFrozen} /></div>
-                        <div className="space-y-2"><Label>E-mail para Validação</Label><Input onBlur={(e) => handleFieldChange('buyer', 'email', e.target.value)} defaultValue={fields.buyer.email} disabled={!isBuyer || isFrozen} /></div>
                     </div>
                 </div>
             </CardContent>
@@ -331,8 +335,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                      </div>
                      <p className={cn("text-xs font-medium", emailValidation.seller.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.seller.validated ? `Validado em ${new Date(emailValidation.seller.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
                      <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                        <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="E-mail do vendedor" disabled={isActionPending}/>
-                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('seller', sellerEmail)} disabled={isActionPending || emailValidation.seller.validated}><Send className="h-4 w-4"/></Button>
+                        <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="E-mail do vendedor" disabled={isActionPending || emailValidation.seller.validated}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('seller')} disabled={isActionPending || emailValidation.seller.validated}><Send className="h-4 w-4"/></Button>
                      </div>
                 </div>
                 <div className="flex flex-col gap-2 p-4 border rounded-lg bg-secondary/30">
@@ -342,8 +346,8 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
                      </div>
                      <p className={cn("text-xs font-medium", emailValidation.buyer.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.buyer.validated ? `Validado em ${new Date(emailValidation.buyer.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
                       <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                        <Input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="E-mail do comprador" disabled={isActionPending}/>
-                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('buyer', buyerEmail)} disabled={isActionPending || emailValidation.buyer.validated}><Send className="h-4 w-4"/></Button>
+                        <Input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="E-mail do comprador" disabled={isActionPending || emailValidation.buyer.validated}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('buyer')} disabled={isActionPending || emailValidation.buyer.validated}><Send className="h-4 w-4"/></Button>
                      </div>
                 </div>
             </CardContent>

@@ -1,58 +1,54 @@
-// src/app/api/negociacao/send-validation-email/route.ts
+// /src/app/api/negociacao/send-validation-email/route.ts
 import { NextResponse } from 'next/server';
-import * as Brevo from '@getbrevo/brevo';
 import jwt from 'jsonwebtoken';
-import { connectDB } from '@/lib/mongodb';
-import { Contrato } from '@/models/Contrato';
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
+const BREVO_API = 'https://api.brevo.com/v3/smtp/email';
+const BREVO_KEY = process.env.BREVO_API_KEY; 
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'no-reply@pecus.com';
+const SITE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const EMAIL_JWT_SECRET = process.env.EMAIL_JWT_SECRET || 'supersecretjwtkey';
 
-if (!BREVO_API_KEY) {
-  console.error("Variável de ambiente BREVO_API_KEY não definida.");
+if (!BREVO_KEY) {
+  console.error('BREVO_API_KEY não definido');
 }
-if (JWT_SECRET === 'supersecretjwtkey') {
-  console.warn("Atenção: JWT_SECRET está usando um valor padrão. Defina uma chave segura em produção.");
+if (EMAIL_JWT_SECRET === 'supersecretjwtkey') {
+    console.warn("Atenção: EMAIL_JWT_SECRET está usando um valor padrão. Defina uma chave segura em produção.");
 }
+
 
 export async function POST(req: Request) {
-  if (!BREVO_API_KEY) {
+  if (!BREVO_KEY) {
     return NextResponse.json({ ok: false, error: "Brevo API Key não configurada." }, { status: 500 });
   }
 
   try {
-    await connectDB();
-    const { negotiationId, role, userEmail, userName } = await req.json();
-
-    if (!negotiationId || !userEmail || !role) {
-      return NextResponse.json({ ok: false, error: 'Dados obrigatórios ausentes' }, { status: 400 });
+    const body = await req.json();
+    const { toEmail, toName, contractId, userId, role } = body;
+    if (!toEmail || !contractId || !userId || !role) {
+      return NextResponse.json({ error: 'Dados insuficientes' }, { status: 400 });
     }
-    
-    const contract = await Contrato.findOne({ negotiationId });
-    if (!contract) {
-        return NextResponse.json({ ok: false, error: 'Contrato não encontrado' }, { status: 404 });
-    }
-    
-    // Cria token de validação com expiração de 24h
-    const token = jwt.sign({ contractId: contract._id, userEmail, role }, JWT_SECRET, { expiresIn: '24h' });
 
-    const validationUrl = `${NEXT_PUBLIC_API_URL}/api/negociacao/verify-acceptance?token=${token}`;
+    // Gere token de aceitação (guarde no DB se quiser auditar)
+    const token = jwt.sign(
+      { contractId, userId, role },
+      EMAIL_JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
-    const apiInstance = new Brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
+    const validateUrl = `${SITE_URL}/api/negociacao/validate-email?token=${encodeURIComponent(token)}`;
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
-    sendSmtpEmail.sender = { email: 'no-reply@pecusintermediate.com', name: 'PECU’S INTERMEDIATE' };
-    sendSmtpEmail.to = [{ email: userEmail, name: userName || 'Usuário' }];
-    sendSmtpEmail.subject = 'Confirmação de Aceite do Contrato';
-    sendSmtpEmail.htmlContent = `
+    // Monta o payload para Brevo (SMTP endpoint)
+    const payload = {
+      sender: { name: "PECU'S INTERMEDIATE", email: SENDER_EMAIL },
+      to: [{ email: toEmail, name: toName || 'Usuário' }],
+      subject: 'Valide seu contrato - PECU\'S INTERMEDIATE',
+      htmlContent: `
         <div style="font-family:Arial, sans-serif; text-align:center; padding: 20px; color: #333;">
           <h2 style="color: #22c55e;">Confirme seu aceite de contrato</h2>
-          <p>Olá, ${userName || 'Usuário'}!</p>
-          <p>Seu contrato referente à negociação <strong>#${negotiationId}</strong> foi validado e aguarda seu aceite. Por favor, clique no botão abaixo para confirmar sua concordância com os termos.</p>
+          <p>Olá, ${toName || 'Usuário'}!</p>
+          <p>Seu contrato referente à negociação foi validado e aguarda seu aceite. Por favor, clique no botão abaixo para confirmar sua concordância com os termos.</p>
           <p style="margin: 30px 0;">
-            <a href="${validationUrl}" 
+            <a href="${validateUrl}" 
                style="background-color:#22c55e; color:white; padding:12px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">
                Confirmar Aceite e Prosseguir
             </a>
@@ -60,13 +56,27 @@ export async function POST(req: Request) {
           <p style="color: #777; font-size: 12px;">Se você não iniciou esta negociação, por favor, ignore este e-mail.</p>
           <p style="color: #999; font-size: 12px;">Este link de confirmação expira em 24 horas.</p>
         </div>
-      `;
-    
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+      `
+    };
+
+    const res = await fetch(BREVO_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': BREVO_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Brevo responded with error:', res.status, text);
+      return NextResponse.json({ error: 'Erro enviando e-mail', details: text }, { status: 502 });
+    }
 
     return NextResponse.json({ ok: true, message: 'Email de validação enviado com sucesso!' });
-  } catch (error: any) {
-    console.error('Erro ao enviar email de validação:', error);
-    return NextResponse.json({ ok: false, error: error.message || 'Erro interno do servidor' }, { status: 500 });
+  } catch (err) {
+    console.error('send-validation-email error', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
