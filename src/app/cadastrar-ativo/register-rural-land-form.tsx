@@ -118,7 +118,7 @@ export function RegisterRuralLandForm() {
               descricao: data.description,
               tipo: 'rural-land',
               price: data.price,
-              imagens: uploadedMedia.map(m => m.url), // Send only URLs
+              imagens: uploadedMedia, // Send the full media object array
               metadados: {
                 owner: data.owner,
                 registration: data.registration,

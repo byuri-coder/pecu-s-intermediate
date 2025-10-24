@@ -179,7 +179,7 @@ export function ProfileForm() {
                 // This is where you would get the real URL from storage
                 // const storageUrl = await uploadAvatarToStorage(avatarFile);
                 // For demonstration, we use a service that generates an avatar from the user's ID.
-                photoURL = `https://avatar.vercel.sh/${user.uid}.png`;
+                photoURL = `https://avatar.vercel.sh/${user.uid}`;
                 await updateProfile(user, { photoURL });
             }
             

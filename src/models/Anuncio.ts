@@ -9,10 +9,8 @@ const AnuncioSchema = new Schema({
   price: { type: Number },
   currency: { type: String, default: "BRL" },
   status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo"], default: "Disponível", index: true },
-  imagens: [{ url: String, alt: String, type: { type: String, enum: ['image', 'video'], default: 'image' } }],
+  imagens: [{ type: Schema.Types.Mixed }], // Changed to Mixed to accept objects
   metadados: { type: Schema.Types.Mixed },
 }, { timestamps: true });
 
 export const Anuncio = models.Anuncio || mongoose.model("Anuncio", AnuncioSchema);
-
-    
