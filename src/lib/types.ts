@@ -155,3 +155,26 @@ export type FirestoreTransaction = {
     createdAt: any; // Firestore Timestamp
     [key: string]: any; // Allow other properties
 }
+
+export interface UserProfile {
+    _id: string;
+    uidFirebase: string;
+    nome: string;
+    email: string;
+    photoURL?: string;
+    banco?: string;
+    agencia?: string;
+    conta?: string;
+    chavePix?: string;
+    inscricaoEstadual?: string;
+    estadoFiscal?: string;
+    cpfCnpj?: string;
+    endereco?: string;
+    cidade?: string;
+    estado?: string;
+    cep?: string;
+    autorizacoesEspeciais?: string[];
+    tipo: "comprador" | "vendedor" | "administrador";
+    createdAt: string;
+    updatedAt: string;
+}

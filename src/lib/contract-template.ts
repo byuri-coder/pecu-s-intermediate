@@ -1,13 +1,13 @@
 
-import type { Asset, AssetType } from './types';
+import type { Asset, AssetType, UserProfile } from './types';
 import { numberToWords } from './number-to-words';
 
 // This function returns a detailed contract template string based on the asset type.
 // The placeholders `[...]` will be replaced with actual data.
 
 interface Parties {
-    seller: { name: string; doc: string; address: string; ie: string; repName: string; repDoc: string; repRole: string };
-    buyer: { name: string; doc: string; address: string; ie: string; };
+    seller: UserProfile;
+    buyer: UserProfile;
 }
 
 interface ContractState {
@@ -40,7 +40,7 @@ CONTRATO DE CESSÃO DE DIREITOS CREDITÓRIOS E OUTRAS AVENÇAS
 
 Pelo presente instrumento particular, de um lado:
 
-CEDENTE: ${parties.seller.name}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.seller.doc}, com sede na ${parties.seller.address}, doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
+CEDENTE: ${parties.seller.nome}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${parties.seller.cpfCnpj}, com sede na ${parties.seller.endereco}, doravante denominada simplesmente "CEDENTE", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
 CESSIONÁRIO: ${contract.fields.buyer.razaoSocial || '[Razão Social do Comprador]'}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob o nº ${contract.fields.buyer.cnpj || '[CNPJ do Comprador]'}, com sede em ${contract.fields.buyer.endereco || '[Endereço do Comprador]'}, doravante denominada simplesmente "CESSIONÁRIO", representada neste ato por seu(s) representante(s) legal(is) ao final assinado(s);
 
@@ -49,16 +49,16 @@ Resolvem as partes, de comum acordo, celebrar o presente Contrato de Cessão de 
 
     const footer = `
 CLÁUSULA DÉCIMA – FORO
-10.1. Fica eleito o foro da Comarca de ${parties.seller.address.split(',').pop()?.trim()}, para dirimir quaisquer dúvidas ou litígios oriundos do presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+10.1. Fica eleito o foro da Comarca de ${parties.seller.cidade || '[Cidade do Vendedor]'}, para dirimir quaisquer dúvidas ou litígios oriundos do presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
 
 E, por estarem assim justas e contratadas, as partes assinam o presente Contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.
 
-[Local], ${new Date(contract.frozenAt || Date.now()).toLocaleDateString('pt-BR')}.
+${parties.seller.cidade || '[Local]'}, ${new Date(contract.frozenAt || Date.now()).toLocaleDateString('pt-BR')}.
 
 
 _________________________________________
-CEDENTE: ${parties.seller.name}
-CNPJ: ${parties.seller.doc}
+CEDENTE: ${parties.seller.nome}
+CNPJ: ${parties.seller.cpfCnpj}
 
 
 _________________________________________

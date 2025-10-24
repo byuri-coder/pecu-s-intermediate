@@ -11,23 +11,34 @@ import { useToast } from '@/hooks/use-toast';
 import type { Asset, AssetType, CompletedDeal } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
-import { app } from '@/lib/firebase';
-import { getContractTemplate } from '@/lib/contract-template';
+import { useUser } from '@/firebase';
 import { Seal } from '@/components/ui/seal';
 import { Contrato as ContractModel } from '@/models/Contrato';
 
 type UserRole = 'buyer' | 'seller';
-
 type ContractState = InstanceType<typeof ContractModel>;
 
-export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: string, assetType: AssetType, asset: Asset | null }) {
+interface AdjustmentClientPageProps {
+  assetId: string;
+  assetType: AssetType;
+  asset: Asset | null;
+  contract: ContractState | null;
+  setContract: React.Dispatch<React.SetStateAction<ContractState | null>>;
+  loadContract: () => void;
+  setGeneratedDeal: React.Dispatch<React.SetStateAction<CompletedDeal | null>>;
+}
+
+export default function AdjustmentClientPage({ 
+    assetId, 
+    assetType,
+    asset, 
+    contract, 
+    setContract, 
+    loadContract,
+    setGeneratedDeal
+}: AdjustmentClientPageProps) {
   const { toast } = useToast();
-  
-  const [user, setUser] = React.useState<User | null>(null);
-  const [contract, setContract] = React.useState<ContractState | null>(null);
-  const [generatedDeal, setGeneratedDeal] = React.useState<CompletedDeal | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const { user } = useUser();
   const [isActionPending, setIsActionPending] = React.useState(false);
 
   const [sellerEmail, setSellerEmail] = React.useState('');
@@ -35,64 +46,12 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
 
   const negotiationId = `neg_${assetId}`;
 
-  // Auth listener
   React.useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const loadContract = React.useCallback(async () => {
-      if (!user || !asset) {
-          if (!user) setLoading(false);
-          return;
-      }
-      try {
-        const response = await fetch(`/api/negociacao/get-or-create-contract?negotiationId=${negotiationId}`);
-        const data = await response.json();
-        
-        if (response.ok && data.ok) {
-            setContract(data.contract);
-            setSellerEmail(data.contract.fields.seller.email || '');
-            setBuyerEmail(data.contract.fields.buyer.email || '');
-        } else if (response.status === 404) {
-            const createResponse = await fetch('/api/negociacao/get-or-create-contract', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId,
-                    buyerId: user.uid,
-                    sellerId: 'ownerId' in asset ? asset.ownerId : '',
-                    anuncioId: assetId,
-                })
-            });
-            const createData = await createResponse.json();
-             if (createData.ok) {
-                setContract(createData.contract);
-                setSellerEmail(createData.contract.fields.seller.email || '');
-                setBuyerEmail(createData.contract.fields.buyer.email || '');
-            } else {
-                throw new Error(createData.error || "Falha ao criar contrato");
-            }
-        } else {
-            throw new Error(data.error || "Falha ao carregar contrato");
-        }
-      } catch (error: any) {
-        toast({ title: "Erro ao Carregar", description: error.message, variant: 'destructive' });
-        setContract(null);
-      } finally {
-        setLoading(false);
-      }
-  }, [negotiationId, user, asset, assetId, toast]);
-
-
-  // Fetch or create contract on mount
-  React.useEffect(() => {
-    setLoading(true);
-    loadContract();
-  }, [loadContract]);
+    if (contract) {
+        setSellerEmail(contract.fields?.seller?.email || '');
+        setBuyerEmail(contract.fields?.buyer?.email || '');
+    }
+  }, [contract]);
 
 
   const currentUserRole: UserRole | null = (asset && 'ownerId' in asset && user?.uid === asset.ownerId) ? 'seller' : 'buyer';
@@ -243,22 +202,16 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin"/></div>
-  }
-  
   if (!contract || !user) {
       return (
           <div className="container mx-auto max-w-lg py-12 text-center">
               <Card>
                   <CardHeader>
-                      <CardTitle>Erro de Carregamento</CardTitle>
-                      <CardDescription>Não foi possível carregar os detalhes da negociação. Verifique se está logado e tente novamente.</CardDescription>
+                      <CardTitle>A carregar...</CardTitle>
+                      <CardDescription>A carregar os detalhes da negociação...</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <Button asChild>
-                          <Link href="/dashboard">Voltar ao Painel</Link>
-                      </Button>
+                      <Loader2 className="mx-auto h-10 w-10 animate-spin"/>
                   </CardContent>
               </Card>
           </div>
@@ -274,7 +227,7 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
   const bothUploaded = documents.buyer.fileUrl && documents.seller.fileUrl;
   
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
+    <div className="space-y-8">
        <div className="mb-6">
         <Button variant="outline" asChild>
             <Link href={`/chat-negociacao?id=${negotiationId}`}>
@@ -283,7 +236,6 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             </Link>
         </Button>
       </div>
-      <div className="space-y-8">
         {/* Etapa 1: Preenchimento e Acordo */}
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -393,6 +345,5 @@ export function AdjustmentClientPage({ assetId, assetType, asset }: { assetId: s
             </CardFooter>
         </Card>
       </div>
-    </div>
   );
 }
