@@ -161,7 +161,7 @@ export interface UserProfile {
     uidFirebase: string;
     nome: string;
     email: string;
-    photoURL?: string;
+    avatarBase64?: string;
     banco?: string;
     agencia?: string;
     conta?: string;

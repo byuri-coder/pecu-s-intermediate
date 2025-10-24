@@ -128,8 +128,8 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
-                     if (currentUser.photoURL) {
-                        setAvatarPreview(currentUser.photoURL);
+                     if (fetchedUser.avatarBase64) {
+                        setAvatarPreview(fetchedUser.avatarBase64);
                     }
                 } else {
                      form.reset({
@@ -183,16 +183,6 @@ export function ProfileForm() {
         }
 
         try {
-            // In a real app, you would upload avatarFile to a cloud storage (e.g., Firebase Storage)
-            // and get a public URL. Here we'll just use the local preview for demonstration.
-            let photoURL = user.photoURL; // Keep the old one by default
-            if (avatarFile) {
-                // const storageUrl = await uploadAvatarToStorage(avatarFile);
-                // For demonstration, we'll just use the blob URL. In a real app, replace this.
-                photoURL = avatarPreview;
-                await updateProfile(user, { photoURL });
-            }
-            
             // Update Firebase Auth display name if it changed
             if (data.fullName !== user.displayName) {
                 await updateProfile(user, { displayName: data.fullName });
@@ -202,7 +192,7 @@ export function ProfileForm() {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                photoURL: photoURL, // Send the new or existing URL to your backend
+                avatarBase64: avatarPreview,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,

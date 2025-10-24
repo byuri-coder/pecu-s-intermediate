@@ -6,6 +6,7 @@ const UsuarioSchema = new Schema({
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   photoURL: { type: String }, // For profile picture
+  avatarBase64: { type: String }, // Field to store base64 image
 
   // Dados bancários
   banco: String,
