@@ -69,6 +69,8 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -122,7 +124,7 @@ export function ProfileForm() {
                         specialRegistration: fetchedUser.autorizacoesEspeciais?.join(', ') || '',
                         bankName: fetchedUser.banco || '',
                         agency: fetchedUser.agencia || '',
-                        account: fetchedUser.conta || '',
+                        conta: fetchedUser.conta || '',
                         pixKey: fetchedUser.chavePix || '',
                     });
                      if (currentUser.photoURL) {
@@ -154,6 +156,14 @@ export function ProfileForm() {
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "A imagem de perfil não pode exceder 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
       setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {

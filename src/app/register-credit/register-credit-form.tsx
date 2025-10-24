@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -55,6 +56,8 @@ const registerCreditSchema = z.object({
 
 type RegisterCreditFormValues = z.infer<typeof registerCreditSchema>;
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export function RegisterCreditForm() {
   const [isPending, startTransition] = useTransition();
   const [isAiPending, startAiTransition] = useTransition();
@@ -66,6 +69,20 @@ export function RegisterCreditForm() {
   const form = useForm<RegisterCreditFormValues>({
     resolver: zodResolver(registerCreditSchema),
   });
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const file = event.target.files[0];
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O arquivo excede o limite de 10MB.",
+          variant: "destructive",
+        });
+        if(fileInputRef.current) fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const onSubmit = (data: RegisterCreditFormValues) => {
     startTransition(async () => {
@@ -274,7 +291,14 @@ export function RegisterCreditForm() {
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
               <p className="text-xs text-muted-foreground/70">PDF, DOCX, JPG (max. 10MB)</p>
-              <Input ref={fileInputRef} type="file" className="hidden" multiple />
+              <Input 
+                ref={fileInputRef} 
+                type="file" 
+                className="hidden" 
+                multiple 
+                onChange={handleFileChange}
+                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg"
+              />
             </div>
           </section>
 

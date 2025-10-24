@@ -47,6 +47,8 @@ type MediaFile = {
     type: 'image' | 'video';
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export function RegisterRuralLandForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -63,7 +65,18 @@ export function RegisterRuralLandForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-        const newFiles = Array.from(files);
+        const newFiles = Array.from(files).filter(file => {
+            if (file.size > MAX_FILE_SIZE) {
+                toast({
+                    title: "Arquivo muito grande",
+                    description: `O arquivo ${file.name} excede o limite de 10MB.`,
+                    variant: "destructive",
+                });
+                return false;
+            }
+            return true;
+        });
+
         if (mediaFiles.length + newFiles.length > 10) {
             toast({
                 title: "Limite de arquivos excedido",
@@ -215,7 +228,7 @@ export function RegisterRuralLandForm() {
                 onClick={() => fileInputRef.current?.click()}>
                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                 <p className="mt-4 text-sm text-muted-foreground">Clique para fazer o upload ou arraste e solte os arquivos</p>
-                <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG) e Vídeos (MP4, MOV). Máx 10 arquivos.</p>
+                <p className="text-xs text-muted-foreground/70">Imagens (JPG, PNG) e Vídeos (MP4, MOV). Máx 10MB por arquivo.</p>
                 <Input 
                     ref={fileInputRef} 
                     type="file" 
