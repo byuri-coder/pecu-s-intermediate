@@ -83,5 +83,3 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         return NextResponse.json({ error: "Erro ao excluir ativo" }, { status: 500 });
     }
 }
-
-    

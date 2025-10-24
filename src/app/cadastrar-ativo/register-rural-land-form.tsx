@@ -105,7 +105,7 @@ export function RegisterRuralLandForm() {
 
   const onSubmit = (data: RegisterRuralLandFormValues) => {
     startTransition(async () => {
-        const auth = getAuth();
+        const auth = getAuth(app);
         const user = auth.currentUser;
         if (!user) {
             toast({ title: "Erro de Autenticação", description: "Você precisa estar logado para cadastrar um ativo.", variant: "destructive" });

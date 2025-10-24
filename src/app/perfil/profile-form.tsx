@@ -69,7 +69,7 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
@@ -123,8 +123,8 @@ export function ProfileForm() {
                         zipCode: fetchedUser.cep || '',
                         specialRegistration: fetchedUser.autorizacoesEspeciais?.join(', ') || '',
                         bankName: fetchedUser.banco || '',
-                        agency: fetchedUser.agencia || '',
-                        conta: fetchedUser.conta || '',
+                        agency: fetchedUser.agencia,
+                        account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
                      if (currentUser.photoURL) {

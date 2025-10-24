@@ -26,7 +26,7 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
   const { toast } = useToast();
   
   const [editableAsset, setEditableAsset] = React.useState(asset);
-  const [mediaFiles, setMediaFiles] = React.useState<(File|string)[]>(('images' in asset && asset.images) ? asset.images : []);
+  const [mediaFiles, setMediaFiles] = React.useState<(File|{url: string, type: 'image' | 'video'})[]>(('images' in asset && Array.isArray(asset.images)) ? asset.images : []);
   const [isSaving, setIsSaving] = React.useState(false);
 
 
@@ -54,8 +54,8 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
   
   const removeMedia = (index: number) => {
     const file = mediaFiles[index];
-    if (typeof file === 'string' && file.startsWith('blob:')) {
-        URL.revokeObjectURL(file);
+    if (typeof file !== 'string' && 'preview' in file && file.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(file.preview);
     }
     setMediaFiles(prev => prev.filter((_, i) => i !== index));
   };
@@ -63,15 +63,19 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
   const handleSaveAssetChanges = async () => {
     setIsSaving(true);
     try {
-        // SIMULATE UPLOAD: In a real app, you'd upload new files to cloud storage
-        const uploadedMediaUrls = await Promise.all(mediaFiles.map(async (file) => {
-            if (typeof file === 'string') return file; // It's already a URL
+        const uploadedMediaUrls = await Promise.all(mediaFiles.map(async (fileOrObject) => {
+            if (typeof fileOrObject === 'object' && 'url' in fileOrObject) {
+                 return fileOrObject; // It's already an object with a URL
+            }
+            const file = fileOrObject as File;
             // In a real app, upload `file` and return the URL. For now, we simulate.
-            return `https://picsum.photos/seed/${editableAsset.id}-${file.name}/800/600`;
+            return {
+                url: `https://picsum.photos/seed/${editableAsset.id}-${file.name}/800/600`,
+                type: file.type.startsWith('video') ? 'video' : 'image'
+            };
         }));
         
         const payload = {
-            ...editableAsset,
             titulo: editableAsset.title,
             price: editableAsset.price,
             descricao: editableAsset.description,
@@ -168,10 +172,12 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
                             <div>
                             <h4 className="font-medium mb-2">Mídias Atuais:</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {mediaFiles.map((file, index) => {
-                                    const src = typeof file === 'string' ? file : URL.createObjectURL(file);
-                                    const isVideo = (typeof file !== 'string' && file.type.startsWith('video')) || (typeof file === 'string' && (file.endsWith('.mp4') || file.endsWith('.mov')));
-                                    
+                                {mediaFiles.map((fileOrObject, index) => {
+                                    const isFile = fileOrObject instanceof File;
+                                    const src = isFile ? URL.createObjectURL(fileOrObject as File) : (fileOrObject as {url: string}).url;
+                                    const type = isFile ? (fileOrObject as File).type : (fileOrObject as {type: 'image' | 'video'}).type;
+                                    const isVideo = type.startsWith('video');
+
                                     return (
                                         <div key={index} className="relative aspect-video rounded-md overflow-hidden group bg-secondary">
                                             {isVideo ? (
@@ -210,6 +216,7 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
 export default function EditAssetPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id ?? '';
   const assetType = (searchParams?.get('type') as AssetType);
@@ -229,14 +236,9 @@ export default function EditAssetPage() {
                 const data = await res.json();
                 if(data.ok) {
                      setAsset({
-                        ...data.anuncio.metadados,
+                        ...data.anuncio, // Spread the whole document
                         id: data.anuncio._id,
                         title: data.anuncio.titulo,
-                        description: data.anuncio.descricao,
-                        price: data.anuncio.price,
-                        status: data.anuncio.status,
-                        images: data.anuncio.imagens,
-                        ownerId: data.anuncio.uidFirebase,
                      });
                 } else {
                     setAsset(null);
