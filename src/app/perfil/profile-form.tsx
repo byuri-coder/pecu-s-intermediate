@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -182,14 +183,13 @@ export function ProfileForm() {
         }
 
         try {
-            // SIMULATE UPLOAD: In a real app, upload avatarFile to Firebase Storage and get URL
-            // For now, we'll just use a placeholder if a new file was selected.
+            // In a real app, you would upload avatarFile to a cloud storage (e.g., Firebase Storage)
+            // and get a public URL. Here we'll just use the local preview for demonstration.
             let photoURL = user.photoURL; // Keep the old one by default
             if (avatarFile) {
-                // This is where you would get the real URL from storage
                 // const storageUrl = await uploadAvatarToStorage(avatarFile);
-                // For demonstration, we use a service that generates an avatar from the user's ID.
-                photoURL = `https://avatar.vercel.sh/${user.uid}`;
+                // For demonstration, we'll just use the blob URL. In a real app, replace this.
+                photoURL = avatarPreview;
                 await updateProfile(user, { photoURL });
             }
             

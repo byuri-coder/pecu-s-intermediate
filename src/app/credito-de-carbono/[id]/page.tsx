@@ -139,15 +139,8 @@ export default function CreditDetailPage({ params }: { params: { id: string } })
           
           <Card>
             <CardContent className="p-0">
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                    <Image
-                        src={`https://picsum.photos/seed/${credit.id}/1200/675`}
-                        alt={`Imagem do projeto ${credit.id}`}
-                        width={1200}
-                        height={675}
-                        className="object-cover w-full h-full"
-                        data-ai-hint="nature landscape"
-                    />
+                <div className="aspect-video w-full overflow-hidden rounded-t-lg bg-secondary flex items-center justify-center">
+                    <Leaf className="h-24 w-24 text-muted-foreground/30"/>
                 </div>
             </CardContent>
           </Card>

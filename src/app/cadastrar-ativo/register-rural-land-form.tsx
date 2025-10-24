@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -113,13 +114,13 @@ export function RegisterRuralLandForm() {
         }
 
         try {
-            // SIMULATE UPLOAD: Replace local blob URLs with public placeholder URLs
+            // In a real app, upload files to a cloud storage (e.g. Firebase Storage)
+            // and get the public URLs. Here, we'll use the blob URLs for demonstration.
             const uploadedMedia = mediaFiles.map((mf, index) => {
                 // In a real app, this is where you'd upload mf.file to cloud storage
-                // and get a permanent URL. For this demo, we'll use a public placeholder.
-                const publicUrl = `https://picsum.photos/seed/${user.uid.substring(0, 8)}${index}/800/600`;
+                // and get a permanent URL.
                 return {
-                    url: publicUrl, // Use the public URL
+                    url: mf.preview, // For a real app, this should be the final public URL
                     type: mf.type,
                     alt: data.title
                 };

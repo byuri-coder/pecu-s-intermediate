@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -160,7 +161,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
   
   const carouselMedia = land.images && land.images.length > 0
     ? land.images.map(img => typeof img === 'string' ? { url: img, type: 'image' as const } : img)
-    : [{ url: `https://picsum.photos/seed/${land.id}/1200/675`, type: 'image' as const, alt: 'Placeholder Image' }];
+    : [];
 
 
   return (
@@ -185,34 +186,40 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
           
            <Card>
                 <CardContent className="p-4">
-                    <Carousel className="w-full">
-                        <CarouselContent>
-                            {carouselMedia.map((media, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="aspect-video w-full overflow-hidden rounded-lg relative bg-secondary">
-                                        {media.type === 'video' ? (
-                                            <video
-                                                src={media.url}
-                                                controls
-                                                className="object-contain w-full h-full"
-                                            />
-                                        ) : (
-                                            <Image
-                                                src={media.url}
-                                                alt={media.alt || `Mídia ${index + 1} de ${land.title}`}
-                                                fill
-                                                className="object-cover"
-                                                data-ai-hint="fazenda"
-                                            />
-                                        )}
-                                         {media.type === 'video' && <Film className="h-6 w-6 text-white absolute top-3 left-3 drop-shadow-lg" />}
-                                    </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious className="ml-16" />
-                        <CarouselNext className="mr-16" />
-                    </Carousel>
+                    {carouselMedia.length > 0 ? (
+                        <Carousel className="w-full">
+                            <CarouselContent>
+                                {carouselMedia.map((media, index) => (
+                                    <CarouselItem key={index}>
+                                        <div className="aspect-video w-full overflow-hidden rounded-lg relative bg-secondary">
+                                            {media.type === 'video' ? (
+                                                <video
+                                                    src={media.url}
+                                                    controls
+                                                    className="object-contain w-full h-full"
+                                                />
+                                            ) : (
+                                                <Image
+                                                    src={media.url}
+                                                    alt={media.alt || `Mídia ${index + 1} de ${land.title}`}
+                                                    fill
+                                                    className="object-cover"
+                                                    data-ai-hint="fazenda"
+                                                />
+                                            )}
+                                            {media.type === 'video' && <Film className="h-6 w-6 text-white absolute top-3 left-3 drop-shadow-lg" />}
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="ml-16" />
+                            <CarouselNext className="mr-16" />
+                        </Carousel>
+                    ) : (
+                         <div className="aspect-video w-full overflow-hidden rounded-lg bg-secondary flex items-center justify-center">
+                            <MountainIcon className="h-24 w-24 text-muted-foreground/30"/>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

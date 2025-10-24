@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -44,7 +45,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             case 'image':
                 return (
                      <div className="w-full max-w-xs aspect-video rounded-md overflow-hidden relative group">
-                        <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover" data-ai-hint="farm field" />
+                        <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover"/>
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button 
                                 size="icon" 

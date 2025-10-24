@@ -56,22 +56,25 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
     }
   }
 
-  const imageUrl = land.images && land.images.length > 0 
-    ? land.images[0]
-    : `https://picsum.photos/seed/${land.id}/400/225`;
+  const imageUrl = land.images && land.images.length > 0 ? (typeof land.images[0] === 'string' ? land.images[0] : land.images[0].url) : null;
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
-       <div className="relative w-full aspect-[16/9] overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={`Imagem da propriedade ${land.title}`}
-          width={400}
-          height={225}
-          className="object-cover w-full h-full"
-          data-ai-hint="fazenda"
-          loading="lazy"
-        />
+       <div className="relative w-full aspect-[16/9] overflow-hidden bg-secondary">
+        {imageUrl ? (
+            <Image
+                src={imageUrl}
+                alt={`Imagem da propriedade ${land.title}`}
+                fill
+                className="object-cover"
+                data-ai-hint="fazenda"
+                loading="lazy"
+            />
+        ) : (
+            <div className="flex items-center justify-center h-full">
+                <MountainIcon className="h-16 w-16 text-muted-foreground/30"/>
+            </div>
+        )}
         <div className="absolute top-2 right-2">
             <StatusBadge status={land.status} />
         </div>

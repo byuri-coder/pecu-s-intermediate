@@ -1,4 +1,5 @@
 
+
 import type { CarbonCredit, TaxCredit, RuralLand, Operation, Petition, Invoice } from '@/lib/types';
 
 export const placeholderCredits: CarbonCredit[] = [];
