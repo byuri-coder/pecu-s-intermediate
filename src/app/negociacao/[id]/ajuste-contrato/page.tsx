@@ -153,6 +153,29 @@ export default function AdjustmentPage() {
     return 'Aguardando o preenchimento dos dados...';
   }, [asset, assetType, contract, parties]);
 
+  const duplicatesPreview = React.useMemo(() => {
+    if (!contract || !asset || asset === 'loading') return null;
+    
+    const totalValue = (asset.price || (asset.pricePerCredit && asset.quantity ? asset.pricePerCredit * asset.quantity : 0)) || 0;
+    const installments = parseInt(contract.fields.seller.installments, 10) || 1;
+    const installmentValue = totalValue / installments;
+    const today = new Date();
+    
+    const duplicates = [];
+    for (let i = 0; i < installments; i++) {
+        const dueDate = new Date(today);
+        dueDate.setMonth(today.getMonth() + i + 1);
+        duplicates.push({
+            orderNumber: `${i + 1}/${installments}`,
+            invoiceNumber: `NF-${id.substring(0, 6)}-${i+1}`,
+            issueDate: today.toLocaleDateString('pt-BR'),
+            dueDate: dueDate.toLocaleDateString('pt-BR'),
+            value: installmentValue,
+        });
+    }
+    return duplicates;
+  }, [contract, asset, id]);
+
   const handleDownloadPdf = () => {
     try {
         const doc = new jsPDF('p', 'pt', 'a4');
@@ -179,6 +202,8 @@ export default function AdjustmentPage() {
     notFound();
     return null;
   }
+
+  const finalDeal = generatedDeal || { duplicates: duplicatesPreview };
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
@@ -209,20 +234,20 @@ export default function AdjustmentPage() {
                 </CardContent>
             </Card>
 
-            {generatedDeal && (
+            {finalDeal && finalDeal.duplicates && finalDeal.duplicates.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Pré-visualização das Duplicatas</CardTitle>
                   <CardDescription>
-                    Estas são as duplicatas que serão registradas.
+                    {generatedDeal ? 'Estas são as duplicatas que foram registradas.' : 'Esta é uma pré-visualização das duplicatas que serão geradas.'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {generatedDeal.duplicates.map((dup, index) => (
+                  {finalDeal.duplicates.map((dup, index) => (
                       <Card key={index} className="bg-background overflow-hidden">
                         <CardHeader className="bg-muted p-4 flex flex-row items-center justify-between">
                           <CardTitle className="text-lg">DM - DUPLICATA DE VENDA MERCANTIL</CardTitle>
-                          {generatedDeal.blockchain && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
+                          {generatedDeal && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
