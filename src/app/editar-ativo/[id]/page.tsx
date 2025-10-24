@@ -18,30 +18,23 @@ import { app } from '@/lib/firebase';
 import { Anuncio } from '@/models';
 
 type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
-type Asset = (CarbonCredit | TaxCredit | RuralLand) & { [key: string]: any };
-
+// The asset from the DB will be a full Anuncio object
+type Asset = any;
 
 function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
   const router = useRouter();
   const { toast } = useToast();
   
   const [editableAsset, setEditableAsset] = React.useState(asset);
-  const [mediaFiles, setMediaFiles] = React.useState<(File|{url: string, type: 'image' | 'video'})[]>(('images' in asset && Array.isArray(asset.images)) ? asset.images : []);
+  // Ensure mediaFiles is initialized correctly from asset.imagens
+  const [mediaFiles, setMediaFiles] = React.useState<(File|{url: string, type: string})[]>(
+    (asset.imagens && Array.isArray(asset.imagens)) ? asset.imagens : []
+  );
   const [isSaving, setIsSaving] = React.useState(false);
 
 
   const handleAssetChange = (field: keyof Asset, value: any) => {
     setEditableAsset(prev => ({...prev, [field]: value }));
-  };
-
-  const handleMetadadosChange = (field: string, value: any) => {
-    setEditableAsset(prev => ({
-        ...prev,
-        metadados: {
-            ...prev.metadados,
-            [field]: value
-        }
-    }));
   };
   
   const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,10 +46,6 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
   };
   
   const removeMedia = (index: number) => {
-    const file = mediaFiles[index];
-    if (typeof file !== 'string' && 'preview' in file && file.preview.startsWith('blob:')) {
-        URL.revokeObjectURL(file.preview);
-    }
     setMediaFiles(prev => prev.filter((_, i) => i !== index));
   };
   
@@ -70,20 +59,17 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
             const file = fileOrObject as File;
             // In a real app, upload `file` and return the URL. For now, we simulate.
             return {
-                url: `https://picsum.photos/seed/${editableAsset.id}-${file.name}/800/600`,
+                url: `https://picsum.photos/seed/${editableAsset._id}-${file.name}/800/600`,
                 type: file.type.startsWith('video') ? 'video' : 'image'
             };
         }));
         
         const payload = {
-            titulo: editableAsset.title,
-            price: editableAsset.price,
-            descricao: editableAsset.description,
+            ...editableAsset,
             imagens: uploadedMediaUrls,
-            metadados: editableAsset.metadados,
         };
         
-        const response = await fetch(`/api/anuncios/${asset.id}`, {
+        const response = await fetch(`/api/anuncios/${asset._id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -136,7 +122,7 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1 md:col-span-2">
                         <Label>Título do Anúncio</Label>
-                        <Input value={editableAsset.title} onChange={(e) => handleAssetChange('title', e.target.value)} />
+                        <Input value={editableAsset.titulo} onChange={(e) => handleAssetChange('titulo', e.target.value)} />
                     </div>
                     {editableAsset.price !== undefined && (
                         <div className="space-y-1">
@@ -146,7 +132,7 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
                     )}
                     <div className="md:col-span-2 space-y-1">
                         <Label>Descrição</Label>
-                        <Textarea value={editableAsset.description} onChange={(e) => handleAssetChange('description', e.target.value)} rows={4} />
+                        <Textarea value={editableAsset.descricao} onChange={(e) => handleAssetChange('descricao', e.target.value)} rows={4} />
                     </div>
                 </div>
 
@@ -235,11 +221,7 @@ export default function EditAssetPage() {
                 const res = await fetch(`/api/anuncios/${id}`);
                 const data = await res.json();
                 if(data.ok) {
-                     setAsset({
-                        ...data.anuncio, // Spread the whole document
-                        id: data.anuncio._id,
-                        title: data.anuncio.titulo,
-                     });
+                     setAsset(data.anuncio);
                 } else {
                     setAsset(null);
                 }
