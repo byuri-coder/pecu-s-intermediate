@@ -204,7 +204,6 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                                     alt={media.alt || `Mídia ${index + 1} de ${land.title}`}
                                                     fill
                                                     className="object-cover"
-                                                    data-ai-hint="fazenda"
                                                 />
                                             )}
                                             {media.type === 'video' && <Film className="h-6 w-6 text-white absolute top-3 left-3 drop-shadow-lg" />}

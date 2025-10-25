@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { notFound, useSearchParams, useParams, useRouter } from 'next/navigation';
-import type { CarbonCredit, RuralLand, TaxCredit } from '@/lib/types';
+import type { AssetType } from '@/lib/types';
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,32 +16,39 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Edit, UploadCloud, Film, Trash2, Loader2, ShieldCheck } from 'lucide-react';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { app } from '@/lib/firebase';
-import { Anuncio } from '@/models';
 
-type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
-// The asset from the DB will be a full Anuncio object
-type Asset = any;
+type Anuncio = any; // Anuncio from DB
 
-function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetType }) {
+// Helper function to read file as base64
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
+
+
+function EditAssetForm({ asset, assetType }: { asset: Anuncio, assetType: AssetType }) {
   const router = useRouter();
   const { toast } = useToast();
   
   const [editableAsset, setEditableAsset] = React.useState(asset);
-  // Ensure mediaFiles is initialized correctly from asset.imagens
-  const [mediaFiles, setMediaFiles] = React.useState<(File|{url: string, type: string})[]>(
-    (asset.imagens && Array.isArray(asset.imagens)) ? asset.imagens : []
+  // This state will hold a mix of existing media objects and new File objects
+  const [mediaFiles, setMediaFiles] = React.useState<(File | { url: string; type: string; alt?: string })[]>(
+    asset.imagens && Array.isArray(asset.imagens) ? asset.imagens : []
   );
+
   const [isSaving, setIsSaving] = React.useState(false);
 
-
-  const handleAssetChange = (field: keyof Asset, value: any) => {
-    setEditableAsset(prev => ({...prev, [field]: value }));
+  const handleAssetChange = (field: keyof Anuncio, value: any) => {
+    setEditableAsset((prev: Anuncio) => ({ ...prev, [field]: value }));
   };
   
   const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
       const newFiles = Array.from(files);
+      // You can add size validation here if needed
       setMediaFiles(prev => [...prev, ...newFiles]);
     }
   };
@@ -53,14 +61,18 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
     setIsSaving(true);
     try {
         const uploadedMediaUrls = await Promise.all(mediaFiles.map(async (fileOrObject) => {
-            if (typeof fileOrObject === 'object' && 'url' in fileOrObject) {
-                 return fileOrObject; // It's already an object with a URL
+            // If it's already an object with a URL, it means it's an existing image. Keep it.
+            if (typeof fileOrObject === 'object' && 'url' in fileOrObject && !(fileOrObject instanceof File)) {
+                 return fileOrObject;
             }
+            
+            // If it's a File object, it's a new upload. Convert to base64.
             const file = fileOrObject as File;
-            // In a real app, upload `file` and return the URL. For now, we simulate.
+            const base64 = await toBase64(file);
             return {
-                url: `https://picsum.photos/seed/${editableAsset._id}-${file.name}/800/600`,
-                type: file.type.startsWith('video') ? 'video' : 'image'
+                url: base64,
+                type: file.type.startsWith('video') ? 'video' : 'image',
+                alt: editableAsset.titulo,
             };
         }));
         
@@ -160,6 +172,7 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {mediaFiles.map((fileOrObject, index) => {
                                     const isFile = fileOrObject instanceof File;
+                                    // If it's a file, create a blob URL. If it's an object, use its URL (which is base64).
                                     const src = isFile ? URL.createObjectURL(fileOrObject as File) : (fileOrObject as {url: string}).url;
                                     const type = isFile ? (fileOrObject as File).type : (fileOrObject as {type: 'image' | 'video'}).type;
                                     const isVideo = type.startsWith('video');
@@ -202,12 +215,11 @@ function EditAssetForm({ asset, assetType }: { asset: Asset, assetType: AssetTyp
 export default function EditAssetPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id ?? '';
   const assetType = (searchParams?.get('type') as AssetType);
   
-  const [asset, setAsset] = React.useState<Asset | null | 'loading'>('loading');
+  const [asset, setAsset] = React.useState<Anuncio | null | 'loading'>('loading');
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [password, setPassword] = React.useState('');
   const [authError, setAuthError] = React.useState('');
@@ -216,7 +228,7 @@ export default function EditAssetPage() {
 
   React.useEffect(() => {
     async function fetchAsset() {
-        if (id && assetType) {
+        if (id) {
             try {
                 const res = await fetch(`/api/anuncios/${id}`);
                 const data = await res.json();
@@ -232,7 +244,7 @@ export default function EditAssetPage() {
         }
     }
     fetchAsset();
-  }, [id, assetType]);
+  }, [id]);
 
   const handleReauthenticate = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -266,6 +278,7 @@ export default function EditAssetPage() {
 
   if (!asset) {
     notFound();
+    return null;
   }
 
   if (!isAuthenticated) {

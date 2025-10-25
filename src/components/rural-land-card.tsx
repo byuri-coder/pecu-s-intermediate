@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, MountainIcon, Handshake, Sprout, Building, Pickaxe } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import imageData from '@/app/lib/placeholder-images.json';
 
 type RuralLandCardProps = {
   land: RuralLand;
@@ -67,7 +66,6 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
                 alt={`Imagem da propriedade ${land.title}`}
                 fill
                 className="object-cover"
-                data-ai-hint="fazenda"
                 loading="lazy"
             />
         ) : (

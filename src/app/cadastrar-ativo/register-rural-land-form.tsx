@@ -50,6 +50,15 @@ type MediaFile = {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+// Helper function to read file as base64
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
+
+
 export function RegisterRuralLandForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -114,17 +123,14 @@ export function RegisterRuralLandForm() {
         }
 
         try {
-            // In a real app, upload files to a cloud storage (e.g. Firebase Storage)
-            // and get the public URLs. Here, we'll use the blob URLs for demonstration.
-            const uploadedMedia = mediaFiles.map((mf, index) => {
-                // In a real app, this is where you'd upload mf.file to cloud storage
-                // and get a permanent URL.
+            const uploadedMedia = await Promise.all(mediaFiles.map(async (mf) => {
+                const base64 = await toBase64(mf.file);
                 return {
-                    url: mf.preview, // For a real app, this should be the final public URL
+                    url: base64, // Send base64 to backend
                     type: mf.type,
                     alt: data.title
                 };
-            });
+            }));
 
             const payload = {
               uidFirebase: user.uid,
@@ -132,7 +138,7 @@ export function RegisterRuralLandForm() {
               descricao: data.description,
               tipo: 'rural-land',
               price: data.price,
-              imagens: uploadedMedia, // Send the full media object array
+              imagens: uploadedMedia, // Send array of media objects with base64 content
               metadados: {
                 owner: data.owner,
                 registration: data.registration,
@@ -277,3 +283,4 @@ export function RegisterRuralLandForm() {
     </Form>
   );
 }
+
