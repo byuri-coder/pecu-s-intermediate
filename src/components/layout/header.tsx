@@ -50,7 +50,6 @@ export function Header() {
         setUser(firebaseUser);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
         
-        // Fetch user data from MongoDB
         try {
             const res = await fetch(`/api/usuarios/get/${firebaseUser.uid}`);
             const data = await res.json();
@@ -79,7 +78,6 @@ export function Header() {
 
     window.addEventListener('storage', checkNotifications);
 
-    // Cleanup subscription on unmount
     return () => {
         unsubscribe();
         window.removeEventListener('storage', checkNotifications);
@@ -149,7 +147,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={dbUser?.avatarBase64 || undefined} alt="User Avatar" />
+                    <AvatarImage src={dbUser?.avatarId ? `/api/images/${dbUser.avatarId}` : undefined} alt="User Avatar" />
                     <AvatarFallback>
                         {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>

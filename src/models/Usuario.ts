@@ -5,8 +5,9 @@ const UsuarioSchema = new Schema({
   uidFirebase: { type: String, required: true, unique: true, index: true },
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
-  photoURL: { type: String }, // For profile picture
-  avatarBase64: { type: String }, // Field to store base64 image
+  
+  // Referência ao ID do arquivo no GridFS
+  avatarId: { type: Schema.Types.ObjectId, default: null },
 
   // Dados bancários
   banco: String,

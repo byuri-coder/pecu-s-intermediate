@@ -1,5 +1,6 @@
 
 
+
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -13,6 +14,8 @@ export type CarbonCredit = {
   status: string;
   ownerId: string;
   createdAt: string | Date; 
+  imageIds?: string[];
+  thumbnailId?: string;
 };
 
 export type TaxCredit = {
@@ -25,13 +28,9 @@ export type TaxCredit = {
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
   createdAt: string | Date; 
+  imageIds?: string[];
+  thumbnailId?: string;
 };
-
-type MediaItem = {
-    url: string;
-    type: 'image' | 'video';
-    alt?: string;
-}
 
 export type RuralLand = {
   id: string;
@@ -41,13 +40,14 @@ export type RuralLand = {
   sizeHa: number;
   businessType: 'Venda' | 'Permuta' | 'Mineração' | 'Arrendamento';
   location: string;
-  images: MediaItem[];
   documentation: string; // Link or description of available docs
   registration: string; // Land registration identifier
   price?: number; // Optional, might not apply to all business types
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
   createdAt: string | Date; 
+  imageIds?: string[];
+  thumbnailId?: string;
 };
 
 export type Operation = {
@@ -131,7 +131,7 @@ export interface Conversation {
   assetId: string;
   assetName: string;
   name: string; // Name of the other participant
-  avatar: string;
+  avatar: string; // This will now be a URL like /api/images/:id
   lastMessage: string;
   time: string;
   unread: number;
@@ -161,7 +161,7 @@ export interface UserProfile {
     uidFirebase: string;
     nome: string;
     email: string;
-    avatarBase64?: string;
+    avatarId?: string; // GridFS fileId
     banco?: string;
     agencia?: string;
     conta?: string;

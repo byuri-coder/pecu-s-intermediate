@@ -1,19 +1,15 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,14 +18,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MapPin, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
+import { Loader2, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAuth, onAuthStateChanged, updateProfile, type User } from 'firebase/auth';
 import { app } from '@/lib/firebase';
-import { Usuario as UserModel } from '@/models/Usuario'; // Assuming this is your mongoose model type
-
 
 const profileSchema = z.object({
   fullName: z.string().min(3, 'Nome completo é obrigatório'),
@@ -49,7 +43,6 @@ const profileSchema = z.object({
   
   specialRegistration: z.string().optional(),
 
-  // Payment Info
   bankName: z.string().optional(),
   agency: z.string().optional(),
   account: z.string().optional(),
@@ -106,7 +99,6 @@ export function ProfileForm() {
         setUser(currentUser);
         if (currentUser) {
             try {
-                // Fetch user data from your DB
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
 
@@ -128,8 +120,8 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
-                     if (fetchedUser.avatarBase64) {
-                        setAvatarPreview(fetchedUser.avatarBase64);
+                     if (fetchedUser.avatarId) {
+                        setAvatarPreview(`/api/images/${fetchedUser.avatarId}`);
                     }
                 } else {
                      form.reset({
@@ -148,11 +140,6 @@ export function ProfileForm() {
     });
     return () => unsubscribe();
   }, [form]);
-  
-  const address = form.watch('address');
-  const city = form.watch('city');
-  const state = form.watch('state');
-  const fullAddress = [address, city, state].filter(Boolean).join(', ');
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -166,11 +153,7 @@ export function ProfileForm() {
         return;
       }
       setAvatarFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
   };
 
@@ -183,16 +166,25 @@ export function ProfileForm() {
         }
 
         try {
-            // Update Firebase Auth display name if it changed
-            if (data.fullName !== user.displayName) {
-                await updateProfile(user, { displayName: data.fullName });
+            let avatarId = dbUser?.avatarId;
+            if (avatarFile) {
+                const formData = new FormData();
+                formData.append("file", avatarFile);
+
+                const uploadRes = await fetch(`/api/upload/avatar/${user.uid}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const uploadData = await uploadRes.json();
+                if (!uploadRes.ok) throw new Error(uploadData.error || 'Falha no upload do avatar.');
+                avatarId = uploadData.avatarId;
             }
-            
+
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                avatarBase64: avatarPreview,
+                avatarId: avatarId,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -217,12 +209,15 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
+            if (data.fullName !== user.displayName) {
+                await updateProfile(user, { displayName: data.fullName });
+            }
+
             toast({
                 title: "Perfil Atualizado!",
                 description: "Suas informações foram salvas com sucesso.",
             });
             
-            // Force a reload of the user object to get fresh data everywhere
              window.location.reload();
 
 
@@ -249,7 +244,7 @@ export function ProfileForm() {
                         type="file"
                         ref={avatarInputRef}
                         className="hidden"
-                        accept="image/png, image/jpeg"
+                        accept="image/png, image/jpeg, image/webp"
                         onChange={handleAvatarChange}
                     />
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
@@ -358,16 +353,6 @@ export function ProfileForm() {
                 <FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} placeholder="00000-000" /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
-            {fullAddress && (
-                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                 >
-                    <MapPin className="h-4 w-4" />
-                    Visualizar no Google Maps
-                 </a>
-            )}
           </section>
 
           <section className="space-y-4 p-6 border rounded-lg">
