@@ -206,73 +206,82 @@ export default function AdjustmentPage() {
   const finalDeal = generatedDeal || { duplicates: duplicatesPreview };
 
   return (
-    <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <AdjustmentClientPage
-            assetId={id}
-            assetType={assetType}
-            asset={asset}
-            contract={contract}
-            setContract={setContract}
-            loadContract={loadContract}
-            setGeneratedDeal={setGeneratedDeal}
-        />
-        <div className="space-y-6">
-            <Card className="sticky top-20">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Pré-visualização do Contrato</CardTitle>
-                        <CardDescription>Este documento é gerado dinamicamente.</CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-                        <Download className="mr-2 h-4 w-4"/>
-                        Baixar PDF
-                    </Button>
-                </CardHeader>
-                <CardContent className="h-[400px] overflow-y-auto bg-secondary/30 p-4 rounded-b-lg border-t">
-                    <pre className="whitespace-pre-wrap text-xs font-mono">{contractPreviewText}</pre>
-                </CardContent>
-            </Card>
+    <div className="container mx-auto max-w-full py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+            {/* Coluna de Ações (Esquerda) */}
+            <div className="w-full lg:w-1/2">
+                 <AdjustmentClientPage
+                    assetId={id}
+                    assetType={assetType}
+                    asset={asset}
+                    contract={contract}
+                    setContract={setContract}
+                    loadContract={loadContract}
+                    setGeneratedDeal={setGeneratedDeal}
+                />
+            </div>
 
-            {finalDeal && finalDeal.duplicates && finalDeal.duplicates.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pré-visualização das Duplicatas</CardTitle>
-                  <CardDescription>
-                    {generatedDeal ? 'Estas são as duplicatas que foram registradas.' : 'Esta é uma pré-visualização das duplicatas que serão geradas.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {finalDeal.duplicates.map((dup, index) => (
-                      <Card key={index} className="bg-background overflow-hidden">
-                        <CardHeader className="bg-muted p-4 flex flex-row items-center justify-between">
-                          <CardTitle className="text-lg">DM - DUPLICATA DE VENDA MERCANTIL</CardTitle>
-                          {generatedDeal && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
-                        </CardHeader>
-                        <CardContent className="p-4 space-y-4">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div><span className="font-semibold block">Nº de Ordem:</span>{dup.orderNumber}</div>
-                            <div><span className="font-semibold block">Nº da Fatura:</span>{dup.invoiceNumber}</div>
-                            <div><span className="font-semibold block">Data Emissão:</span>{dup.issueDate}</div>
-                            <div><span className="font-semibold block">Data Vencimento:</span>{dup.dueDate}</div>
-                          </div>
-                          <div className="text-center p-4 border rounded-lg">
-                            <p className="text-sm text-muted-foreground">Valor do Título</p>
-                            <p className="text-2xl font-bold text-primary">
-                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dup.value)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              ({numberToWords(dup.value)})
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </CardContent>
-              </Card>
-            )}
+            {/* Coluna de Pré-visualização (Direita, Fixa) */}
+            <div className="w-full lg:w-1/2">
+                <div className="lg:fixed lg:top-20 lg:right-8 lg:h-[calc(100vh-6rem)] lg:w-[45%] lg:max-w-4xl">
+                    <div className="h-full w-full overflow-y-auto space-y-6 pr-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Pré-visualização do Contrato</CardTitle>
+                                    <CardDescription>Este documento é gerado dinamicamente.</CardDescription>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+                                    <Download className="mr-2 h-4 w-4"/>
+                                    Baixar PDF
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="h-[400px] overflow-y-auto bg-secondary/30 p-4 rounded-b-lg border-t">
+                                <pre className="whitespace-pre-wrap text-xs font-mono">{contractPreviewText}</pre>
+                            </CardContent>
+                        </Card>
+
+                        {finalDeal && finalDeal.duplicates && finalDeal.duplicates.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                            <CardTitle>Pré-visualização das Duplicatas</CardTitle>
+                            <CardDescription>
+                                {generatedDeal ? 'Estas são as duplicatas que foram registradas.' : 'Esta é uma pré-visualização das duplicatas que serão geradas.'}
+                            </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                            {finalDeal.duplicates.map((dup, index) => (
+                                <Card key={index} className="bg-background overflow-hidden">
+                                    <CardHeader className="bg-muted p-4 flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg">DM - DUPLICATA DE VENDA MERCANTIL</CardTitle>
+                                    {generatedDeal && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
+                                    </CardHeader>
+                                    <CardContent className="p-4 space-y-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                        <div><span className="font-semibold block">Nº de Ordem:</span>{dup.orderNumber}</div>
+                                        <div><span className="font-semibold block">Nº da Fatura:</span>{dup.invoiceNumber}</div>
+                                        <div><span className="font-semibold block">Data Emissão:</span>{dup.issueDate}</div>
+                                        <div><span className="font-semibold block">Data Vencimento:</span>{dup.dueDate}</div>
+                                    </div>
+                                    <div className="text-center p-4 border rounded-lg">
+                                        <p className="text-sm text-muted-foreground">Valor do Título</p>
+                                        <p className="text-2xl font-bold text-primary">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dup.value)}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                        ({numberToWords(dup.value)})
+                                        </p>
+                                    </div>
+                                    </CardContent>
+                                </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
   );
 }
