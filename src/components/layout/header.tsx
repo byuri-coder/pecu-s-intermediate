@@ -30,7 +30,6 @@ const NotificationDot = () => (
 
 export function Header() {
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
-  const [dbUser, setDbUser] = React.useState<any>(null);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [hasNewInvoices, setHasNewInvoices] = React.useState(false);
   const [hasNewDuplicates, setHasNewDuplicates] = React.useState(false);
@@ -49,20 +48,8 @@ export function Header() {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
-        
-        try {
-            const res = await fetch(`/api/usuarios/get/${firebaseUser.uid}`);
-            const data = await res.json();
-            if (data.ok) {
-                setDbUser(data.usuario);
-            }
-        } catch (e) {
-            console.error("Failed to fetch user from db", e);
-        }
-
       } else {
         setUser(null);
-        setDbUser(null);
         setIsAdmin(false);
       }
     });
@@ -147,7 +134,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={dbUser?.avatarId ? `/api/images/${dbUser.avatarId}` : undefined} alt="User Avatar" />
+                    <AvatarImage src={user.photoURL || undefined} alt="User Avatar" />
                     <AvatarFallback>
                         {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>

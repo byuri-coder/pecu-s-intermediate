@@ -6,8 +6,8 @@ const UsuarioSchema = new Schema({
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   
-  // Referência ao ID do arquivo no GridFS
-  avatarId: { type: Schema.Types.ObjectId, default: null },
+  // Agora armazena a URL pública da imagem (do Firebase Storage)
+  avatarId: { type: String, default: null },
 
   // Dados bancários
   banco: String,

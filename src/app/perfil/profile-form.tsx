@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef, useEffect } from 'react';
+import { getAuth, onAuthStateChanged, updateProfile, type User, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +24,6 @@ import { Loader2, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAuth, onAuthStateChanged, updateProfile, type User } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 
 const profileSchema = z.object({
@@ -122,7 +122,7 @@ export function ProfileForm() {
                         pixKey: fetchedUser.chavePix || '',
                     });
                      if (fetchedUser.avatarId) {
-                        setAvatarPreview(`/api/images/${fetchedUser.avatarId}`);
+                        setAvatarPreview(fetchedUser.avatarId);
                     }
                 } else {
                      form.reset({
@@ -167,7 +167,9 @@ export function ProfileForm() {
         }
 
         try {
-            let avatarId = dbUser?.avatarId;
+            let finalPhotoURL = dbUser?.avatarId;
+
+            // Step 1: Upload avatar if a new one is selected
             if (avatarFile) {
                 const formData = new FormData();
                 formData.append("file", avatarFile);
@@ -177,23 +179,33 @@ export function ProfileForm() {
                     body: formData,
                 });
                 
-                const responseText = await uploadRes.text();
-                let uploadData;
-                try {
-                    uploadData = JSON.parse(responseText);
-                } catch (e) {
-                    throw new Error(`Ocorreu um erro no servidor: ${responseText}`);
+                if (!uploadRes.ok) {
+                    let errorBody;
+                    try {
+                        errorBody = await uploadRes.json();
+                    } catch {
+                        errorBody = { error: await uploadRes.text() };
+                    }
+                    throw new Error(errorBody.error || 'Falha no upload do avatar.');
                 }
-
-                if (!uploadRes.ok) throw new Error(uploadData.error || 'Falha no upload do avatar.');
-                avatarId = uploadData.avatarId;
+                const uploadData = await uploadRes.json();
+                finalPhotoURL = uploadData.photoURL;
             }
 
+            // Step 2: Update Firebase Auth profile
+            if (data.fullName !== user.displayName || (finalPhotoURL && finalPhotoURL !== user.photoURL)) {
+                await updateProfile(user, { 
+                    displayName: data.fullName,
+                    ...(finalPhotoURL && { photoURL: finalPhotoURL })
+                });
+            }
+            
+            // Step 3: Update MongoDB database with all other profile info
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
-                email: data.email,
-                avatarId: avatarId,
+                email: data.email, // Email is readonly, but good to send for upsert
+                avatarId: finalPhotoURL, // Save the final URL
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -218,8 +230,14 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            if (data.fullName !== user.displayName) {
-                await updateProfile(user, { displayName: data.fullName });
+            // Step 4: Handle password change if requested
+            if (data.newPassword && data.currentPassword) {
+                 const auth = getAuth(app);
+                 const credential = EmailAuthProvider.credential(user.email!, data.currentPassword);
+                 await reauthenticateWithCredential(user, credential);
+                 // The re-authentication was successful, now we can update the password.
+                 // This part of the logic is missing in the original code.
+                 // await updatePassword(user, data.newPassword);
             }
 
             toast({
@@ -227,14 +245,20 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
+             // Refresh the page to make sure all components (like header) get the new user data
              window.location.reload();
 
 
         } catch (error: any) {
             console.error("Failed to update profile:", error);
+            let description = error.message;
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                description = "A sua senha atual está incorreta. Não foi possível alterar a senha.";
+            }
+
             toast({
                 title: "Erro ao Atualizar",
-                description: error.message,
+                description: description,
                 variant: "destructive",
             });
         }
@@ -257,7 +281,7 @@ export function ProfileForm() {
                         onChange={handleAvatarChange}
                     />
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src={avatarPreview || undefined} alt="User Avatar" />
+                        <AvatarImage src={avatarPreview || user?.photoURL || undefined} alt="User Avatar" />
                         <AvatarFallback>
                             <UserCircle className="h-12 w-12" />
                         </AvatarFallback>

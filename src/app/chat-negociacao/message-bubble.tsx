@@ -82,7 +82,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     const senderInitial = senderName.charAt(0).toUpperCase();
 
     // Use a foto de perfil real se disponível, caso contrário use a inicial
-    const avatarSrc = msg.user?.profileImage ? (msg.user.profileImage.startsWith('http') ? msg.user.profileImage : `/api/images/${msg.user.profileImage}`) : undefined;
+    const avatarSrc = msg.user?.profileImage;
 
     return (
          <div
@@ -93,7 +93,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             >
             {!isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc} />
+                    <AvatarImage src={avatarSrc || undefined} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
@@ -116,7 +116,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc} />
+                    <AvatarImage src={avatarSrc || undefined} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}

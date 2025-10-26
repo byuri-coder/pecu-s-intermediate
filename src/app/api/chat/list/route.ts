@@ -42,9 +42,7 @@ export async function GET(req: Request) {
                 getLatestMessage(room._id.toString())
             ]);
             
-            const avatarUrl = otherUser?.avatarId
-              ? `/api/images/${otherUser.avatarId}`
-              : `https://avatar.vercel.sh/${otherUserId}.png`;
+            const avatarUrl = otherUser?.avatarId || `https://avatar.vercel.sh/${otherUserId}.png`;
 
             return {
                 id: room._id.toString(),

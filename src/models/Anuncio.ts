@@ -10,9 +10,7 @@ const AnuncioSchema = new Schema({
   currency: { type: String, default: "BRL" },
   status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo"], default: "Disponível", index: true },
   
-  // Referências aos IDs dos arquivos no GridFS
-  imageIds: [{ type: Schema.Types.ObjectId }],
-  thumbnailId: { type: Schema.Types.ObjectId, default: null },
+  imagens: { type: [{ url: String, type: String, alt: String }], default: [] },
   
   metadados: { type: Schema.Types.Mixed },
 }, { timestamps: true });
