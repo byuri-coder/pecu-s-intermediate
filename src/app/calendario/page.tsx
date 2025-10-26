@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { useUser, useCollection } from '@/firebase';
-import { query, where, or } from 'firebase/firestore';
+import { useUser, useCollection, useFirestore } from '@/firebase';
+import { query, where, or, collection } from 'firebase/firestore';
 
 
 const AssetIcon = ({ assetType }: { assetType: Operation['assetType'] }) => {
@@ -30,20 +30,20 @@ export default function CalendarPage() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [selectedDayOperations, setSelectedDayOperations] = React.useState<Operation[]>([]);
   const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
   
   const transactionsQuery = React.useMemo(() => {
-    if (!user) return null;
+    if (!user || !firestore) return null;
     return query(
-        // This is a placeholder for a real collection name, e.g., 'transactions'
-        collection(useFirestore(), 'transactions'),
+        collection(firestore, 'transactions'),
         or(
             where('buyerId', '==', user.uid),
             where('sellerId', '==', user.uid)
         )
     );
-  }, [user]);
+  }, [user, firestore]);
 
-  const { data: transactions, loading: transactionsLoading } = useCollection<FirestoreTransaction>(transactionsQuery);
+  const { data: transactions, loading: transactionsLoading } = useCollection<FirestoreTransaction>(transactionsQuery as any);
 
   const allOperations: Operation[] = React.useMemo(() => {
     if (!transactions || !user) return [];
