@@ -1,3 +1,4 @@
+
 // src/models/Comprovante.ts
 import mongoose, { Schema, models } from "mongoose";
 

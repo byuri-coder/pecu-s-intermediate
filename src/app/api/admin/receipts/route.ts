@@ -1,3 +1,4 @@
+
 // src/app/api/admin/receipts/route.ts
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";

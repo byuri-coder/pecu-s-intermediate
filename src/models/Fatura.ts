@@ -1,3 +1,4 @@
+
 // src/models/Fatura.ts
 import mongoose, { Schema, models } from "mongoose";
 
