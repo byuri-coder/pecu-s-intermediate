@@ -41,6 +41,7 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
       { upsert: true, new: true }
     );
     
+    // Retorna a URL que servirá a imagem, com um timestamp para quebrar o cache do navegador
     const photoURL = `/api/avatar/${uid}?t=${new Date().getTime()}`;
 
     return NextResponse.json({ success: true, photoURL });

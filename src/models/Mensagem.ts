@@ -11,15 +11,18 @@ const ChatMessageSchema = new mongoose.Schema({
     default: "text",
   },
   text: { type: String },
-  fileUrl: { type: String },
+  fileUrl: { type: String }, // Can store base64 data URI for simplicity
   fileName: { type: String },
   fileType: { type: String },
   location: {
     latitude: Number,
     longitude: Number,
   },
-  // Campo de dados do remetente para ser populado
-  user: { type: Schema.Types.Mixed }
+  // Embed sender's info for quick display without extra lookups
+  user: { 
+      name: String,
+      profileImage: String // This will store the /api/avatar/[uid] URL
+  }
 }, { timestamps: true });
 
 

@@ -8,7 +8,7 @@ import { app } from '@/lib/firebase';
 
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, Calendar, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,6 +48,7 @@ export function Header() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        // Force refresh of the avatar by adding a timestamp
         setAvatarUrl(`/api/avatar/${firebaseUser.uid}?t=${new Date().getTime()}`);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
       } else {
@@ -137,7 +138,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl || undefined} alt="User Avatar" />
+                    <AvatarImage src={avatarUrl || undefined} alt={user.displayName || 'User Avatar'} />
                     <AvatarFallback>
                         {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -186,9 +187,6 @@ export function Header() {
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/peticoes"><FileSignature className="mr-2 h-4 w-4" /><span>Minhas Petições</span></Link>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem asChild>
-                    <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Operações</span></Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>

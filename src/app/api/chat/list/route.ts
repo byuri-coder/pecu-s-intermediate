@@ -5,15 +5,29 @@ import { connectDB } from '@/lib/mongodb';
 import { ChatRoom } from '@/models/ChatRoom';
 import { Anuncio } from '@/models/Anuncio';
 import { Usuario } from '@/models/Usuario';
+import { Mensagem } from '@/models/Mensagem';
 import mongoose from 'mongoose';
 import type { Conversation } from '@/lib/types';
 
 
 async function getLatestMessage(chatId: string) {
-    // This is a placeholder. In a real app, you would fetch this from your Mensagem model.
+    const lastMessage = await Mensagem.findOne({ chatId }).sort({ createdAt: -1 }).lean();
+    if (!lastMessage) {
+        return {
+            text: "Negociação iniciada...",
+            timestamp: new Date(),
+        }
+    }
+    
+    let content = '...';
+    if(lastMessage.type === 'text') content = lastMessage.text || '...';
+    if(lastMessage.type === 'image') content = '📷 Imagem';
+    if(lastMessage.type === 'pdf') content = '📄 Documento';
+    if(lastMessage.type === 'location') content = '📍 Localização';
+    
     return {
-        text: "Negociação iniciada...",
-        timestamp: new Date(),
+        text: content,
+        timestamp: lastMessage.createdAt,
     }
 }
 
@@ -50,7 +64,7 @@ export async function GET(req: Request) {
                 assetId: room.assetId,
                 assetName: asset?.titulo || 'Ativo Desconhecido',
                 name: otherUser?.nome || 'Usuário Desconhecido',
-                avatar: avatarUrl, // Use the real avatar URL
+                avatar: avatarUrl,
                 lastMessage: lastMessage?.text || 'Nenhuma mensagem ainda.',
                 time: new Date(lastMessage.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 unread: 0, // Placeholder

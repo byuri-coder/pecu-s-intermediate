@@ -7,19 +7,18 @@ export const runtime = 'nodejs';
 
 export async function GET(req: Request, { params }: { params: { uid: string } }) {
   try {
-    await connectDB();
     const { uid } = params;
-    
     if (!uid) {
       return new NextResponse("UID do usuário é obrigatório.", { status: 400 });
     }
-
+    
+    await connectDB();
     const user = await Usuario.findOne({ uidFirebase: uid }).lean();
 
     if (!user || !user.fotoPerfil?.data) {
-      // Retorna uma imagem padrão ou um erro 404
-      // Para este caso, vamos redirecionar para um placeholder genérico
-      return NextResponse.redirect(`https://avatar.vercel.sh/${uid}.png`);
+      // Retorna uma imagem de fallback ou um erro 404
+      const fallbackUrl = `https://avatar.vercel.sh/${uid}.png?text=${user?.nome?.charAt(0) || '?'}`;
+      return NextResponse.redirect(fallbackUrl);
     }
 
     return new NextResponse(user.fotoPerfil.data, {

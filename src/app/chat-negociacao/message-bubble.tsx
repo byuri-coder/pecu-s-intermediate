@@ -3,19 +3,22 @@
 
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, Download, MapPin, UserCircle } from 'lucide-react';
+import { FileText, Download, MapPin, UserCircle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { Message } from '@/lib/types';
+import * as React from 'react';
 
 export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUserId: string }) => {
+    const [imageLoading, setImageLoading] = React.useState(true);
     const isMe = msg.senderId === currentUserId;
     
-    const handleDownload = (url: string, filename: string) => {
+    const handleDownload = (url: string, filename?: string) => {
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      // Use um nome de arquivo genérico se não estiver disponível
+      a.download = filename || `download_${Date.now()}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -38,19 +41,27 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
                 return (
                     <a href={msg.content} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md border p-2 bg-secondary/30 hover:bg-secondary/50 transition-colors">
                         <FileText className="h-6 w-6 text-red-600"/>
-                        <span className="font-medium text-sm truncate">{msg.content.split('/').pop()}</span>
+                        <span className="font-medium text-sm truncate">{(msg as any).fileName || 'documento.pdf'}</span>
                     </a>
                 )
             case 'image':
                 return (
-                     <div className="w-full max-w-xs aspect-video rounded-md overflow-hidden relative group">
-                        <Image src={msg.content} alt="Imagem enviada no chat" fill className="object-cover"/>
+                     <div className="w-full max-w-xs aspect-video rounded-md overflow-hidden relative group bg-secondary/50">
+                        {imageLoading && <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin"/></div>}
+                        <Image 
+                            src={msg.content} 
+                            alt="Imagem enviada no chat" 
+                            fill 
+                            className="object-cover"
+                            onLoad={() => setImageLoading(false)}
+                            onError={() => setImageLoading(false)} // Esconde o loader mesmo se der erro
+                        />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button 
                                 size="icon" 
                                 variant="outline" 
                                 className="bg-background/50 hover:bg-background/80"
-                                onClick={() => handleDownload(msg.content, 'imagem_chat.png')}
+                                onClick={() => handleDownload(msg.content, (msg as any).fileName)}
                             >
                                 <Download className="h-5 w-5" />
                                 <span className="sr-only">Baixar Imagem</span>
@@ -79,8 +90,6 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     
     const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
     const senderInitial = senderName.charAt(0).toUpperCase();
-
-    // The avatar URL now comes from the message user object, which is populated by the API.
     const avatarSrc = msg.user?.profileImage;
 
     return (
@@ -92,7 +101,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             >
             {!isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} />
+                    <AvatarImage src={avatarSrc || undefined} alt={`${senderName} avatar`} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
@@ -115,7 +124,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} />
+                    <AvatarImage src={avatarSrc || undefined} alt={`${senderName} avatar`} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}

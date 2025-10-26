@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const user = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.avatarUrl || null } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: `/api/avatar/${body.senderId}` } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -24,21 +24,26 @@ export async function POST(req: Request) {
     // Buscar o usuário para embutir os dados
     const senderUser = await Usuario.findOne({ uidFirebase: senderId }).lean();
 
-    const newMessage = await Mensagem.create({
+    const newMessageData: any = {
       chatId,
       senderId,
       receiverId,
       type,
-      text,
-      fileUrl,
-      fileName,
-      fileType,
-      location,
       user: { // Embutir dados do usuário na mensagem
           name: senderUser?.nome || 'Usuário Desconhecido',
           profileImage: `/api/avatar/${senderId}`
       }
-    });
+    };
+
+    if (type === 'text') newMessageData.text = text;
+    if (type === 'image' || type === 'pdf') {
+        newMessageData.fileUrl = fileUrl;
+        newMessageData.fileName = fileName;
+        newMessageData.fileType = fileType;
+    }
+    if (type === 'location') newMessageData.location = location;
+    
+    const newMessage = await Mensagem.create(newMessageData);
 
     return NextResponse.json({ ok: true, message: newMessage });
   } catch (error: any) {
@@ -65,6 +70,9 @@ export async function GET(req: Request) {
     
     // Para cada mensagem, popular os dados do remetente
     const populatedMessages = await Promise.all(messages.map(async (msg) => {
+        // A informação do user já está embutida, mas podemos garantir o fallback
+        if(msg.user) return msg;
+        
         const sender = await Usuario.findOne({ uidFirebase: msg.senderId }).lean();
         return {
             ...msg,
