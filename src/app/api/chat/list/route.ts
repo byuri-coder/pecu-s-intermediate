@@ -41,13 +41,17 @@ export async function GET(req: Request) {
                 Anuncio.findById(room.assetId).lean(),
                 getLatestMessage(room._id.toString())
             ]);
+            
+            const avatarUrl = otherUser?.avatarId
+              ? `/api/images/${otherUser.avatarId}`
+              : `https://avatar.vercel.sh/${otherUserId}.png`;
 
             return {
                 id: room._id.toString(),
                 assetId: room.assetId,
                 assetName: asset?.titulo || 'Ativo Desconhecido',
                 name: otherUser?.nome || 'Usuário Desconhecido',
-                avatar: `https://avatar.vercel.sh/${otherUserId}.png`, // Placeholder avatar
+                avatar: avatarUrl,
                 lastMessage: lastMessage?.text || 'Nenhuma mensagem ainda.',
                 time: new Date(lastMessage.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 unread: 0, // Placeholder
