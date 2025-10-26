@@ -182,9 +182,6 @@ export function Header() {
                     <Link href="/cadastrar-ativo"><FilePlus className="mr-2 h-4 w-4" /><span>Cadastrar Ativos</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
-                    <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário</span></Link>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem asChild>
                     <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Gerenciar Filiais</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
