@@ -50,7 +50,7 @@ export async function GET(req: Request) {
                 assetId: room.assetId,
                 assetName: asset?.titulo || 'Ativo Desconhecido',
                 name: otherUser?.nome || 'Usuário Desconhecido',
-                avatar: avatarUrl,
+                avatar: avatarUrl, // Use the real avatar URL
                 lastMessage: lastMessage?.text || 'Nenhuma mensagem ainda.',
                 time: new Date(lastMessage.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 unread: 0, // Placeholder

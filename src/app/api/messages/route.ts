@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const user = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.avatarId || null } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.avatarUrl || null } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       location,
       user: { // Embutir dados do usuário na mensagem
           name: senderUser?.nome || 'Usuário Desconhecido',
-          // O avatar será resolvido pelo frontend via /api/avatar/[uid]
+          profileImage: `/api/avatar/${senderId}`
       }
     });
 
@@ -70,6 +70,7 @@ export async function GET(req: Request) {
             ...msg,
             user: {
                 name: sender?.nome || 'Usuário Desconhecido',
+                profileImage: `/api/avatar/${msg.senderId}`
             }
         };
     }));

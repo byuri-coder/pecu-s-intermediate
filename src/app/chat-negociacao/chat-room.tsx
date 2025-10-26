@@ -18,6 +18,16 @@ interface ChatRoomProps {
     receiverId: string;
 }
 
+// In a real application, you would upload to a service like Firebase Storage
+// and get a URL back. For this simulation, we'll convert the file to a base64 Data URL.
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
+
+
 export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
     const { toast } = useToast();
     const [messages, setMessages] = React.useState<Message[]>([]);
@@ -100,7 +110,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
         
         if (msg.type === 'text') payload.text = msg.content;
         else if (msg.type === 'image' || msg.type === 'pdf') {
-            payload.fileUrl = msg.content;
+            payload.fileUrl = msg.content; // The content is the base64 URL
             payload.fileName = msg.content.split('/').pop();
             payload.fileType = msg.type;
         } else if (msg.type === 'location') {
@@ -119,17 +129,16 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
 
             setAutoScroll(true);
 
+            // The API now returns the fully populated message object
             const optimisticMessage: Message = {
                 id: sentMessage.message._id,
-                senderId: currentUser.uid,
-                content: msg.content,
-                type: msg.type,
-                timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                user: {
-                    name: currentUser.displayName || 'Eu',
-                    profileImage: `/api/avatar/${currentUser.uid}`
-                }
+                senderId: sentMessage.message.senderId,
+                content: sentMessage.message.text || sentMessage.message.fileUrl,
+                type: sentMessage.message.type,
+                timestamp: new Date(sentMessage.message.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                user: sentMessage.message.user
             };
+            
             setMessages(prev => [...prev, optimisticMessage]);
             setNewMessage('');
         } catch(error: any) {
@@ -150,16 +159,21 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
         handleSendMessage({ content: messageContent, type: messageType });
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
             const file = event.target.files[0];
             if (file.size > 10 * 1024 * 1024) { // 10 MB limit
                 toast({ title: "Arquivo muito grande", description: "Por favor, selecione um arquivo com menos de 10MB.", variant: "destructive" });
                 return;
             }
-            const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
-            const content = URL.createObjectURL(file); // In a real app, upload file to storage and get URL
-            handleSendMessage({ content, type: fileType });
+            try {
+                const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+                const base64Content = await toBase64(file);
+                handleSendMessage({ content: base64Content, type: fileType });
+            } catch (error) {
+                toast({ title: "Erro ao processar arquivo", description: "Não foi possível ler o arquivo selecionado.", variant: "destructive" });
+            }
+            
             if(fileInputRef.current) fileInputRef.current.value = "";
         }
     };
