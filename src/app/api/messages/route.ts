@@ -1,3 +1,4 @@
+
 // src/app/api/messages/route.ts
 import { NextResponse } from 'next/server';
 import { connectDB, DISABLE_MONGO } from '@/lib/mongodb';
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const user = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.photoURL || '' } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: user?.avatarId || null } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       location,
       user: { // Embutir dados do usuário na mensagem
           name: senderUser?.nome || 'Usuário Desconhecido',
-          profileImage: senderUser?.photoURL || null,
+          profileImage: senderUser?.avatarId || null, // Usar o avatarId do banco de dados
       }
     });
 

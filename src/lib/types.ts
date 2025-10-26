@@ -14,7 +14,7 @@ export type CarbonCredit = {
   status: string;
   ownerId: string;
   createdAt: string | Date; 
-  imageIds?: string[];
+  images?: { url: string; type: 'image' | 'video', alt?: string }[];
   thumbnailId?: string;
 };
 
@@ -28,7 +28,7 @@ export type TaxCredit = {
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
   createdAt: string | Date; 
-  imageIds?: string[];
+  images?: { url: string; type: 'image' | 'video', alt?: string }[];
   thumbnailId?: string;
 };
 
@@ -46,7 +46,7 @@ export type RuralLand = {
   status: 'Disponível' | 'Negociando' | 'Vendido';
   ownerId: string;
   createdAt: string | Date; 
-  imageIds?: string[];
+  images?: { url: string; type: 'image' | 'video', alt?: string }[];
   thumbnailId?: string;
 };
 
@@ -119,7 +119,7 @@ export interface Message {
   // user object containing sender's public info
   user: {
     name: string;
-    profileImage?: string | null;
+    profileImage?: string | null; // Can be avatarId or a full URL
   };
   status?: 'sent' | 'delivered' | 'read';
   receiverId?: string;
