@@ -35,7 +35,7 @@ export default function CalendarPage() {
     if (!user) return null;
     return query(
         // This is a placeholder for a real collection name, e.g., 'transactions'
-        'transactions',
+        collection(useFirestore(), 'transactions'),
         or(
             where('buyerId', '==', user.uid),
             where('sellerId', '==', user.uid)
