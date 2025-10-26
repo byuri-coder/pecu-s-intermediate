@@ -40,8 +40,8 @@ export async function POST(req: Request) {
             issueDate: today,
             dueDate: dueDate,
             value: installmentValue,
-            buyerId: contract.buyerId, // Correctly use the user ID from the contract
-            sellerId: contract.sellerId, // Correctly use the user ID from the contract
+            buyerId: contract.buyerId, // Use the firebase UID
+            sellerId: contract.sellerId, // Use the firebase UID
         });
     }
 
@@ -52,21 +52,19 @@ export async function POST(req: Request) {
     const feeDueDate = new Date();
     feeDueDate.setDate(today.getDate() + 7); // 7 days to pay
 
-    // Find the contract by the business ID (negotiationId), not the MongoDB _id
     const relatedContract = await Contrato.findOne({ negotiationId: negotiationId }).lean();
     if (!relatedContract) {
       throw new Error(`Contrato com negotiationId ${negotiationId} não encontrado para gerar fatura.`);
     }
 
-    // Find the seller's user document to get their MongoDB ObjectId
     const sellerUser = await Usuario.findOne({ uidFirebase: contract.sellerId }).lean();
     if (!sellerUser) {
         throw new Error(`Usuário vendedor com uidFirebase ${contract.sellerId} não encontrado.`);
     }
 
-    const newFatura = await Fatura.create({
-        usuarioId: sellerUser._id, // Use the seller's MongoDB ObjectId
-        contratoId: relatedContract._id, // Use the actual MongoDB _id
+    await Fatura.create({
+        usuarioId: sellerUser._id,
+        contratoId: relatedContract._id,
         numero: `FEE-${assetId.substring(0, 8)}`,
         valor: serviceFee,
         dataVencimento: feeDueDate,

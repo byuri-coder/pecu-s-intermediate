@@ -4,23 +4,25 @@ import { connectDB } from '@/lib/mongodb';
 import { Duplicata } from '@/models/Duplicata';
 import { Usuario } from '@/models/Usuario';
 import { Contrato } from '@/models/Contrato';
+import { Anuncio } from '@/models/Anuncio';
 
-async function getDealsFromDuplicates(duplicates: any[], userCnpj: string) {
+async function getDealsFromDuplicates(duplicates: any[], userId: string) {
     const dealsMap = new Map();
 
     for (const dup of duplicates) {
         if (!dealsMap.has(dup.negotiationId)) {
-            const contract = await Contrato.findOne({ _id: `contract_${dup.negotiationId.split('_')[1]}` }).lean();
+            const contract = await Contrato.findOne({ negotiationId: dup.negotiationId }).lean();
             if (contract) {
+                const anuncio = await Anuncio.findById(contract.anuncioId).lean();
                 dealsMap.set(dup.negotiationId, {
-                    assetId: dup.negotiationId.split('_')[1],
-                    assetName: "Nome do Ativo (Buscar)", // You would fetch this from the Anuncio model
+                    assetId: contract.anuncioId,
+                    assetName: anuncio?.titulo || 'Ativo não encontrado',
                     duplicates: [],
-                    seller: { name: contract.dados.fields.seller.razaoSocial, doc: contract.dados.fields.seller.cnpj, address: contract.dados.fields.seller.endereco },
-                    buyer: { name: contract.dados.fields.buyer.razaoSocial, doc: contract.dados.fields.buyer.cnpj, address: contract.dados.fields.buyer.endereco },
+                    seller: { name: contract.fields.seller.razaoSocial, doc: contract.fields.seller.cnpj, address: contract.fields.seller.endereco },
+                    buyer: { name: contract.fields.buyer.razaoSocial, doc: contract.fields.buyer.cnpj, address: contract.fields.buyer.endereco },
                     blockchain: {
                         transactionHash: '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-                        blockTimestamp: new Date(contract.finalizedAt).toISOString()
+                        blockTimestamp: contract.completedAt ? new Date(contract.completedAt).toISOString() : new Date().toISOString()
                     }
                 });
             }
@@ -49,22 +51,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, error: 'ID do usuário é obrigatório' }, { status: 400 });
     }
     
-    // First, get the user's CNPJ/CPF from their profile
-    const user = await Usuario.findOne({ uidFirebase: userId }).lean();
-    if (!user) {
-      return NextResponse.json({ ok: true, deals: [] });
-    }
-    const userDocIdentifier = user.cpfCnpj; // Assuming you add this field to the user model
-
     // Find all duplicates where this user is either the buyer or the seller
     const userDuplicates = await Duplicata.find({
         $or: [
-            { buyerId: userDocIdentifier },
-            { sellerId: userDocIdentifier }
+            { buyerId: userId },
+            { sellerId: userId }
         ]
     }).sort({ issueDate: -1 }).lean();
 
-    const deals = await getDealsFromDuplicates(userDuplicates, userDocIdentifier);
+    const deals = await getDealsFromDuplicates(userDuplicates, userId);
     
     return NextResponse.json({ ok: true, deals });
 

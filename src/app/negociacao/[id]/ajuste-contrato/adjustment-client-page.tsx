@@ -120,14 +120,36 @@ export default function AdjustmentClientPage({
   }
 
 
-  const handleFinalizeContract = async () => {
-     try {
-      await handleUpdateContractAPI(
-          '/api/negociacao/finalizar',
-          {}, true
-      );
+  const handleFinalizeAndGenerate = async () => {
+     if (!contract || !asset) return;
+    setIsActionPending(true);
+    try {
+      // 1. Finalize contract (move to step 4)
+      await handleUpdateContractAPI('/api/negociacao/finalizar', {});
+      
+      // 2. Generate duplicates and invoice
+      const response = await fetch('/api/negociacao/gerar-duplicatas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assetId, contract, asset }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Falha ao gerar duplicatas');
+      
+      // 3. Update UI
+      setGeneratedDeal(result.deal);
+      
+      // 4. Set flags in local storage to trigger notifications
+      localStorage.setItem('newDuplicatesAvailable', 'true');
+      localStorage.setItem('newInvoicesAvailable', 'true');
+      window.dispatchEvent(new Event('storage'));
+      
+      toast({ title: "Contrato Finalizado!", description: 'As duplicatas e faturas foram geradas com sucesso!' });
+
     } catch(error: any) {
        toast({ title: "Erro", description: error.message || 'Falha ao finalizar o contrato.', variant: "destructive" });
+    } finally {
+        setIsActionPending(false);
     }
   };
   
@@ -172,35 +194,6 @@ export default function AdjustmentClientPage({
      }, 1000);
   };
   
-  const handleGenerateDuplicates = async () => {
-    if (!contract || !asset) return;
-
-    try {
-        setIsActionPending(true);
-        const response = await fetch('/api/negociacao/gerar-duplicatas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ assetId, contract, asset }),
-        });
-
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'Falha ao gerar duplicatas');
-        
-        setGeneratedDeal(result.deal);
-        await handleUpdateContractAPI(
-            '/api/negociacao/update-contract',
-            { updates: { duplicatesGenerated: true } },
-        );
-        localStorage.setItem('newDuplicatesAvailable', 'true');
-        window.dispatchEvent(new Event('storage'));
-        toast({ title: "Sucesso!", description: 'Duplicatas geradas com sucesso!' });
-
-    } catch (error: any) {
-         toast({ title: "Erro", description: error.message, variant: "destructive"});
-    } finally {
-        setIsActionPending(false);
-    }
-  };
 
   if (!contract || !user) {
       return (
@@ -218,7 +211,7 @@ export default function AdjustmentClientPage({
       );
   }
   
-  const { step, fields, acceptances, emailValidation, documents, duplicatesGenerated } = contract;
+  const { step, fields, acceptances, emailValidation, documents } = contract;
   const isSeller = currentUserRole === 'seller';
   const isBuyer = currentUserRole === 'buyer';
   const isFrozen = step > 1;
@@ -311,7 +304,7 @@ export default function AdjustmentClientPage({
         {/* Etapa 3: Documentos e Duplicatas */}
         <Card className={cn(!bothValidated && "opacity-50 pointer-events-none")}>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2"><FileSignature className="h-5 w-5"/>3. Documentos e Duplicatas</CardTitle>
+                <CardTitle className="flex items-center gap-2"><FileSignature className="h-5 w-5"/>3. Documentos e Finalização</CardTitle>
                  {step > 3 && <Seal text="Finalizado"/>}
             </CardHeader>
             <CardContent className="space-y-6">
@@ -331,16 +324,11 @@ export default function AdjustmentClientPage({
                         </div>
                      </div>
                  </div>
-                 <Button className="w-full" variant="outline" onClick={handleGenerateDuplicates} disabled={isActionPending || duplicatesGenerated}>
-                     {isActionPending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                     <Fingerprint className="mr-2 h-4 w-4"/>
-                     {duplicatesGenerated ? 'Duplicatas Geradas' : 'Gerar Duplicatas Autenticadas'}
-                 </Button>
             </CardContent>
             <CardFooter>
-                 <Button className="w-full" size="lg" onClick={handleFinalizeContract} disabled={isActionPending || !bothUploaded || !duplicatesGenerated || step === 4}>
+                 <Button className="w-full" size="lg" onClick={handleFinalizeAndGenerate} disabled={isActionPending || !bothUploaded || step === 4}>
                      {isActionPending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                     {step === 4 ? <><CheckCircle className="mr-2 h-4 w-4"/>Contrato Finalizado</> : <><Lock className="mr-2 h-4 w-4"/>Finalizar Contrato e Transação</>}
+                     {step === 4 ? <><CheckCircle className="mr-2 h-4 w-4"/>Contrato Finalizado</> : <><Lock className="mr-2 h-4 w-4"/>Finalizar e Gerar Duplicatas</>}
                  </Button>
             </CardFooter>
         </Card>
