@@ -187,6 +187,9 @@ export function Header() {
                    <DropdownMenuItem asChild>
                     <Link href="/peticoes"><FileSignature className="mr-2 h-4 w-4" /><span>Minhas Petições</span></Link>
                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Operações</span></Link>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin"><Shield className="mr-2 h-4 w-4" /><span>Área do Admin</span></Link>

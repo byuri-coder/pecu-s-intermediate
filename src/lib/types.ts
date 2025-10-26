@@ -139,7 +139,7 @@ export interface Conversation {
 }
 
 
-export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land';
+export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land' | 'other';
 export type Asset = CarbonCredit | TaxCredit | RuralLand;
 
 // Adicionando um tipo para Transação vinda do Firestore
