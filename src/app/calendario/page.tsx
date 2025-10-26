@@ -51,6 +51,8 @@ export default function CalendarPage() {
     return transactions.map((tx): Operation => {
         const isSale = tx.sellerId === user.uid;
         let assetType: Operation['assetType'] = 'Crédito de Carbono'; // Default
+        
+        // Safely access nested properties
         if (tx.listing?.category === 'tax-credit') assetType = 'Crédito Tributário';
         if (tx.listing?.category === 'rural-land') assetType = 'Terra Rural';
 
@@ -170,3 +172,4 @@ export default function CalendarPage() {
     </div>
   );
 }
+
