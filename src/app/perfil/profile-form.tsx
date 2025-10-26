@@ -176,7 +176,15 @@ export function ProfileForm() {
                     method: 'POST',
                     body: formData,
                 });
-                const uploadData = await uploadRes.json();
+                
+                const responseText = await uploadRes.text();
+                let uploadData;
+                try {
+                    uploadData = JSON.parse(responseText);
+                } catch (e) {
+                    throw new Error(`Ocorreu um erro no servidor: ${responseText}`);
+                }
+
                 if (!uploadRes.ok) throw new Error(uploadData.error || 'Falha no upload do avatar.');
                 avatarId = uploadData.avatarId;
             }
