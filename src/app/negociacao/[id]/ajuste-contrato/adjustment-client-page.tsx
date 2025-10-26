@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useUser } from '@/firebase';
 import { Seal } from '@/components/ui/seal';
 import { Contrato as ContractModel } from '@/models/Contrato';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type UserRole = 'buyer' | 'seller';
 type ContractState = InstanceType<typeof ContractModel>;
@@ -237,12 +238,30 @@ export default function AdjustmentClientPage({
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className={cn("p-4 border rounded-lg", isSeller ? 'bg-background' : 'bg-muted/40')}>
-                     <h4 className="font-semibold mb-2">Campos do Vendedor</h4>
+                     <h4 className="font-semibold mb-4">Campos do Vendedor</h4>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2"><Label>Razão Social</Label><Input onBlur={(e) => handleFieldChange('seller', 'razaoSocial', e.target.value)} defaultValue={fields.seller.razaoSocial} disabled={!isSeller || isFrozen} /></div>
                         <div className="space-y-2"><Label>CNPJ</Label><Input onBlur={(e) => handleFieldChange('seller', 'cnpj', e.target.value)} defaultValue={fields.seller.cnpj} disabled={!isSeller || isFrozen} /></div>
                         <div className="space-y-2"><Label>Inscrição Estadual</Label><Input onBlur={(e) => handleFieldChange('seller', 'ie', e.target.value)} defaultValue={fields.seller.ie} disabled={!isSeller || isFrozen} /></div>
                         <div className="space-y-2"><Label>Endereço Completo</Label><Input onBlur={(e) => handleFieldChange('seller', 'endereco', e.target.value)} defaultValue={fields.seller.endereco} disabled={!isSeller || isFrozen} /></div>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                        <div className="space-y-2">
+                           <Label>Forma de Pagamento</Label>
+                           <Select onValueChange={(value) => handleFieldChange('seller', 'paymentMethod', value)} defaultValue={fields.seller.paymentMethod} disabled={!isSeller || isFrozen}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="vista">À Vista</SelectItem>
+                                    <SelectItem value="parcelado">Parcelado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {fields.seller.paymentMethod === 'parcelado' && (
+                             <div className="space-y-2">
+                                <Label>Nº de Parcelas</Label>
+                                <Input type="number" onBlur={(e) => handleFieldChange('seller', 'installments', e.target.value)} defaultValue={fields.seller.installments} disabled={!isSeller || isFrozen} />
+                            </div>
+                        )}
                      </div>
                 </div>
                  <div className={cn("p-4 border rounded-lg", isBuyer ? 'bg-background' : 'bg-muted/40')}>

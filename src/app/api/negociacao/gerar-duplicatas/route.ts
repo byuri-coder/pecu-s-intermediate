@@ -23,23 +23,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'Dados do contrato ou ativo ausentes.' }, { status: 400 });
     }
     
-    // --- 1. Generate and Save Duplicates ---
+    // --- 1. Generate and Save Duplicates based on payment method ---
     const totalValue = (asset.price || (asset.pricePerCredit && asset.quantity ? asset.pricePerCredit * asset.quantity : 0)) || 0;
-    const installments = parseInt(contract.fields.seller.installments, 10) || 1;
-    const installmentValue = totalValue / installments;
+    const paymentMethod = contract.fields.seller.paymentMethod || 'vista';
+    const installments = paymentMethod === 'vista' ? 1 : parseInt(contract.fields.seller.installments, 10) || 1;
+    const installmentValue = parseFloat((totalValue / installments).toFixed(2));
     const today = new Date();
     
     const duplicatesToCreate = [];
     for (let i = 0; i < installments; i++) {
         const dueDate = new Date(today);
-        dueDate.setMonth(today.getMonth() + i + 1);
+        if (paymentMethod === 'vista') {
+            dueDate.setDate(today.getDate() + 1); // D+1 for lump sum
+        } else {
+            dueDate.setMonth(today.getMonth() + i + 1); // 30, 60, 90 days etc.
+        }
+        
         duplicatesToCreate.push({
             negotiationId: negotiationId,
             orderNumber: `${i + 1}/${installments}`,
             invoiceNumber: `NF-${assetId.substring(0, 6)}-${i+1}`,
             issueDate: today,
             dueDate: dueDate,
-            value: installmentValue,
+            value: (i === installments - 1) ? totalValue - (installmentValue * (installments -1)) : installmentValue, // Adjust last installment for rounding
             buyerId: contract.buyerId, // Use the firebase UID
             sellerId: contract.sellerId, // Use the firebase UID
         });
