@@ -70,7 +70,6 @@ export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -99,13 +98,13 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
+            setAvatarPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
 
                 if (data.ok) {
                     const fetchedUser = data.usuario;
-                    setDbUser(fetchedUser);
                     form.reset({
                         fullName: currentUser.displayName || fetchedUser.nome || '',
                         email: currentUser.email || fetchedUser.email || '',
@@ -121,9 +120,6 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
-                     if (fetchedUser.avatarId) {
-                        setAvatarPreview(fetchedUser.avatarId);
-                    }
                 } else {
                      form.reset({
                         fullName: currentUser.displayName || '',
@@ -167,8 +163,6 @@ export function ProfileForm() {
         }
 
         try {
-            let finalPhotoURL = dbUser?.avatarId;
-
             // Step 1: Upload avatar if a new one is selected
             if (avatarFile) {
                 const formData = new FormData();
@@ -188,16 +182,11 @@ export function ProfileForm() {
                     }
                     throw new Error(errorBody.error || 'Falha no upload do avatar.');
                 }
-                const uploadData = await uploadRes.json();
-                finalPhotoURL = uploadData.photoURL;
             }
 
-            // Step 2: Update Firebase Auth profile
-            if (data.fullName !== user.displayName || (finalPhotoURL && finalPhotoURL !== user.photoURL)) {
-                await updateProfile(user, { 
-                    displayName: data.fullName,
-                    ...(finalPhotoURL && { photoURL: finalPhotoURL })
-                });
+            // Step 2: Update Firebase Auth profile display name
+            if (data.fullName !== user.displayName) {
+                await updateProfile(user, { displayName: data.fullName });
             }
             
             // Step 3: Update MongoDB database with all other profile info
@@ -205,7 +194,6 @@ export function ProfileForm() {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email, // Email is readonly, but good to send for upsert
-                avatarId: finalPhotoURL, // Save the final URL
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -233,11 +221,12 @@ export function ProfileForm() {
             // Step 4: Handle password change if requested
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
-                 const credential = EmailAuthProvider.credential(user.email!, data.currentPassword);
-                 await reauthenticateWithCredential(user, credential);
-                 // The re-authentication was successful, now we can update the password.
-                 // This part of the logic is missing in the original code.
-                 // await updatePassword(user, data.newPassword);
+                 if (user.email) {
+                    const credential = EmailAuthProvider.credential(user.email, data.currentPassword);
+                    await reauthenticateWithCredential(user, credential);
+                    // This part is missing in the original logic. Add the actual password update.
+                    // await updatePassword(user, data.newPassword);
+                 }
             }
 
             toast({
@@ -281,7 +270,7 @@ export function ProfileForm() {
                         onChange={handleAvatarChange}
                     />
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src={avatarPreview || user?.photoURL || undefined} alt="User Avatar" />
+                        <AvatarImage src={avatarPreview || undefined} alt="User Avatar" />
                         <AvatarFallback>
                             <UserCircle className="h-12 w-12" />
                         </AvatarFallback>

@@ -33,6 +33,7 @@ export function Header() {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [hasNewInvoices, setHasNewInvoices] = React.useState(false);
   const [hasNewDuplicates, setHasNewDuplicates] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
 
   const navItems = [
@@ -47,9 +48,11 @@ export function Header() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        setAvatarUrl(`/api/avatar/${firebaseUser.uid}?t=${new Date().getTime()}`);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
       } else {
         setUser(null);
+        setAvatarUrl(null);
         setIsAdmin(false);
       }
     });
@@ -134,7 +137,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.photoURL || undefined} alt="User Avatar" />
+                    <AvatarImage src={avatarUrl || undefined} alt="User Avatar" />
                     <AvatarFallback>
                         {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>

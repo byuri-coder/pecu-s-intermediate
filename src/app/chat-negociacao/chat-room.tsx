@@ -62,7 +62,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                         content: msg.text || msg.fileUrl || (msg.location ? `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}` : 'Conteúdo inválido'),
                         type: msg.type,
                         timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                        user: msg.user || { name: msg.senderId === currentUser.uid ? currentUser.displayName : 'Destinatário', profileImage: msg.senderId === currentUser.uid ? currentUser.photoURL : null }
+                        user: msg.user || { name: 'Desconhecido' }
                     }));
                     setMessages(newMessages);
                 }
@@ -81,7 +81,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
             isMounted = false;
             clearInterval(intervalId);
         };
-    }, [chatId, currentUser.uid, currentUser.displayName, currentUser.photoURL, toast]);
+    }, [chatId, currentUser.uid, toast]);
 
 
     const handleSendMessage = async (msg: Omit<Message, 'id' | 'timestamp' | 'senderId' | 'user'> & { type: Message['type'], content: string}) => {
@@ -127,7 +127,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                 timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 user: {
                     name: currentUser.displayName || 'Eu',
-                    profileImage: currentUser.photoURL
+                    profileImage: `/api/avatar/${currentUser.uid}`
                 }
             };
             setMessages(prev => [...prev, optimisticMessage]);

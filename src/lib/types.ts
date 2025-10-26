@@ -1,6 +1,5 @@
 
 
-
 export type CarbonCredit = {
   id: string;
   sellerName: string;
@@ -119,7 +118,7 @@ export interface Message {
   // user object containing sender's public info
   user: {
     name: string;
-    profileImage?: string | null; // Can be avatarId or a full URL
+    profileImage?: string | null; // Can be a relative URL like /api/avatar/uid
   };
   status?: 'sent' | 'delivered' | 'read';
   receiverId?: string;
@@ -131,7 +130,7 @@ export interface Conversation {
   assetId: string;
   assetName: string;
   name: string; // Name of the other participant
-  avatar: string; // This will now be a URL like /api/images/:id
+  avatar: string; // This will now be a URL like /api/avatar/:id
   lastMessage: string;
   time: string;
   unread: number;
@@ -161,7 +160,7 @@ export interface UserProfile {
     uidFirebase: string;
     nome: string;
     email: string;
-    avatarId?: string; // GridFS fileId
+    fotoPerfil?: { data: Buffer; contentType: string };
     banco?: string;
     agencia?: string;
     conta?: string;

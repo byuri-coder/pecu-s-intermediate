@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -81,8 +80,8 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
     const senderInitial = senderName.charAt(0).toUpperCase();
 
-    // Use a foto de perfil real se disponível, caso contrário use a inicial
-    const avatarSrc = msg.user?.profileImage;
+    // The avatar URL points to our custom API route
+    const avatarSrc = `/api/avatar/${msg.senderId}`;
 
     return (
          <div
@@ -93,7 +92,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             >
             {!isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} />
+                    <AvatarImage src={avatarSrc} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}
@@ -116,7 +115,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             </div>
             {isMe && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} />
+                    <AvatarImage src={avatarSrc} />
                     <AvatarFallback>{senderInitial}</AvatarFallback>
                 </Avatar>
             )}

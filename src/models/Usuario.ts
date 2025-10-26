@@ -6,8 +6,11 @@ const UsuarioSchema = new Schema({
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   
-  // Agora armazena a URL pública da imagem (do Firebase Storage)
-  avatarId: { type: String, default: null },
+  // Campo para armazenar a imagem do perfil diretamente no Mongo
+  fotoPerfil: {
+    data: Buffer,
+    contentType: String,
+  },
 
   // Dados bancários
   banco: String,

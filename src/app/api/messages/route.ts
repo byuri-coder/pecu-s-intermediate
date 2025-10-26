@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       location,
       user: { // Embutir dados do usuário na mensagem
           name: senderUser?.nome || 'Usuário Desconhecido',
-          profileImage: senderUser?.avatarId || null, // Usar o avatarId do banco de dados
+          // O avatar será resolvido pelo frontend via /api/avatar/[uid]
       }
     });
 
@@ -63,10 +63,20 @@ export async function GET(req: Request) {
 
     const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
-    return NextResponse.json({ ok: true, messages });
+    // Para cada mensagem, popular os dados do remetente
+    const populatedMessages = await Promise.all(messages.map(async (msg) => {
+        const sender = await Usuario.findOne({ uidFirebase: msg.senderId }).lean();
+        return {
+            ...msg,
+            user: {
+                name: sender?.nome || 'Usuário Desconhecido',
+            }
+        };
+    }));
+
+    return NextResponse.json({ ok: true, messages: populatedMessages });
   } catch (error: any) {
     console.error('Error in /api/messages (GET):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
-    
