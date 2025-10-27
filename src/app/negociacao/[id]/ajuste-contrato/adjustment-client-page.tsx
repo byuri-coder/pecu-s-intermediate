@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, Fingerprint, Clock, Send } from 'lucide-react';
+import { ArrowLeft, FileSignature, CheckCircle, MailCheck, Loader2, Lock, Users, UploadCloud, Fingerprint, Clock, Send, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Asset, AssetType, CompletedDeal } from '@/lib/types';
@@ -183,21 +183,31 @@ export default function AdjustmentClientPage({
     }
   };
 
-  const handleFileUpload = (role: UserRole) => {
+  const handleFileUpload = async (role: UserRole, file: File) => {
     if (currentUserRole !== role || !contract || contract.step !== 3) return;
-     
-     setIsActionPending(true);
-     // Simulate file upload
-     setTimeout(() => {
-        handleUpdateContractAPI(
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({ title: "Arquivo muito grande", description: "O arquivo não pode exceder 10MB.", variant: "destructive" });
+        return;
+    }
+    
+    setIsActionPending(true);
+    
+    // In a real app, you'd upload to a storage service. Here, we'll simulate it by updating the DB.
+    // The `fileUrl` will just be the filename for demonstration.
+    const fileUrl = `contrato_${role}_${assetId}_${file.name}`;
+    
+    try {
+        await handleUpdateContractAPI(
             '/api/negociacao/update-contract',
-            { updates: { [`documents.${role}.fileUrl`]: `contrato_${role}_${assetId}.pdf` } },
-        ).then(() => {
-            toast({ title: 'Documento anexado (simulado).' });
-        }).catch((error: any) => {
-            toast({ title: "Erro", description: error.message || 'Falha ao anexar documento.', variant: 'destructive' });
-        });
-     }, 1000);
+            { updates: { [`documents.${role}.fileUrl`]: fileUrl } },
+        );
+        toast({ title: 'Documento anexado!', description: 'Seu contrato assinado foi enviado.' });
+    } catch (error: any) {
+        toast({ title: "Erro", description: error.message || 'Falha ao anexar documento.', variant: 'destructive' });
+    } finally {
+        setIsActionPending(false);
+    }
   };
   
 
@@ -225,6 +235,68 @@ export default function AdjustmentClientPage({
   const bothValidated = emailValidation.buyer.validated && emailValidation.seller.validated;
   const bothUploaded = documents.buyer.fileUrl && documents.seller.fileUrl;
   
+  const UploadArea = ({ forRole }: { forRole: UserRole }) => {
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const documentExists = documents[forRole].fileUrl;
+    const canUpload = currentUserRole === forRole && step === 3 && !documentExists;
+    const isDisabled = isActionPending || !canUpload || (forRole === 'buyer' && !documents.seller.fileUrl);
+
+    const handleTriggerUpload = () => {
+        if (isDisabled) return;
+        fileInputRef.current?.click();
+    };
+
+    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            handleFileUpload(forRole, e.target.files[0]);
+        }
+    };
+    
+    return (
+        <div className={cn("space-y-2 p-4 rounded-lg border", currentUserRole === forRole ? 'bg-background' : 'bg-muted/40')}>
+            <h4 className="font-semibold text-sm capitalize">{forRole === 'seller' ? 'Vendedor' : 'Comprador'}</h4>
+            <div 
+                className={cn(
+                    "h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2",
+                    !isDisabled && "cursor-pointer hover:bg-secondary"
+                )}
+                onClick={handleTriggerUpload}
+            >
+                {isActionPending && currentUserRole === forRole ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground"/>
+                ) : documentExists ? (
+                    <CheckCircle className="h-6 w-6 text-green-500"/>
+                ) : (
+                    <UploadCloud className="h-6 w-6 text-muted-foreground"/>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                    {documentExists 
+                        ? 'Contrato Anexado' 
+                        : canUpload 
+                            ? 'Anexar Contrato Assinado' 
+                            : forRole === 'buyer'
+                                ? 'Aguardando vendedor...'
+                                : 'Pendente'}
+                </p>
+            </div>
+            <input 
+                ref={fileInputRef}
+                type="file" 
+                className="hidden" 
+                onChange={handleFileSelected}
+                accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
+                disabled={isDisabled}
+            />
+            {isBuyer && documents.seller.fileUrl && !documents.buyer.fileUrl && (
+                 <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => alert('Download do documento do vendedor... (simulado)')}>
+                    <Download className="mr-2 h-4 w-4"/> Baixar Contrato para Assinar
+                 </Button>
+            )}
+        </div>
+    );
+  };
+  
+
   return (
     <div className="space-y-8">
        <div className="mb-6">
@@ -333,20 +405,8 @@ export default function AdjustmentClientPage({
             </CardHeader>
             <CardContent className="space-y-6">
                  <div className="grid grid-cols-2 gap-4">
-                     <div className={cn("space-y-2 p-4 rounded-lg border", isSeller ? 'bg-background' : 'bg-muted/40')}>
-                         <h4 className="font-semibold text-sm">Contrato do Vendedor</h4>
-                         <div className={cn("h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2", isSeller && step === 3 && "cursor-pointer hover:bg-secondary")} onClick={() => handleFileUpload('seller')}>
-                            {documents.seller.fileUrl ? <CheckCircle className="h-6 w-6 text-green-500"/> : <UploadCloud className="h-6 w-6 text-muted-foreground"/>}
-                            <p className="text-xs text-muted-foreground mt-1">{documents.seller.fileUrl ? 'Contrato Anexado' : 'Anexar Contrato Assinado'}</p>
-                         </div>
-                     </div>
-                     <div className={cn("space-y-2 p-4 rounded-lg border", isBuyer ? 'bg-background' : 'bg-muted/40')}>
-                        <h4 className="font-semibold text-sm">Contrato do Comprador</h4>
-                        <div className={cn("h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2", isBuyer && step === 3 && "cursor-pointer hover:bg-secondary")} onClick={() => handleFileUpload('buyer')}>
-                             {documents.buyer.fileUrl ? <CheckCircle className="h-6 w-6 text-green-500"/> : <UploadCloud className="h-6 w-6 text-muted-foreground"/>}
-                            <p className="text-xs text-muted-foreground mt-1">{documents.buyer.fileUrl ? 'Contrato Anexado' : 'Anexar Contrato Assinado'}</p>
-                        </div>
-                     </div>
+                    <UploadArea forRole="seller" />
+                    <UploadArea forRole="buyer" />
                  </div>
             </CardContent>
             <CardFooter>
