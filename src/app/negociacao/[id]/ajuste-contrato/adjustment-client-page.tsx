@@ -304,8 +304,8 @@ export default function AdjustmentClientPage({
                      </div>
                      <p className={cn("text-xs font-medium", emailValidation.seller.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.seller.validated ? `Validado em ${new Date(emailValidation.seller.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
                      <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                        <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="E-mail do vendedor" disabled={isActionPending || emailValidation.seller.validated}/>
-                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('seller')} disabled={isActionPending || emailValidation.seller.validated}><Send className="h-4 w-4"/></Button>
+                        <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="E-mail do vendedor" disabled={isActionPending || emailValidation.seller.validated || !isSeller}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('seller')} disabled={isActionPending || emailValidation.seller.validated || !isSeller}><Send className="h-4 w-4"/></Button>
                      </div>
                 </div>
                 <div className="flex flex-col gap-2 p-4 border rounded-lg bg-secondary/30">
@@ -315,8 +315,8 @@ export default function AdjustmentClientPage({
                      </div>
                      <p className={cn("text-xs font-medium", emailValidation.buyer.validated ? 'text-green-600' : 'text-muted-foreground')}>{emailValidation.buyer.validated ? `Validado em ${new Date(emailValidation.buyer.timestamp!).toLocaleDateString()}` : 'Pendente'}</p>
                       <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                        <Input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="E-mail do comprador" disabled={isActionPending || emailValidation.buyer.validated}/>
-                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('buyer')} disabled={isActionPending || emailValidation.buyer.validated}><Send className="h-4 w-4"/></Button>
+                        <Input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="E-mail do comprador" disabled={isActionPending || emailValidation.buyer.validated || !isBuyer}/>
+                        <Button variant="outline" size="icon" onClick={() => handleSendValidationEmail('buyer')} disabled={isActionPending || emailValidation.buyer.validated || !isBuyer}><Send className="h-4 w-4"/></Button>
                      </div>
                 </div>
             </CardContent>
