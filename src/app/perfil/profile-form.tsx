@@ -99,7 +99,7 @@ export function ProfileForm() {
         setUser(currentUser);
         if (currentUser) {
             // Use a timestamp to prevent browser caching of the avatar
-            setPhotoPreview(currentUser.photoURL || `/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
+            setPhotoPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
@@ -166,21 +166,19 @@ export function ProfileForm() {
                 });
                 const uploadData = await uploadResponse.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Falha no upload da foto.');
-                newPhotoURL = uploadData.photoURL; // Get the permanent URL from backend
+                newPhotoURL = uploadData.photoURL; 
             }
 
-            // Update Firebase Auth profile
             await updateProfile(user, { 
                 displayName: data.fullName,
                 photoURL: newPhotoURL 
             });
             
-            // Update MongoDB
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                fotoPerfilUrl: newPhotoURL, // Save the permanent URL
+                fotoPerfilUrl: newPhotoURL,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -205,7 +203,6 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            // Handle password change
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -220,7 +217,6 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
-             // Force a reload to ensure all components get the new user data
              window.location.reload();
 
         } catch (error: any) {
@@ -314,7 +310,7 @@ export function ProfileForm() {
                     <FormItem><FormLabel>Conta Corrente com dígito</FormLabel><FormControl><Input {...field} placeholder="Ex: 12345-6" /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField name="pixKey" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl></FormItem>
+                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormItem>
                 )} />
             </div>
           </section>
@@ -383,5 +379,3 @@ export function ProfileForm() {
       </Form>
   );
 }
-
-    

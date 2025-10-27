@@ -111,13 +111,13 @@ export interface CompletedDeal {
 
 export interface Message {
   id: string;
-  senderId: string; // Keep senderId to identify who sent it
+  senderId: string;
   content: string;
   type: 'text' | 'image' | 'pdf' | 'location';
   timestamp: string;
-  // user object containing sender's public info
   user: {
     name: string;
+    photoURL?: string | null;
   };
   status?: 'sent' | 'delivered' | 'read';
   receiverId?: string;
@@ -173,4 +173,5 @@ export interface UserProfile {
     tipo: "comprador" | "vendedor" | "administrador";
     createdAt: string;
     updatedAt: string;
+    fotoPerfilUrl?: string;
 }

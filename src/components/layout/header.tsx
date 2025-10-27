@@ -136,7 +136,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                    <Avatar className="h-8 w-8">
-                     <AvatarImage src={user.photoURL || `/api/avatar/${user.uid}?t=${new Date().getTime()}`} alt={user.displayName || 'Avatar do usuário'} />
+                     <AvatarImage src={`/api/avatar/${user.uid}?t=${new Date().getTime()}`} alt={user.displayName || 'Avatar do usuário'} />
                      <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
                    </Avatar>
                   <span className="sr-only">Toggle user menu</span>
@@ -216,5 +216,3 @@ export function Header() {
     </header>
   );
 }
-
-    

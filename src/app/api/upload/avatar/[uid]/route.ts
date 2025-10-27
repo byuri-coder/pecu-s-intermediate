@@ -6,9 +6,9 @@ import { Usuario } from '@/models/Usuario';
 
 export const runtime = 'nodejs';
 
-// Esta rota agora simula o salvamento de um arquivo e retorna uma URL pública.
-// Em um ambiente de produção real, isso envolveria salvar em um bucket (S3, GCS)
-// e obter a URL a partir daí. Por enquanto, vamos usar um placeholder.
+// This route now simulates saving a file and returns a public URL.
+// In a real production environment, this would involve saving to a bucket (S3, GCS)
+// and getting the URL from there. For this exercise, we'll use a placeholder URL generator.
 export async function POST(req: Request, { params }: { params: { uid: string } }) {
   try {
     const { uid } = params;
@@ -23,22 +23,22 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
       return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
     
-    // Simulação de salvamento e geração de URL.
-    // Em um projeto real, aqui você faria o upload para o Firebase Storage ou S3.
-    // A URL seria a URL pública retornada por esse serviço.
-    // Para este exercício, usaremos um placeholder previsível para demonstração.
-    const publicImageUrl = `https://avatar.vercel.sh/${uid}.png?text=${file.name.substring(0, 1)}`;
+    // Simulation of file saving and URL generation.
+    // In a real project, this would upload to Firebase Storage or S3.
+    // We'll use a predictable placeholder for demonstration.
+    // The query param ensures the browser doesn't use a cached version.
+    const publicImageUrl = `https://avatar.vercel.sh/${uid}.png?text=${file.name.substring(0, 1)}&ts=${Date.now()}`;
 
     await connectDB();
 
-    // Atualiza o usuário com a nova URL da foto de perfil.
+    // Update the user with the new profile picture URL.
     await Usuario.findOneAndUpdate(
       { uidFirebase: uid },
       { $set: { fotoPerfilUrl: publicImageUrl } },
       { upsert: true, new: true }
     );
     
-    // Retorna a URL pública que o frontend irá usar
+    // Return the public URL for the frontend to use
     return NextResponse.json({ success: true, photoURL: publicImageUrl });
 
   } catch (error: any) {

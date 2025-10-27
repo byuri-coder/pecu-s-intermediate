@@ -18,7 +18,6 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     const handleDownload = (url: string, filename?: string) => {
       const a = document.createElement('a');
       a.href = url;
-      // Use um nome de arquivo genérico se não estiver disponível
       a.download = filename || `download_${Date.now()}`;
       document.body.appendChild(a);
       a.click();
@@ -90,6 +89,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     }
     
     const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
+    const senderAvatarUrl = msg.user?.photoURL || `/api/avatar/${msg.senderId}`;
 
     return (
          <div
@@ -100,7 +100,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             >
             {!isMe && (
                 <Avatar className="h-8 w-8 border">
-                    <AvatarImage src={`/api/avatar/${msg.senderId}`} alt={senderName} />
+                    <AvatarImage src={senderAvatarUrl} alt={senderName} />
                     <AvatarFallback>{senderName.charAt(0)}</AvatarFallback>
                 </Avatar>
             )}
@@ -130,5 +130,3 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
         </div>
     )
 }
-
-    

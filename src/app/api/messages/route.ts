@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const senderUser = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User' } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User', photoURL: senderUser?.fotoPerfilUrl || '' } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       type,
       user: {
           name: senderUser?.nome || 'Usuário Desconhecido',
+          photoURL: senderUser?.fotoPerfilUrl || null
       }
     };
 
@@ -43,10 +44,12 @@ export async function POST(req: Request) {
     
     const newMessage = await Mensagem.create(newMessageData);
 
-    // This is a simplified representation. In a real app, you might want to return the fully populated object.
     const responseMessage = {
         ...newMessage.toObject(),
-        user: { name: senderUser?.nome || 'Usuário Desconhecido' }
+        user: { 
+            name: senderUser?.nome || 'Usuário Desconhecido',
+            photoURL: senderUser?.fotoPerfilUrl || null
+        }
     };
 
 
@@ -74,14 +77,15 @@ export async function GET(req: Request) {
     const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
     const populatedMessages = await Promise.all(messages.map(async (msg) => {
-        if (msg.user && msg.user.name) {
+        if (msg.user && msg.user.name && msg.user.photoURL) {
             return msg;
         }
         const sender = await Usuario.findOne({ uidFirebase: msg.senderId }).lean();
         return {
             ...msg,
             user: {
-                name: sender?.nome || 'Usuário Desconhecido'
+                name: sender?.nome || 'Usuário Desconhecido',
+                photoURL: sender?.fotoPerfilUrl || null
             }
         };
     }));

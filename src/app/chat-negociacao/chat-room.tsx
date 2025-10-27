@@ -18,8 +18,6 @@ interface ChatRoomProps {
     receiverId: string;
 }
 
-// In a real application, you would upload to a service like Firebase Storage
-// and get a URL back. For this simulation, we'll convert the file to a base64 Data URL.
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -72,7 +70,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
                         content: msg.text || msg.fileUrl || (msg.location ? `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}` : 'Conteúdo inválido'),
                         type: msg.type,
                         timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                        user: msg.user || { name: 'Desconhecido' }
+                        user: msg.user || { name: 'Desconhecido', photoURL: null }
                     }));
                     setMessages(newMessages);
                 }
@@ -110,7 +108,7 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
         
         if (msg.type === 'text') payload.text = msg.content;
         else if (msg.type === 'image' || msg.type === 'pdf') {
-            payload.fileUrl = msg.content; // The content is the base64 URL
+            payload.fileUrl = msg.content;
             payload.fileName = msg.content.split('/').pop();
             payload.fileType = msg.type;
         } else if (msg.type === 'location') {
@@ -129,7 +127,6 @@ export function ChatRoom({ chatId, currentUser, receiverId }: ChatRoomProps) {
 
             setAutoScroll(true);
 
-            // The API now returns the fully populated message object
             const optimisticMessage: Message = {
                 id: sentMessage.message._id,
                 senderId: sentMessage.message.senderId,

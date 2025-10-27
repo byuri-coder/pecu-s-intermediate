@@ -6,7 +6,7 @@ import { Usuario } from '@/models/Usuario';
 
 export const runtime = 'nodejs';
 
-// Esta rota agora redireciona para a URL salva ou para um fallback.
+// This route now redirects to the saved URL or to a fallback.
 export async function GET(req: Request, { params }: { params: { uid: string } }) {
   try {
     const { uid } = params;
@@ -17,19 +17,19 @@ export async function GET(req: Request, { params }: { params: { uid: string } })
     await connectDB();
     const user = await Usuario.findOne({ uidFirebase: uid }).lean();
 
-    // Se o usuário tem uma URL de foto de perfil salva, redireciona para ela.
+    // If the user has a saved profile picture URL, redirect to it.
     if (user && user.fotoPerfilUrl) {
       return NextResponse.redirect(user.fotoPerfilUrl);
     }
 
-    // Caso contrário, gera uma imagem de fallback com a inicial do nome.
+    // Otherwise, generate a fallback image with the initial of the name.
     const fallbackLetter = user?.nome?.charAt(0).toUpperCase() || uid.charAt(0).toUpperCase() || '?';
     const fallbackUrl = `https://avatar.vercel.sh/${uid}.png?text=${fallbackLetter}`;
     return NextResponse.redirect(fallbackUrl);
 
   } catch (err: any) {
     console.error('Erro ao buscar avatar:', err);
-    // Em caso de erro, ainda tenta retornar um fallback genérico.
+    // In case of an error, still try to return a generic fallback.
     const fallbackUrl = `https://avatar.vercel.sh/${params.uid}.png?text=?`;
     return NextResponse.redirect(fallbackUrl);
   }
