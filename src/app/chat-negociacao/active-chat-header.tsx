@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/sheet';
 import type { Conversation, AssetType } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUser } from '@/firebase';
 
 
 function getAssetTypeRoute(type: AssetType) {
@@ -39,7 +40,8 @@ export function ActiveChatHeader({
   assetId: string;
 }) {
   
-  const otherUserId = conversation.participants?.find(p => p !== 'current_user_placeholder'); // Replace with actual current user logic
+  const { user } = useUser();
+  const otherUserId = conversation.participants?.find(p => p !== user?.uid);
 
   return (
     <CardHeader className="flex-row items-center justify-between">
@@ -104,3 +106,5 @@ export function ActiveChatHeader({
     </CardHeader>
   );
 }
+
+    

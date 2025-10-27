@@ -9,6 +9,7 @@ import { Search, Leaf, Landmark, Mountain, Loader2 } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUser } from '@/firebase';
 
 
 // Ícone de cada tipo de ativo
@@ -34,6 +35,7 @@ export function ChatList({
 }) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const { user } = useUser();
 
   // Se ainda estiver carregando
   if (isLoading) {
@@ -84,7 +86,7 @@ export function ChatList({
         {filteredConversations.length > 0 ? (
           <div className="space-y-1">
             {filteredConversations.map((convo) => {
-                const otherUserId = convo.participants?.find(p => p !== 'current_user_placeholder'); // Replace with actual current user logic
+                const otherUserId = convo.participants?.find(p => p !== user?.uid);
                 return (
                   <button
                     key={convo.id}
@@ -134,3 +136,5 @@ export function ChatList({
     </Card>
   );
 }
+
+    

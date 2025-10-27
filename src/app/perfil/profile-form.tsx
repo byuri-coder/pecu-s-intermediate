@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
+import { Loader2, UserCircle, Pencil, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { app } from '@/lib/firebase';
@@ -98,7 +98,8 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
-            setPhotoPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
+            // Use a timestamp to prevent browser caching of the avatar
+            setPhotoPreview(currentUser.photoURL || `/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
@@ -154,8 +155,7 @@ export function ProfileForm() {
         }
 
         try {
-             // Step 1: Handle photo upload if a new photo is selected
-            let photoURL = user.photoURL;
+            let newPhotoURL = user.photoURL;
             if (photoFile) {
                 const formData = new FormData();
                 formData.append('file', photoFile);
@@ -166,23 +166,21 @@ export function ProfileForm() {
                 });
                 const uploadData = await uploadResponse.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Falha no upload da foto.');
-                photoURL = uploadData.photoURL;
+                newPhotoURL = uploadData.photoURL; // Get the permanent URL from backend
             }
 
-            // Step 2: Update Firebase Auth profile
-            if (data.fullName !== user.displayName || (photoURL && photoURL !== user.photoURL)) {
-                await updateProfile(user, { 
-                    displayName: data.fullName,
-                    ...(photoURL && { photoURL: photoURL })
-                });
-            }
+            // Update Firebase Auth profile
+            await updateProfile(user, { 
+                displayName: data.fullName,
+                photoURL: newPhotoURL 
+            });
             
-            // Step 3: Update MongoDB database
+            // Update MongoDB
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                fotoPerfilUrl: photoURL,
+                fotoPerfilUrl: newPhotoURL, // Save the permanent URL
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -207,7 +205,7 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            // Step 4: Handle password change
+            // Handle password change
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -316,7 +314,7 @@ export function ProfileForm() {
                     <FormItem><FormLabel>Conta Corrente com dígito</FormLabel><FormControl><Input {...field} placeholder="Ex: 12345-6" /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField name="pixKey" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl></FormItem>
                 )} />
             </div>
           </section>
@@ -385,3 +383,5 @@ export function ProfileForm() {
       </Form>
   );
 }
+
+    

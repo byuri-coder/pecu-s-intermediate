@@ -130,3 +130,5 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
         </div>
     )
 }
+
+    
