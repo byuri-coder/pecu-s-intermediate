@@ -218,14 +218,15 @@ export default function AdjustmentPage() {
                     setContract={setContract}
                     loadContract={loadContract}
                     setGeneratedDeal={setGeneratedDeal}
+                    handleDownloadPdf={handleDownloadPdf}
                 />
             </div>
 
             {/* Coluna de Pré-visualização (Direita, Fixa) */}
             <div className="w-full lg:w-1/2">
-                <div className="lg:fixed lg:top-20 lg:right-8 lg:h-[calc(100vh-6rem)] lg:w-[45%] lg:max-w-4xl">
-                    <div className="h-full w-full overflow-y-auto space-y-6 pr-4">
-                        <Card>
+                <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
+                    <div className="h-full w-full flex flex-col space-y-6">
+                        <Card className="flex-1 flex flex-col">
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle>Pré-visualização do Contrato</CardTitle>
@@ -236,7 +237,7 @@ export default function AdjustmentPage() {
                                     Baixar PDF
                                 </Button>
                             </CardHeader>
-                            <CardContent className="h-[400px] overflow-y-auto bg-secondary/30 p-4 rounded-b-lg border-t">
+                            <CardContent className="flex-1 h-0 overflow-y-auto bg-secondary/30 p-4 rounded-b-lg border-t">
                                 <pre className="whitespace-pre-wrap text-xs font-mono">{contractPreviewText}</pre>
                             </CardContent>
                         </Card>
@@ -249,7 +250,7 @@ export default function AdjustmentPage() {
                                 {generatedDeal ? 'Estas são as duplicatas que foram registradas.' : 'Esta é uma pré-visualização das duplicatas que serão geradas.'}
                             </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4 max-h-80 overflow-y-auto">
                             {finalDeal.duplicates.map((dup, index) => (
                                 <Card key={index} className="bg-background overflow-hidden">
                                     <CardHeader className="bg-muted p-4 flex flex-row items-center justify-between">

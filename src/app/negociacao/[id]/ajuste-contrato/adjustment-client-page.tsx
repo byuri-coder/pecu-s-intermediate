@@ -27,6 +27,7 @@ interface AdjustmentClientPageProps {
   setContract: React.Dispatch<React.SetStateAction<ContractState | null>>;
   loadContract: () => void;
   setGeneratedDeal: React.Dispatch<React.SetStateAction<CompletedDeal | null>>;
+  handleDownloadPdf: () => void;
 }
 
 export default function AdjustmentClientPage({ 
@@ -36,7 +37,8 @@ export default function AdjustmentClientPage({
     contract, 
     setContract, 
     loadContract,
-    setGeneratedDeal
+    setGeneratedDeal,
+    handleDownloadPdf,
 }: AdjustmentClientPageProps) {
   const { toast } = useToast();
   const { user } = useUser();
@@ -204,7 +206,7 @@ export default function AdjustmentClientPage({
         );
         toast({ title: 'Documento anexado!', description: 'Seu contrato assinado foi enviado.' });
     } catch (error: any) {
-        toast({ title: "Erro", description: error.message || 'Falha ao anexar documento.', variant: 'destructive' });
+        toast({ title: "Erro", description: error.message || 'Falha ao anexar documento.', variant: "destructive" });
     } finally {
         setIsActionPending(false);
     }
@@ -238,8 +240,8 @@ export default function AdjustmentClientPage({
   const UploadArea = ({ forRole }: { forRole: UserRole }) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const documentExists = documents[forRole].fileUrl;
-    const canUpload = currentUserRole === forRole && step === 3 && !documentExists;
-    const isDisabled = isActionPending || !canUpload || (forRole === 'buyer' && !documents.seller.fileUrl);
+    const canUpload = currentUserRole === forRole && step === 3;
+    const isDisabled = isActionPending || !canUpload || documentExists || (isBuyer && !documents.seller.fileUrl);
 
     const handleTriggerUpload = () => {
         if (isDisabled) return;
@@ -252,9 +254,22 @@ export default function AdjustmentClientPage({
         }
     };
     
+    let message = 'Pendente';
+    if (documentExists) {
+        message = 'Contrato Anexado';
+    } else if (isActionPending && currentUserRole === forRole) {
+        message = 'Enviando...';
+    } else if (canUpload) {
+        if (isBuyer && !documents.seller.fileUrl) {
+            message = 'Aguardando documento do vendedor';
+        } else {
+            message = 'Clique para anexar o contrato assinado';
+        }
+    }
+
     return (
         <div className={cn("space-y-2 p-4 rounded-lg border", currentUserRole === forRole ? 'bg-background' : 'bg-muted/40')}>
-            <h4 className="font-semibold text-sm capitalize">{forRole === 'seller' ? 'Vendedor' : 'Comprador'}</h4>
+            <h4 className="font-semibold text-sm capitalize">{forRole === 'seller' ? 'Passo 1: Vendedor' : 'Passo 2: Comprador'}</h4>
             <div 
                 className={cn(
                     "h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-2",
@@ -269,15 +284,7 @@ export default function AdjustmentClientPage({
                 ) : (
                     <UploadCloud className="h-6 w-6 text-muted-foreground"/>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
-                    {documentExists 
-                        ? 'Contrato Anexado' 
-                        : canUpload 
-                            ? 'Anexar Contrato Assinado' 
-                            : forRole === 'buyer'
-                                ? 'Aguardando vendedor...'
-                                : 'Pendente'}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{message}</p>
             </div>
             <input 
                 ref={fileInputRef}
@@ -287,8 +294,8 @@ export default function AdjustmentClientPage({
                 accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
                 disabled={isDisabled}
             />
-            {isBuyer && documents.seller.fileUrl && !documents.buyer.fileUrl && (
-                 <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => alert('Download do documento do vendedor... (simulado)')}>
+            {isBuyer && documents.seller.fileUrl && !documentExists && (
+                 <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => toast({ title: 'Simulando download...', description: 'Em um app real, o arquivo seria baixado.'})}>
                     <Download className="mr-2 h-4 w-4"/> Baixar Contrato para Assinar
                  </Button>
             )}
@@ -403,8 +410,9 @@ export default function AdjustmentClientPage({
                 <CardTitle className="flex items-center gap-2"><FileSignature className="h-5 w-5"/>3. Documentos e Finalização</CardTitle>
                  {step > 3 && <Seal text="Finalizado"/>}
             </CardHeader>
-            <CardContent className="space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
+            <CardContent className="space-y-2">
+                <p className="text-sm text-muted-foreground text-center">O vendedor deve baixar o contrato, assinar e fazer o upload. Em seguida, o comprador poderá baixar, assinar e enviar sua versão.</p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                     <UploadArea forRole="seller" />
                     <UploadArea forRole="buyer" />
                  </div>
