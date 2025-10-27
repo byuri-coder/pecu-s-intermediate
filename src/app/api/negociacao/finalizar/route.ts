@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Contrato } from '@/models/Contrato';
+import { Anuncio } from '@/models/Anuncio';
 
 export async function POST(req: Request) {
   try {
@@ -20,12 +21,11 @@ export async function POST(req: Request) {
     if (contract.step < 3) {
       return NextResponse.json({ ok: false, error: 'Etapas anteriores não foram concluídas' }, { status: 400 });
     }
+    
+    // Update the asset status to "Vendido"
+    await Anuncio.findByIdAndUpdate(contract.anuncioId, { status: 'Vendido' });
 
-    // Adicione aqui a lógica para verificar se os documentos foram enviados por ambos
-    // if (!contract.documents.buyer.fileUrl || !contract.documents.seller.fileUrl) {
-    //   return NextResponse.json({ ok: false, error: 'Documentos pendentes de upload' }, { status: 400 });
-    // }
-
+    // Update the contract status
     contract.status = 'completed';
     contract.step = 4;
     contract.completedAt = new Date();

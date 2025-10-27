@@ -47,9 +47,10 @@ export async function GET(req: Request) {
     if (tipo) filter.tipo = tipo;
 
     if (uidFirebase) {
+        // If fetching for a specific user, get all their assets regardless of status
         filter.uidFirebase = uidFirebase;
     } else {
-        // Para marketplaces públicos, apenas os disponíveis/ativos
+        // For public marketplaces, only show available/active assets
         filter.status = { $in: ["Disponível", "Ativo"] };
     }
 

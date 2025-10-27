@@ -236,6 +236,7 @@ export default function DashboardPage({
                         </TableRow>
                     ) : allAssets.length > 0 ? allAssets.map((asset) => {
                       const { name, value } = getAssetDetails(asset);
+                      const isFinalized = asset.status === 'Vendido';
                       return (
                       <TableRow key={asset._id}>
                         <TableCell className="font-medium">{name}</TableCell>
@@ -257,7 +258,7 @@ export default function DashboardPage({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              {asset.status === 'Vendido' ? (
+                              {isFinalized ? (
                                 <DropdownMenuItem asChild>
                                   <Link href={`/negociacao/${asset._id}/ajuste-contrato?type=${asset.assetType}`}>Dados da Negociação</Link>
                                 </DropdownMenuItem>
@@ -330,5 +331,3 @@ export default function DashboardPage({
     </>
   );
 }
-
-    
