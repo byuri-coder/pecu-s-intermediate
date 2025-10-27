@@ -10,8 +10,7 @@ export async function POST(req: Request) {
     const db = await connectDB();
     if (!db) {
       const body = await req.json();
-      const user = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: user?.nome, profileImage: `/api/avatar/${body.senderId}` } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: 'Mock User', profileImage: `/api/avatar/${body.senderId}` } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -21,7 +20,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'chatId, senderId, receiverId, e type são obrigatórios' }, { status: 400 });
     }
     
-    // Buscar o usuário para embutir os dados
     const senderUser = await Usuario.findOne({ uidFirebase: senderId }).lean();
 
     const newMessageData: any = {
@@ -29,15 +27,15 @@ export async function POST(req: Request) {
       senderId,
       receiverId,
       type,
-      user: { // Embutir dados do usuário na mensagem
+      user: {
           name: senderUser?.nome || 'Usuário Desconhecido',
-          profileImage: `/api/avatar/${senderId}`
+          profileImage: `/api/avatar/${senderId}` // Always use the API route
       }
     };
 
     if (type === 'text') newMessageData.text = text;
     if (type === 'image' || type === 'pdf') {
-        newMessageData.fileUrl = fileUrl;
+        newMessageData.fileUrl = fileUrl; // This is the base64 data URI
         newMessageData.fileName = fileName;
         newMessageData.fileType = fileType;
     }
@@ -68,22 +66,9 @@ export async function GET(req: Request) {
 
     const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
-    // Para cada mensagem, popular os dados do remetente
-    const populatedMessages = await Promise.all(messages.map(async (msg) => {
-        // A informação do user já está embutida, mas podemos garantir o fallback
-        if(msg.user) return msg;
-        
-        const sender = await Usuario.findOne({ uidFirebase: msg.senderId }).lean();
-        return {
-            ...msg,
-            user: {
-                name: sender?.nome || 'Usuário Desconhecido',
-                profileImage: `/api/avatar/${msg.senderId}`
-            }
-        };
-    }));
-
-    return NextResponse.json({ ok: true, messages: populatedMessages });
+    // The user object is already embedded, so we can just return the messages.
+    // The profileImage URL is already correctly set to /api/avatar/senderId during message creation.
+    return NextResponse.json({ ok: true, messages });
   } catch (error: any) {
     console.error('Error in /api/messages (GET):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });

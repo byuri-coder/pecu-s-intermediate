@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef, useEffect } from 'react';
-import { getAuth, onAuthStateChanged, updateProfile, type User, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, updateProfile, type User, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -98,6 +98,7 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
+            // Point avatar preview to our new API route
             setAvatarPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
@@ -224,8 +225,7 @@ export function ProfileForm() {
                  if (user.email) {
                     const credential = EmailAuthProvider.credential(user.email, data.currentPassword);
                     await reauthenticateWithCredential(user, credential);
-                    // This part is missing in the original logic. Add the actual password update.
-                    // await updatePassword(user, data.newPassword);
+                    await updatePassword(user, data.newPassword);
                  }
             }
 
