@@ -56,15 +56,11 @@ export async function GET(req: Request) {
                 getLatestMessage(room._id.toString())
             ]);
             
-            // Construir a URL do avatar usando a rota da API ou a URL salva
-            const avatarUrl = otherUser?.fotoPerfilUrl || `/api/avatar/${otherUserId}`;
-
             return {
                 id: room._id.toString(),
                 assetId: room.assetId,
                 assetName: asset?.titulo || 'Ativo Desconhecido',
                 name: otherUser?.nome || 'Usuário Desconhecido',
-                avatar: avatarUrl,
                 lastMessage: lastMessage?.text || 'Nenhuma mensagem ainda.',
                 time: new Date(lastMessage.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 unread: 0, // Placeholder

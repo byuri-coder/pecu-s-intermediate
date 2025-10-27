@@ -1,3 +1,4 @@
+
 // src/models/Usuario.ts
 import mongoose, { Schema, models } from "mongoose";
 
@@ -6,9 +7,6 @@ const UsuarioSchema = new Schema({
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   
-  // Alterado para armazenar a URL pública da imagem em vez do buffer
-  fotoPerfilUrl: { type: String },
-
   banco: String,
   agencia: String,
   conta: String,

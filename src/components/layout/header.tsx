@@ -11,7 +11,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 
@@ -33,7 +32,6 @@ export function Header() {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [hasNewInvoices, setHasNewInvoices] = React.useState(false);
   const [hasNewDuplicates, setHasNewDuplicates] = React.useState(false);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 
 
   const navItems = [
@@ -48,13 +46,9 @@ export function Header() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // A photoURL do Firebase Auth é atualizada no login/upload.
-        // O ?t=... é para quebrar o cache do navegador.
-        setAvatarUrl(`${firebaseUser.photoURL}?t=${new Date().getTime()}`);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
       } else {
         setUser(null);
-        setAvatarUrl(null);
         setIsAdmin(false);
       }
     });
@@ -137,13 +131,9 @@ export function Header() {
               </Button>
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl || undefined} alt={user.displayName || 'User Avatar'} />
-                    <AvatarFallback>
-                        {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                  <UserCircle className="h-5 w-5" />
+                  <span className="sr-only">Toggle user menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>

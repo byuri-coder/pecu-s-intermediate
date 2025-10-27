@@ -2,7 +2,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileText, Download, MapPin, UserCircle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -89,8 +88,6 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     }
     
     const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
-    const senderInitial = senderName.charAt(0).toUpperCase();
-    const avatarSrc = msg.user?.profileImage;
 
     return (
          <div
@@ -100,10 +97,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
             )}
             >
             {!isMe && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} alt={`${senderName} avatar`} />
-                    <AvatarFallback>{senderInitial}</AvatarFallback>
-                </Avatar>
+                <UserCircle className="h-8 w-8 text-muted-foreground" />
             )}
             <div className="flex flex-col gap-1" style={{ alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                  <span className="text-xs text-muted-foreground px-1">{senderName}</span>
@@ -123,10 +117,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
                 </div>
             </div>
             {isMe && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc || undefined} alt={`${senderName} avatar`} />
-                    <AvatarFallback>{senderInitial}</AvatarFallback>
-                </Avatar>
+                <UserCircle className="h-8 w-8 text-muted-foreground" />
             )}
         </div>
     )

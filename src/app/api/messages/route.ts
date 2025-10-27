@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const senderUser = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User', profileImage: senderUser?.fotoPerfilUrl } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User' } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -30,8 +30,6 @@ export async function POST(req: Request) {
       type,
       user: {
           name: senderUser?.nome || 'Usuário Desconhecido',
-          // O photoURL já deve estar sincronizado no Firebase Auth, mas usar a URL do Mongo é mais seguro
-          profileImage: senderUser?.fotoPerfilUrl || `/api/avatar/${senderId}`
       }
     };
 

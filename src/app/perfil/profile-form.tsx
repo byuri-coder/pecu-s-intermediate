@@ -23,7 +23,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { app } from '@/lib/firebase';
 
 const profileSchema = z.object({
@@ -64,15 +63,10 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
 export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -98,7 +92,6 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
-            setAvatarPreview(currentUser.photoURL || `/api/avatar/${currentUser.uid}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
@@ -120,10 +113,6 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
-                     // Garante que o preview use a URL do Mongo se o Firebase estiver desatualizado
-                    if (fetchedUser.fotoPerfilUrl) {
-                        setAvatarPreview(`${fetchedUser.fotoPerfilUrl}?t=${new Date().getTime()}`);
-                    }
                 } else {
                      form.reset({
                         fullName: currentUser.displayName || '',
@@ -142,23 +131,6 @@ export function ProfileForm() {
     return () => unsubscribe();
   }, [form]);
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        toast({
-          title: "Arquivo muito grande",
-          description: "A imagem de perfil não pode exceder 10MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
-  };
-
-
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
         if (!user) {
@@ -167,39 +139,18 @@ export function ProfileForm() {
         }
 
         try {
-            let uploadedImageUrl = user.photoURL;
-
-            // Step 1: Upload avatar if a new one is selected
-            if (avatarFile) {
-                const formData = new FormData();
-                formData.append("file", avatarFile);
-
-                const uploadRes = await fetch(`/api/upload/avatar/${user.uid}`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                
-                const uploadData = await uploadRes.json();
-                if (!uploadRes.ok) {
-                    throw new Error(uploadData.error || 'Falha no upload do avatar.');
-                }
-                uploadedImageUrl = uploadData.photoURL; // Get the new URL from backend
-            }
-
-            // Step 2: Update Firebase Auth profile
-            if (data.fullName !== user.displayName || (uploadedImageUrl && uploadedImageUrl !== user.photoURL)) {
+            // Step 1: Update Firebase Auth profile
+            if (data.fullName !== user.displayName) {
                 await updateProfile(user, { 
                     displayName: data.fullName,
-                    photoURL: uploadedImageUrl 
                 });
             }
             
-            // Step 3: Update MongoDB database
+            // Step 2: Update MongoDB database
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                fotoPerfilUrl: uploadedImageUrl,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -224,7 +175,7 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            // Step 4: Handle password change
+            // Step 3: Handle password change
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -239,7 +190,6 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
-             // Refresh the page to make sure all components (like header) get the new user data
              window.location.reload();
 
         } catch (error: any) {
@@ -264,40 +214,13 @@ export function ProfileForm() {
           
           <section className="space-y-4 p-6 border rounded-lg">
             <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais e Acesso</h3>
-            <div className="flex items-center gap-6">
-                <div className="relative">
-                    <input
-                        type="file"
-                        ref={avatarInputRef}
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/webp"
-                        onChange={handleAvatarChange}
-                    />
-                    <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src={avatarPreview ? `${avatarPreview}?t=${new Date().getTime()}` : undefined} alt="User Avatar" />
-                        <AvatarFallback>
-                            <UserCircle className="h-12 w-12" />
-                        </AvatarFallback>
-                    </Avatar>
-                    <Button 
-                        type="button"
-                        size="icon" 
-                        variant="outline" 
-                        className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-                        onClick={() => avatarInputRef.current?.click()}
-                    >
-                        <Pencil className="h-4 w-4"/>
-                        <span className="sr-only">Editar foto</span>
-                    </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1">
-                    <FormField name="fullName" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField name="email" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} readOnly disabled /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1">
+                <FormField name="fullName" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="email" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} readOnly disabled /></FormControl><FormMessage /></FormItem>
+                )} />
             </div>
             
             <div className="pt-4">

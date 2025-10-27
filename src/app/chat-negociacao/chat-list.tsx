@@ -3,10 +3,9 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Leaf, Landmark, Mountain, Loader2 } from 'lucide-react';
+import { Search, Leaf, Landmark, Mountain, Loader2, UserCircle } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -91,10 +90,7 @@ export function ChatList({
                 )}
                 onClick={() => handleSelectChat(convo.id)}
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={convo.avatar || undefined} />
-                  <AvatarFallback>{convo.name?.charAt(0) || '?'}</AvatarFallback>
-                </Avatar>
+                <UserCircle className="h-10 w-10 text-muted-foreground" />
 
                 <div className="flex-1 overflow-hidden">
                   <div className="flex items-center justify-between">

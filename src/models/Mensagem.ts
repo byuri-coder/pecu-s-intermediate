@@ -1,3 +1,4 @@
+
 // src/models/Mensagem.ts
 import mongoose, { Schema, models } from "mongoose";
 
@@ -21,7 +22,6 @@ const ChatMessageSchema = new mongoose.Schema({
   // Embed sender's info for quick display without extra lookups
   user: { 
       name: String,
-      profileImage: String // This will store the /api/avatar/[uid] URL
   }
 }, { timestamps: true });
 

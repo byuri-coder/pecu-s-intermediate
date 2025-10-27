@@ -17,7 +17,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Conversation, AssetType } from '@/lib/types';
 
 function getAssetTypeRoute(type: AssetType) {
@@ -43,10 +42,7 @@ export function ActiveChatHeader({
       <Sheet>
         <SheetTrigger asChild>
           <div className="flex items-center gap-3 cursor-pointer group">
-            <Avatar className="h-11 w-11">
-              <AvatarImage src={conversation.avatar} />
-              <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <UserCircle className="h-11 w-11 text-muted-foreground" />
             <div>
               <CardTitle className="text-xl group-hover:underline">
                 {conversation.name}
@@ -74,12 +70,7 @@ export function ActiveChatHeader({
             <Card>
               <CardHeader className="p-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={conversation.avatar} />
-                    <AvatarFallback>
-                      <UserCircle className="h-8 w-8" />
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserCircle className="h-16 w-16 text-muted-foreground" />
                   <div>
                     <h3 className="text-lg font-semibold">{conversation.name}</h3>
                     <p className="text-sm text-muted-foreground">
