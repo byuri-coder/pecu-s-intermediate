@@ -48,8 +48,9 @@ export function Header() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Force refresh of the avatar by adding a timestamp
-        setAvatarUrl(`/api/avatar/${firebaseUser.uid}?t=${new Date().getTime()}`);
+        // A photoURL do Firebase Auth é atualizada no login/upload.
+        // O ?t=... é para quebrar o cache do navegador.
+        setAvatarUrl(`${firebaseUser.photoURL}?t=${new Date().getTime()}`);
         setIsAdmin(firebaseUser.email === 'byuripaulo@gmail.com');
       } else {
         setUser(null);

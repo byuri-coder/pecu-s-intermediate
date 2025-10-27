@@ -10,7 +10,8 @@ export async function POST(req: Request) {
     const db = await connectDB();
     if (!db) {
       const body = await req.json();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: 'Mock User', profileImage: `/api/avatar/${body.senderId}` } } }, { status: 201 });
+      const senderUser = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User', profileImage: senderUser?.fotoPerfilUrl } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -29,7 +30,8 @@ export async function POST(req: Request) {
       type,
       user: {
           name: senderUser?.nome || 'Usuário Desconhecido',
-          profileImage: `/api/avatar/${senderId}` // Always use the API route
+          // O photoURL já deve estar sincronizado no Firebase Auth, mas usar a URL do Mongo é mais seguro
+          profileImage: senderUser?.fotoPerfilUrl || `/api/avatar/${senderId}`
       }
     };
 
@@ -66,8 +68,7 @@ export async function GET(req: Request) {
 
     const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
-    // The user object is already embedded, so we can just return the messages.
-    // The profileImage URL is already correctly set to /api/avatar/senderId during message creation.
+    // O objeto 'user' já é embutido durante a criação, então podemos apenas retornar as mensagens.
     return NextResponse.json({ ok: true, messages });
   } catch (error: any) {
     console.error('Error in /api/messages (GET):', error);

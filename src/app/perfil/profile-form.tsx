@@ -98,8 +98,7 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
-            // Point avatar preview to our new API route
-            setAvatarPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
+            setAvatarPreview(currentUser.photoURL || `/api/avatar/${currentUser.uid}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
@@ -121,6 +120,10 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
+                     // Garante que o preview use a URL do Mongo se o Firebase estiver desatualizado
+                    if (fetchedUser.fotoPerfilUrl) {
+                        setAvatarPreview(`${fetchedUser.fotoPerfilUrl}?t=${new Date().getTime()}`);
+                    }
                 } else {
                      form.reset({
                         fullName: currentUser.displayName || '',
@@ -164,6 +167,8 @@ export function ProfileForm() {
         }
 
         try {
+            let uploadedImageUrl = user.photoURL;
+
             // Step 1: Upload avatar if a new one is selected
             if (avatarFile) {
                 const formData = new FormData();
@@ -174,27 +179,27 @@ export function ProfileForm() {
                     body: formData,
                 });
                 
+                const uploadData = await uploadRes.json();
                 if (!uploadRes.ok) {
-                    let errorBody;
-                    try {
-                        errorBody = await uploadRes.json();
-                    } catch {
-                        errorBody = { error: await uploadRes.text() };
-                    }
-                    throw new Error(errorBody.error || 'Falha no upload do avatar.');
+                    throw new Error(uploadData.error || 'Falha no upload do avatar.');
                 }
+                uploadedImageUrl = uploadData.photoURL; // Get the new URL from backend
             }
 
-            // Step 2: Update Firebase Auth profile display name
-            if (data.fullName !== user.displayName) {
-                await updateProfile(user, { displayName: data.fullName });
+            // Step 2: Update Firebase Auth profile
+            if (data.fullName !== user.displayName || (uploadedImageUrl && uploadedImageUrl !== user.photoURL)) {
+                await updateProfile(user, { 
+                    displayName: data.fullName,
+                    photoURL: uploadedImageUrl 
+                });
             }
             
-            // Step 3: Update MongoDB database with all other profile info
+            // Step 3: Update MongoDB database
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
-                email: data.email, // Email is readonly, but good to send for upsert
+                email: data.email,
+                fotoPerfilUrl: uploadedImageUrl,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -219,7 +224,7 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            // Step 4: Handle password change if requested
+            // Step 4: Handle password change
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -236,7 +241,6 @@ export function ProfileForm() {
             
              // Refresh the page to make sure all components (like header) get the new user data
              window.location.reload();
-
 
         } catch (error: any) {
             console.error("Failed to update profile:", error);
@@ -270,7 +274,7 @@ export function ProfileForm() {
                         onChange={handleAvatarChange}
                     />
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src={avatarPreview || undefined} alt="User Avatar" />
+                        <AvatarImage src={avatarPreview ? `${avatarPreview}?t=${new Date().getTime()}` : undefined} alt="User Avatar" />
                         <AvatarFallback>
                             <UserCircle className="h-12 w-12" />
                         </AvatarFallback>
@@ -328,7 +332,7 @@ export function ProfileForm() {
                     <FormItem><FormLabel>Conta Corrente com dígito</FormLabel><FormControl><Input {...field} placeholder="Ex: 12345-6" /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField name="pixKey" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormMessage>
                 )} />
             </div>
           </section>

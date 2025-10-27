@@ -56,8 +56,8 @@ export async function GET(req: Request) {
                 getLatestMessage(room._id.toString())
             ]);
             
-            // Build the avatar URL pointing to our API
-            const avatarUrl = `/api/avatar/${otherUserId}`;
+            // Construir a URL do avatar usando a rota da API ou a URL salva
+            const avatarUrl = otherUser?.fotoPerfilUrl || `/api/avatar/${otherUserId}`;
 
             return {
                 id: room._id.toString(),

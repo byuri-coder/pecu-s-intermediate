@@ -6,10 +6,8 @@ const UsuarioSchema = new Schema({
   nome: { type: String },
   email: { type: String, required: true, unique: true, index: true },
   
-  fotoPerfil: {
-    data: Buffer,
-    contentType: String,
-  },
+  // Alterado para armazenar a URL pública da imagem em vez do buffer
+  fotoPerfilUrl: { type: String },
 
   banco: String,
   agencia: String,
