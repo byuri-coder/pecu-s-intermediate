@@ -332,7 +332,7 @@ export function ProfileForm() {
                     <FormItem><FormLabel>Conta Corrente com dígito</FormLabel><FormControl><Input {...field} placeholder="Ex: 12345-6" /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField name="pixKey" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormMessage>
+                    <FormItem><FormLabel>Chave PIX</FormLabel><FormControl><Input {...field} placeholder="Email, CPF/CNPJ, Telefone ou Chave Aleatória" /></FormControl><FormMessage /></FormItem>
                 )} />
             </div>
           </section>
@@ -401,3 +401,5 @@ export function ProfileForm() {
       </Form>
   );
 }
+
+    
