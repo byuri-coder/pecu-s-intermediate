@@ -33,13 +33,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "uidFirebase e titulo são obrigatórios" }, { status: 400 });
     }
 
+    // A lógica para converter base64 para ficheiros seria aqui,
+    // mas por agora, vamos garantir que o formato do objeto é aceite pelo schema.
     const anuncio = await Anuncio.create({
       uidFirebase,
       titulo,
       descricao,
       tipo,
       price,
-      imagens,
+      imagens, // O schema agora espera um array de objetos
       metadados,
     });
 
@@ -49,6 +51,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, anuncio });
   } catch (err: any) {
     console.error("Erro /api/anuncios/create:", err);
+    // Adiciona log detalhado para o erro de cast
+    if (err.name === 'CastError') {
+      console.error('Mongoose CastError Details:', JSON.stringify(err, null, 2));
+    }
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
