@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,8 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const chartData: { date: string; carbono: number; tributos: number; terras: number }[] = [];
+type ChartDataItem = {
+  month: string;
+  total: number;
+  carbono: number;
+  tributos: number;
+  terras: number;
+};
 
 const chartConfig = {
   total: {
@@ -47,19 +55,58 @@ const chartConfig = {
 
 export function MovementsChart() {
   const [timeRange, setTimeRange] = React.useState<keyof typeof chartConfig>('total');
+  const [chartData, setChartData] = React.useState<ChartDataItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const fetchChartData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/dashboard/movements');
+      const data = await response.json();
+      if (data.ok) {
+        // Format data for the chart
+        const formattedData = data.movements.map((item: any) => ({
+            month: item.month,
+            total: item.total,
+            carbono: item.byType['carbon-credit'] || 0,
+            tributos: item.byType['tax-credit'] || 0,
+            terras: item.byType['rural-land'] || 0,
+        }));
+        setChartData(formattedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch chart data", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchChartData();
+
+    // Listen for updates from other tabs
+    const channel = new BroadcastChannel("dashboard-update");
+    channel.onmessage = (event) => {
+        if(event.data === 'contract-finalized') {
+            fetchChartData();
+        }
+    };
+
+    return () => channel.close();
+  }, [fetchChartData]);
 
   const filteredData = React.useMemo(() => {
     if (timeRange === 'total') {
-        return chartData.map(d => ({
-            date: d.date,
-            value: d.carbono + d.tributos + d.terras
-        }));
+      return chartData.map(d => ({
+        date: d.month,
+        value: d.total,
+      }));
     }
     return chartData.map(d => ({
-        date: d.date,
-        value: d[timeRange]
+      date: d.month,
+      value: d[timeRange],
     }));
-  }, [timeRange]);
+  }, [timeRange, chartData]);
 
   const activeChart = timeRange;
 
@@ -96,71 +143,82 @@ export function MovementsChart() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id={`fill-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor={`var(--color-${activeChart})`}
-                  stopOpacity={0.8}
+        {loading ? (
+            <div className="h-[250px] w-full flex items-center justify-center">
+                <Skeleton className="h-full w-full"/>
+            </div>
+        ) : filteredData.length > 0 ? (
+            <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+            >
+            <AreaChart data={filteredData}>
+                <defs>
+                <linearGradient id={`fill-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                    offset="5%"
+                    stopColor={`var(--color-${activeChart})`}
+                    stopOpacity={0.8}
+                    />
+                    <stop
+                    offset="95%"
+                    stopColor={`var(--color-${activeChart})`}
+                    stopOpacity={0.1}
+                    />
+                </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
+                    tickFormatter={(value) => {
+                        const [year, month] = value.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1);
+                        return date.toLocaleDateString('pt-BR', {
+                            month: 'short',
+                        }).replace('.', '');
+                    }}
                 />
-                <stop
-                  offset="95%"
-                  stopColor={`var(--color-${activeChart})`}
-                  stopOpacity={0.1}
+                <YAxis 
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => `R$${new Intl.NumberFormat('pt-BR', { notation: 'compact' }).format(value)}`}
                 />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('pt-BR', {
-                  month: 'short',
-                  day: 'numeric',
-                });
-              }}
-            />
-             <YAxis 
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => `R$${value}`}
-             />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    new Date(value).toLocaleDateString('pt-BR', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })
-                  }
-                  formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number)}
-                  indicator="dot"
+                <ChartTooltip
+                cursor={false}
+                content={
+                    <ChartTooltipContent
+                    labelFormatter={(value) => {
+                        const [year, month] = value.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1);
+                        return date.toLocaleDateString('pt-BR', {
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    }}
+                    formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number)}
+                    indicator="dot"
+                    />
+                }
                 />
-              }
-            />
-            <Area
-              dataKey="value"
-              type="natural"
-              fill={`url(#fill-${activeChart})`}
-              stroke={`var(--color-${activeChart})`}
-              stackId="a"
-            />
-          </AreaChart>
-        </ChartContainer>
+                <Area
+                    dataKey="value"
+                    type="natural"
+                    fill={`url(#fill-${activeChart})`}
+                    stroke={`var(--color-${activeChart})`}
+                    stackId="a"
+                />
+            </AreaChart>
+            </ChartContainer>
+        ) : (
+            <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                <p>Nenhuma movimentação registrada ainda.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );

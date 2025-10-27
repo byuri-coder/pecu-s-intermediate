@@ -145,6 +145,11 @@ export default function AdjustmentClientPage({
       localStorage.setItem('newInvoicesAvailable', 'true');
       window.dispatchEvent(new Event('storage'));
       
+      // 5. Send message to update dashboard charts
+      const channel = new BroadcastChannel("dashboard-update");
+      channel.postMessage("contract-finalized");
+      channel.close();
+      
       toast({ title: "Contrato Finalizado!", description: 'As duplicatas e faturas foram geradas com sucesso!' });
 
     } catch(error: any) {
