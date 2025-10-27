@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!db) {
       const body = await req.json();
       const senderUser = await Usuario.findOne({ uidFirebase: body.senderId }).lean();
-      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User', photoURL: senderUser?.fotoPerfilUrl || '' } } }, { status: 201 });
+      return NextResponse.json({ ok: true, message: { _id: "mock_message_id", ...body, user: { name: senderUser?.nome || 'Mock User', photoURL: `/api/avatar/${body.senderId}` } } }, { status: 201 });
     }
     
     const body = await req.json();
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       type,
       user: {
           name: senderUser?.nome || 'Usuário Desconhecido',
-          photoURL: senderUser?.fotoPerfilUrl || null
+          photoURL: `/api/avatar/${senderId}`
       }
     };
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         ...newMessage.toObject(),
         user: { 
             name: senderUser?.nome || 'Usuário Desconhecido',
-            photoURL: senderUser?.fotoPerfilUrl || null
+            photoURL: `/api/avatar/${senderId}`
         }
     };
 
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
             ...msg,
             user: {
                 name: sender?.nome || 'Usuário Desconhecido',
-                photoURL: sender?.fotoPerfilUrl || null
+                photoURL: `/api/avatar/${msg.senderId}`
             }
         };
     }));

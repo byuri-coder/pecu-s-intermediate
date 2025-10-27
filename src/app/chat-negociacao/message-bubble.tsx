@@ -89,7 +89,7 @@ export const MessageBubble = ({ msg, currentUserId }: { msg: Message, currentUse
     }
     
     const senderName = msg.user?.name || (isMe ? 'Eu' : 'Usuário Desconhecido');
-    const senderAvatarUrl = msg.user?.photoURL || `/api/avatar/${msg.senderId}`;
+    const senderAvatarUrl = `/api/avatar/${msg.senderId}`;
 
     return (
          <div

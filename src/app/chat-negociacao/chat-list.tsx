@@ -136,5 +136,3 @@ export function ChatList({
     </Card>
   );
 }
-
-    
