@@ -8,7 +8,7 @@ import { app } from '@/lib/firebase';
 
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -178,6 +178,9 @@ export function Header() {
                         </div>
                          {hasNewDuplicates && <NotificationDot />}
                     </Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/calendario"><Calendar className="mr-2 h-4 w-4" /><span>Calendário de Operações</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/cadastrar-ativo"><FilePlus className="mr-2 h-4 w-4" /><span>Cadastrar Ativos</span></Link>

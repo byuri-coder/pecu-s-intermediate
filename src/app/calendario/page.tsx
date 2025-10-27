@@ -1,126 +1,142 @@
+
 'use client';
 
-import * as React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Wallet, ShoppingCart, Leaf, Landmark, Mountain } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { useUser, useCollection } from '@/firebase';
-import type { FirestoreTransaction, Asset, AssetType } from '@/lib/types';
-import { useMemo } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
+import { useUser } from "@/firebase";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { EventClickArg } from "@fullcalendar/core";
 
-const AssetIcon = ({ type }: { type: AssetType }) => {
-    const icons = {
-        'carbon-credit': Leaf,
-        'tax-credit': Landmark,
-        'rural-land': Mountain,
-    };
-    const Icon = icons[type] || Leaf;
-    return <Icon className="h-5 w-5" />;
-};
-
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  backgroundColor: string;
+  borderColor: string;
+}
 
 export default function CalendarPage() {
-  const { user } = useUser();
-  const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(new Date());
+  const { user, loading: userLoading } = useUser();
+  const [eventos, setEventos] = useState<CalendarEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const { toast } = useToast();
 
-  const { data: transactions, loading } = useCollection<FirestoreTransaction>(
-    user ? `transactions` : null
-  );
+  const carregarEventos = useCallback(async () => {
+    if (!user) return;
+    setLoadingEvents(true);
+    try {
+      const res = await fetch(`/api/calendario/get/${user.uid}`);
+      const data = await res.json();
+      if(data.eventos) {
+          setEventos(
+            data.eventos.map((ev: any) => ({
+              id: ev._id,
+              title: `${ev.titulo} (${ev.status})`,
+              start: ev.data,
+              backgroundColor: ev.status === "concluido" ? "hsl(var(--primary))" : "hsl(var(--secondary))",
+              borderColor: ev.status === "concluido" ? "hsl(var(--primary))" : "hsl(var(--secondary))",
+              textColor: ev.status === "concluido" ? "hsl(var(--primary-foreground))" : "hsl(var(--secondary-foreground))",
+            }))
+          );
+      }
+    } catch (error) {
+        toast({ title: "Erro", description: "Não foi possível carregar os eventos.", variant: "destructive" });
+    } finally {
+        setLoadingEvents(false);
+    }
+  }, [user, toast]);
 
-  const userTransactions = useMemo(() => {
-    if (!transactions || !user) return [];
-    return transactions.filter(tx => tx.buyerId === user.uid || tx.sellerId === user.uid);
-  }, [transactions, user]);
+  useEffect(() => {
+    if (user) {
+      carregarEventos();
+    }
+    if (!user && !userLoading) {
+        setLoadingEvents(false);
+    }
+  }, [user, userLoading, carregarEventos]);
 
+  async function adicionarEvento(info: DateClickArg) {
+    if (!user) return;
+    const titulo = prompt("Título do evento:");
+    if (!titulo) return;
 
-  const operationDates = useMemo(() => {
-    return userTransactions.map(tx => tx.createdAt.toDate());
-  }, [userTransactions]);
+    try {
+        const res = await fetch("/api/calendario/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                usuarioId: user.uid,
+                titulo,
+                data: info.dateStr,
+                status: 'pendente'
+            }),
+        });
+        if (!res.ok) throw new Error("Falha ao salvar evento.");
+        toast({ title: "Sucesso!", description: "Evento adicionado." });
+        carregarEventos();
+    } catch(error: any) {
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+    }
+  }
 
-  const selectedDayOperations = useMemo(() => {
-    if (!selectedDay) return [];
-    return userTransactions.filter(op => {
-        const opDate = op.createdAt.toDate();
-        return format(opDate, 'yyyy-MM-dd') === format(selectedDay, 'yyyy-MM-dd');
-    });
-  }, [userTransactions, selectedDay]);
+  async function excluirEvento(clickInfo: EventClickArg) {
+    if (confirm(`Tem certeza que deseja excluir o evento "${clickInfo.event.title}"?`)) {
+      try {
+          const res = await fetch(`/api/calendario/delete/${clickInfo.event.id}`, { method: "DELETE" });
+          if(!res.ok) throw new Error("Falha ao excluir evento.");
+          toast({ title: "Sucesso!", description: "Evento excluído." });
+          carregarEventos();
+      } catch(error: any) {
+         toast({ title: "Erro", description: error.message, variant: "destructive" });
+      }
+    }
+  }
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-7xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-4">
-                        <CalendarIcon className="h-8 w-8 text-primary" />
-                        <div>
-                        <CardTitle className="text-3xl font-bold font-headline">Calendário de Operações</CardTitle>
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-4">
+                    <CalendarIcon className="h-8 w-8 text-primary" />
+                    <div>
+                        <CardTitle className="text-3xl font-bold font-headline">Calendário de Atividades</CardTitle>
                         <CardDescription>
-                            Acompanhe suas transações de compra e venda ao longo do tempo.
+                            Gerencie seus eventos, tarefas e prazos. Clique em um dia para adicionar um novo evento.
                         </CardDescription>
-                        </div>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <Calendar
-                        mode="single"
-                        selected={selectedDay}
-                        onSelect={setSelectedDay}
-                        className="rounded-md border p-4 w-full"
-                        modifiers={{
-                            operation: operationDates,
-                        }}
-                        modifiersClassNames={{
-                           operation: 'day-with-operation'
+                </div>
+            </CardHeader>
+            <CardContent>
+                {userLoading || loadingEvents ? (
+                     <div className="flex items-center justify-center h-96">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                ) : user ? (
+                    <FullCalendar
+                        plugins={[dayGridPlugin, interactionPlugin]}
+                        initialView="dayGridMonth"
+                        events={eventos}
+                        dateClick={adicionarEvento}
+                        eventClick={excluirEvento}
+                        locale="pt-br"
+                        height="auto"
+                        headerToolbar={{
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,dayGridWeek,dayGridDay'
                         }}
                     />
-                </CardContent>
-            </Card>
-        </div>
-        <div>
-            <Card>
-                <CardHeader>
-                     <CardTitle>Operações do Dia</CardTitle>
-                     <CardDescription>
-                        {selectedDay ? format(selectedDay, "'Eventos de' dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione um dia'}
-                    </CardDescription>
-                </CardHeader>
-                 <CardContent className="space-y-4 h-[400px] overflow-y-auto">
-                    {loading ? (
-                         <div className="flex items-center justify-center h-full">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        </div>
-                    ) : selectedDayOperations.length > 0 ? (
-                        selectedDayOperations.map(op => {
-                            const isSale = op.sellerId === user?.uid;
-                            return (
-                                <div key={op.id} className="flex items-start gap-4 p-3 rounded-lg bg-secondary/50">
-                                    <div className={`p-2 rounded-full ${isSale ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {isSale ? <Wallet className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold">{isSale ? 'Venda Realizada' : 'Compra Efetuada'}</p>
-                                        <p className="text-sm text-muted-foreground">Ativo: {(op as any).listing?.title || op.listingId}</p>
-                                        <p className="text-sm font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(op.value)}</p>
-                                    </div>
-                                    <div className="ml-auto p-2 bg-muted rounded-full">
-                                        <AssetIcon type={(op as any).listing?.category || 'carbon-credit'}/>
-                                    </div>
-                                </div>
-                            )
-                        })
-                    ) : (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <p>Nenhuma operação neste dia.</p>
-                        </div>
-                    )}
-                 </CardContent>
-            </Card>
-        </div>
-      </div>
+                ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>Faça login para visualizar seu calendário.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   );
 }
