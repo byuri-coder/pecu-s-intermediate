@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import {
   Card,
@@ -152,21 +152,7 @@ export function MovementsChart() {
             config={chartConfig}
             className="aspect-auto h-[250px] w-full"
             >
-            <AreaChart data={filteredData}>
-                <defs>
-                <linearGradient id={`fill-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                    offset="5%"
-                    stopColor={`var(--color-${activeChart})`}
-                    stopOpacity={0.8}
-                    />
-                    <stop
-                    offset="95%"
-                    stopColor={`var(--color-${activeChart})`}
-                    stopOpacity={0.1}
-                    />
-                </linearGradient>
-                </defs>
+            <LineChart data={filteredData}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                     dataKey="date"
@@ -205,14 +191,19 @@ export function MovementsChart() {
                     />
                 }
                 />
-                <Area
+                <Line
                     dataKey="value"
-                    type="natural"
-                    fill={`url(#fill-${activeChart})`}
+                    type="monotone"
                     stroke={`var(--color-${activeChart})`}
-                    stackId="a"
+                    strokeWidth={2}
+                    dot={{
+                        fill: `var(--color-${activeChart})`
+                    }}
+                    activeDot={{
+                        r: 6
+                    }}
                 />
-            </AreaChart>
+            </LineChart>
             </ChartContainer>
         ) : (
             <div className="h-[250px] flex items-center justify-center text-muted-foreground">
