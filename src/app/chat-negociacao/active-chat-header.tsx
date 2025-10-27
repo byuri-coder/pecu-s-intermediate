@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import {
-  Edit,
-  UserCircle
+  Edit
 } from 'lucide-react';
 import {
   Sheet,
@@ -18,6 +17,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import type { Conversation, AssetType } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 function getAssetTypeRoute(type: AssetType) {
   switch (type) {
@@ -37,12 +38,18 @@ export function ActiveChatHeader({
   conversation: Conversation;
   assetId: string;
 }) {
+  
+  const otherUserId = conversation.participants?.find(p => p !== 'current_user_placeholder'); // Replace with actual current user logic
+
   return (
     <CardHeader className="flex-row items-center justify-between">
       <Sheet>
         <SheetTrigger asChild>
           <div className="flex items-center gap-3 cursor-pointer group">
-            <UserCircle className="h-11 w-11 text-muted-foreground" />
+             <Avatar className="h-11 w-11 border">
+                <AvatarImage src={`/api/avatar/${otherUserId}`} alt={conversation.name} />
+                <AvatarFallback>{conversation.name?.charAt(0).toUpperCase()}</AvatarFallback>
+             </Avatar>
             <div>
               <CardTitle className="text-xl group-hover:underline">
                 {conversation.name}
@@ -70,7 +77,10 @@ export function ActiveChatHeader({
             <Card>
               <CardHeader className="p-4">
                 <div className="flex items-center gap-4">
-                  <UserCircle className="h-16 w-16 text-muted-foreground" />
+                  <Avatar className="h-16 w-16 border">
+                      <AvatarImage src={`/api/avatar/${otherUserId}`} alt={conversation.name} />
+                      <AvatarFallback className="text-xl">{conversation.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
                   <div>
                     <h3 className="text-lg font-semibold">{conversation.name}</h3>
                     <p className="text-sm text-muted-foreground">

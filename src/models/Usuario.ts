@@ -24,6 +24,8 @@ const UsuarioSchema = new Schema({
   autorizacoesEspeciais: { type: [String], default: [] },
   
   tipo: { type: String, enum: ["comprador", "vendedor", "administrador"], default: "comprador" },
+  
+  fotoPerfilUrl: { type: String }, // Stores the public URL to the profile picture
 }, { timestamps: true });
 
 export const Usuario = models.Usuario || mongoose.model("Usuario", UsuarioSchema);

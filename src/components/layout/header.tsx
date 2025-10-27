@@ -5,6 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import Image from 'next/image';
 
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -13,6 +14,8 @@ import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -132,7 +135,10 @@ export function Header() {
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
-                  <UserCircle className="h-5 w-5" />
+                   <Avatar className="h-8 w-8">
+                     <AvatarImage src={`/api/avatar/${user.uid}?t=${new Date().getTime()}`} alt={user.displayName || 'Avatar do usuário'} />
+                     <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
               </DropdownMenuTrigger>

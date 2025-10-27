@@ -6,12 +6,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useTransition, useState, useRef, useEffect } from 'react';
 import { getAuth, onAuthStateChanged, updateProfile, type User, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,6 +24,8 @@ import { Loader2, UserCircle, Pencil, Banknote, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { app } from '@/lib/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const profileSchema = z.object({
   fullName: z.string().min(3, 'Nome completo é obrigatório'),
@@ -67,6 +69,9 @@ export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -92,6 +97,7 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
+            setPhotoPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
                 const data = await res.json();
@@ -131,6 +137,14 @@ export function ProfileForm() {
     return () => unsubscribe();
   }, [form]);
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const onSubmit = (data: ProfileFormValues) => {
     startTransition(async () => {
         if (!user) {
@@ -139,18 +153,35 @@ export function ProfileForm() {
         }
 
         try {
-            // Step 1: Update Firebase Auth profile
-            if (data.fullName !== user.displayName) {
+             // Step 1: Handle photo upload if a new photo is selected
+            let photoURL = user.photoURL;
+            if (photoFile) {
+                const formData = new FormData();
+                formData.append('file', photoFile);
+
+                const uploadResponse = await fetch(`/api/upload/avatar/${user.uid}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const uploadData = await uploadResponse.json();
+                if (!uploadData.success) throw new Error(uploadData.error || 'Falha no upload da foto.');
+                photoURL = uploadData.photoURL;
+            }
+
+            // Step 2: Update Firebase Auth profile
+            if (data.fullName !== user.displayName || (photoURL && photoURL !== user.photoURL)) {
                 await updateProfile(user, { 
                     displayName: data.fullName,
+                    ...(photoURL && { photoURL: photoURL })
                 });
             }
             
-            // Step 2: Update MongoDB database
+            // Step 3: Update MongoDB database
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
+                fotoPerfilUrl: photoURL,
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -175,7 +206,7 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
 
-            // Step 3: Handle password change
+            // Step 4: Handle password change
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -190,6 +221,7 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
+             // Force a reload to ensure all components get the new user data
              window.location.reload();
 
         } catch (error: any) {
@@ -211,7 +243,35 @@ export function ProfileForm() {
   return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          
+            
+            <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                    <Avatar className="h-32 w-32 border-4 border-background shadow-md">
+                        <AvatarImage src={photoPreview || ''} alt="Foto de perfil" />
+                        <AvatarFallback>
+                            <UserCircle className="h-full w-full text-muted-foreground"/>
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="icon" 
+                        className="absolute bottom-1 right-1 h-8 w-8 rounded-full"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <Pencil className="h-4 w-4"/>
+                        <span className="sr-only">Alterar foto</span>
+                    </Button>
+                    <Input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/png, image/jpeg" 
+                        onChange={handlePhotoChange}
+                    />
+                </div>
+            </div>
+
           <section className="space-y-4 p-6 border rounded-lg">
             <h3 className="text-xl font-semibold border-b pb-2">Informações Pessoais e Acesso</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1">
@@ -324,5 +384,3 @@ export function ProfileForm() {
       </Form>
   );
 }
-
-    

@@ -43,7 +43,14 @@ export async function POST(req: Request) {
     
     const newMessage = await Mensagem.create(newMessageData);
 
-    return NextResponse.json({ ok: true, message: newMessage });
+    // This is a simplified representation. In a real app, you might want to return the fully populated object.
+    const responseMessage = {
+        ...newMessage.toObject(),
+        user: { name: senderUser?.nome || 'Usuário Desconhecido' }
+    };
+
+
+    return NextResponse.json({ ok: true, message: responseMessage });
   } catch (error: any) {
     console.error('Error in /api/messages (POST):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });
@@ -66,8 +73,20 @@ export async function GET(req: Request) {
 
     const messages = await Mensagem.find({ chatId }).sort({ createdAt: 'asc' }).lean();
     
-    // O objeto 'user' já é embutido durante a criação, então podemos apenas retornar as mensagens.
-    return NextResponse.json({ ok: true, messages });
+    const populatedMessages = await Promise.all(messages.map(async (msg) => {
+        if (msg.user && msg.user.name) {
+            return msg;
+        }
+        const sender = await Usuario.findOne({ uidFirebase: msg.senderId }).lean();
+        return {
+            ...msg,
+            user: {
+                name: sender?.nome || 'Usuário Desconhecido'
+            }
+        };
+    }));
+
+    return NextResponse.json({ ok: true, messages: populatedMessages });
   } catch (error: any) {
     console.error('Error in /api/messages (GET):', error);
     return NextResponse.json({ ok: false, error: error.message || 'Internal Server Error' }, { status: 500 });

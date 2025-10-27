@@ -5,9 +5,11 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Leaf, Landmark, Mountain, Loader2, UserCircle } from 'lucide-react';
+import { Search, Leaf, Landmark, Mountain, Loader2 } from 'lucide-react';
 import type { Conversation, AssetType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 // Ícone de cada tipo de ativo
 const AssetTypeIcon = ({ type }: { type: AssetType }) => {
@@ -81,39 +83,45 @@ export function ChatList({
       <CardContent className="flex-1 p-2 overflow-y-auto">
         {filteredConversations.length > 0 ? (
           <div className="space-y-1">
-            {filteredConversations.map((convo) => (
-              <button
-                key={convo.id}
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-lg p-3 text-left transition-all hover:bg-secondary',
-                  activeChatId === convo.id && 'bg-secondary'
-                )}
-                onClick={() => handleSelectChat(convo.id)}
-              >
-                <UserCircle className="h-10 w-10 text-muted-foreground" />
+            {filteredConversations.map((convo) => {
+                const otherUserId = convo.participants?.find(p => p !== 'current_user_placeholder'); // Replace with actual current user logic
+                return (
+                  <button
+                    key={convo.id}
+                    className={cn(
+                      'flex w-full items-start gap-3 rounded-lg p-3 text-left transition-all hover:bg-secondary',
+                      activeChatId === convo.id && 'bg-secondary'
+                    )}
+                    onClick={() => handleSelectChat(convo.id)}
+                  >
+                    <Avatar className="h-10 w-10 border">
+                        <AvatarImage src={`/api/avatar/${otherUserId}`} alt={convo.name} />
+                        <AvatarFallback>{convo.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
 
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold truncate">{convo.name || 'Usuário'}</p>
-                    <time className="text-xs text-muted-foreground">{convo.time || ''}</time>
-                  </div>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold truncate">{convo.name || 'Usuário'}</p>
+                        <time className="text-xs text-muted-foreground">{convo.time || ''}</time>
+                      </div>
 
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground truncate">
-                      {convo.lastMessage || 'Sem mensagens ainda'}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <AssetTypeIcon type={convo.type} />
-                      {convo.unread > 0 && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                          {convo.unread}
-                        </span>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground truncate">
+                          {convo.lastMessage || 'Sem mensagens ainda'}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <AssetTypeIcon type={convo.type} />
+                          {convo.unread > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                              {convo.unread}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </button>
-            ))}
+                  </button>
+                )
+            })}
           </div>
         ) : (
           <div className="text-center text-sm text-muted-foreground py-10">
