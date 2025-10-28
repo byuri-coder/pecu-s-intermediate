@@ -1,4 +1,3 @@
-
 // src/app/api/upload/avatar/[uid]/route.ts
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
@@ -6,9 +5,9 @@ import { Usuario } from '@/models/Usuario';
 
 export const runtime = 'nodejs';
 
-// This route now simulates saving a file and returns a public URL.
-// In a real production environment, this would involve saving to a bucket (S3, GCS)
-// and getting the URL from there. For this exercise, we'll use a placeholder URL generator.
+// This route handles both POST (upload) and DELETE operations for a user's avatar.
+
+// POST: Handles uploading a new avatar.
 export async function POST(req: Request, { params }: { params: { uid: string } }) {
   try {
     const { uid } = params;
@@ -23,11 +22,10 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
       return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
     
-    // Simulation of file saving and URL generation.
-    // In a real project, this would upload to Firebase Storage or S3.
-    // We'll use a predictable placeholder for demonstration.
-    // The query param ensures the browser doesn't use a cached version.
-    const publicImageUrl = `https://avatar.vercel.sh/${uid}.png?text=${file.name.substring(0, 1)}&ts=${Date.now()}`;
+    // In a real project, this would upload to a persistent storage service (Firebase Storage, S3).
+    // For this environment, we'll generate a placeholder URL that points back to our serving endpoint.
+    // The timestamp acts as a cache-buster.
+    const publicImageUrl = `/api/avatar/${uid}?t=${Date.now()}`;
 
     await connectDB();
 
@@ -43,6 +41,32 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
 
   } catch (error: any) {
     console.error('Erro no upload do avatar:', error);
+    return NextResponse.json({ error: 'Erro interno no servidor', details: error.message }, { status: 500 });
+  }
+}
+
+
+// DELETE: Handles deleting the reference to the user's current avatar.
+export async function DELETE(req: Request, { params }: { params: { uid: string } }) {
+  try {
+    const { uid } = params;
+    if (!uid) {
+      return NextResponse.json({ error: 'UID do usuário ausente.' }, { status: 400 });
+    }
+    
+    await connectDB();
+
+    // "Delete" the avatar by nullifying the URL field in the database.
+    // This prevents the old image from being served.
+    await Usuario.findOneAndUpdate(
+      { uidFirebase: uid },
+      { $set: { fotoPerfilUrl: null } }
+    );
+    
+    return NextResponse.json({ success: true, message: "Referência da foto de perfil removida." });
+
+  } catch (error: any) {
+    console.error('Erro ao deletar avatar:', error);
     return NextResponse.json({ error: 'Erro interno no servidor', details: error.message }, { status: 500 });
   }
 }

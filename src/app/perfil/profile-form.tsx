@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -98,7 +97,6 @@ export function ProfileForm() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
         if (currentUser) {
-            // Use a timestamp to prevent browser caching of the avatar
             setPhotoPreview(`/api/avatar/${currentUser.uid}?t=${new Date().getTime()}`);
             try {
                 const res = await fetch(`/api/usuarios/get/${currentUser.uid}`);
@@ -156,7 +154,12 @@ export function ProfileForm() {
 
         try {
             let newPhotoURL = user.photoURL;
+
             if (photoFile) {
+                // 1. Delete the old picture reference first
+                await fetch(`/api/upload/avatar/${user.uid}`, { method: 'DELETE' });
+
+                // 2. Upload the new picture
                 const formData = new FormData();
                 formData.append('file', photoFile);
 
@@ -169,16 +172,18 @@ export function ProfileForm() {
                 newPhotoURL = uploadData.photoURL; 
             }
 
+            // 3. Update Firebase Auth profile
             await updateProfile(user, { 
                 displayName: data.fullName,
                 photoURL: newPhotoURL 
             });
             
+            // 4. Update MongoDB with all profile data
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                fotoPerfilUrl: newPhotoURL,
+                fotoPerfilUrl: newPhotoURL, // Save the final URL
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -202,7 +207,8 @@ export function ProfileForm() {
                 const result = await response.json();
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
-
+            
+            // 5. Update password if necessary
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -217,7 +223,8 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
-             window.location.reload();
+            // 6. Reload to reflect changes globally
+            window.location.reload();
 
         } catch (error: any) {
             console.error("Failed to update profile:", error);
