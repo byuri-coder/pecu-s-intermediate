@@ -9,19 +9,49 @@ import Image from 'next/image';
 
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar, Wheat } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar, Wheat, ChevronDown } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
 
 
-const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-  <Link href={href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-    {children}
-  </Link>
-);
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a">
+>(({ className, title, children, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  )
+})
+ListItem.displayName = "ListItem"
+
 
 const NotificationDot = () => (
     <span className="relative flex h-2 w-2 ml-2">
@@ -30,20 +60,35 @@ const NotificationDot = () => (
     </span>
 );
 
+const marketplaceComponents: { title: string; href: string; description: string }[] = [
+  {
+    title: "Crédito de Carbono",
+    href: "/credito-de-carbono",
+    description: "Invista em projetos sustentáveis e neutralize sua pegada de carbono.",
+  },
+  {
+    title: "Terras Rurais",
+    href: "/terras-rurais",
+    description: "Encontre propriedades para agronegócio, mineração ou arrendamento.",
+  },
+  {
+    title: "Créditos Tributários",
+    href: "/tributos",
+    description: "Otimize sua carga fiscal com saldos credores de ICMS e outros tributos.",
+  },
+  {
+    title: "Grãos",
+    href: "/graos",
+    description: "Negocie insumos, grãos físicos e contratos futuros com segurança.",
+  },
+]
+
+
 export function Header() {
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [hasNewInvoices, setHasNewInvoices] = React.useState(false);
   const [hasNewDuplicates, setHasNewDuplicates] = React.useState(false);
-
-
-  const navItems = [
-    { href: '/graos', label: 'Grãos' },
-    { href: '/tributos', label: 'Tributos' },
-    { href: '/terras-rurais', label: 'Terras Rurais' },
-    { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
-    { href: '/agente-de-assistencia', label: 'Calculadora e Simuladores', icon: Calculator },
-  ];
 
   React.useEffect(() => {
     const auth = getAuth(app);
@@ -86,14 +131,33 @@ export function Header() {
               PECU'S INTERMEDIATE
             </span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navItems.map((item) => (
-              <Link key={`${item.href}-${item.label}`} href={item.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center">
-                 {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : null}
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <NavigationMenu>
+            <NavigationMenuList>
+                <NavigationMenuItem>
+                    <NavigationMenuTrigger>Marketplace</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                        {marketplaceComponents.map((component) => (
+                        <ListItem
+                            key={component.title}
+                            title={component.title}
+                            href={component.href}
+                        >
+                            {component.description}
+                        </ListItem>
+                        ))}
+                    </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                    <Link href="/agente-de-assistencia" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Calculadora e Simuladores
+                    </NavigationMenuLink>
+                    </Link>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
 
         <Sheet>
@@ -113,12 +177,14 @@ export function Header() {
                 <span className="font-bold">PECU'S INTERMEDIATE</span>
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
-              {navItems.map((item) => (
-                <Link key={`${item.href}-${item.label}-mobile`} href={item.href} className="text-sm font-medium text-foreground flex items-center">
-                  {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : null}
-                  {item.label}
+              {marketplaceComponents.map((item) => (
+                <Link key={`${item.href}-mobile`} href={item.href} className="text-sm font-medium text-foreground">
+                  {item.title}
                 </Link>
               ))}
+                <Link href="/agente-de-assistencia" className="text-sm font-medium text-foreground flex items-center">
+                  <Calculator className="mr-2 h-4 w-4" /> Calculadora e Simuladores
+                </Link>
             </div>
           </SheetContent>
         </Sheet>
