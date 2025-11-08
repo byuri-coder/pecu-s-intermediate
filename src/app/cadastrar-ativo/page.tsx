@@ -1,3 +1,4 @@
+
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RegisterCreditForm } from '../register-credit/register-credit-form';
@@ -73,7 +74,7 @@ export default function RegisterAssetPage() {
               <Card className="border-primary/20">
                   <CardHeader>
                     <CardTitle>Formulário de Grãos</CardTitle>
-                    <CardDescription>Selecione a categoria e preencha os detalhes para anunciar seus grãos.</CardDescription>
+                    <CardDescription>Preencha os detalhes abaixo para cadastrar um novo lote de grãos.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <RegisterGrainForm />
