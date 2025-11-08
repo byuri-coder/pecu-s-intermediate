@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table, Banknote, Handshake } from 'lucide-react';
+import { CalculatorIcon, AlertTriangle, BadgePercent, Landmark, FileText, Minus, Plus, Scale, ReceiptText, Briefcase, Users, Percent, TrendingUp, Table, Banknote, Handshake, Loader2, UserX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DiscountCalculator, SimpleInterestCalculator, CompoundInterestCalculator } from './calculator';
@@ -11,6 +11,8 @@ import { IcmsCalculator, PisCofinsCalculator, DifalCalculator, IcmsStCalculator,
 import { TaxRegimeComparator, EmployeeCostCalculator, ProjectedCashFlowCalculator, ProfitMarginCalculator } from './business-calculators';
 import { AmortizationCalculator } from './amortization-calculator';
 import { Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis } from 'recharts';
+import { useUser } from '@/firebase';
+import { Button } from '@/components/ui/button';
 
 const calculators = [
     {
@@ -203,6 +205,7 @@ const FinancialChart = ({ data, chartType }: { data: any, chartType: string }) =
 export default function CalculatorHubPage() {
     const [selectedCalculatorKey, setSelectedCalculatorKey] = React.useState(calculators[0].title);
     const [chartData, setChartData] = React.useState(null);
+    const { user, loading } = useUser();
 
     const SelectedCalculator = React.useMemo(() => {
         return calculators.find(c => c.title === selectedCalculatorKey)?.component || null;
@@ -214,6 +217,40 @@ export default function CalculatorHubPage() {
             setChartData(null); // Reset chart on new selection
         }
     };
+
+    if (loading) {
+        return (
+            <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-center min-h-[50vh]">
+                <Loader2 className="h-10 w-10 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-lg flex items-center justify-center min-h-[50vh]">
+                <Card className="text-center w-full">
+                    <CardHeader>
+                         <div className="mx-auto bg-primary/10 text-primary p-4 rounded-full w-fit mb-4">
+                            <UserX className="h-10 w-10" />
+                        </div>
+                        <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
+                        <CardDescription>
+                            Por favor, faça login ou crie uma conta para acessar nossas calculadoras e simuladores.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2">
+                        <Button asChild>
+                            <Link href="/login">Fazer Login</Link>
+                        </Button>
+                         <Button variant="outline" asChild>
+                            <Link href="/cadastro">Criar Conta</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
 
   return (
