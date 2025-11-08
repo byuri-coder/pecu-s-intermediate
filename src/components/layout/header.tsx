@@ -38,7 +38,7 @@ export function Header() {
 
 
   const navItems = [
-    { href: '/graos', label: 'Grãos', icon: Wheat },
+    { href: '/graos', label: 'Grãos' },
     { href: '/tributos', label: 'Tributos' },
     { href: '/terras-rurais', label: 'Terras Rurais' },
     { href: '/credito-de-carbono', label: 'Crédito de Carbono' },
@@ -83,7 +83,7 @@ export function Header() {
           <Link href="/credito-de-carbono" className="mr-6 flex items-center space-x-2">
             <Logo className="h-8 w-8" />
             <span className="hidden font-bold sm:inline-block">
-              PECU'S INTERMEDIATE
+              PECU'S
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -110,7 +110,7 @@ export function Header() {
           <SheetContent side="left" className="pr-0">
             <Link href="/" className="mr-6 flex items-center space-x-2">
                 <Logo className="h-8 w-8" />
-                <span className="font-bold">PECU'S INTERMEDIATE</span>
+                <span className="font-bold">PECU'S</span>
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
               {navItems.map((item) => (
