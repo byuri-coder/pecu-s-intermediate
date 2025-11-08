@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const anuncio = await Anuncio.findById(id).lean();
 
-    if (!anuncio) {
+    if (!anuncio || anuncio.status === 'Deletado') {
       return NextResponse.json({ ok: false, error: "Anúncio não encontrado" }, { status: 404 });
     }
 
@@ -72,11 +72,20 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const { id } = params;
 
     try {
-        const deleted = await Anuncio.findByIdAndDelete(id);
+        const asset = await Anuncio.findById(id);
 
-        if (!deleted) {
+        if (!asset) {
             return NextResponse.json({ error: "Ativo não encontrado" }, { status: 404 });
         }
+        
+        if (asset.status === 'Vendido') {
+             return NextResponse.json({ error: "Anúncios vendidos não podem ser excluídos." }, { status: 400 });
+        }
+        
+        asset.status = 'Deletado';
+        asset.deletedAt = new Date();
+        await asset.save();
+        
         return NextResponse.json({ message: "Ativo excluído com sucesso" });
     } catch (err: any) {
         console.error(`Erro /api/anuncios/${id} (DELETE):`, err);

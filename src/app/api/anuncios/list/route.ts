@@ -47,11 +47,12 @@ export async function GET(req: Request) {
     if (tipo) filter.tipo = tipo;
 
     if (uidFirebase) {
-        // If fetching for a specific user, get all their assets regardless of status
+        // If fetching for a specific user, get all their assets except deleted ones
         filter.uidFirebase = uidFirebase;
+        filter.status = { $ne: "Deletado" };
     } else {
         // For public marketplaces, only show available/active assets
-        filter.status = { $in: ["Disponível", "Ativo"] };
+        filter.status = { $in: ["Disponível", "Ativo", "Negociando"] };
     }
 
     const skip = (page - 1) * limit;

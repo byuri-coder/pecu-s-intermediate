@@ -8,7 +8,8 @@ const AnuncioSchema = new Schema({
   tipo: { type: String, enum: ["rural-land", "carbon-credit", "tax-credit", "grain-insumo", "grain-pos-colheita", "grain-futuro", "other"], required: true },
   price: { type: Number },
   currency: { type: String, default: "BRL" },
-  status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo"], default: "Disponível", index: true },
+  status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo", "Deletado"], default: "Disponível", index: true },
+  deletedAt: { type: Date, default: null }, // Campo para soft delete
   
   imagens: { type: [{ 
     url: String, 
