@@ -82,8 +82,8 @@ export function Header() {
         <div className="mr-4 hidden md:flex">
           <Link href="/credito-de-carbono" className="mr-6 flex items-center space-x-2">
             <Logo className="h-8 w-8" />
-            <span className="hidden font-bold sm:inline-block">
-              PECU'S
+            <span className="hidden font-semibold sm:inline-block text-sm">
+              PECU'S INTERMEDIATE
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -110,7 +110,7 @@ export function Header() {
           <SheetContent side="left" className="pr-0">
             <Link href="/" className="mr-6 flex items-center space-x-2">
                 <Logo className="h-8 w-8" />
-                <span className="font-bold">PECU'S</span>
+                <span className="font-bold">PECU'S INTERMEDIATE</span>
             </Link>
             <div className="flex flex-col space-y-3 pt-6">
               {navItems.map((item) => (
