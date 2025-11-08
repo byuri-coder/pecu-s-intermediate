@@ -1,9 +1,10 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RegisterCreditForm } from '../register-credit/register-credit-form';
-import { Leaf, Mountain, Landmark } from 'lucide-react';
+import { Leaf, Mountain, Landmark, Wheat } from 'lucide-react';
 import { RegisterRuralLandForm } from './register-rural-land-form';
 import { RegisterTaxCreditForm } from './register-tax-credit-form';
+import { RegisterGrainForm } from './register-grain-form';
 
 export default function RegisterAssetPage() {
   return (
@@ -17,7 +18,7 @@ export default function RegisterAssetPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="carbon-credit">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 mb-6">
               <TabsTrigger value="carbon-credit">
                 <Leaf className="mr-2 h-4 w-4" />
                 Crédito de Carbono
@@ -29,6 +30,10 @@ export default function RegisterAssetPage() {
               <TabsTrigger value="tax-credit">
                 <Landmark className="mr-2 h-4 w-4" />
                 Crédito Tributário
+              </TabsTrigger>
+               <TabsTrigger value="grain">
+                <Wheat className="mr-2 h-4 w-4" />
+                Grãos
               </TabsTrigger>
             </TabsList>
             <TabsContent value="carbon-credit">
@@ -61,6 +66,17 @@ export default function RegisterAssetPage() {
                   </CardHeader>
                   <CardContent>
                       <RegisterTaxCreditForm />
+                  </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="grain">
+              <Card className="border-primary/20">
+                  <CardHeader>
+                    <CardTitle>Formulário de Grãos</CardTitle>
+                    <CardDescription>Selecione a categoria e preencha os detalhes para anunciar seus grãos.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <RegisterGrainForm />
                   </CardContent>
               </Card>
             </TabsContent>

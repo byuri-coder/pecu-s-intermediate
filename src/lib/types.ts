@@ -49,6 +49,61 @@ export type RuralLand = {
   thumbnailId?: string;
 };
 
+// Types for Grains Marketplace
+export type GrainInsumo = {
+  id: string;
+  vendedorId: string;
+  tipo: 'grain-insumo';
+  grain: string;
+  cultivar: string;
+  tecnologia?: string;
+  ciclo?: string;
+  tratamento?: { fungicida: boolean; inseticida: boolean; outros?: string };
+  testes?: { vigor?: number; germinacao: number };
+  zonaRecomendada?: string;
+  precoPorSaca: number;
+  quantidadeDisponivel: number;
+  imagens?: { url: string; type: 'image' | 'video', alt?: string }[];
+  status: 'Disponível' | 'Negociando' | 'Vendido';
+  ownerId: string;
+  createdAt: string | Date;
+}
+
+export type GrainPosColheita = {
+  id: string;
+  vendedorId: string;
+  tipo: 'grain-pos-colheita';
+  grain: string;
+  safra: string;
+  qualidade?: { umidade?: number; impurezas?: number; avariados?: number; laudoUrl?: string };
+  modalidadeEntrega: { tipo: 'EX-SILO' | 'CIF' | 'FOB'; localRetirada?: string };
+  precoPorSaca: number;
+  quantidadeDisponivel: number;
+  imagens?: { url: string; type: 'image' | 'video', alt?: string }[];
+  status: 'Disponível' | 'Negociando' | 'Vendido';
+  ownerId: string;
+  createdAt: string | Date;
+}
+
+export type GrainFuturo = {
+  id: string;
+  vendedorId: string;
+  tipo: 'grain-futuro';
+  grain: string;
+  safra: string;
+  quantidade: number;
+  dataEntrega: Date;
+  precoFuturo: number;
+  instrumento: { tipo: 'CPR' | 'TERMO'; documentoUrl?: string };
+  garantias?: { seguroRural?: boolean; apoliceUrl?: string; alienacaoFiduciaria?: boolean; bemAlienadoDescricao?: string };
+  pagamento?: { sinalPercentual?: number; mecanismo?: 'escrow' | 'direto' };
+  imagens?: { url: string; type: 'image' | 'video', alt?: string }[];
+  status: 'Disponível' | 'Negociando' | 'Vendido';
+  ownerId: string;
+  createdAt: string | Date;
+}
+
+
 export type Operation = {
   id: string;
   date: Date;
@@ -137,8 +192,8 @@ export interface Conversation {
 }
 
 
-export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land' | 'other';
-export type Asset = CarbonCredit | TaxCredit | RuralLand;
+export type AssetType = 'carbon-credit' | 'tax-credit' | 'rural-land' | 'grain-insumo' | 'grain-pos-colheita' | 'grain-futuro' | 'other';
+export type Asset = CarbonCredit | TaxCredit | RuralLand | GrainInsumo | GrainPosColheita | GrainFuturo;
 
 // Adicionando um tipo para Transação vinda do Firestore
 export type FirestoreTransaction = {

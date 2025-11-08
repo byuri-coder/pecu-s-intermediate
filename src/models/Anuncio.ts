@@ -5,7 +5,7 @@ const AnuncioSchema = new Schema({
   uidFirebase: { type: String, required: true, index: true }, // vinculação ao usuário
   titulo: { type: String, required: true },
   descricao: { type: String },
-  tipo: { type: String, enum: ["rural-land", "carbon-credit", "tax-credit", "other"], default: "rural-land" },
+  tipo: { type: String, enum: ["rural-land", "carbon-credit", "tax-credit", "grain-insumo", "grain-pos-colheita", "grain-futuro", "other"], required: true },
   price: { type: Number },
   currency: { type: String, default: "BRL" },
   status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo"], default: "Disponível", index: true },
