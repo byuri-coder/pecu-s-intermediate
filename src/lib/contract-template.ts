@@ -86,6 +86,131 @@ CNPJ: ${contract.fields.buyer.cnpj || '[CNPJ do Comprador]'}
         }
     };
 
+    if (assetType.startsWith('grain-')) {
+        const totalValue = asset.price || 0;
+        const grainTemplate = `
+CONTRATO DE COMPRA E VENDA DE GRÃOS
+
+Pelo presente instrumento particular, as partes abaixo identificadas celebram o presente CONTRATO DE COMPRA E VENDA DE GRÃOS, que se regerá pelas cláusulas e condições seguintes:
+
+1. IDENTIFICAÇÃO DAS PARTES
+
+1.1. VENDEDOR:
+Nome/Razão Social: ${parties.seller.nome}
+CPF/CNPJ: ${parties.seller.cpfCnpj}
+Endereço completo: ${parties.seller.endereco}
+Contato: ${parties.seller.email}
+
+1.2. COMPRADOR:
+Nome/Razão Social: ${contract.fields.buyer.razaoSocial}
+CPF/CNPJ: ${contract.fields.buyer.cnpj}
+Endereço completo: ${contract.fields.buyer.endereco}
+Contato: ${contract.fields.buyer.email}
+
+2. OBJETO DO CONTRATO
+
+2.1. O presente contrato tem por objeto a compra e venda de grãos, conforme abaixo especificado:
+
+Tipo de Grão: ${'grain' in asset ? asset.grain : '[tipo_grao]'}
+Cultivar/Variedade: ${'cultivar' in asset ? asset.cultivar : '[cultivar]'}
+Safra: ${'safra' in asset ? asset.safra : '[safra]'}
+Quantidade negociada: ${'quantity' in asset ? asset.quantity : ('quantidade' in asset ? asset.quantidade : 0)} sacas
+Peso por saca: 60 kg
+Qualidade:
+Umidade: ${'qualidade' in asset && asset.qualidade?.umidade ? `${asset.qualidade.umidade}%` : '[umidade]%'}
+Impurezas: ${'qualidade' in asset && asset.qualidade?.impurezas ? `${asset.qualidade.impurezas}%` : '[impurezas]%'}
+Avariados: ${'qualidade' in asset && asset.qualidade?.avariados ? `${asset.qualidade.avariados}%` : '[avariados]%'}
+Laudo de Classificação: ${'qualidade' in asset && asset.qualidade?.laudoUrl ? asset.qualidade.laudoUrl : '[url_laudo]'}
+
+Parágrafo único. A qualidade deverá atender às normas do MAPA – Ministério da Agricultura e Pecuária, bem como às especificações deste contrato.
+
+3. PREÇO E CONDIÇÕES DE PAGAMENTO
+
+3.1. Preço unitário por saca: R$ ${'precoPorSaca' in asset && asset.precoPorSaca ? formatCurrency(asset.precoPorSaca) : ('precoFuturo' in asset && asset.precoFuturo ? formatCurrency(asset.precoFuturo) : formatCurrency(totalValue))}
+3.2. Valor total da negociação: R$ ${formatCurrency(totalValue)}
+
+3.3. Condição de pagamento:
+Modalidade: ${contract.fields.seller.paymentMethod === 'vista' ? 'À Vista' : 'Parcelado'}
+Número de parcelas: ${contract.fields.seller.installments || 1}
+Valor de cada parcela: [valor_parcela]
+Datas de vencimento: [datas_vencimento]
+Sinal/Entrada (se houver): R$ [sinal] em [data_sinal]
+
+3.4. Pagamentos serão realizados via: PIX ou Transferência Bancária
+
+4. MODALIDADE DE ENTREGA
+
+A entrega ocorrerá na modalidade ${'modalidadeEntrega' in asset && asset.modalidadeEntrega ? asset.modalidadeEntrega.tipo : '[modalidade_entrega]'}, conforme descrito:
+
+4.1. EX-SILO
+Retirada pelo comprador no local:
+${'modalidadeEntrega' in asset && asset.modalidadeEntrega?.localRetirada ? asset.modalidadeEntrega.localRetirada : '[endereco_silo]'}, responsável técnico: [responsavel_silo].
+
+4.2. FOB
+Entrega realizada pelo vendedor até [local_fob].
+
+4.3. CIF
+Entrega na localização do comprador: [endereco_entrega], com frete incluso no preço.
+
+4.4. Data/hora da entrega: ${'dataEntrega' in asset ? new Date(asset.dataEntrega).toLocaleDateString('pt-BR') : '[data_entrega]'}.
+
+5. GARANTIAS E SEGURANÇA JURÍDICA
+5.1. Para operações futuras (CPR/Termo)
+
+Se aplicável, este contrato acompanha o instrumento:
+Tipo: ${'instrumento' in asset ? asset.instrumento.tipo : '[tipo_instrumento]'}
+Número da CPR/Termo: [numero_cpr]
+Documento: ${'instrumento' in asset && asset.instrumento.documentoUrl ? asset.instrumento.documentoUrl : '[url_documento_cpr]'}
+
+5.2. Garantias concedidas pelo vendedor
+Seguro rural: ${'garantias' in asset && asset.garantias?.seguroRural ? 'Sim' : 'Não'}
+Número da apólice: ${'garantias' in asset && asset.garantias?.apoliceUrl ? asset.garantias.apoliceUrl : '[numero_apolice]'}
+Alienação fiduciária: ${'garantias' in asset && asset.garantias?.alienacaoFiduciaria ? 'Sim' : 'Não'}
+Bem alienado: ${'garantias' in asset && asset.garantias?.bemAlienadoDescricao ? asset.garantias.bemAlienadoDescricao : '[descricao_bem_alienado]'}
+
+6. OBRIGAÇÕES DAS PARTES
+6.1. Obrigações do Vendedor
+O Vendedor se compromete a:
+a) Entregar os grãos dentro do padrão acordado.
+b) Fornecer documentos obrigatórios: Nota fiscal nº [numero_nf] e Laudo de classificação (quando aplicável).
+c) Manter o produto armazenado em condições adequadas até a entrega.
+d) Responder por vícios ou defeitos ocultos.
+
+6.2. Obrigações do Comprador
+O Comprador se compromete a:
+a) Efetuar o pagamento nos prazos estabelecidos.
+b) Retirar o produto (em caso EX-SILO) dentro do período acertado.
+c) Fornecer informações corretas e documentos necessários.
+
+7. PENALIDADES E MULTAS
+7.1. Atraso no pagamento: Multa de 2% + juros de 1% a.m.
+7.2. Atraso na entrega: Multa de 2% sobre o valor ainda não entregue.
+7.3. Inadimplemento total: A parte inadimplente pagará multa de 10%, sem prejuízo de perdas e danos.
+
+8. RESCISÃO CONTRATUAL
+Poderá ser rescindido em caso de: descumprimento de qualquer cláusula, fraude, falência, ou caso fortuito/força maior. A rescisão deve ser formalizada por escrito.
+
+9. FORO
+As partes elegem o foro da comarca de ${parties.seller.cidade || '[Cidade do Vendedor]'}, renunciando a qualquer outro.
+
+10. DISPOSIÇÕES FINAIS
+a) As partes declaram ter lido, compreendido e concordado integralmente.
+b) A assinatura eletrônica realizada pela plataforma PECU’S INTERMEDIATE é válida e produz todos os efeitos legais (Lei 14.063/2020).
+c) Este contrato passa a valer após o aceite digital do comprador e vendedor.
+
+✅ Assinaturas Eletrônicas
+
+VENDEDOR:
+Assinado por: ${parties.seller.nome}
+Data: ${contract.acceptances.seller.date ? new Date(contract.acceptances.seller.date).toLocaleString('pt-BR') : '[data_assinatura_vendedor]'}
+
+COMPRADOR:
+Assinado por: ${contract.fields.buyer.razaoSocial}
+Data: ${contract.acceptances.buyer.date ? new Date(contract.acceptances.buyer.date).toLocaleString('pt-BR') : '[data_assinatura_comprador]'}
+`;
+        return grainTemplate;
+    }
+
 
     // Specific clauses for each asset type
     const clauses: { [key in AssetType]: string } = {
@@ -122,7 +247,11 @@ CLÁUSULA SEGUNDA – DO PREÇO E CONDIÇÕES DE PAGAMENTO
 
 CLÁUSULA TERCEIRA – DA POSSE E DA ESCRITURA
 3.1. A posse do Imóvel será transferida ao CESSIONÁRIO após a quitação integral do preço, momento em que a CEDENTE se obriga a outorgar a competente Escritura Pública de Compra e Venda.
-`
+`,
+        'grain-insumo': '',
+        'grain-pos-colheita': '',
+        'grain-futuro': '',
+        'other': ''
     };
 
     const commonClauses = `

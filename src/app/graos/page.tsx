@@ -26,38 +26,44 @@ export default function GrainsMarketplacePage() {
       setLoadingMore(true);
     } else {
       setLoading(true);
+      setGrains([]); // Clear previous results for a new filter/initial load
     }
     
     try {
       const grainTypes = ['grain-insumo', 'grain-pos-colheita', 'grain-futuro'];
-      const responses = await Promise.all(
-          grainTypes.map(type => fetch(`/api/anuncios/list?page=${currentPage}&limit=${PAGE_SIZE / grainTypes.length}&tipo=${type}`))
+      
+      const requests = grainTypes.map(type => 
+        fetch(`/api/anuncios/list?page=${currentPage}&limit=${PAGE_SIZE / grainTypes.length}&tipo=${type}`)
       );
+      
+      const responses = await Promise.all(requests);
       
       let allNewGrains: Asset[] = [];
       let stillHasMore = false;
 
       for (const response of responses) {
           if (!response.ok) {
-            console.error('Failed to fetch grains for a type');
+            console.error('Failed to fetch grains for a type', response.statusText);
             continue;
           }
           const data = await response.json();
-          const formattedGrains = data.anuncios.map((anuncio: any) => ({
-            ...anuncio.metadados,
-            id: anuncio._id,
-            title: anuncio.titulo,
-            description: anuncio.descricao,
-            price: anuncio.price,
-            status: anuncio.status,
-            ownerId: anuncio.uidFirebase,
-            createdAt: anuncio.createdAt,
-            tipo: anuncio.tipo,
-            imagens: anuncio.imagens,
-          }));
-          allNewGrains = allNewGrains.concat(formattedGrains);
-          if (data.anuncios.length >= (PAGE_SIZE / grainTypes.length)) {
-              stillHasMore = true;
+          if (data.ok) {
+            const formattedGrains = data.anuncios.map((anuncio: any) => ({
+              ...anuncio.metadados,
+              id: anuncio._id,
+              title: anuncio.titulo,
+              description: anuncio.descricao,
+              price: anuncio.price,
+              status: anuncio.status,
+              ownerId: anuncio.uidFirebase,
+              createdAt: anuncio.createdAt,
+              tipo: anuncio.tipo,
+              imagens: anuncio.imagens,
+            }));
+            allNewGrains = allNewGrains.concat(formattedGrains);
+            if (data.anuncios.length >= (PAGE_SIZE / grainTypes.length)) {
+                stillHasMore = true;
+            }
           }
       }
       
@@ -67,7 +73,7 @@ export default function GrainsMarketplacePage() {
        if (isLoadMore) {
         setPage(currentPage + 1);
       } else {
-        setPage(2);
+        setPage(2); // Set up the next page to be loaded
       }
 
     } catch (error) {
