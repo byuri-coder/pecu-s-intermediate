@@ -30,6 +30,14 @@ interface ContractState {
   [key: string]: any;
 }
 
+// Function to calculate the negotiation fee based on the value
+function calcularTaxaNegociacao(valor: number): number {
+  if (valor <= 50000) return 0.04;       // 4%
+  if (valor <= 200000) return 0.035;     // 3.5%
+  if (valor <= 1000000) return 0.03;     // 3%
+  return 0.02;                           // 2%
+}
+
 
 export function getContractTemplate(assetType: AssetType, asset: Asset, contract: ContractState, parties: Parties): string {
     const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -211,6 +219,10 @@ Data: ${contract.acceptances.buyer.date ? new Date(contract.acceptances.buyer.da
         return grainTemplate;
     }
 
+    const totalValue = 'price' in asset && asset.price ? asset.price : ('pricePerCredit' in asset && 'quantity' in asset && asset.pricePerCredit && asset.quantity ? asset.pricePerCredit * asset.quantity : 0);
+    const taxaPercentual = calcularTaxaNegociacao(totalValue) * 100;
+    const valorTaxa = formatCurrency(totalValue * (taxaPercentual / 100));
+
 
     // Specific clauses for each asset type
     const clauses: { [key in AssetType]: string } = {
@@ -269,18 +281,24 @@ CLÁUSULA QUINTA – OBRIGAÇÕES DAS PARTES
     a) Realizar o pagamento do preço nos termos e condições aqui estabelecidos.
     b) Fornecer as informações necessárias para o registro da transferência dos créditos em seu nome.
 
-CLÁUSULA SEXTA – CONFIDENCIALIDADE
-6.1. As partes se obrigam a manter em absoluto sigilo todas as informações comerciais, financeiras e técnicas a que tiverem acesso em razão deste Contrato, não podendo revelá-las a terceiros sem o prévio consentimento por escrito da outra parte, salvo quando exigido por lei ou autoridade competente.
+CLÁUSULA SEXTA - TAXA DE INTERMEDIAÇÃO
+6.1. A presente operação está sujeita à taxa de intermediação aplicada pela plataforma PECU’S INTERMEDIATE, calculada de forma regressiva sobre o valor total do contrato, conforme seguinte critério:
+    - 4% (quatro por cento) para operações até R$ 50.000,00;
+    - 3,5% (três vírgula cinco por cento) para operações entre R$ 50.001,00 e R$ 200.000,00;
+    - 3% (três por cento) para operações entre R$ 200.001,00 e R$ 1.000.000,00;
+    - 2% (dois por cento) para operações acima de R$ 1.000.000,00.
+6.2. O valor devido a título de intermediação desta operação é de ${valorTaxa}, correspondente ao percentual aplicável de ${taxaPercentual.toFixed(1).replace('.', ',')}% sobre o valor total do contrato. Este valor será faturado pela plataforma diretamente contra a CEDENTE.
 
-CLÁUSULA SÉTIMA – RESCISÃO
-7.1. O presente Contrato poderá ser rescindido de pleno direito, independentemente de notificação judicial ou extrajudicial, em caso de inadimplemento de qualquer de suas cláusulas ou condições, sujeitando a parte infratora ao pagamento de multa de 10% (dez por cento) sobre o valor total da negociação, sem prejuízo da apuração de perdas e danos.
+CLÁUSULA SÉTIMA – CONFIDENCIALIDADE
+7.1. As partes se obrigam a manter em absoluto sigilo todas as informações comerciais, financeiras e técnicas a que tiverem acesso em razão deste Contrato, não podendo revelá-las a terceiros sem o prévio consentimento por escrito da outra parte, salvo quando exigido por lei ou autoridade competente.
 
-CLÁUSULA OITAVA – DISPOSIÇÕES GERAIS
-8.1. O presente Contrato constitui o acordo integral entre as partes, substituindo quaisquer entendimentos, acordos ou representações anteriores, verbais ou escritas.
-8.2. A eventual tolerância de qualquer das partes quanto ao descumprimento de quaisquer cláusulas deste Contrato não constituirá novação, renúncia ou precedente.
+CLÁUSULA OITAVA – RESCISÃO
+8.1. O presente Contrato poderá ser rescindido de pleno direito, independentemente de notificação judicial ou extrajudicial, em caso de inadimplemento de qualquer de suas cláusulas ou condições, sujeitando a parte infratora ao pagamento de multa de 10% (dez por cento) sobre o valor total da negociação, sem prejuízo da apuração de perdas e danos.
 
-CLÁUSULA NONA – SUCESSÃO
-9.1. Este Contrato obriga as partes e seus sucessores a qualquer título.
+CLÁUSULA NONA – DISPOSIÇÕES GERAIS
+9.1. O presente Contrato constitui o acordo integral entre as partes, substituindo quaisquer entendimentos, acordos ou representações anteriores, verbais ou escritas.
+9.2. A eventual tolerância de qualquer das partes quanto ao descumprimento de quaisquer cláusulas deste Contrato não constituirá novação, renúncia ou precedente.
+9.3. Este Contrato obriga as partes e seus sucessores a qualquer título.
 `;
   
     return header + (clauses[assetType] || '') + commonClauses + footer;

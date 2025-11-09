@@ -8,8 +8,14 @@ import { Usuario } from '@/models/Usuario';
 import type { Asset, CompletedDeal } from '@/lib/types';
 import mongoose from 'mongoose';
 
-// This should come from a config file or environment variable
-const SERVICE_FEE_PERCENTAGE = 0.05; // 5%
+// Function to calculate the negotiation fee based on the value
+function calcularTaxaNegociacao(valor: number): number {
+  if (valor <= 50000) return 0.04;       // 4%
+  if (valor <= 200000) return 0.035;     // 3.5%
+  if (valor <= 1000000) return 0.03;     // 3%
+  return 0.02;                           // 2%
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -54,7 +60,8 @@ export async function POST(req: Request) {
     await Duplicata.insertMany(duplicatesToCreate);
 
     // --- 2. Generate and Save Service Fee Invoice ---
-    const serviceFee = totalValue * SERVICE_FEE_PERCENTAGE;
+    const serviceFeePercentage = calcularTaxaNegociacao(totalValue);
+    const serviceFee = totalValue * serviceFeePercentage;
     const feeDueDate = new Date();
     feeDueDate.setDate(today.getDate() + 7); // 7 days to pay
 
