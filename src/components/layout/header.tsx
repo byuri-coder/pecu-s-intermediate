@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar, Wheat, ChevronDown } from 'lucide-react';
+import { Menu, UserCircle, LogOut, LayoutDashboard, FilePlus, Building, User, Calculator, MessageSquare, FileSignature, Shield, TrendingUp, Receipt, FileText, Calendar, Wheat, ChevronDown, Share2 } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -248,6 +248,9 @@ export function Header() {
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/cadastrar-ativo"><FilePlus className="mr-2 h-4 w-4" /><span>Cadastrar Ativos</span></Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/conectar-crm"><Share2 className="mr-2 h-4 w-4" /><span>Conectar CRM</span></Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/filiais"><Building className="mr-2 h-4 w-4" /><span>Gerenciar Filiais</span></Link>

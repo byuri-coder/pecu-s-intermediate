@@ -1,3 +1,4 @@
+
 // src/models/Anuncio.ts
 import mongoose, { Schema, models } from "mongoose";
 
@@ -8,8 +9,9 @@ const AnuncioSchema = new Schema({
   tipo: { type: String, enum: ["rural-land", "carbon-credit", "tax-credit", "grain-insumo", "grain-pos-colheita", "grain-futuro", "other"], required: true },
   price: { type: Number },
   currency: { type: String, default: "BRL" },
-  status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo", "Deletado"], default: "Disponível", index: true },
+  status: { type: String, enum: ["Disponível", "Negociando", "Vendido", "Pausado", "Ativo", "Deletado", "inativo", "cancelado", "finalizado"], default: "Disponível", index: true },
   deletedAt: { type: Date, default: null }, // Campo para soft delete
+  crm_id: { type: String, index: true }, // Campo para ID do CRM
   
   imagens: { type: [{ 
     url: String, 
