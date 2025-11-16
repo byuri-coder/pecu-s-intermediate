@@ -71,9 +71,8 @@ export default function ConectarCRMPage() {
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ploomes">Ploomes</SelectItem>
-                <SelectItem value="rdstation">RD Station</SelectItem>
-                <SelectItem value="pipenrun">PipenRun</SelectItem>
+                <SelectItem value="externo">CRM Externo</SelectItem>
+                <SelectItem value="interno">CRM Interno</SelectItem>
               </SelectContent>
             </Select>
           </div>
