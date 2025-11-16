@@ -1,4 +1,3 @@
-
 // src/models/Anuncio.ts
 import mongoose, { Schema, models } from "mongoose";
 
