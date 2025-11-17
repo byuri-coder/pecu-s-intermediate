@@ -3,8 +3,9 @@ import mongoose, { Schema, models } from "mongoose";
 
 const CrmIntegrationSchema = new Schema({
   userId: { type: String, required: true, unique: true, index: true },
-  crm: { type: String, required: true, enum: ["ploomes", "rdstation", "pipenrun"] },
-  apiKey: { type: String, required: true }, // Should be encrypted at rest
+  integrationType: { type: String, enum: ['api', 'file'], required: true },
+  crm: { type: String, enum: ["ploomes", "rdstation", "pipenrun", "externo", "interno"] },
+  apiKey: { type: String }, // Should be encrypted at rest
   accountId: { type: String },
   connectedAt: { type: Date, default: Date.now },
   active: { type: Boolean, default: true },
