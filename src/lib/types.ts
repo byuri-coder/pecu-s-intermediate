@@ -158,8 +158,9 @@ export interface CompletedDeal {
     duplicates: Duplicata[];
     seller: { name: string; doc: string, address: string };
     buyer: { name: string; doc: string, address: string };
-    blockchain?: {
+    blockchain: {
       transactionHash: string;
+      merkleRoot: string;
       blockTimestamp: string;
     };
 }

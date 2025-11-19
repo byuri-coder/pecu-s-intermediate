@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import { FileText, Users, Download, Fingerprint, Loader2 } from 'lucide-react';
+import { FileText, Users, Download, Fingerprint, Loader2, Copy, Layers } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -137,10 +138,10 @@ export default function DuplicatasPage() {
     doc.save(`duplicatas_${deal.assetId}.pdf`);
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     toast({
-        title: `Hash copiado!`,
+        title: `${field} copiado!`,
     });
   }
 
@@ -187,20 +188,31 @@ export default function DuplicatasPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 border border-t-0 rounded-b-lg space-y-4">
-                     <div className="flex items-center justify-between">
+                     <div className="flex items-center justify-between flex-wrap gap-4">
                          <Button onClick={() => handleDownloadPdf(deal)} size="sm" variant="outline">
                             <Download className="mr-2 h-4 w-4" />
                             Baixar PDF
                         </Button>
                         {deal.blockchain && (
-                         <Card className="p-2 bg-muted/30">
-                             <div className="flex items-center gap-2">
-                                <Fingerprint className="h-5 w-5 text-primary"/>
-                                <div className="text-xs">
-                                    <p className="font-semibold text-muted-foreground">Registro Blockchain</p>
-                                    <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain?.transactionHash || '')} title="Copiar hash">
-                                        {deal.blockchain.transactionHash}
-                                    </p>
+                         <Card className="p-2 bg-muted/30 max-w-full overflow-hidden">
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Fingerprint className="h-5 w-5 text-primary flex-shrink-0"/>
+                                    <div className="text-xs min-w-0">
+                                        <p className="font-semibold text-muted-foreground">Hash da Transação</p>
+                                        <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain?.transactionHash || '', 'Hash da Transação')} title={deal.blockchain.transactionHash}>
+                                            {deal.blockchain.transactionHash}
+                                        </p>
+                                    </div>
+                                </div>
+                                 <div className="flex items-center gap-2">
+                                    <Layers className="h-5 w-5 text-primary flex-shrink-0"/>
+                                    <div className="text-xs min-w-0">
+                                        <p className="font-semibold text-muted-foreground">Hash do Lote (Merkle Root)</p>
+                                        <p className="font-mono text-primary/80 truncate cursor-pointer" onClick={() => copyToClipboard(deal.blockchain?.merkleRoot || '', 'Merkle Root')} title={deal.blockchain.merkleRoot}>
+                                            {deal.blockchain.merkleRoot}
+                                        </p>
+                                    </div>
                                 </div>
                              </div>
                          </Card>
@@ -233,7 +245,7 @@ export default function DuplicatasPage() {
                           <CardTitle className="text-lg">
                             DM - DUPLICATA DE VENDA MERCANTIL
                           </CardTitle>
-                          {deal.blockchain && <Seal text="Validado em Blockchain" className="border-primary/20 bg-primary/10 text-primary" />}
+                          {deal.blockchain && <Seal text="Integridade Verificada" className="border-primary/20 bg-primary/10 text-primary" />}
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

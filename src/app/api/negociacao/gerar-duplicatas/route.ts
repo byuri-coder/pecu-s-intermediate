@@ -6,7 +6,27 @@ import { Fatura } from '@/models/Fatura';
 import { Contrato } from '@/models/Contrato';
 import { Usuario } from '@/models/Usuario';
 import type { Asset, CompletedDeal } from '@/lib/types';
-import mongoose from 'mongoose';
+import crypto from "crypto";
+
+// Hashing Functions
+function generateHash(data: any): string {
+    const canonical = JSON.stringify(data, Object.keys(data).sort());
+    return crypto.createHash("sha256").update(canonical).digest("hex");
+}
+
+function getMerkleRoot(hashes: string[]): string {
+    if (!hashes.length) return generateHash('');
+    if (hashes.length === 1) return hashes[0];
+
+    const nextLayer: string[] = [];
+    for (let i = 0; i < hashes.length; i += 2) {
+        const h1 = hashes[i];
+        const h2 = hashes[i + 1] || h1; // Duplicate last hash if odd number
+        nextLayer.push(generateHash(h1 + h2));
+    }
+    return getMerkleRoot(nextLayer);
+}
+
 
 // Function to calculate the negotiation fee based on the value
 function calcularTaxaNegociacao(valor: number): number {
@@ -85,7 +105,21 @@ export async function POST(req: Request) {
         description: `Taxa de serviço sobre negociação: ${asset.title}`
     });
 
-    // --- 3. Return the generated deal object for frontend display ---
+    // --- 3. Hashing ---
+    const duplicateHashes = duplicatesToCreate.map(dup => generateHash(dup));
+    const merkleRoot = getMerkleRoot(duplicateHashes);
+
+    const dealObjectForHashing = {
+      assetId,
+      contract,
+      asset,
+      duplicates: duplicatesToCreate,
+      timestamp: new Date().toISOString(),
+    };
+    const transactionHash = generateHash(dealObjectForHashing);
+
+
+    // --- 4. Return the generated deal object for frontend display ---
     const deal: CompletedDeal = {
         assetId: assetId,
         assetName: asset.title,
@@ -93,7 +127,8 @@ export async function POST(req: Request) {
         seller: { name: contract.fields.seller.razaoSocial, doc: contract.fields.seller.cnpj, address: contract.fields.seller.endereco },
         buyer: { name: contract.fields.buyer.razaoSocial, doc: contract.fields.buyer.cnpj, address: contract.fields.buyer.endereco },
         blockchain: {
-            transactionHash: '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            transactionHash,
+            merkleRoot,
             blockTimestamp: new Date().toISOString()
         }
     };
