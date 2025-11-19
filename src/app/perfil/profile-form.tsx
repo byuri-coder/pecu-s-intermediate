@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, UserCircle, Pencil, Landmark } from 'lucide-react';
+import { Loader2, UserCircle, Pencil, Landmark, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { states } from '@/lib/states';
 import { app } from '@/lib/firebase';
@@ -143,6 +144,14 @@ export function ProfileForm() {
       setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: "ID copiado!",
+        description: "Sua chave de identificação foi copiada.",
+    });
   };
 
   const onSubmit = (data: ProfileFormValues) => {
@@ -272,6 +281,18 @@ export function ProfileForm() {
                         onChange={handlePhotoChange}
                     />
                 </div>
+                {user && (
+                    <div className="text-center">
+                        <p className="text-sm font-medium text-muted-foreground">Sua Chave de Identificação</p>
+                        <div className="flex items-center gap-2 mt-1 rounded-md bg-muted p-2 border">
+                           <p className="text-xs font-mono text-foreground/80">{user.uid}</p>
+                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(user.uid)}>
+                                <Copy className="h-3 w-3" />
+                                <span className="sr-only">Copiar ID</span>
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
 
           <section className="space-y-4 p-6 border rounded-lg">
@@ -386,3 +407,5 @@ export function ProfileForm() {
       </Form>
   );
 }
+
+    
