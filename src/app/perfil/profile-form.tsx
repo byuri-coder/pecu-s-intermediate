@@ -165,8 +165,6 @@ export function ProfileForm() {
         }
 
         try {
-            let newPhotoURL: string | null = user.photoURL;
-
             if (photoFile) {
                 const formData = new FormData();
                 formData.append('file', photoFile);
@@ -177,7 +175,6 @@ export function ProfileForm() {
                 });
                 const uploadData = await uploadResponse.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Falha no upload da foto.');
-                newPhotoURL = uploadData.url; 
             }
 
             // Update Firebase Auth profile displayName
@@ -404,5 +401,3 @@ export function ProfileForm() {
       </Form>
   );
 }
-
-    

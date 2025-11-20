@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
     // No need to delete old file as we're not using a real storage service in this simulation.
 
     // Update the user with the new profile picture metadata.
-    const updatedUser = await Usuario.findOneAndUpdate(
+    await Usuario.findOneAndUpdate(
       { uidFirebase: uid },
       { 
         $set: { 
