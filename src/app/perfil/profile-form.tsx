@@ -120,6 +120,9 @@ export function ProfileForm() {
                         account: fetchedUser.conta,
                         pixKey: fetchedUser.chavePix || '',
                     });
+                     if (fetchedUser.profilePhoto?.url) {
+                        setPhotoPreview(fetchedUser.profilePhoto.url);
+                    }
                 } else {
                      form.reset({
                         fullName: currentUser.displayName || '',
@@ -145,7 +148,7 @@ export function ProfileForm() {
       setPhotoPreview(URL.createObjectURL(file));
     }
   };
-
+  
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -162,13 +165,9 @@ export function ProfileForm() {
         }
 
         try {
-            let newPhotoURL = user.photoURL;
+            let newPhotoURL: string | null = user.photoURL;
 
             if (photoFile) {
-                // 1. Delete the old picture reference first
-                await fetch(`/api/upload/avatar/${user.uid}`, { method: 'DELETE' });
-
-                // 2. Upload the new picture
                 const formData = new FormData();
                 formData.append('file', photoFile);
 
@@ -178,21 +177,19 @@ export function ProfileForm() {
                 });
                 const uploadData = await uploadResponse.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Falha no upload da foto.');
-                newPhotoURL = uploadData.photoURL; 
+                newPhotoURL = uploadData.url; 
             }
 
-            // 3. Update Firebase Auth profile
-            await updateProfile(user, { 
-                displayName: data.fullName,
-                photoURL: newPhotoURL 
-            });
+            // Update Firebase Auth profile displayName
+            if (user.displayName !== data.fullName) {
+                await updateProfile(user, { displayName: data.fullName });
+            }
             
-            // 4. Update MongoDB with all profile data
+            // Update MongoDB with all profile data
             const payload = {
                 uidFirebase: user.uid,
                 nome: data.fullName,
                 email: data.email,
-                fotoPerfilUrl: newPhotoURL, // Save the final URL
                 banco: data.bankName,
                 agencia: data.agency,
                 conta: data.account,
@@ -217,7 +214,7 @@ export function ProfileForm() {
                 throw new Error(result.error || 'Falha ao atualizar perfil no banco de dados.');
             }
             
-            // 5. Update password if necessary
+            // Update password if necessary
             if (data.newPassword && data.currentPassword) {
                  const auth = getAuth(app);
                  if (user.email) {
@@ -232,7 +229,7 @@ export function ProfileForm() {
                 description: "Suas informações foram salvas com sucesso.",
             });
             
-            // 6. Reload to reflect changes globally
+            // Reload to reflect changes globally
             window.location.reload();
 
         } catch (error: any) {
@@ -281,7 +278,7 @@ export function ProfileForm() {
                         onChange={handlePhotoChange}
                     />
                 </div>
-                {user && (
+                 {user && (
                     <div className="text-center">
                         <p className="text-sm font-medium text-muted-foreground">Sua Chave de Identificação</p>
                         <div className="flex items-center gap-2 mt-1 rounded-md bg-muted p-2 border">

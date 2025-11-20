@@ -1,3 +1,4 @@
+
 // src/app/api/upload/avatar/[uid]/route.ts
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
@@ -22,22 +23,38 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
       return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
     
-    // In a real project, this would upload to a persistent storage service (Firebase Storage, S3).
-    // For this environment, we'll generate a placeholder URL that points back to our serving endpoint.
-    // The timestamp acts as a cache-buster.
-    const publicImageUrl = `/api/avatar/${uid}?t=${Date.now()}`;
+    // In a real project, this would upload to a persistent storage service (Firebase Storage, S3, Cloudinary).
+    // For this environment, we'll simulate this by creating a unique ID and a placeholder URL.
+    const storageId = `profile-photos/${uid}-${Date.now()}-${file.name}`;
+    const publicImageUrl = `/api/avatar/${uid}?t=${Date.now()}`; // The URL our server will use to serve the image reference
 
     await connectDB();
 
-    // Update the user with the new profile picture URL.
-    await Usuario.findOneAndUpdate(
+    const user = await Usuario.findOne({ uidFirebase: uid });
+
+    // If an old photo exists, its storageId would be used here to delete it from the storage service.
+    if (user && user.profilePhoto?.storageId) {
+      // await deleteFromStorage(user.profilePhoto.storageId);
+      console.log(`Simulating deletion of old avatar: ${user.profilePhoto.storageId}`);
+    }
+
+    // Update the user with the new profile picture metadata.
+    const updatedUser = await Usuario.findOneAndUpdate(
       { uidFirebase: uid },
-      { $set: { fotoPerfilUrl: publicImageUrl } },
+      { 
+        $set: { 
+          profilePhoto: {
+            url: publicImageUrl,
+            storageId: storageId,
+            updatedAt: new Date(),
+          } 
+        } 
+      },
       { upsert: true, new: true }
     );
     
-    // Return the public URL for the frontend to use
-    return NextResponse.json({ success: true, photoURL: publicImageUrl });
+    // Return the public URL for the frontend to use for immediate UI update.
+    return NextResponse.json({ success: true, url: updatedUser.profilePhoto.url });
 
   } catch (error: any) {
     console.error('Erro no upload do avatar:', error);
@@ -56,11 +73,18 @@ export async function DELETE(req: Request, { params }: { params: { uid: string }
     
     await connectDB();
 
-    // "Delete" the avatar by nullifying the URL field in the database.
-    // This prevents the old image from being served.
+    const user = await Usuario.findOne({ uidFirebase: uid });
+
+    // If a photo exists, its storageId would be used here to delete it from the storage service.
+    if (user && user.profilePhoto?.storageId) {
+      // await deleteFromStorage(user.profilePhoto.storageId);
+       console.log(`Simulating deletion of avatar from storage: ${user.profilePhoto.storageId}`);
+    }
+
+    // "Delete" the avatar by nullifying the profilePhoto object in the database.
     await Usuario.findOneAndUpdate(
       { uidFirebase: uid },
-      { $set: { fotoPerfilUrl: null } }
+      { $set: { profilePhoto: { url: null, storageId: null, updatedAt: null } } }
     );
     
     return NextResponse.json({ success: true, message: "Referência da foto de perfil removida." });

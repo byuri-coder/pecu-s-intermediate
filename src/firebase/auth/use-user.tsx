@@ -1,11 +1,13 @@
+
 // src/firebase/auth/use-user.tsx
 'use client';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import * as React from 'react';
 import { useAuth } from '../provider';
 import { Usuario } from '@/models/Usuario';
+import type { UserProfile } from '@/lib/types';
 
-export type UserWithMongo = User & { mongo?: InstanceType<typeof Usuario> }
+export type UserWithMongo = User & { mongo?: UserProfile }
 
 export function useUser() {
   const auth = useAuth();
