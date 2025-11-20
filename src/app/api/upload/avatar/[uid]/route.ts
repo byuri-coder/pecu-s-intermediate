@@ -6,6 +6,13 @@ import { Usuario } from '@/models/Usuario';
 
 export const runtime = 'nodejs';
 
+// Helper function to read file as base64
+const toBase64 = async (file: File): Promise<string> => {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    return `data:${file.type};base64,${buffer.toString('base64')}`;
+};
+
 // This route handles both POST (upload) and DELETE operations for a user's avatar.
 
 // POST: Handles uploading a new avatar.
@@ -24,19 +31,13 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
     }
     
     // In a real project, this would upload to a persistent storage service (Firebase Storage, S3, Cloudinary).
-    // For this environment, we'll simulate this by creating a unique ID and a placeholder URL.
-    const storageId = `profile-photos/${uid}-${Date.now()}-${file.name}`;
-    const publicImageUrl = `/api/avatar/${uid}?t=${Date.now()}`; // The URL our server will use to serve the image reference
+    // For this simulation, we'll convert the image to a base64 data URI and store that.
+    const base64Image = await toBase64(file);
+    const storageId = `profile-photos/${uid}-${Date.now()}-${file.name}`; // Still useful for reference
 
     await connectDB();
 
-    const user = await Usuario.findOne({ uidFirebase: uid });
-
-    // If an old photo exists, its storageId would be used here to delete it from the storage service.
-    if (user && user.profilePhoto?.storageId) {
-      // await deleteFromStorage(user.profilePhoto.storageId);
-      console.log(`Simulating deletion of old avatar: ${user.profilePhoto.storageId}`);
-    }
+    // No need to delete old file as we're not using a real storage service in this simulation.
 
     // Update the user with the new profile picture metadata.
     const updatedUser = await Usuario.findOneAndUpdate(
@@ -44,17 +45,18 @@ export async function POST(req: Request, { params }: { params: { uid: string } }
       { 
         $set: { 
           profilePhoto: {
-            url: publicImageUrl,
+            url: base64Image, // Store the data URI
             storageId: storageId,
             updatedAt: new Date(),
           } 
         } 
       },
       { upsert: true, new: true }
-    );
+    ).lean();
     
-    // Return the public URL for the frontend to use for immediate UI update.
-    return NextResponse.json({ success: true, url: updatedUser.profilePhoto.url });
+    // Return the public URL that can be used to fetch the image via our API.
+    const publicUrl = `/api/avatar/${uid}?t=${new Date().getTime()}`;
+    return NextResponse.json({ success: true, url: publicUrl });
 
   } catch (error: any) {
     console.error('Erro no upload do avatar:', error);
@@ -72,14 +74,6 @@ export async function DELETE(req: Request, { params }: { params: { uid: string }
     }
     
     await connectDB();
-
-    const user = await Usuario.findOne({ uidFirebase: uid });
-
-    // If a photo exists, its storageId would be used here to delete it from the storage service.
-    if (user && user.profilePhoto?.storageId) {
-      // await deleteFromStorage(user.profilePhoto.storageId);
-       console.log(`Simulating deletion of avatar from storage: ${user.profilePhoto.storageId}`);
-    }
 
     // "Delete" the avatar by nullifying the profilePhoto object in the database.
     await Usuario.findOneAndUpdate(
