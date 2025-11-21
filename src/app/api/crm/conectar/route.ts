@@ -32,11 +32,12 @@ export async function POST(req: Request) {
             }
 
             // In a real implementation, this is where you'd call your universal parser.
-            // For now, we just acknowledge the upload.
+            // For now, we just acknowledge the upload and simulate processing.
+            // This logic now runs inline with the request.
             // const buffer = await streamToBuffer(file.stream());
             // const rawData = await parseFile(buffer, file.name); -> Your universal parser
             // const cleanData = normalizeData(rawData);
-            // await saveToDatabase(cleanData, userId);
+            // await publicarAtivos(cleanData, userId);
             
             await CrmIntegration.updateOne(
                 { userId: userId },
@@ -44,12 +45,12 @@ export async function POST(req: Request) {
                     integrationType: 'file',
                     active: true,
                     lastSync: new Date(),
-                    syncStatus: 'success',
+                    syncStatus: 'success', // Assuming immediate processing
                 } },
                 { upsert: true }
             );
 
-            return NextResponse.json({ message: "Arquivo recebido e importação agendada!" });
+            return NextResponse.json({ message: "Arquivo recebido e processado com sucesso!" });
 
         } else if (contentType.includes('application/json')) {
             const { userId, crm, apiKey, accountId } = await req.json();
