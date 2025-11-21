@@ -11,6 +11,7 @@ const CrmIntegrationSchema = new Schema({
   active: { type: Boolean, default: true },
   lastSync: { type: Date },
   syncStatus: { type: String, enum: ["success", "failed", "pending"], default: "pending" },
+  crm_id: { type: String, index: true }, 
 }, { timestamps: true });
 
 export const CrmIntegration = models.CrmIntegration || mongoose.model("CrmIntegration", CrmIntegrationSchema);
