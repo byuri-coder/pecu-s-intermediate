@@ -2,36 +2,46 @@ import Redis from "ioredis";
 
 let redis: Redis;
 
-// Prefer the single URL format if available (common in Render, Heroku)
-if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: 3,
+// This function attempts to create a Redis client.
+function createRedisClient(url: string, isExplicit: boolean): Redis {
+  const client = new Redis(url, {
+    maxRetriesPerRequest: isExplicit ? 3 : 1, // Be less aggressive with local fallback
     retryStrategy(times) {
+      if (!isExplicit) return null; // Don't retry for local fallback
       return Math.min(times * 50, 2000);
     },
+    showFriendlyErrorStack: true,
+    lazyConnect: true, // Don't connect until the first command
   });
-} 
-// Otherwise, try to use separate host, port, and password variables
-else if (process.env.REDIS_HOST && process.env.REDIS_PORT) {
-  redis = new Redis({
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT, 10),
-    password: process.env.REDIS_PASSWORD, // ioredis handles if this is undefined
-    maxRetriesPerRequest: null, // As per your suggestion for this setup
+
+  client.on("connect", () => {
+    if (isExplicit) {
+      console.log("✅ Conectado ao Redis");
+    } else {
+      console.log("✅ Conectado ao Redis (fallback local).");
+    }
   });
-} 
-// Fallback for local development if no environment variables are set
-else {
-  console.warn("⚠️ No REDIS_URL or REDIS_HOST/PORT found. Falling back to localhost:6379. This is expected for local development.");
-  redis = new Redis("redis://localhost:6379", {
-    maxRetriesPerRequest: 3,
-    retryStrategy(times) {
-      return Math.min(times * 50, 2000);
-    },
+
+  client.on("error", (err) => {
+    if (isExplicit) {
+      console.error("❌ Erro de conexão com o Redis:", err.message);
+    } else {
+      // For local fallback, errors are more expected, so we just log a warning.
+      // console.warn(`⚠️ Could not connect to local Redis fallback: ${err.message}`);
+    }
   });
+
+  return client;
 }
 
-redis.on("connect", () => console.log("✅ Conectado ao Redis"));
-redis.on("error", (err) => console.error("❌ Erro de conexão com o Redis:", err.message));
+if (process.env.REDIS_URL) {
+  redis = createRedisClient(process.env.REDIS_URL, true);
+} else {
+  console.warn(
+    "⚠️ REDIS_URL not found. Falling back to localhost:6379. This is expected for local development."
+  );
+  redis = createRedisClient("redis://localhost:6379", false);
+}
+
 
 export default redis;

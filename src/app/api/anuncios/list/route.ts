@@ -15,27 +15,29 @@ function generateCacheKey(base: string, queryParams: any) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const queryParams = Object.fromEntries(url.searchParams.entries());
-  
-  if (DISABLE_MONGO) {
-    console.log("📄 Usando dados mockados (sem MongoDB)");
-    return NextResponse.json({ ok: true, page: 1, limit: 10, total: 0, anuncios: [] });
-  }
-  
   const cacheKey = generateCacheKey("anuncios", queryParams);
 
   try {
-    const cached = await redis.get(cacheKey);
+    const db = await connectDB();
+    if (!db) {
+       // In production, if DB is not connected, we should not return mock data.
+       if (process.env.NODE_ENV === 'production') {
+            return NextResponse.json({ ok: false, error: "Database not available" }, { status: 503 });
+       }
+       console.log("📄 Usando dados mockados (sem MongoDB)");
+       return NextResponse.json({ ok: true, page: 1, limit: 10, total: 0, anuncios: [] });
+    }
+    
+    const cached = await redis.get(cacheKey).catch(err => {
+        console.warn("⚠️ Redis cache read failed:", err.message);
+        return null;
+    });
+
     if (cached) {
       console.log("✅ Cache hit:", cacheKey);
       return NextResponse.json(JSON.parse(cached));
     }
     console.log("❌ Cache miss:", cacheKey);
-
-    const db = await connectDB();
-    if (!db) {
-       console.log("📄 Usando dados mockados (sem MongoDB)");
-       return NextResponse.json({ ok: true, page: 1, limit: 10, total: 0, anuncios: [] });
-    }
     
     const page = Math.max(Number(url.searchParams.get("page") || "1"), 1);
     const limit = Math.min(Number(url.searchParams.get("limit") || "100"), 100);
@@ -61,8 +63,10 @@ export async function GET(req: Request) {
 
     const responseBody = { ok: true, page, limit, total, anuncios };
 
-    // Salva no cache por 5 minutos
-    await redis.set(cacheKey, JSON.stringify(responseBody), "EX", 60 * 5); 
+    // Salva no cache por 5 minutos, non-blocking
+    redis.set(cacheKey, JSON.stringify(responseBody), "EX", 60 * 5).catch(err => {
+         console.warn("⚠️ Redis cache write failed:", err.message);
+    }); 
 
     return NextResponse.json(responseBody);
   } catch (err: any) {
