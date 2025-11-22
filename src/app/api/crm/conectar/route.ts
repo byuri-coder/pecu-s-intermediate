@@ -2,18 +2,40 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { CrmIntegration } from "@/models/CrmIntegration";
-import { Readable } from 'stream';
+import { Anuncio } from "@/models/Anuncio";
+import xlsx from "xlsx";
+import redis from "@/lib/redis";
 
-// Helper to convert stream to buffer
-async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
-    const reader = stream.getReader();
-    const chunks: Uint8Array[] = [];
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
+async function parseFileFromBuffer(buffer: Buffer) {
+    const workbook = xlsx.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+    return data;
+}
+
+async function publicarAtivos(data: any[], uidFirebase: string) {
+    const anuncios = data.map(row => ({
+        uidFirebase,
+        titulo: (row as any).titulo || (row as any).nome || "Sem título",
+        tipo: (row as any).tipo?.toLowerCase() || "other",
+        price: Number((row as any).preco || (row as any).price || 0),
+        metadados: {
+            ...row
+        },
+        status: 'Disponível',
+        createdAt: new Date(),
+    }));
+
+    if (anuncios.length > 0) {
+        await Anuncio.insertMany(anuncios);
     }
-    return Buffer.concat(chunks);
+    
+    // Clear relevant caches
+    await redis.del(`anuncios:${uidFirebase}`);
+    await redis.del("anuncios"); // General cache key for public listings
+
+    return anuncios.length;
 }
 
 
@@ -26,31 +48,33 @@ export async function POST(req: Request) {
             const formData = await req.formData();
             const file = formData.get('file') as File;
             const userId = formData.get('userId') as string;
-            
+
             if (!file || !userId) {
                 return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
             }
 
-            // In a real implementation, this is where you'd call your universal parser.
-            // For now, we just acknowledge the upload and simulate processing.
-            // This logic now runs inline with the request.
-            // const buffer = await streamToBuffer(file.stream());
-            // const rawData = await parseFile(buffer, file.name); -> Your universal parser
-            // const cleanData = normalizeData(rawData);
-            // await publicarAtivos(cleanData, userId);
-            
+            // Process the file
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const rawData = await parseFileFromBuffer(buffer);
+
+            if (!rawData || rawData.length === 0) {
+                return NextResponse.json({ error: "Arquivo inválido ou vazio." }, { status: 400 });
+            }
+
+            const total = await publicarAtivos(rawData, userId);
+
             await CrmIntegration.updateOne(
                 { userId: userId },
                 { $set: { 
                     integrationType: 'file',
                     active: true,
                     lastSync: new Date(),
-                    syncStatus: 'success', // Assuming immediate processing
+                    syncStatus: 'success',
                 } },
                 { upsert: true }
             );
 
-            return NextResponse.json({ message: "Arquivo recebido e processado com sucesso!" });
+            return NextResponse.json({ message: `Sucesso! ${total} ativos foram importados e publicados.`, total });
 
         } else if (contentType.includes('application/json')) {
             const { userId, crm, apiKey, accountId } = await req.json();
@@ -64,7 +88,7 @@ export async function POST(req: Request) {
                 {
                     $set: {
                         crm,
-                        apiKey, // IMPORTANT: In a real app, this should be encrypted
+                        apiKey,
                         accountId: accountId || null,
                         active: true,
                         integrationType: 'api',
@@ -80,7 +104,7 @@ export async function POST(req: Request) {
         }
 
     } catch (error: any) {
-        console.error("Erro ao conectar CRM:", error);
-        return NextResponse.json({ error: "Erro interno no servidor ao tentar conectar o CRM." }, { status: 500 });
+        console.error("Erro ao conectar/importar CRM:", error);
+        return NextResponse.json({ error: "Erro interno no servidor ao tentar processar a solicitação." }, { status: 500 });
     }
 }
