@@ -1,5 +1,5 @@
 
-export const runtime = "nodejs"; // Set runtime to Node.js to ensure xlsx and Buffer work correctly.
+export const runtime = "nodejs"; // GARANTE QUE XLSX VAI FUNCIONAR
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
@@ -19,6 +19,7 @@ async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
     }
     return Buffer.concat(chunks);
 }
+
 
 async function parseFileFromBuffer(buffer: Buffer) {
     const workbook = xlsx.read(buffer, { type: "buffer" });
@@ -45,15 +46,15 @@ async function publicarAtivos(data: any[], uidFirebase: string) {
         await Anuncio.insertMany(anuncios);
     }
     
-    // Clear relevant caches
-    const userCacheKey = `anuncios:${uidFirebase}`;
-    const publicCacheKey = "anuncios";
+    // Clear relevant caches to ensure the new assets appear
+    const userCacheKey = `anuncios:uidFirebase=${uidFirebase}`;
+    const publicCacheKeyPrefix = "anuncios";
     
     try {
-        const userKeys = await redis.keys(userCacheKey + '*');
+        const userKeys = await redis.keys(`${userCacheKey}*`);
         if (userKeys.length > 0) await redis.del(userKeys);
         
-        const publicKeys = await redis.keys(publicCacheKey + '*');
+        const publicKeys = await redis.keys(`${publicCacheKeyPrefix}:*`);
         if (publicKeys.length > 0) await redis.del(publicKeys);
 
         console.log(`🧹 Cache cleared for user ${uidFirebase} and public listings.`);
@@ -74,36 +75,39 @@ export async function POST(req: Request) {
 
         if (contentType.includes('multipart/form-data')) {
             const formData = await req.formData();
-            const file = formData.get('file') as File;
+            const file = formData.get('file') as File | null;
             const userId = formData.get('userId') as string;
 
             if (!file || !userId) {
                 return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
             }
+            
+            if (file instanceof Blob) {
+                 const buffer = Buffer.from(await file.arrayBuffer());
+                 const rawData = await parseFileFromBuffer(buffer);
 
-            // Process the file using the robust stream-to-buffer method
-            const stream = file.stream();
-            const buffer = await streamToBuffer(stream);
-            const rawData = await parseFileFromBuffer(buffer);
+                if (!rawData || rawData.length === 0) {
+                    return NextResponse.json({ error: "Arquivo inválido ou vazio." }, { status: 400 });
+                }
 
-            if (!rawData || rawData.length === 0) {
-                return NextResponse.json({ error: "Arquivo inválido ou vazio." }, { status: 400 });
+                const total = await publicarAtivos(rawData, userId);
+
+                await CrmIntegration.updateOne(
+                    { userId: userId },
+                    { $set: { 
+                        integrationType: 'file',
+                        active: true,
+                        lastSync: new Date(),
+                        syncStatus: 'success',
+                    } },
+                    { upsert: true }
+                );
+
+                return NextResponse.json({ message: `Sucesso! ${total} ativos foram importados e publicados.`, total });
             }
+            
+            return NextResponse.json({ error: "Tipo de arquivo inválido" }, { status: 400 });
 
-            const total = await publicarAtivos(rawData, userId);
-
-            await CrmIntegration.updateOne(
-                { userId: userId },
-                { $set: { 
-                    integrationType: 'file',
-                    active: true,
-                    lastSync: new Date(),
-                    syncStatus: 'success',
-                } },
-                { upsert: true }
-            );
-
-            return NextResponse.json({ message: `Sucesso! ${total} ativos foram importados e publicados.`, total });
 
         } else if (contentType.includes('application/json')) {
             const { userId, crm, apiKey, accountId } = await req.json();
