@@ -9,18 +9,6 @@ import { Anuncio } from "@/models/Anuncio";
 import xlsx from "xlsx";
 import redis from "@/lib/redis";
 
-async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
-    const reader = stream.getReader();
-    const chunks: Uint8Array[] = [];
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
-    }
-    return Buffer.concat(chunks);
-}
-
-
 async function parseFileFromBuffer(buffer: Buffer) {
     const workbook = xlsx.read(buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
@@ -28,6 +16,7 @@ async function parseFileFromBuffer(buffer: Buffer) {
     const data = xlsx.utils.sheet_to_json(sheet, { defval: "" });
     return data;
 }
+
 
 async function publicarAtivos(data: any[], uidFirebase: string) {
     const anuncios = data.map(row => ({
