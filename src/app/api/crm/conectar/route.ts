@@ -1,5 +1,6 @@
 
 export const runtime = "nodejs"; // Set runtime to Node.js to ensure xlsx and Buffer work correctly.
+export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
