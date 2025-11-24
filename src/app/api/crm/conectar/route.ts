@@ -1,10 +1,23 @@
 
+export const runtime = "nodejs"; // Set runtime to Node.js to ensure xlsx and Buffer work correctly.
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { CrmIntegration } from "@/models/CrmIntegration";
 import { Anuncio } from "@/models/Anuncio";
 import xlsx from "xlsx";
 import redis from "@/lib/redis";
+
+async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+    }
+    return Buffer.concat(chunks);
+}
 
 async function parseFileFromBuffer(buffer: Buffer) {
     const workbook = xlsx.read(buffer, { type: "buffer" });
@@ -32,8 +45,22 @@ async function publicarAtivos(data: any[], uidFirebase: string) {
     }
     
     // Clear relevant caches
-    await redis.del(`anuncios:${uidFirebase}`);
-    await redis.del("anuncios"); // General cache key for public listings
+    const userCacheKey = `anuncios:${uidFirebase}`;
+    const publicCacheKey = "anuncios";
+    
+    try {
+        const userKeys = await redis.keys(userCacheKey + '*');
+        if (userKeys.length > 0) await redis.del(userKeys);
+        
+        const publicKeys = await redis.keys(publicCacheKey + '*');
+        if (publicKeys.length > 0) await redis.del(publicKeys);
+
+        console.log(`🧹 Cache cleared for user ${uidFirebase} and public listings.`);
+
+    } catch (error) {
+        console.error("Error clearing Redis cache:", error);
+    }
+
 
     return anuncios.length;
 }
@@ -53,8 +80,9 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
             }
 
-            // Process the file
-            const buffer = Buffer.from(await file.arrayBuffer());
+            // Process the file using the robust stream-to-buffer method
+            const stream = file.stream();
+            const buffer = await streamToBuffer(stream);
             const rawData = await parseFileFromBuffer(buffer);
 
             if (!rawData || rawData.length === 0) {
