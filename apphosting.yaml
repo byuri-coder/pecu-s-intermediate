@@ -1,7 +1,16 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# Specifies the command to run your app.
+run: npm run start
+
+# The 'postinstall' script in package.json will automatically run 'next build'.
+# We can still specify a build command here as a fallback or for clarity.
+build:
+  # The command to build your app.
+  run: npm run build
+
+# Increase this value if you'd like to automatically spin up
+# more instances in response to increased traffic.
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
   maxInstances: 1
