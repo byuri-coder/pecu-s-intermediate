@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { CrmIntegration } from "@/models/CrmIntegration";
 import { Anuncio } from "@/models/Anuncio";
-import xlsx from "xlsx";
+import * as xlsx from "xlsx";
 import redis from "@/lib/redis";
 
 async function parseFileFromBuffer(buffer: Buffer) {
