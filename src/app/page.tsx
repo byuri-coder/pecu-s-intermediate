@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import MarketplacePage from './credito-de-carbono/page';
 
 export default function Home() {
-  redirect('/credito-de-carbono')
+  return <MarketplacePage />;
 }
