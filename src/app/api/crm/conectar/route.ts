@@ -35,7 +35,6 @@ async function publicarAtivos(data: any[], uidFirebase: string) {
         await Anuncio.insertMany(anuncios);
     }
     
-    // Clear relevant caches to ensure the new assets appear
     const userCacheKey = `anuncios:uidFirebase=${uidFirebase}`;
     const publicCacheKeyPrefix = "anuncios";
     
@@ -51,7 +50,6 @@ async function publicarAtivos(data: any[], uidFirebase: string) {
     } catch (error) {
         console.error("Error clearing Redis cache:", error);
     }
-
 
     return anuncios.length;
 }
