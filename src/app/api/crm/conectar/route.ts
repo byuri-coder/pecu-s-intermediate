@@ -2,6 +2,10 @@
 export const runtime = "nodejs"; // GARANTE QUE XLSX VAI FUNCIONAR
 export const dynamic = "force-dynamic";
 
+// 🔥 CRÍTICO NA RENDER
+export const maxDuration = 60; 
+export const maxBodySize = "15mb";
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { CrmIntegration } from "@/models/CrmIntegration";
@@ -83,15 +87,19 @@ export async function POST(req: Request) {
     try {
         await connectDB();
         const contentType = req.headers.get('content-type') || '';
+        console.log("📥 Recebido headers:", contentType);
 
         if (contentType.includes('multipart/form-data')) {
             const formData = await req.formData();
+            console.log("📥 formData keys:", [...formData.keys()]);
             const file = formData.get('file') as File | null;
             const userId = formData.get('userId') as string;
 
             if (!file || !userId) {
+                console.error("❌ Arquivo ou userId não recebido no formData!");
                 return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
             }
+            console.log("📦 Arquivo recebido:", file.name, file.size);
             
             if (file instanceof Blob) {
                  const buffer = Buffer.from(await file.arrayBuffer());
