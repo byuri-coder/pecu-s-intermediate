@@ -19,39 +19,63 @@ async function parseFileFromBuffer(buffer: Buffer) {
 
 
 async function publicarAtivos(data: any[], uidFirebase: string) {
-    const anuncios = data.map(row => ({
-        uidFirebase,
-        titulo: (row as any).titulo || (row as any).nome || "Sem título",
-        tipo: (row as any).tipo?.toLowerCase() || "other",
-        price: Number((row as any).preco || (row as any).price || 0),
-        metadados: {
-            ...row
-        },
-        status: 'Disponível',
-        createdAt: new Date(),
-    }));
+    const anunciosParaPublicar = [];
 
-    if (anuncios.length > 0) {
-        await Anuncio.insertMany(anuncios);
+    for (const row of data) {
+
+        // NORMALIZAÇÃO DE CAMPOS
+        const titulo =
+            row.titulo ||
+            row.Título ||
+            row.nome ||
+            row.Nome ||
+            row.descricao ||
+            row.Descrição ||
+            "Sem título";
+
+        const price =
+            Number(
+                row.preco ||
+                row.Preço ||
+                row.precoUnitario ||
+                row.price ||
+                row.Price ||
+                0
+            );
+
+        const tipo =
+            (row.tipo || row.Tipo || "other").toString().toLowerCase();
+
+        // GARANTE QUE CATEGORIA, STATUS E UID EXISTEM
+        const anuncio = {
+            uidFirebase,
+            titulo,
+            tipo,
+            price,
+            metadados: { ...row },
+            status: "Disponível",
+            createdAt: new Date(),
+        };
+
+        anunciosParaPublicar.push(anuncio);
     }
-    
-    const userCacheKey = `anuncios:uidFirebase=${uidFirebase}`;
-    const publicCacheKeyPrefix = "anuncios";
-    
+
+    if (anunciosParaPublicar.length > 0) {
+        await Anuncio.insertMany(anunciosParaPublicar, { ordered: false });
+    }
+
+    // LIMPA TODO O CACHE RELACIONADO
     try {
-        const userKeys = await redis.keys(`${userCacheKey}*`);
-        if (userKeys.length > 0) await redis.del(userKeys);
-        
-        const publicKeys = await redis.keys(`${publicCacheKeyPrefix}:*`);
-        if (publicKeys.length > 0) await redis.del(publicKeys);
-
-        console.log(`🧹 Cache cleared for user ${uidFirebase} and public listings.`);
-
+        const allKeys = await redis.keys("anuncios*");
+        if (allKeys.length > 0) {
+            await redis.del(allKeys);
+        }
+        console.log(`🧹 Cache cleared for user ${uidFirebase} and all anuncios.`);
     } catch (error) {
         console.error("Error clearing Redis cache:", error);
     }
 
-    return anuncios.length;
+    return anunciosParaPublicar.length;
 }
 
 
