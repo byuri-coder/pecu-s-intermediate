@@ -95,11 +95,11 @@ export async function POST(req: Request) {
             const file = formData.get('file') as File | null;
             const userId = formData.get('userId') as string;
 
-            if (!file || !userId) {
-                console.error("❌ Arquivo ou userId não recebido no formData!");
+            if (!file) {
+                console.error("❌ Arquivo NÃO recebido no formData!");
                 return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
             }
-            console.log("📦 Arquivo recebido:", file.name, file.size);
+             console.log("📦 Arquivo recebido:", file.name, file.size);
             
             if (file instanceof Blob) {
                  const buffer = Buffer.from(await file.arrayBuffer());
