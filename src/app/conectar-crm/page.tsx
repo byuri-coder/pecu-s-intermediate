@@ -25,6 +25,7 @@ export default function ConectarCRMPage() {
   const [apiKey, setApiKey] = useState("");
   const [accountId, setAccountId] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   async function handleConnect() {
@@ -72,7 +73,7 @@ export default function ConectarCRMPage() {
          toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um arquivo para importar.", variant: "destructive" });
         return;
     }
-    setIsConnecting(true);
+    setIsUploading(true);
     const formData = new FormData();
     formData.append('file', uploadedFile);
     formData.append('userId', user.uid);
@@ -92,7 +93,7 @@ export default function ConectarCRMPage() {
     } catch (error: any) {
         toast({ title: "Erro na Importação", description: error.message, variant: "destructive" });
     } finally {
-        setIsConnecting(false);
+        setIsUploading(false);
     }
   };
 
@@ -179,9 +180,9 @@ export default function ConectarCRMPage() {
                             )}
                         </div>
 
-                        <Button onClick={handleFileUpload} className="w-full" disabled={isConnecting || !uploadedFile}>
-                            {isConnecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isConnecting ? "Processando..." : "Importar Arquivo"}
+                        <Button onClick={handleFileUpload} className="w-full" disabled={isUploading || !uploadedFile}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {isUploading ? "Processando..." : "Importar Arquivo"}
                         </Button>
                     </div>
                 </TabsContent>
@@ -191,3 +192,4 @@ export default function ConectarCRMPage() {
     </div>
   );
 }
+
