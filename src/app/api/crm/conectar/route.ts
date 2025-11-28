@@ -1,5 +1,5 @@
 
-export const runtime = "nodejs"; // GARANTE QUE XLSX VAI FUNCIONAR
+export const runtime = "nodejs"; 
 export const dynamic = "force-dynamic";
 
 // 🔥 CRÍTICO NA RENDER
@@ -13,59 +13,50 @@ import { Anuncio } from "@/models/Anuncio";
 import * as xlsx from "xlsx";
 import redis from "@/lib/redis";
 
+function sanitizeKeys(obj: any) {
+    const cleaned: any = {};
+    for (const key of Object.keys(obj)) {
+        const normalized = key
+            .normalize("NFKC")
+            .replace(/[\uFEFF]/g, "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+        cleaned[normalized] = obj[key];
+    }
+    return cleaned;
+}
+
 async function parseFileFromBuffer(buffer: Buffer) {
     const workbook = xlsx.read(buffer, { type: "buffer" });
+
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+
+    const rawData = xlsx.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: false,
+        blankrows: false
+    });
+
+    const data = rawData.map(row => sanitizeKeys(row));
     return data;
 }
 
-
 async function publicarAtivos(data: any[], uidFirebase: string) {
-    const anunciosParaPublicar = [];
+    const anuncios = data.map(row => ({
+        uidFirebase,
+        titulo: row.titulo || "Sem título",
+        tipo: row.tipo_transacao || "other",
+        price: Number(row.valor_reais || 0),
+        metadados: row,
+        status: "Disponível",
+        createdAt: new Date(),
+    }));
 
-    for (const row of data) {
-
-        // NORMALIZAÇÃO DE CAMPOS
-        const titulo =
-            row.titulo ||
-            row.Título ||
-            row.nome ||
-            row.Nome ||
-            row.descricao ||
-            row.Descrição ||
-            "Sem título";
-
-        const price =
-            Number(
-                row.preco ||
-                row.Preço ||
-                row.precoUnitario ||
-                row.price ||
-                row.Price ||
-                0
-            );
-
-        const tipo =
-            (row.tipo || row.Tipo || "other").toString().toLowerCase();
-
-        // GARANTE QUE CATEGORIA, STATUS E UID EXISTEM
-        const anuncio = {
-            uidFirebase,
-            titulo,
-            tipo,
-            price,
-            metadados: { ...row },
-            status: "Disponível",
-            createdAt: new Date(),
-        };
-
-        anunciosParaPublicar.push(anuncio);
-    }
-
-    if (anunciosParaPublicar.length > 0) {
-        await Anuncio.insertMany(anunciosParaPublicar, { ordered: false });
+    if (anuncios.length > 0) {
+        await Anuncio.insertMany(anuncios);
     }
 
     // LIMPA TODO O CACHE RELACIONADO
@@ -79,7 +70,7 @@ async function publicarAtivos(data: any[], uidFirebase: string) {
         console.error("Error clearing Redis cache:", error);
     }
 
-    return anunciosParaPublicar.length;
+    return anuncios.length;
 }
 
 
