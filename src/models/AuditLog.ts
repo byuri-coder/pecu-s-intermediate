@@ -3,7 +3,7 @@
 import mongoose, { Schema, models } from "mongoose";
 
 const AuditLogSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'Usuario' },
+  userId: { type: String, required: true, index: true }, // Store Firebase UID
   action: { type: String, required: true },
   details: { type: Schema.Types.Mixed },
   ipAddress: { type: String },
