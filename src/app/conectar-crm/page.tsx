@@ -18,6 +18,8 @@ const crmOptions = [
   { value: "interno", label: "CRM Interno" },
 ];
 
+const MAX_FILES = 5;
+
 export default function ConectarCRMPage() {
   const { user } = useUser();
   const { toast } = useToast();
@@ -26,7 +28,7 @@ export default function ConectarCRMPage() {
   const [accountId, setAccountId] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   async function handleConnect() {
     if (!user) {
@@ -58,44 +60,64 @@ export default function ConectarCRMPage() {
   }
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 20 * 1024 * 1024) { // 20MB limit
-        toast({ title: "Arquivo muito grande", description: "O arquivo não pode exceder 20MB.", variant: "destructive" });
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      
+      if (uploadedFiles.length + newFiles.length > MAX_FILES) {
+        toast({ title: "Limite excedido", description: `Você pode enviar no máximo ${MAX_FILES} arquivos por vez.`, variant: "destructive" });
         return;
       }
-      setUploadedFile(file);
+      
+      const validFiles = newFiles.filter(file => {
+          if (file.size > 20 * 1024 * 1024) { // 20MB limit per file
+            toast({ title: "Arquivo muito grande", description: `O arquivo ${file.name} excede o limite de 20MB.`, variant: "destructive" });
+            return false;
+          }
+          return true;
+      });
+
+      setUploadedFiles(prev => [...prev, ...validFiles]);
     }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleFileUpload = async () => {
-    if (!uploadedFile || !user) {
-         toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um arquivo para importar.", variant: "destructive" });
+    if (uploadedFiles.length === 0 || !user) {
+         toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um ou mais arquivos para importar.", variant: "destructive" });
         return;
     }
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', uploadedFile);
-    formData.append('userId', user.uid);
-    formData.append('integrationType', 'file');
+    
+    // We process uploads one by one to give clearer feedback, but you could use Promise.all for parallel uploads.
+    for (const file of uploadedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', user.uid);
+        formData.append('integrationType', 'file');
 
-    try {
-        const res = await fetch("/api/crm/conectar", {
-            method: 'POST',
-            body: formData,
-        });
+        try {
+            const res = await fetch("/api/crm/conectar", {
+                method: 'POST',
+                body: formData,
+            });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Falha ao processar o arquivo.");
-        
-        toast({ title: "Sucesso!", description: data.message });
-        setUploadedFile(null);
-    } catch (error: any) {
-        toast({ title: "Erro na Importação", description: error.message, variant: "destructive" });
-    } finally {
-        setIsUploading(false);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Falha ao processar o arquivo ${file.name}.`);
+            
+            toast({ title: "Sucesso!", description: `${file.name}: ${data.message}` });
+        } catch (error: any) {
+            toast({ title: `Erro em ${file.name}`, description: error.message, variant: "destructive" });
+        }
     }
+    
+    setUploadedFiles([]); // Clear files after attempting upload
+    setIsUploading(false);
   };
+
 
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-2xl">
@@ -161,28 +183,35 @@ export default function ConectarCRMPage() {
                 <TabsContent value="file" className="pt-6">
                     <div className="space-y-6">
                         <div className="space-y-2">
-                             <Label>Arquivo de Exportação</Label>
-                             <CardDescription>Exporte seus dados em formato CSV, XLSX ou JSON do seu CRM e faça o upload aqui.</CardDescription>
-                             {!uploadedFile ? (
-                                <div onClick={() => document.getElementById('file-input')?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
-                                    <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <p className="text-sm">Clique ou arraste para adicionar o arquivo</p>
-                                    <Input id="file-input" type="file" className="hidden" accept=".csv,.xlsx,.json,.xml" onChange={handleFileChange} />
-                                </div>
-                            ) : (
-                                <div className="mt-2 flex justify-between items-center text-sm p-3 bg-muted rounded-md border">
-                                    <div className='flex items-center gap-2'>
-                                        <File className="h-5 w-5"/>
-                                        <span>{uploadedFile.name}</span>
+                             <Label>Arquivos de Exportação</Label>
+                             <CardDescription>Exporte seus dados em formato CSV, XLSX ou JSON do seu CRM e faça o upload aqui (máx. 5 arquivos).</CardDescription>
+                             <div onClick={() => document.getElementById('file-input')?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
+                                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <p className="text-sm">Clique ou arraste para adicionar arquivos</p>
+                                <Input id="file-input" type="file" className="hidden" accept=".csv,.xlsx,.json,.xml" onChange={handleFileChange} multiple />
+                            </div>
+
+                            {uploadedFiles.length > 0 && (
+                                <div className="space-y-2 mt-4">
+                                    <Label>Arquivos selecionados:</Label>
+                                    <div className="space-y-1">
+                                    {uploadedFiles.map((file, index) => (
+                                        <div key={index} className="flex justify-between items-center text-sm p-2 bg-muted rounded-md border">
+                                            <div className='flex items-center gap-2 overflow-hidden'>
+                                                <File className="h-5 w-5 flex-shrink-0"/>
+                                                <span className="truncate">{file.name}</span>
+                                            </div>
+                                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => removeFile(index)}><Trash2 className="h-4 w-4"/></Button>
+                                        </div>
+                                    ))}
                                     </div>
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setUploadedFile(null)}><Trash2 className="h-4 w-4"/></Button>
                                 </div>
                             )}
                         </div>
 
-                        <Button onClick={handleFileUpload} className="w-full" disabled={isUploading || !uploadedFile}>
+                        <Button onClick={handleFileUpload} className="w-full" disabled={isUploading || uploadedFiles.length === 0}>
                             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isUploading ? "Processando..." : "Importar Arquivo"}
+                            {isUploading ? "Processando..." : `Importar ${uploadedFiles.length > 0 ? uploadedFiles.length : ''} Arquivo(s)`}
                         </Button>
                     </div>
                 </TabsContent>
