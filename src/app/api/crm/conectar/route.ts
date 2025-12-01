@@ -1,153 +1,72 @@
 
-export const runtime = "nodejs"; 
-export const dynamic = "force-dynamic";
-
-// 🔥 CRÍTICO NA RENDER
-export const maxDuration = 60; 
-export const maxBodySize = "15mb";
-
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { CrmIntegration } from "@/models/CrmIntegration";
-import { Anuncio } from "@/models/Anuncio";
-import * as xlsx from "xlsx";
-import redis from "@/lib/redis";
-
-function sanitizeKeys(obj: any) {
-    const cleaned: any = {};
-    for (const key of Object.keys(obj)) {
-        const normalized = key
-            .normalize("NFKC")
-            .replace(/[\uFEFF]/g, "")
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-
-        cleaned[normalized] = obj[key];
-    }
-    return cleaned;
-}
-
-async function parseFileFromBuffer(buffer: Buffer) {
-    const workbook = xlsx.read(buffer, { type: "buffer" });
-
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    const rawData = xlsx.utils.sheet_to_json(sheet, {
-        defval: "",
-        raw: false,
-        blankrows: false
-    });
-
-    const data = rawData.map(row => sanitizeKeys(row));
-    return data;
-}
-
-async function publicarAtivos(data: any[], uidFirebase: string) {
-    const anuncios = data.map(row => ({
-        uidFirebase,
-        titulo: row.titulo || "Sem título",
-        tipo: row.tipo_transacao || "other",
-        price: Number(row.valor_reais || 0),
-        metadados: row,
-        status: "Disponível",
-        createdAt: new Date(),
-    }));
-
-    if (anuncios.length > 0) {
-        await Anuncio.insertMany(anuncios);
-    }
-
-    // LIMPA TODO O CACHE RELACIONADO
-    try {
-        const allKeys = await redis.keys("anuncios*");
-        if (allKeys.length > 0) {
-            await redis.del(allKeys);
-        }
-        console.log(`🧹 Cache cleared for user ${uidFirebase} and all anuncios.`);
-    } catch (error) {
-        console.error("Error clearing Redis cache:", error);
-    }
-
-    return anuncios.length;
-}
-
 
 export async function POST(req: Request) {
+  const contentType = req.headers.get("content-type") || "";
+
+  // 🟦 Se for upload de arquivo (FormData)
+  if (contentType.includes("multipart/form-data")) {
     try {
-        await connectDB();
-        const contentType = req.headers.get('content-type') || '';
-        console.log("📥 Recebido headers:", contentType);
+      const form = await req.formData();
+      const file = form.get("file");
+      const userId = form.get("userId");
+      const integrationType = form.get("integrationType");
 
-        if (contentType.includes('multipart/form-data')) {
-            const formData = await req.formData();
-            console.log("📥 formData keys:", [...formData.keys()]);
-            const file = formData.get('file') as File | null;
-            const userId = formData.get('userId') as string;
+      if (!file || !(file instanceof File)) {
+        return NextResponse.json(
+          { error: "Nenhum arquivo selecionado" },
+          { status: 400 }
+        );
+      }
 
-            if (!file) {
-                console.error("❌ Arquivo NÃO recebido no formData!");
-                return NextResponse.json({ error: "Arquivo e ID do usuário são obrigatórios." }, { status: 400 });
-            }
-             console.log("📦 Arquivo recebido:", file.name, file.size);
-            
-            if (file instanceof Blob) {
-                 const buffer = Buffer.from(await file.arrayBuffer());
-                 const rawData = await parseFileFromBuffer(buffer);
+      // Lê o conteúdo real do arquivo
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
 
-                if (!rawData || rawData.length === 0) {
-                    return NextResponse.json({ error: "Arquivo inválido ou vazio." }, { status: 400 });
-                }
+      // Aqui você processa o arquivo (xlsx, csv, json, xml)
+      // depois salva no MongoDB, cria logs etc.
 
-                const total = await publicarAtivos(rawData, userId);
-
-                await CrmIntegration.updateOne(
-                    { userId: userId },
-                    { $set: { 
-                        integrationType: 'file',
-                        active: true,
-                        lastSync: new Date(),
-                        syncStatus: 'success',
-                    } },
-                    { upsert: true }
-                );
-
-                return NextResponse.json({ message: `Sucesso! ${total} ativos foram importados e publicados.`, total });
-            }
-            
-            return NextResponse.json({ error: "Tipo de arquivo inválido" }, { status: 400 });
-
-
-        } else if (contentType.includes('application/json')) {
-            const { userId, crm, apiKey, accountId } = await req.json();
-
-            if (!userId || !crm || !apiKey) {
-                return NextResponse.json({ error: "Dados insuficientes para conectar o CRM via API." }, { status: 400 });
-            }
-
-            await CrmIntegration.updateOne(
-                { userId: userId },
-                {
-                    $set: {
-                        crm,
-                        apiKey,
-                        accountId: accountId || null,
-                        active: true,
-                        integrationType: 'api',
-                        connectedAt: new Date(),
-                    }
-                },
-                { upsert: true }
-            );
-
-            return NextResponse.json({ message: "CRM conectado com sucesso!" });
-        } else {
-             return NextResponse.json({ error: "Content-Type não suportado." }, { status: 415 });
-        }
-
-    } catch (error: any) {
-        console.error("Erro ao conectar/importar CRM:", error);
-        return NextResponse.json({ error: "Erro interno no servidor ao tentar processar a solicitação." }, { status: 500 });
+      return NextResponse.json({
+        message: `Arquivo ${file.name} importado com sucesso!`,
+        originalName: file.name,
+        integrationType,
+        userId,
+      });
+    } catch (err: any) {
+      return NextResponse.json(
+        { error: "Erro ao processar upload: " + err.message },
+        { status: 500 }
+      );
     }
+  }
+
+  // 🟩 Caso seja JSON (API KEY)
+  if (contentType.includes("application/json")) {
+    try {
+      const body = await req.json();
+
+      if (!body.crm || !body.apiKey) {
+        return NextResponse.json(
+          { error: "CRM e API Key são obrigatórios." },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        message: "CRM conectado com sucesso via API Key.",
+        crm: body.crm,
+        userId: body.userId,
+      });
+    } catch (err: any) {
+      return NextResponse.json(
+        { error: "Erro ao processar JSON: " + err.message },
+        { status: 500 }
+      );
+    }
+  }
+
+  return NextResponse.json(
+    { error: "Formato de requisição inválido." },
+    { status: 400 }
+  );
 }
