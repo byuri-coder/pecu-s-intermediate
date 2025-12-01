@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { ImportAuditLog } from "@/models/ImportAuditLog";
@@ -69,18 +70,24 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+      
+      // ======================================================
+      // 🟨 1.1.1 - SANITIZE DATA AND PROVIDE DEFAULTS
+      // ======================================================
+       const anunciosLimpos = anunciosExtraidos.map((a) => ({
+          ...a,
+          uidFirebase: userId,
+          tipo: a.tipo || "other",
+          titulo: a.titulo || a.nome || "Sem título",
+          origin: `import:${integrationType}`,
+          createdAt: timestamp,
+        }));
+
 
       // ======================================================
       // 🟩 1.2 — SALVA NO MONGODB
       // ======================================================
-      const anunciosSalvos = await Anuncio.insertMany(
-        anunciosExtraidos.map((a:any) => ({
-          ...a,
-          uidFirebase: userId,
-          origin: `import:${integrationType}`,
-          createdAt: timestamp,
-        }))
-      );
+      const anunciosSalvos = await Anuncio.insertMany(anunciosLimpos);
 
       // ======================================================
       // 🟥 1.3 — CRIA LOG PARA AUDITORIA
