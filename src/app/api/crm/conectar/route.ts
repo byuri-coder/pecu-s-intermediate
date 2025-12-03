@@ -7,8 +7,11 @@ import redis from "@/lib/redis";
 import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { XMLParser } from "fast-xml-parser";
+import removeAccents from "remove-accents";
 
-export const runtime = 'nodejs'; // Force Node.js runtime for file uploads
+export const runtime = 'nodejs';
+export const dynamic = "force-dynamic"; 
+export const fetchCache = "force-no-store";
 
 async function clearCachePrefix(prefix: string) {
   try {
@@ -35,21 +38,42 @@ function normalizePrice(value: any): number {
 }
 
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date) {
-    const sanitized: { [key: string]: any } = {};
-    for (const key of Object.keys(raw)) {
-        const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '_');
-        sanitized[normalizedKey] = raw[key];
-    }
+  const sanitized: { [key: string]: any } = {};
+
+  for (const key of Object.keys(raw)) {
+    const k = removeAccents(key)
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+
+    sanitized[k] = raw[key];
+  }
     
     return {
         uidFirebase: userId,
-        titulo: sanitized.titulo || sanitized.nome_do_ativo || sanitized.asset_name || "Sem título",
-        tipo: sanitized.tipo || sanitized.categoria || sanitized.category || "other",
-        price: normalizePrice(sanitized.preco || sanitized.price || sanitized.valor || sanitized.valor_reais),
-        status: "Disponível", // Definindo um status padrão para exibição
+        titulo:
+            sanitized.titulo ||
+            sanitized.titulo_do_ativo ||
+            sanitized.nome ||
+            sanitized.nome_do_ativo ||
+            "Sem título",
+
+        tipo:
+            sanitized.tipo ||
+            sanitized.categoria ||
+            sanitized.category ||
+            "outro",
+
+        price: normalizePrice(
+            sanitized.preco ||
+            sanitized.price ||
+            sanitized.valor ||
+            sanitized.valor_reais
+        ),
+        status: "Disponível",
         origin: `import:${integrationType}`,
         createdAt: timestamp,
-        metadados: raw, // Mantém os dados originais para referência
+        metadados: raw,
     };
 }
 
@@ -58,106 +82,110 @@ export async function POST(req: Request) {
   await connectDB();
   const timestamp = new Date();
   
-  const form = await req.formData().catch(() => null);
+  const contentType = req.headers.get("content-type") || "";
 
   // ======================================================
-  // 🟦 1) UPLOAD DE ARQUIVO (FormData)
+  // 1) FORM-DATA — UPLOAD DE ARQUIVO
   // ======================================================
-  if (form) {
+  if (contentType.includes("multipart/form-data")) {
     try {
-        const files = form.getAll("file") as File[];
-        const userId = form.get("userId") as string;
-        const integrationType = form.get("integrationType") as string;
+      const form = await req.formData();
+      const files = form.getAll("file") as File[];
+      const userId = form.get("userId") as string;
+      const integrationType = form.get("integrationType") as string;
 
-        if (!files || files.length === 0 || files.some(f => typeof f === 'string')) {
-            return NextResponse.json({ error: "Nenhum arquivo válido enviado." }, { status: 400 });
+      if (!files || files.length === 0) {
+        return NextResponse.json(
+          { error: "Nenhum arquivo válido enviado." },
+          { status: 400 }
+        );
+      }
+
+      let allRecords: any[] = [];
+
+      for (const file of files) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const name = file.name.toLowerCase();
+
+        let rows: any[] = [];
+
+        if (name.endsWith(".csv")) {
+          rows = parse(buffer.toString("utf-8"), {
+            columns: true,
+            skip_empty_lines: true,
+            delimiter: [",", ";"],
+          });
+        } else if (name.endsWith(".xlsx")) {
+          const wb = XLSX.read(buffer);
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        } else if (name.endsWith(".json")) {
+          rows = JSON.parse(buffer.toString());
+        } else if (name.endsWith(".xml")) {
+          const parser = new XMLParser();
+          const xml = parser.parse(buffer.toString());
+          rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
         }
 
-        let allAnunciosExtraidos: any[] = [];
-        let totalFilesProcessed = 0;
+        allRecords.push(...rows);
+      }
+      
+      if (allRecords.length === 0) {
+        return NextResponse.json(
+          { error: "Nenhum registro encontrado nos arquivos." },
+          { status: 400 }
+        );
+      }
 
-        for (const file of files) {
-            const bytes = await file.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const fileName = file.name.toLowerCase();
-            let anunciosDoArquivo: any[] = [];
+      const normalized = allRecords.map((r) =>
+        normalizeAndMapRecord(r, userId, integrationType, timestamp)
+      );
 
-            if (fileName.endsWith(".xlsx")) {
-                const workbook = XLSX.read(buffer, { type: "buffer" });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                anunciosDoArquivo = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false, blankrows: false });
-            } else if (fileName.endsWith(".csv")) {
-                anunciosDoArquivo = parse(buffer.toString('utf-8'), { columns: true, skip_empty_lines: true, delimiter: [',', ';'] });
-            } else if (fileName.endsWith(".json")) {
-                anunciosDoArquivo = JSON.parse(buffer.toString());
-            } else if (fileName.endsWith(".xml")) {
-                const parser = new XMLParser();
-                const xmlData = parser.parse(buffer.toString());
-                anunciosDoArquivo = xmlData?.anuncios?.anuncio || xmlData?.anuncios || [];
-            }
-            
-            if (anunciosDoArquivo.length > 0) {
-                 allAnunciosExtraidos.push(...anunciosDoArquivo);
-                 totalFilesProcessed++;
-            }
-        }
-        
-        if (allAnunciosExtraidos.length === 0) {
-            return NextResponse.json({ error: "Nenhum anúncio encontrado nos arquivos." }, { status: 400 });
-        }
+      const saved = await Anuncio.insertMany(normalized);
 
-        const anunciosLimpos = allAnunciosExtraidos.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp));
-        const anunciosSalvos = await Anuncio.insertMany(anunciosLimpos);
-        
-        await clearCachePrefix("anuncios");
+      await clearCachePrefix("anuncios");
 
-        await ImportAuditLog.create({
-            userId,
-            integrationType,
-            originalFileName: files.map(f => f.name).join(', '),
-            totalRegistros: anunciosSalvos.length,
-            createdAt: timestamp,
-        });
+      await ImportAuditLog.create({
+        userId,
+        integrationType,
+        originalFileName: files.map((f) => f.name).join(", "),
+        totalRegistros: saved.length,
+        createdAt: timestamp,
+      });
 
-        return NextResponse.json({
-            message: "Importação concluída com sucesso",
-            registrosSalvos: anunciosSalvos.length,
-            userId,
-        });
+      return NextResponse.json({
+        message: "Importação concluída",
+        registrosSalvos: saved.length,
+        userId,
+      });
 
     } catch (err: any) {
-      console.error("Erro em /api/crm/conectar (FormData):", err);
-      return NextResponse.json({ error: "Erro interno no servidor: " + err.message }, { status: 500 });
+      return NextResponse.json({ error: "Erro ao processar upload: " + err.message }, { status: 500 });
     }
   }
 
   // ======================================================
-  // 🟧 2) CONEXÃO VIA API KEY (JSON)
+  // 2) JSON — API KEY
   // ======================================================
-  try {
+  if (contentType.includes("application/json")) {
+    try {
       const body = await req.json();
-      if (body) {
-          if (!body.crm || !body.apiKey) {
-              return NextResponse.json({ error: "CRM e API Key são obrigatórios." }, { status: 400 });
-          }
-          
-          await ImportAuditLog.create({
-              userId: body.userId,
-              integrationType: "api-key",
-              originalFileName: null,
-              totalRegistros: 0,
-              credentials: body,
-              createdAt: timestamp,
-          });
-
-          return NextResponse.json({
-              message: "Conectado ao CRM com API Key.",
-              userId: body.userId,
-          });
+      if (!body.crm || !body.apiKey) {
+        return NextResponse.json({ error: "CRM e API Key são obrigatórios." }, { status: 400 });
       }
-  } catch (e) {
-      // Ignore JSON parsing errors if form data was processed
+
+      await ImportAuditLog.create({
+        userId: body.userId,
+        integrationType: "api-key",
+        createdAt: timestamp,
+        credentials: body,
+      });
+
+      return NextResponse.json({ message: "CRM conectado com sucesso" });
+    } catch (err: any) {
+      return NextResponse.json({ error: "Erro ao processar JSON: " + err.message }, { status: 500 });
+    }
   }
 
-  return NextResponse.json({ error: "Formato de requisição inválido." }, { status: 400 });
+  return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
 }
