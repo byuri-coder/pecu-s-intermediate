@@ -41,144 +41,103 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
 
 
 export async function POST(req: Request) {
-  const contentType = req.headers.get("content-type") || "";
   await connectDB();
 
   const timestamp = new Date();
+  
+  try {
+    const form = await req.formData().catch(() => null);
 
-  // ======================================================
-  // 🟦 1) UPLOAD DE ARQUIVO (FormData)
-  // ======================================================
-  if (contentType.includes("multipart/form-data")) {
-    try {
-      const form = await req.formData();
-      const file = form.get("file") as File;
-      const userId = form.get("userId") as string;
-      const integrationType = form.get("integrationType") as string;
+    // ======================================================
+    // 🟦 1) UPLOAD DE ARQUIVO (FormData)
+    // ======================================================
+    if (form) {
+        const file = form.get("file") as File;
+        const userId = form.get("userId") as string;
+        const integrationType = form.get("integrationType") as string;
 
-      if (!file || !(file instanceof File)) {
-        return NextResponse.json(
-          { error: "Nenhum arquivo enviado." },
-          { status: 400 }
-        );
-      }
+        if (!file || typeof file === "string" || !file.name) {
+            return NextResponse.json({ error: "Nenhum arquivo válido enviado." }, { status: 400 });
+        }
 
-      // 🔵 Conteúdo real do arquivo
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        
+        let anunciosExtraidos: any[] = [];
+        const fileName = file.name.toLowerCase();
 
-      // ======================================================
-      // 🔥 1.1 — PROCESSA O ARQUIVO E CONVERTE PARA "anúncios"
-      // ======================================================
-      let anunciosExtraidos: any[] = [];
-      const fileName = file.name.toLowerCase();
+        if (fileName.endsWith(".xlsx")) {
+            const workbook = XLSX.read(buffer, { type: "buffer" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            anunciosExtraidos = XLSX.utils.sheet_to_json(sheet);
+        } else if (fileName.endsWith(".csv")) {
+            anunciosExtraidos = parse(buffer.toString('utf-8'), {
+            columns: true,
+            skip_empty_lines: true,
+            delimiter: [',', ';']
+            });
+        } else if (fileName.endsWith(".json")) {
+            anunciosExtraidos = JSON.parse(buffer.toString());
+        } else if (fileName.endsWith(".xml")) {
+            const parser = new XMLParser();
+            const xmlData = parser.parse(buffer.toString());
+            anunciosExtraidos = xmlData?.anuncios?.anuncio || xmlData?.anuncios || [];
+        } else {
+            return NextResponse.json({ error: "Formato de arquivo não suportado." }, { status: 400 });
+        }
+        
+        if (anunciosExtraidos.length === 0) {
+            return NextResponse.json({ error: "Nenhum anúncio encontrado no arquivo." }, { status: 400 });
+        }
 
-      if (fileName.endsWith(".xlsx")) {
-        const workbook = XLSX.read(buffer, { type: "buffer" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        anunciosExtraidos = XLSX.utils.sheet_to_json(sheet);
-      } else if (fileName.endsWith(".csv")) {
-        anunciosExtraidos = parse(buffer.toString('utf-8'), {
-          columns: true,
-          skip_empty_lines: true,
-          delimiter: [',', ';'] // Suporta ambos os delimitadores
+        const anunciosLimpos = anunciosExtraidos.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp));
+        const anunciosSalvos = await Anuncio.insertMany(anunciosLimpos);
+        
+        await clearCachePrefix("anuncios");
+
+        await ImportAuditLog.create({
+            userId,
+            integrationType,
+            originalFileName: file.name,
+            totalRegistros: anunciosSalvos.length,
+            createdAt: timestamp,
         });
-      } else if (fileName.endsWith(".json")) {
-        anunciosExtraidos = JSON.parse(buffer.toString());
-      } else if (fileName.endsWith(".xml")) {
-        const parser = new XMLParser();
-        const xmlData = parser.parse(buffer.toString());
-        anunciosExtraidos = xmlData?.anuncios?.anuncio || xmlData?.anuncios || [];
-      }
 
-
-      // Se não conseguiu extrair nada
-      if (anunciosExtraidos.length === 0) {
-        return NextResponse.json(
-          { error: "Nenhum anúncio encontrado no arquivo." },
-          { status: 400 }
-        );
-      }
-      
-      // ======================================================
-      // 🟨 1.1.1 - NORMALIZE E MAPEI OS DADOS
-      // ======================================================
-       const anunciosLimpos = anunciosExtraidos.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp));
-
-
-      // ======================================================
-      // 🟩 1.2 — SALVA NO MONGODB
-      // ======================================================
-      const anunciosSalvos = await Anuncio.insertMany(anunciosLimpos);
-      
-      // ======================================================
-      // 🧹 1.2.1 - LIMPA O CACHE DO REDIS
-      // ======================================================
-      await clearCachePrefix("anuncios");
-
-
-      // ======================================================
-      // 🟥 1.3 — CRIA LOG PARA AUDITORIA
-      // ======================================================
-      await ImportAuditLog.create({
-        userId,
-        integrationType,
-        originalFileName: file.name,
-        totalRegistros: anunciosSalvos.length,
-        createdAt: timestamp,
-      });
-
-      return NextResponse.json({
-        message: "Importação concluída com sucesso",
-        registrosSalvos: anunciosSalvos.length,
-        userId,
-      });
-    } catch (err: any) {
-      return NextResponse.json(
-        { error: "Erro no upload: " + err.message },
-        { status: 500 }
-      );
+        return NextResponse.json({
+            message: "Importação concluída com sucesso",
+            registrosSalvos: anunciosSalvos.length,
+            userId,
+        });
     }
-  }
 
-  // ======================================================
-  // 🟧 2) CONEXÃO VIA API KEY (JSON)
-  // ======================================================
-  if (contentType.includes("application/json")) {
-    try {
-      const body = await req.json();
+    // ======================================================
+    // 🟧 2) CONEXÃO VIA API KEY (JSON)
+    // ======================================================
+    const body = await req.json().catch(() => null);
+    if (body) {
+        if (!body.crm || !body.apiKey) {
+            return NextResponse.json({ error: "CRM e API Key são obrigatórios." }, { status: 400 });
+        }
+        
+        await ImportAuditLog.create({
+            userId: body.userId,
+            integrationType: "api-key",
+            originalFileName: null,
+            totalRegistros: 0,
+            credentials: body,
+            createdAt: timestamp,
+        });
 
-      if (!body.crm || !body.apiKey) {
-        return NextResponse.json(
-          { error: "CRM e API Key são obrigatórios." },
-          { status: 400 }
-        );
-      }
-
-      // grava log no banco
-      await ImportAuditLog.create({
-        userId: body.userId,
-        integrationType: "api-key",
-        originalFileName: null,
-        totalRegistros: 0,
-        credentials: body,
-        createdAt: timestamp,
-      });
-
-      return NextResponse.json({
-        message: "Conectado ao CRM com API Key.",
-        userId: body.userId,
-      });
-    } catch (err: any) {
-      return NextResponse.json(
-        { error: "Erro no JSON: " + err.message },
-        { status: 500 }
-      );
+        return NextResponse.json({
+            message: "Conectado ao CRM com API Key.",
+            userId: body.userId,
+        });
     }
-  }
 
-  return NextResponse.json(
-    { error: "Formato inválido." },
-    { status: 400 }
-  );
+    return NextResponse.json({ error: "Formato de requisição inválido." }, { status: 400 });
+
+  } catch (err: any) {
+    console.error("Erro em /api/crm/conectar:", err);
+    return NextResponse.json({ error: "Erro interno no servidor: " + err.message }, { status: 500 });
+  }
 }

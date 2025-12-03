@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -29,6 +29,7 @@ export default function ConectarCRMPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleConnect() {
     if (!user) {
@@ -92,7 +93,6 @@ export default function ConectarCRMPage() {
     }
     setIsUploading(true);
     
-    // We process uploads one by one to give clearer feedback, but you could use Promise.all for parallel uploads.
     for (const file of uploadedFiles) {
         const formData = new FormData();
         formData.append('file', file);
@@ -114,7 +114,7 @@ export default function ConectarCRMPage() {
         }
     }
     
-    setUploadedFiles([]); // Clear files after attempting upload
+    setUploadedFiles([]);
     setIsUploading(false);
   };
 
@@ -185,10 +185,10 @@ export default function ConectarCRMPage() {
                         <div className="space-y-2">
                              <Label>Arquivos de Exportação</Label>
                              <CardDescription>Exporte seus dados em formato CSV, XLSX ou JSON do seu CRM e faça o upload aqui (máx. 5 arquivos).</CardDescription>
-                             <div onClick={() => document.getElementById('file-input')?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
+                             <div onClick={() => fileInputRef.current?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
                                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <p className="text-sm">Clique ou arraste para adicionar arquivos</p>
-                                <Input id="file-input" type="file" className="hidden" accept=".csv,.xlsx,.json,.xml" onChange={handleFileChange} multiple />
+                                <Input ref={fileInputRef} id="file-input" type="file" className="hidden" accept=".csv,.xlsx,.json,.xml" onChange={handleFileChange} multiple />
                             </div>
 
                             {uploadedFiles.length > 0 && (
