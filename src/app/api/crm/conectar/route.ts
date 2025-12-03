@@ -58,7 +58,6 @@ export async function POST(req: Request) {
   await connectDB();
   const timestamp = new Date();
   
-  // Use a try-catch block to gracefully handle parsing FormData
   const form = await req.formData().catch(() => null);
 
   // ======================================================
@@ -66,53 +65,48 @@ export async function POST(req: Request) {
   // ======================================================
   if (form) {
     try {
-        console.log("➡️ Headers:", req.headers);
-        console.log("➡️ FORM KEYS:", [...form.keys()]);
-        console.log("➡️ FILE TYPE:", form.get("file"));
-
-        const file = form.get("file") as File;
+        const files = form.getAll("file") as File[];
         const userId = form.get("userId") as string;
         const integrationType = form.get("integrationType") as string;
 
-        if (!file || typeof file === "string" || !file.name) {
+        if (!files || files.length === 0 || files.some(f => typeof f === 'string')) {
             return NextResponse.json({ error: "Nenhum arquivo válido enviado." }, { status: 400 });
         }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        
-        let anunciosExtraidos: any[] = [];
-        const fileName = file.name.toLowerCase();
+        let allAnunciosExtraidos: any[] = [];
+        let totalFilesProcessed = 0;
 
-        if (fileName.endsWith(".xlsx")) {
-            const workbook = XLSX.read(buffer, { type: "buffer" });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            anunciosExtraidos = XLSX.utils.sheet_to_json(sheet, {
-                defval: "",
-                raw: false,
-                blankrows: false
-            });
-        } else if (fileName.endsWith(".csv")) {
-            anunciosExtraidos = parse(buffer.toString('utf-8'), {
-            columns: true,
-            skip_empty_lines: true,
-            delimiter: [',', ';']
-            });
-        } else if (fileName.endsWith(".json")) {
-            anunciosExtraidos = JSON.parse(buffer.toString());
-        } else if (fileName.endsWith(".xml")) {
-            const parser = new XMLParser();
-            const xmlData = parser.parse(buffer.toString());
-            anunciosExtraidos = xmlData?.anuncios?.anuncio || xmlData?.anuncios || [];
-        } else {
-            return NextResponse.json({ error: "Formato de arquivo não suportado." }, { status: 400 });
+        for (const file of files) {
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            const fileName = file.name.toLowerCase();
+            let anunciosDoArquivo: any[] = [];
+
+            if (fileName.endsWith(".xlsx")) {
+                const workbook = XLSX.read(buffer, { type: "buffer" });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                anunciosDoArquivo = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false, blankrows: false });
+            } else if (fileName.endsWith(".csv")) {
+                anunciosDoArquivo = parse(buffer.toString('utf-8'), { columns: true, skip_empty_lines: true, delimiter: [',', ';'] });
+            } else if (fileName.endsWith(".json")) {
+                anunciosDoArquivo = JSON.parse(buffer.toString());
+            } else if (fileName.endsWith(".xml")) {
+                const parser = new XMLParser();
+                const xmlData = parser.parse(buffer.toString());
+                anunciosDoArquivo = xmlData?.anuncios?.anuncio || xmlData?.anuncios || [];
+            }
+            
+            if (anunciosDoArquivo.length > 0) {
+                 allAnunciosExtraidos.push(...anunciosDoArquivo);
+                 totalFilesProcessed++;
+            }
         }
         
-        if (anunciosExtraidos.length === 0) {
-            return NextResponse.json({ error: "Nenhum anúncio encontrado no arquivo." }, { status: 400 });
+        if (allAnunciosExtraidos.length === 0) {
+            return NextResponse.json({ error: "Nenhum anúncio encontrado nos arquivos." }, { status: 400 });
         }
 
-        const anunciosLimpos = anunciosExtraidos.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp));
+        const anunciosLimpos = allAnunciosExtraidos.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp));
         const anunciosSalvos = await Anuncio.insertMany(anunciosLimpos);
         
         await clearCachePrefix("anuncios");
@@ -120,7 +114,7 @@ export async function POST(req: Request) {
         await ImportAuditLog.create({
             userId,
             integrationType,
-            originalFileName: file.name,
+            originalFileName: files.map(f => f.name).join(', '),
             totalRegistros: anunciosSalvos.length,
             createdAt: timestamp,
         });
@@ -162,8 +156,7 @@ export async function POST(req: Request) {
           });
       }
   } catch (e) {
-      // This error is expected if the body is not JSON, so we can ignore it if form processing was successful.
-      // If we are here, it means neither FormData nor JSON was valid.
+      // Ignore JSON parsing errors if form data was processed
   }
 
   return NextResponse.json({ error: "Formato de requisição inválido." }, { status: 400 });

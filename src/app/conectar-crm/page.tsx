@@ -93,25 +93,25 @@ export default function ConectarCRMPage() {
     }
     setIsUploading(true);
     
-    for (const file of uploadedFiles) {
-        const formData = new FormData();
+    const formData = new FormData();
+    uploadedFiles.forEach(file => {
         formData.append('file', file);
-        formData.append('userId', user.uid);
-        formData.append('integrationType', 'file');
+    });
+    formData.append('userId', user.uid);
+    formData.append('integrationType', 'file-batch');
 
-        try {
-            const res = await fetch("/api/crm/conectar", {
-                method: 'POST',
-                body: formData,
-            });
+    try {
+        const res = await fetch("/api/crm/conectar", {
+            method: 'POST',
+            body: formData,
+        });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || `Falha ao processar o arquivo ${file.name}.`);
-            
-            toast({ title: "Sucesso!", description: `${file.name}: ${data.message}` });
-        } catch (error: any) {
-            toast({ title: `Erro em ${file.name}`, description: error.message, variant: "destructive" });
-        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Falha ao processar o lote de arquivos.`);
+        
+        toast({ title: "Sucesso!", description: `${data.registrosSalvos} registros importados de ${uploadedFiles.length} arquivo(s).` });
+    } catch (error: any) {
+        toast({ title: `Erro no Lote de Arquivos`, description: error.message, variant: "destructive" });
     }
     
     setUploadedFiles([]);
