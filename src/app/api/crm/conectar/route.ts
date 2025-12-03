@@ -8,6 +8,8 @@ import * as XLSX from "xlsx";
 import { parse } from "csv-parse/sync";
 import { XMLParser } from "fast-xml-parser";
 
+export const runtime = 'nodejs'; // Force Node.js runtime for file uploads
+
 async function clearCachePrefix(prefix: string) {
   try {
     const keys = await redis.keys(`${prefix}:*`);
@@ -54,16 +56,16 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
 
 export async function POST(req: Request) {
   await connectDB();
-
   const timestamp = new Date();
   
-  try {
-    const form = await req.formData().catch(() => null);
+  // Use a try-catch block to gracefully handle parsing FormData
+  const form = await req.formData().catch(() => null);
 
-    // ======================================================
-    // 🟦 1) UPLOAD DE ARQUIVO (FormData)
-    // ======================================================
-    if (form) {
+  // ======================================================
+  // 🟦 1) UPLOAD DE ARQUIVO (FormData)
+  // ======================================================
+  if (form) {
+    try {
         const file = form.get("file") as File;
         const userId = form.get("userId") as string;
         const integrationType = form.get("integrationType") as string;
@@ -124,36 +126,41 @@ export async function POST(req: Request) {
             registrosSalvos: anunciosSalvos.length,
             userId,
         });
+
+    } catch (err: any) {
+      console.error("Erro em /api/crm/conectar (FormData):", err);
+      return NextResponse.json({ error: "Erro interno no servidor: " + err.message }, { status: 500 });
     }
-
-    // ======================================================
-    // 🟧 2) CONEXÃO VIA API KEY (JSON)
-    // ======================================================
-    const body = await req.json().catch(() => null);
-    if (body) {
-        if (!body.crm || !body.apiKey) {
-            return NextResponse.json({ error: "CRM e API Key são obrigatórios." }, { status: 400 });
-        }
-        
-        await ImportAuditLog.create({
-            userId: body.userId,
-            integrationType: "api-key",
-            originalFileName: null,
-            totalRegistros: 0,
-            credentials: body,
-            createdAt: timestamp,
-        });
-
-        return NextResponse.json({
-            message: "Conectado ao CRM com API Key.",
-            userId: body.userId,
-        });
-    }
-
-    return NextResponse.json({ error: "Formato de requisição inválido." }, { status: 400 });
-
-  } catch (err: any) {
-    console.error("Erro em /api/crm/conectar:", err);
-    return NextResponse.json({ error: "Erro interno no servidor: " + err.message }, { status: 500 });
   }
+
+  // ======================================================
+  // 🟧 2) CONEXÃO VIA API KEY (JSON)
+  // ======================================================
+  try {
+      const body = await req.json();
+      if (body) {
+          if (!body.crm || !body.apiKey) {
+              return NextResponse.json({ error: "CRM e API Key são obrigatórios." }, { status: 400 });
+          }
+          
+          await ImportAuditLog.create({
+              userId: body.userId,
+              integrationType: "api-key",
+              originalFileName: null,
+              totalRegistros: 0,
+              credentials: body,
+              createdAt: timestamp,
+          });
+
+          return NextResponse.json({
+              message: "Conectado ao CRM com API Key.",
+              userId: body.userId,
+          });
+      }
+  } catch (e) {
+      // This error is expected if the body is not JSON, so we can ignore it if form processing was successful.
+      // If we are here, it means neither FormData nor JSON was valid.
+  }
+
+  return NextResponse.json({ error: "Formato de requisição inválido." }, { status: 400 });
 }

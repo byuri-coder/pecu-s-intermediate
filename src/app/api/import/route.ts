@@ -9,6 +9,8 @@ import { AuditLog } from "@/models/AuditLog";
 import { getAuth } from "firebase-admin/auth";
 import { getAdminApp } from "@/firebase/server-provider";
 
+export const runtime = 'nodejs'; // Force Node.js runtime for file uploads
+
 // Sanitize keys from the uploaded file to match our database schema fields
 function sanitizeKeys(obj: any) {
     const cleaned: any = {};

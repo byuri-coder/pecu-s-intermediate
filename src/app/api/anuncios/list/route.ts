@@ -1,3 +1,4 @@
+
 // src/app/api/anuncios/list/route.ts
 import { NextResponse } from "next/server";
 import { connectDB, DISABLE_MONGO } from "@/lib/mongodb";
