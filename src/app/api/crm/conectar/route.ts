@@ -66,6 +66,10 @@ export async function POST(req: Request) {
   // ======================================================
   if (form) {
     try {
+        console.log("➡️ Headers:", req.headers);
+        console.log("➡️ FORM KEYS:", [...form.keys()]);
+        console.log("➡️ FILE TYPE:", form.get("file"));
+
         const file = form.get("file") as File;
         const userId = form.get("userId") as string;
         const integrationType = form.get("integrationType") as string;
