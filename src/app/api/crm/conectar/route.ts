@@ -20,6 +20,18 @@ async function clearCachePrefix(prefix: string) {
   }
 }
 
+function normalizePrice(value: any): number {
+  if (!value) return 0;
+
+  return Number(
+    String(value)
+      .replace(/\s+/g, "")      // remove all whitespace
+      .replace(/R\$/gi, "")    // remove currency symbol
+      .replace(/\./g, "")       // remove thousand separators
+      .replace(/,/g, ".")       // replace decimal comma with a dot
+  ) || 0;
+}
+
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date) {
     const sanitized: { [key: string]: any } = {};
     for (const key of Object.keys(raw)) {
@@ -31,7 +43,7 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
         uidFirebase: userId,
         titulo: sanitized.titulo || sanitized.nome_do_ativo || sanitized.asset_name || "Sem título",
         tipo: sanitized.tipo || sanitized.categoria || sanitized.category || "other",
-        price: Number(sanitized.preco || sanitized.price || sanitized.valor || sanitized.valor_reais || 0),
+        price: normalizePrice(sanitized.preco || sanitized.price || sanitized.valor || sanitized.valor_reais),
         status: "Disponível", // Definindo um status padrão para exibição
         origin: `import:${integrationType}`,
         createdAt: timestamp,
@@ -69,7 +81,11 @@ export async function POST(req: Request) {
         if (fileName.endsWith(".xlsx")) {
             const workbook = XLSX.read(buffer, { type: "buffer" });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            anunciosExtraidos = XLSX.utils.sheet_to_json(sheet);
+            anunciosExtraidos = XLSX.utils.sheet_to_json(sheet, {
+                defval: "",
+                raw: false,
+                blankrows: false
+            });
         } else if (fileName.endsWith(".csv")) {
             anunciosExtraidos = parse(buffer.toString('utf-8'), {
             columns: true,
