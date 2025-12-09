@@ -84,6 +84,9 @@ export default function ConectarCRMPage() {
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   };
 
   const handleFileUpload = async () => {
@@ -99,6 +102,10 @@ export default function ConectarCRMPage() {
     
     const formData = new FormData();
     for (const file of uploadedFiles) {
+        if (!(file instanceof Blob)) {
+            console.warn("Item inválido ignorado:", file);
+            continue;
+        }
         formData.append('file', file);
     }
     formData.append('userId', user.uid);
@@ -119,6 +126,9 @@ export default function ConectarCRMPage() {
     }
     
     setUploadedFiles([]);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
     setIsUploading(false);
   };
 
