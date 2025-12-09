@@ -87,16 +87,20 @@ export default function ConectarCRMPage() {
   };
 
   const handleFileUpload = async () => {
-    if (uploadedFiles.length === 0 || !user) {
+    if (!user) {
+         toast({ title: "Erro de autenticação", description: "Por favor, faça login para continuar.", variant: "destructive" });
+        return;
+    }
+    if (uploadedFiles.length === 0) {
          toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um ou mais arquivos para importar.", variant: "destructive" });
         return;
     }
     setIsUploading(true);
     
     const formData = new FormData();
-    uploadedFiles.forEach(file => {
+    for (const file of uploadedFiles) {
         formData.append('file', file);
-    });
+    }
     formData.append('userId', user.uid);
     formData.append('integrationType', 'file-batch');
 
@@ -188,7 +192,16 @@ export default function ConectarCRMPage() {
                              <div onClick={() => fileInputRef.current?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
                                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <p className="text-sm">Clique ou arraste para adicionar arquivos</p>
-                                <Input ref={fileInputRef} id="file-input" type="file" className="hidden" accept=".csv,.xlsx,.json,.xml" onChange={handleFileChange} multiple />
+                                <Input 
+                                  ref={fileInputRef} 
+                                  id="file-input" 
+                                  type="file"
+                                  name="file"
+                                  className="hidden" 
+                                  accept=".csv,.xlsx,.json,.xml" 
+                                  onChange={handleFileChange} 
+                                  multiple 
+                                />
                             </div>
 
                             {uploadedFiles.length > 0 && (
