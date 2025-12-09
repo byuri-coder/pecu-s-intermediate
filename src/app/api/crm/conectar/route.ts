@@ -62,7 +62,7 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
             sanitized.tipo ||
             sanitized.categoria ||
             sanitized.category ||
-            "outro",
+            "other",
 
         price: normalizePrice(
             sanitized.preco ||
@@ -104,6 +104,10 @@ export async function POST(req: Request) {
       let allRecords: any[] = [];
 
       for (const file of files) {
+        if (!(file instanceof Blob)) {
+            console.warn("Item inválido ignorado:", file);
+            continue;
+        }
         const buffer = Buffer.from(await file.arrayBuffer());
         const name = file.name.toLowerCase();
 
