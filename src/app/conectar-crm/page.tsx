@@ -4,6 +4,7 @@
 import * as React from "react";
 import { useState, useRef } from "react";
 import { useUser } from "@/firebase";
+import { getAuth } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -32,8 +33,10 @@ export default function ConectarCRMPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleConnect() {
-    if (!user) {
-      toast({ title: "Erro", description: "Você precisa estar logado.", variant: "destructive" });
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser?.uid) {
+      toast({ title: "Erro de autenticação", description: "Sessão não disponível. Recarregue a página.", variant: "destructive" });
       return;
     }
     if (!crm || !apiKey) {
@@ -45,7 +48,7 @@ export default function ConectarCRMPage() {
       const res = await fetch("/api/crm/conectar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, crm, apiKey, accountId, integrationType: 'api' }),
+        body: JSON.stringify({ userId: currentUser.uid, crm, apiKey, accountId, integrationType: 'api' }),
       });
 
       const data = await res.json();
@@ -90,9 +93,16 @@ export default function ConectarCRMPage() {
   };
 
   const handleFileUpload = async () => {
-    if (!user) {
-         toast({ title: "Erro de autenticação", description: "Por favor, faça login para continuar.", variant: "destructive" });
-        return;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser?.uid) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Sessão não disponível. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      return;
     }
     if (uploadedFiles.length === 0) {
          toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um ou mais arquivos para importar.", variant: "destructive" });
@@ -108,7 +118,7 @@ export default function ConectarCRMPage() {
         }
         formData.append('file', file);
     }
-    formData.append('userId', user.uid);
+    formData.append('userId', currentUser.uid);
     formData.append('integrationType', 'file-batch');
 
     try {
