@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Share2, UploadCloud, File, Trash2, KeyRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Combobox } from "@/components/ui/combobox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const crmOptions = [
   { value: "externo", label: "CRM Externo" },
@@ -30,6 +32,7 @@ export default function ConectarCRMPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [defaultAssetType, setDefaultAssetType] = useState('carbon-credit');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleConnect() {
@@ -120,6 +123,7 @@ export default function ConectarCRMPage() {
     }
     formData.append('userId', currentUser.uid);
     formData.append('integrationType', 'file-batch');
+    formData.append('defaultAssetType', defaultAssetType);
 
     try {
         const res = await fetch("/api/crm/conectar", {
@@ -206,6 +210,22 @@ export default function ConectarCRMPage() {
                 </TabsContent>
                 <TabsContent value="file" className="pt-6">
                     <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="defaultAssetType">Tipo de Ativo Padrão</Label>
+                            <Select value={defaultAssetType} onValueChange={setDefaultAssetType}>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Selecione um tipo padrão para os ativos" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                <SelectItem value="carbon-credit">Crédito de Carbono</SelectItem>
+                                <SelectItem value="tax-credit">Crédito Tributário</SelectItem>
+                                <SelectItem value="rural-land">Terra Rural</SelectItem>
+                                <SelectItem value="grain">Grãos</SelectItem>
+                                <SelectItem value="other">Outro</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Este será o tipo usado se a coluna "tipo" não for encontrada no arquivo.</p>
+                        </div>
                         <div className="space-y-2">
                              <Label>Arquivos de Exportação</Label>
                              <CardDescription>Exporte seus dados em formato CSV, XLSX ou JSON do seu CRM e faça o upload aqui (máx. 5 arquivos).</CardDescription>

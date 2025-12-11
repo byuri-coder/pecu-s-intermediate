@@ -37,7 +37,7 @@ function normalizePrice(value: any): number {
   ) || 0;
 }
 
-function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date) {
+function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
   const sanitized: { [key: string]: any } = {};
 
   for (const key of Object.keys(raw)) {
@@ -62,7 +62,8 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
             sanitized.tipo ||
             sanitized.categoria ||
             sanitized.category ||
-            "other",
+            defaultAssetType || // Use the default type from the form
+            "other", // Final fallback
 
         price: normalizePrice(
             sanitized.preco ||
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
       const files = form.getAll("file") as File[];
       const userId = form.get("userId") as string;
       const integrationType = form.get("integrationType") as string;
+      const defaultAssetType = form.get("defaultAssetType") as string;
 
       if (!files || files.length === 0) {
         return NextResponse.json(
@@ -142,7 +144,7 @@ export async function POST(req: Request) {
       }
 
       const normalized = allRecords.map((r) =>
-        normalizeAndMapRecord(r, userId, integrationType, timestamp)
+        normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
       );
 
       const saved = await Anuncio.insertMany(normalized);
