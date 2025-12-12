@@ -78,6 +78,25 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
     };
 }
 
+function parseSingleAdFromXLSX(buffer: Buffer) {
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+  const ad: any = {};
+
+  for (const row of rows) {
+    if (!row[0] || !row[1]) continue;
+
+    const key = removeAccents(String(row[0])).trim().toLowerCase().replace(/\s+/g, "_");
+    const value = row[1];
+
+    ad[key] = value;
+  }
+
+  return ad;
+}
+
 
 export async function POST(req: Request) {
   await connectDB();
@@ -104,6 +123,7 @@ export async function POST(req: Request) {
       }
 
       let allRecords: any[] = [];
+      let savedCount = 0;
 
       for (const file of files) {
         if (!(file instanceof Blob)) {
@@ -113,41 +133,62 @@ export async function POST(req: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const name = file.name.toLowerCase();
 
-        let rows: any[] = [];
+        if (name.endsWith(".xlsx")) {
+            const adObject = parseSingleAdFromXLSX(buffer);
+            const anuncioToCreate = {
+              uidFirebase: userId,
+              titulo: adObject["titulo"] || "Sem título",
+              tipo: adObject["tipo_transacao"] === "venda" ? "rural-land" : (adObject["tipo_transacao"] || defaultAssetType || "other"),
+              price: normalizePrice(adObject["valor_reais"]),
+              status: "Disponível",
+              origin: `import:${integrationType}`,
+              createdAt: timestamp,
+              metadados: {
+                owner: adObject["dono"],
+                registration: adObject["numero_propriedade"],
+                location: `${adObject["municipio"]}, ${adObject["estado"]}`,
+                sizeHa: Number(adObject["tamanho_hectares"]) || null,
+                businessType: adObject["tipo_transacao"] || 'Venda',
+                ...adObject
+              },
+              descricao: adObject["descricao"]
+            };
+            await Anuncio.create(anuncioToCreate);
+            savedCount++;
 
-        if (name.endsWith(".csv")) {
-          rows = parse(buffer.toString("utf-8"), {
-            columns: true,
-            skip_empty_lines: true,
-            delimiter: [",", ";"],
-          });
-        } else if (name.endsWith(".xlsx")) {
-          const wb = XLSX.read(buffer);
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        } else if (name.endsWith(".json")) {
-          rows = JSON.parse(buffer.toString());
-        } else if (name.endsWith(".xml")) {
-          const parser = new XMLParser();
-          const xml = parser.parse(buffer.toString());
-          rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
+        } else {
+            let rows: any[] = [];
+            if (name.endsWith(".csv")) {
+              rows = parse(buffer.toString("utf-8"), {
+                columns: true,
+                skip_empty_lines: true,
+                delimiter: [",", ";"],
+              });
+            } else if (name.endsWith(".json")) {
+              rows = JSON.parse(buffer.toString());
+            } else if (name.endsWith(".xml")) {
+              const parser = new XMLParser();
+              const xml = parser.parse(buffer.toString());
+              rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
+            }
+            allRecords.push(...rows);
         }
-
-        allRecords.push(...rows);
       }
       
-      if (allRecords.length === 0) {
-        return NextResponse.json(
-          { error: "Nenhum registro encontrado nos arquivos." },
+      if (allRecords.length > 0) {
+        const normalized = allRecords.map((r) =>
+          normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
+        );
+        const saved = await Anuncio.insertMany(normalized);
+        savedCount += saved.length;
+      }
+
+      if (savedCount === 0) {
+         return NextResponse.json(
+          { error: "Nenhum registro válido encontrado nos arquivos." },
           { status: 400 }
         );
       }
-
-      const normalized = allRecords.map((r) =>
-        normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
-      );
-
-      const saved = await Anuncio.insertMany(normalized);
 
       await clearCachePrefix("anuncios");
 
@@ -155,13 +196,13 @@ export async function POST(req: Request) {
         userId,
         integrationType,
         originalFileName: files.map((f) => f.name).join(", "),
-        totalRegistros: saved.length,
+        totalRegistros: savedCount,
         createdAt: timestamp,
       });
 
       return NextResponse.json({
         message: "Importação concluída",
-        registrosSalvos: saved.length,
+        registrosSalvos: savedCount,
         userId,
       });
 
