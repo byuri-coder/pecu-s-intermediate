@@ -20,7 +20,7 @@ const crmOptions = [
   { value: "interno", label: "CRM Interno" },
 ];
 
-const MAX_FILES = 5;
+const MAX_FILES = 1; // Changed to 1
 
 export default function ConectarCRMPage() {
   const { toast } = useToast();
@@ -70,7 +70,7 @@ export default function ConectarCRMPage() {
       const newFiles = Array.from(files);
       
       if (uploadedFiles.length + newFiles.length > MAX_FILES) {
-        toast({ title: "Limite excedido", description: `Você pode enviar no máximo ${MAX_FILES} arquivos por vez.`, variant: "destructive" });
+        toast({ title: "Limite excedido", description: `Você pode enviar no máximo ${MAX_FILES} arquivo por vez.`, variant: "destructive" });
         return;
       }
       
@@ -106,7 +106,7 @@ export default function ConectarCRMPage() {
       return;
     }
     if (uploadedFiles.length === 0) {
-         toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um ou mais arquivos para importar.", variant: "destructive" });
+         toast({ title: "Nenhum arquivo selecionado", description: "Por favor, selecione um arquivo para importar.", variant: "destructive" });
         return;
     }
     setIsUploading(true);
@@ -130,9 +130,9 @@ export default function ConectarCRMPage() {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `Falha ao processar o lote de arquivos.`);
+        if (!res.ok) throw new Error(data.error || `Falha ao processar o arquivo.`);
         
-        toast({ title: "Sucesso!", description: `${data.registrosSalvos} registros importados de ${uploadedFiles.length} arquivo(s).` });
+        toast({ title: "Sucesso!", description: `${data.registrosSalvos} registros importados do arquivo.` });
     } catch (error: any) {
         toast({ title: `Erro no Lote de Arquivos`, description: error.message, variant: "destructive" });
     }
@@ -225,11 +225,11 @@ export default function ConectarCRMPage() {
                             <p className="text-xs text-muted-foreground">Este será o tipo usado se a coluna "tipo" não for encontrada no arquivo.</p>
                         </div>
                         <div className="space-y-2">
-                             <Label>Arquivos de Exportação</Label>
-                             <CardDescription>Exporte seus dados em formato CSV, XLSX ou JSON do seu CRM e faça o upload aqui (máx. 5 arquivos).</CardDescription>
+                             <Label>Arquivo de Exportação</Label>
+                             <CardDescription>Exporte seus dados em formato CSV, XLSX, JSON ou XML do seu CRM e faça o upload aqui.</CardDescription>
                              <div onClick={() => fileInputRef.current?.click()} className="mt-2 border-2 border-dashed p-12 text-center cursor-pointer hover:bg-secondary">
                                 <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <p className="text-sm">Clique ou arraste para adicionar arquivos</p>
+                                <p className="text-sm">Clique ou arraste para adicionar um arquivo</p>
                                 <Input 
                                   ref={fileInputRef} 
                                   id="file-input" 
@@ -238,13 +238,12 @@ export default function ConectarCRMPage() {
                                   className="hidden" 
                                   accept=".csv,.xlsx,.json,.xml" 
                                   onChange={handleFileChange} 
-                                  multiple 
                                 />
                             </div>
 
                             {uploadedFiles.length > 0 && (
                                 <div className="space-y-2 mt-4">
-                                    <Label>Arquivos selecionados:</Label>
+                                    <Label>Arquivo selecionado:</Label>
                                     <div className="space-y-1">
                                     {uploadedFiles.map((file, index) => (
                                         <div key={index} className="flex justify-between items-center text-sm p-2 bg-muted rounded-md border">
@@ -262,7 +261,7 @@ export default function ConectarCRMPage() {
 
                         <Button onClick={handleFileUpload} className="w-full" disabled={isUploading || uploadedFiles.length === 0}>
                             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isUploading ? "Processando..." : `Importar ${uploadedFiles.length > 0 ? uploadedFiles.length : ''} Arquivo(s)`}
+                            {isUploading ? "Processando..." : `Importar Arquivo`}
                         </Button>
                     </div>
                 </TabsContent>
