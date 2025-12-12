@@ -78,7 +78,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
         </div>
       </div>
       <CardHeader>
-        <CardTitle className="text-lg">{land.title}</CardTitle>
+        <CardTitle className="text-lg">{String(land.title || "Sem título")}</CardTitle>
         <CardDescription>por {land.owner}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-4 text-sm text-muted-foreground">
