@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import { useState, useRef } from "react";
-import { useUser } from "@/firebase";
 import { getAuth } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -24,7 +23,6 @@ const crmOptions = [
 const MAX_FILES = 5;
 
 export default function ConectarCRMPage() {
-  const { user } = useUser();
   const { toast } = useToast();
   const [crm, setCRM] = useState("");
   const [apiKey, setApiKey] = useState("");
