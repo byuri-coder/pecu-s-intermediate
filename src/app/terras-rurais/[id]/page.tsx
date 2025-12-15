@@ -169,7 +169,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
       <div className="mb-6 flex items-center space-x-2 text-sm text-muted-foreground">
         <Link href="/terras-rurais" className="hover:text-primary">Terras Rurais</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">{land.title}</span>
+        <span className="text-foreground">{String(land.title || 'Detalhe do Ativo')}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -177,7 +177,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
           <div>
             <div className="flex flex-wrap items-center gap-4 mb-2">
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl font-headline">
-                {land.title}
+                {String(land.title || 'Propriedade Rural')}
               </h1>
               <StatusBadge status={land.status} />
             </div>
@@ -201,7 +201,7 @@ export default function RuralLandDetailPage({ params }: { params: { id: string }
                                             ) : (
                                                 <Image
                                                     src={media.url}
-                                                    alt={media.alt || `Mídia ${index + 1} de ${land.title}`}
+                                                    alt={media.alt || `Mídia ${index + 1} de ${String(land.title)}`}
                                                     fill
                                                     className="object-cover"
                                                 />
