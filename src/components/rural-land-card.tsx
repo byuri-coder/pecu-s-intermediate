@@ -18,7 +18,7 @@ const BusinessTypeIcon = ({ type }: { type: RuralLand['businessType'] }) => {
     'Mineração': Pickaxe,
     'Arrendamento': Sprout,
   };
-  const Icon = icons[type];
+  const Icon = icons[type] || Handshake; // Fallback icon
   return <Icon className="h-4 w-4 text-primary" />;
 }
 
@@ -27,19 +27,23 @@ const StatusBadge = ({ status }: { status: RuralLand['status'] }) => {
       'Disponível': 'default',
       'Negociando': 'outline',
       'Vendido': 'secondary',
-    }[status] as 'default' | 'outline' | 'secondary';
+    }[status] as 'default' | 'outline' | 'secondary' || 'secondary';
   
     const className = {
       'Disponível': 'bg-green-100 text-green-800 border-green-200',
       'Negociando': 'bg-yellow-100 text-yellow-800 border-yellow-200',
       'Vendido': 'bg-gray-100 text-gray-800 border-gray-200',
-    }[status];
+    }[status] || 'bg-gray-100 text-gray-800';
   
-    return <Badge variant={variant} className={cn('capitalize', className)}>{status}</Badge>;
+    return <Badge variant={variant} className={cn('capitalize', className)}>{status || 'Indefinido'}</Badge>;
   };
 
 export function RuralLandCard({ land }: RuralLandCardProps) {
   
+  if (!land) {
+    return null; // Don't render anything if the land object is invalid
+  }
+
   const getPriceLabel = () => {
     switch (land.businessType) {
       case 'Venda':
@@ -63,7 +67,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
         {imageUrl ? (
             <Image
                 src={imageUrl}
-                alt={`Imagem da propriedade ${land.title}`}
+                alt={`Imagem da propriedade ${String(land.title || "Sem título")}`}
                 fill
                 className="object-cover"
                 loading="lazy"
@@ -74,7 +78,7 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
             </div>
         )}
         <div className="absolute top-2 right-2">
-            <StatusBadge status={land.status} />
+            <StatusBadge status={land.status || 'Disponível'} />
         </div>
       </div>
       <CardHeader>
@@ -83,32 +87,31 @@ export function RuralLandCard({ land }: RuralLandCardProps) {
       </CardHeader>
       <CardContent className="flex-grow space-y-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
-          <BusinessTypeIcon type={land.businessType} />
-          <span>Tipo de Negócio: {land.businessType}</span>
+          <BusinessTypeIcon type={land.businessType || 'Venda'} />
+          <span>Tipo de Negócio: {land.businessType || 'Não definido'}</span>
         </div>
         <div className="flex items-center gap-2">
           <MountainIcon className="h-4 w-4 text-primary" />
-          <span>Tamanho: {land.sizeHa.toLocaleString()} Ha</span>
+          <span>Tamanho: {typeof land.sizeHa === 'number' ? land.sizeHa.toLocaleString() : 'N/A'} Ha</span>
         </div>
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary" />
-          <span>Localização: {land.location}</span>
+          <span>Localização: {land.location || 'Não informada'}</span>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-4 bg-secondary/30 p-4">
-        {land.price && (
+        {(typeof land.price === 'number' && land.price > 0) ? (
           <div>
             <p className="text-xs text-muted-foreground">{getPriceLabel()}</p>
             <p className="text-2xl font-bold text-primary">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(land.price)}
+              {land.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
           </div>
-        )}
-        {land.businessType === 'Permuta' && (
-             <div>
-                <p className="text-xs text-muted-foreground">Negócio</p>
-                <p className="text-xl font-bold text-primary">Aberto a propostas</p>
-            </div>
+        ) : (
+          <div>
+              <p className="text-xs text-muted-foreground">Negócio</p>
+              <p className="text-xl font-bold text-primary">Aberto a propostas</p>
+          </div>
         )}
         <Button asChild className="w-full" disabled={land.status !== 'Disponível'}>
           <Link href={`/terras-rurais/${land.id}`}>Ver Detalhes</Link>
