@@ -25,20 +25,24 @@ async function clearCachePrefix(prefix: string) {
   }
 }
 
-function normalizeNumber(value: any): number {
+// Universal number parser to handle various formats from XLSX files
+function parseAnyNumber(value: any): number {
   if (value === null || value === undefined) return 0;
 
-  return Number(
-    String(value)
-      .toLowerCase()
-      .replace(/r\$/g, "")
-      .replace(/ha/g, "")
-      .replace(/hectares/g, "")
-      .replace(/m2/g, "")
-      .replace(/\s+/g, "")
-      .replace(/\./g, "")
-      .replace(/,/g, ".")
-  ) || 0;
+  let str = String(value)
+    .toLowerCase()
+    .normalize("NFD")               // remove acentos
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/r\$/g, "")
+    .replace(/reais?/g, "")
+    .replace(/ha|hectares?/g, "")
+    .replace(/m2|metros?/g, "")
+    .replace(/[^0-9.,-]/g, "")      // remove tudo que não for número
+    .replace(/\.(?=.*\.)/g, "")     // remove separador de milhar
+    .replace(/,/g, ".");
+
+  const num = Number(str);
+  return Number.isFinite(num) ? num : 0;
 }
 
 
@@ -59,34 +63,31 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
 
         titulo:
             sanitized.titulo ||
-            sanitized.titulo_do_ativo ||
             sanitized.nome ||
-            sanitized.nome_do_ativo ||
-            "Sem título",
+            sanitized.nome_do_imovel ||
+            "Imóvel Rural",
 
         tipo:
             sanitized.tipo ||
-            sanitized.categoria ||
             sanitized.tipo_de_ativo ||
-            defaultAssetType || // fallback explícito
+            defaultAssetType ||
             "other",
 
-        price: normalizeNumber(
+        price: parseAnyNumber(
             sanitized.preco ||
             sanitized.preco_r$ ||
             sanitized.valor ||
-            sanitized.valor_r$ ||
-            sanitized.price
+            sanitized.valor_total
         ),
         
         metadados: {
             ...raw,
-            areaHectares: normalizeNumber(
-                sanitized.area_hectares ||
-                sanitized.area_ha ||
-                sanitized.area ||
-                sanitized.tamanho ||
-                sanitized.area_total
+            areaHectares: parseAnyNumber(
+              sanitized.area_hectares ||
+              sanitized.area_ha ||
+              sanitized.area ||
+              sanitized.tamanho ||
+              sanitized.hectares
             ),
         },
 
@@ -99,12 +100,12 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
 function parseSingleAdFromXLSX(buffer: Buffer) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
 
   const ad: any = {};
 
   for (const row of rows) {
-    if (!row[0] || !row[1]) continue;
+    if (!row[0] || row[1] === null || row[1] === undefined) continue;
 
     const key = removeAccents(String(row[0])).trim().toLowerCase().replace(/\s+/g, "_");
     const value = row[1];
@@ -158,17 +159,17 @@ export async function POST(req: Request) {
               uidFirebase: userId,
               titulo: adObject["titulo"] || "Sem título",
               tipo: adObject["tipo_transacao"] === "venda" ? "rural-land" : (adObject["tipo_transacao"] || defaultAssetType || "other"),
-              price: normalizeNumber(adObject["valor_reais"]),
+              price: parseAnyNumber(adObject["valor_reais"]),
               status: "Disponível",
               origin: `import:${integrationType}`,
               createdAt: timestamp,
               metadados: {
+                ...adObject,
                 owner: adObject["dono"],
                 registration: adObject["numero_propriedade"],
                 location: `${adObject["municipio"]}, ${adObject["estado"]}`,
-                sizeHa: normalizeNumber(adObject["tamanho_hectares"]),
+                sizeHa: parseAnyNumber(adObject["tamanho_hectares"]),
                 businessType: adObject["tipo_transacao"] || 'Venda',
-                ...adObject
               },
               descricao: adObject["descricao"]
             };
@@ -190,18 +191,17 @@ export async function POST(req: Request) {
               const xml = parser.parse(buffer.toString());
               rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
             }
-            allRecords.push(...rows);
+             // For non-xlsx files, use the multi-record logic
+            if (rows.length > 0) {
+              const normalized = rows.map((r) =>
+                normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
+              );
+              const saved = await Anuncio.insertMany(normalized);
+              savedCount += saved.length;
+            }
         }
       }
       
-      if (allRecords.length > 0) {
-        const normalized = allRecords.map((r) =>
-          normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
-        );
-        const saved = await Anuncio.insertMany(normalized);
-        savedCount += saved.length;
-      }
-
       if (savedCount === 0) {
          return NextResponse.json(
           { error: "Nenhum registro válido encontrado nos arquivos." },
