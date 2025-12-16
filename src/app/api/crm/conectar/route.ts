@@ -25,17 +25,22 @@ async function clearCachePrefix(prefix: string) {
   }
 }
 
-function normalizePrice(value: any): number {
-  if (!value) return 0;
+function normalizeNumber(value: any): number {
+  if (value === null || value === undefined) return 0;
 
   return Number(
     String(value)
-      .replace(/\s+/g, "")      // remove all whitespace
-      .replace(/R\$/gi, "")    // remove currency symbol
-      .replace(/\./g, "")       // remove thousand separators
-      .replace(/,/g, ".")       // replace decimal comma with a dot
+      .toLowerCase()
+      .replace(/r\$/g, "")
+      .replace(/ha/g, "")
+      .replace(/hectares/g, "")
+      .replace(/m2/g, "")
+      .replace(/\s+/g, "")
+      .replace(/\./g, "")
+      .replace(/,/g, ".")
   ) || 0;
 }
+
 
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
   const sanitized: { [key: string]: any } = {};
@@ -51,6 +56,7 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
     
     return {
         uidFirebase: userId,
+
         titulo:
             sanitized.titulo ||
             sanitized.titulo_do_ativo ||
@@ -61,20 +67,32 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
         tipo:
             sanitized.tipo ||
             sanitized.categoria ||
-            sanitized.category ||
-            defaultAssetType || // Use the default type from the form
-            "other", // Final fallback
+            sanitized.tipo_de_ativo ||
+            defaultAssetType || // fallback explícito
+            "other",
 
-        price: normalizePrice(
+        price: normalizeNumber(
             sanitized.preco ||
-            sanitized.price ||
+            sanitized.preco_r$ ||
             sanitized.valor ||
-            sanitized.valor_reais
+            sanitized.valor_r$ ||
+            sanitized.price
         ),
+        
+        metadados: {
+            ...raw,
+            areaHectares: normalizeNumber(
+                sanitized.area_hectares ||
+                sanitized.area_ha ||
+                sanitized.area ||
+                sanitized.tamanho ||
+                sanitized.area_total
+            ),
+        },
+
         status: "Disponível",
         origin: `import:${integrationType}`,
         createdAt: timestamp,
-        metadados: raw,
     };
 }
 
@@ -135,11 +153,12 @@ export async function POST(req: Request) {
 
         if (name.endsWith(".xlsx")) {
             const adObject = parseSingleAdFromXLSX(buffer);
+            
             const anuncioToCreate = {
               uidFirebase: userId,
               titulo: adObject["titulo"] || "Sem título",
               tipo: adObject["tipo_transacao"] === "venda" ? "rural-land" : (adObject["tipo_transacao"] || defaultAssetType || "other"),
-              price: normalizePrice(adObject["valor_reais"]),
+              price: normalizeNumber(adObject["valor_reais"]),
               status: "Disponível",
               origin: `import:${integrationType}`,
               createdAt: timestamp,
@@ -147,7 +166,7 @@ export async function POST(req: Request) {
                 owner: adObject["dono"],
                 registration: adObject["numero_propriedade"],
                 location: `${adObject["municipio"]}, ${adObject["estado"]}`,
-                sizeHa: Number(adObject["tamanho_hectares"]) || null,
+                sizeHa: normalizeNumber(adObject["tamanho_hectares"]),
                 businessType: adObject["tipo_transacao"] || 'Venda',
                 ...adObject
               },
