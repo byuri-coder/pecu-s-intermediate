@@ -71,7 +71,7 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
             sanitized.tipo ||
             sanitized.tipo_de_ativo ||
             defaultAssetType ||
-            "other",
+            "rural-land",
 
         price: parseAnyNumber(
             sanitized.preco ||
@@ -193,11 +193,24 @@ export async function POST(req: Request) {
             }
              // For non-xlsx files, use the multi-record logic
             if (rows.length > 0) {
-              const normalized = rows.map((r) =>
-                normalizeAndMapRecord(r, userId, integrationType, timestamp, defaultAssetType)
-              );
-              const saved = await Anuncio.insertMany(normalized);
-              savedCount += saved.length;
+                const normalized = rows.map((raw) => {
+                    const sanitized: { [key: string]: any } = {};
+                    for (const key of Object.keys(raw)) {
+                        const k = removeAccents(key).trim().toLowerCase().replace(/\s+/g, "_");
+                        sanitized[k] = raw[key];
+                    }
+
+                    console.log("IMPORT CHECK", {
+                        preco_raw: sanitized.preco,
+                        area_raw: sanitized.area_hectares,
+                        preco_final: parseAnyNumber(sanitized.preco),
+                        area_final: parseAnyNumber(sanitized.area_hectares),
+                    });
+
+                    return normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType);
+                });
+                const saved = await Anuncio.insertMany(normalized);
+                savedCount += saved.length;
             }
         }
       }
