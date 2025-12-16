@@ -150,10 +150,10 @@ export function Header() {
                     </NavigationMenuContent>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <Link href="/agente-de-assistencia" legacyBehavior passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        Calculadora e Simuladores
-                    </NavigationMenuLink>
+                    <Link href="/agente-de-assistencia" passHref>
+                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                          Calculadora e Simuladores
+                      </NavigationMenuLink>
                     </Link>
               </NavigationMenuItem>
             </NavigationMenuList>
