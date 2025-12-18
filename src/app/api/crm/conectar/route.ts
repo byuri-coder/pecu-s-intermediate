@@ -117,7 +117,7 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
         sanitized[k] = raw[key];
     }
     
-    const { preco, area_hectares } = extractFields(raw);
+    const { preco, area_hectares } = extractFields(sanitized);
 
     return {
         uidFirebase: userId,
