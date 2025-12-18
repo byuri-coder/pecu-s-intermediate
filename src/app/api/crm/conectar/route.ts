@@ -35,9 +35,6 @@ function normalizeText(input: any): string {
     .trim();
 }
 
-const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
-const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
-
 function parseFlexibleNumber(value: any): number | null {
   if (value === null || value === undefined) return null;
 
@@ -75,6 +72,10 @@ function parseFlexibleNumber(value: any): number | null {
   const num = Number(str);
   return Number.isFinite(num) ? num : null;
 }
+
+
+const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
+const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
 
 
 // CAMADA 4 — Leitura por chave + fallback por valor textual
@@ -142,11 +143,7 @@ function parseVerticalSheet(rows: any[][]) {
     const [key, value] = rows[i];
     if (!key) continue;
     
-    const normalizedKey = removeAccents(String(key))
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "_")
-      .replace(/[^\w_]/g, "");
+    const normalizedKey = normalizeText(String(key));
 
     obj[normalizedKey] = value;
   }
@@ -200,7 +197,8 @@ export async function POST(req: Request) {
             });
           
             const record = parseVerticalSheet(matrix);
-            allRecords.push(record);
+            const normalized = normalizeAndMapRecord(record, userId, integrationType, timestamp, defaultAssetType);
+            allRecords.push(normalized);
 
         } else {
             let rows: any[] = [];
@@ -217,7 +215,8 @@ export async function POST(req: Request) {
               const xml = parser.parse(buffer.toString());
               rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
             }
-             allRecords.push(...rows);
+             const normalizedRows = rows.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType));
+             allRecords.push(...normalizedRows);
         }
       }
       
@@ -228,8 +227,7 @@ export async function POST(req: Request) {
         );
       }
       
-      const normalized = allRecords.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType));
-      const saved = await Anuncio.insertMany(normalized);
+      const saved = await Anuncio.insertMany(allRecords);
 
       await clearCachePrefix("anuncios");
 
