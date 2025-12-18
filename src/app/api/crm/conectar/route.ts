@@ -45,6 +45,16 @@ function parseAnyNumber(value: any): number {
   return Number.isFinite(num) ? num : 0;
 }
 
+function normalizeText(input: any): string {
+  return String(input ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
   const sanitized: { [key: string]: any } = {};
 
@@ -103,11 +113,9 @@ function parseVerticalSheet(rows: any[][]) {
     const [key, value] = rows[i];
     if (!key) continue;
 
-    const normalizedKey = removeAccents(String(key))
-      .toLowerCase()
-      .trim()
+    const normalizedKey = normalizeText(key)
       .replace(/\s+/g, "_")
-      .replace(/[^\w]/g, "");
+      .replace(/[^\w_]/g, ""); // Allow underscore
 
     obj[normalizedKey] = value;
   }
