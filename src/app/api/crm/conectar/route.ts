@@ -110,29 +110,49 @@ function extractFields(record: Record<string, any>) {
 }
 
 
-function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
-    const sanitized: { [key: string]: any } = {};
-    for (const key of Object.keys(raw)) {
-        const k = normalizeText(key);
-        sanitized[k] = raw[key];
-    }
-    
-    const { preco, area_hectares } = extractFields(sanitized);
+function normalizeAndMapRecord(
+  raw: any,
+  userId: string,
+  integrationType: string,
+  timestamp: Date,
+  assetType: string
+) {
+  const sanitized: Record<string, any> = {};
+  for (const key of Object.keys(raw)) {
+    sanitized[normalizeText(key)] = raw[key];
+  }
 
-    return {
-        uidFirebase: userId,
-        titulo: sanitized["titulo"] || sanitized["nome"] || sanitized["nome do imovel"] || "Imóvel Rural",
-        tipo: sanitized["tipo"] || sanitized["tipo de ativo"] || defaultAssetType || "terras_rurais",
-        price: preco,
-        metadados: {
-            ...raw,
-            areaHectares: area_hectares,
-        },
-        status: "Disponível",
-        origin: `import:${integrationType}`,
-        createdAt: timestamp,
-    };
+  const { preco, area_hectares } = extractFields(sanitized);
+
+  return {
+    uidFirebase: userId,
+    titulo:
+      sanitized["titulo"] ||
+      sanitized["nome"] ||
+      sanitized["nome do imovel"] ||
+      "Ativo importado",
+
+    tipo: assetType, // 🔥 ÚNICA FONTE DA VERDADE
+
+    price: preco || null,
+
+    descricao:
+      sanitized["descricao"] ||
+      sanitized["observacoes"] ||
+      sanitized["detalhes"] ||
+      null,
+
+    metadados: {
+      ...raw,
+      areaHectares: area_hectares,
+    },
+
+    status: "Disponível",
+    origin: `import:${integrationType}`,
+    createdAt: timestamp,
+  };
 }
+
 
 
 function parseVerticalSheet(rows: any[][]) {
@@ -166,7 +186,14 @@ export async function POST(req: Request) {
       const files = form.getAll("file") as File[];
       const userId = form.get("userId") as string;
       const integrationType = form.get("integrationType") as string;
-      const defaultAssetType = form.get("defaultAssetType") as string;
+      const assetType = form.get("defaultAssetType") as string;
+      
+      if (!assetType) {
+        return NextResponse.json(
+          { error: "Tipo de ativo não informado." },
+          { status: 400 }
+        );
+      }
 
       if (!files || files.length === 0) {
         return NextResponse.json(
@@ -196,8 +223,7 @@ export async function POST(req: Request) {
             }) as any[][];
           
             const record = parseVerticalSheet(matrix);
-            const normalized = normalizeAndMapRecord(record, userId, integrationType, timestamp, defaultAssetType);
-            allRecords.push(normalized);
+            allRecords.push(record);
 
         } else {
             let rows: any[] = [];
@@ -214,8 +240,7 @@ export async function POST(req: Request) {
               const xml = parser.parse(buffer.toString());
               rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
             }
-             const normalizedRows = rows.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType));
-             allRecords.push(...normalizedRows);
+             allRecords.push(...rows);
         }
       }
       
@@ -226,7 +251,11 @@ export async function POST(req: Request) {
         );
       }
       
-      const saved = await Anuncio.insertMany(allRecords);
+      const normalizedRecords = allRecords.map(raw =>
+        normalizeAndMapRecord(raw, userId, integrationType, timestamp, assetType)
+      );
+      
+      const saved = await Anuncio.insertMany(normalizedRecords);
 
       await clearCachePrefix("anuncios");
 
