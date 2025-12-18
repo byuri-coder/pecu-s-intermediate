@@ -54,70 +54,59 @@ function normalizeText(input: any): string {
     .trim();
 }
 
+// --- Semantic Key Definitions ---
+const TITULO_KEYS = ["titulo", "nome", "nome do imovel", "titulo do ativo", "nome do ativo"];
+const TIPO_KEYS = ["tipo", "categoria", "tipo de ativo"];
+const PRECO_KEYS = ["preco", "preco r$", "valor", "valor r$", "price", "preco total", "valor total", "venda", "preco de venda", "r$", "reais"];
+const AREA_KEYS = ["area hectares", "area ha", "area", "tamanho", "area total", "hectares", "ha", "extensao", "metragem", "m2", "km2"];
+
+// Helper function to find a value by searching through a list of possible keys
+function findValueByKeys(record: Record<string, any>, keys: string[]): any {
+    const normalizedRecord: Record<string, any> = {};
+    for (const key in record) {
+        normalizedRecord[normalizeText(key)] = record[key];
+    }
+    
+    for (const key of keys) {
+        if (normalizedRecord[key] !== undefined && normalizedRecord[key] !== null) {
+            return normalizedRecord[key];
+        }
+    }
+    return null;
+}
 
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
-  const sanitized: { [key: string]: any } = {};
+    const sanitized: { [key: string]: any } = {};
+    for (const key of Object.keys(raw)) {
+        const k = normalizeText(key).replace(/\s+/g, "_");
+        sanitized[k] = raw[key];
+    }
 
-  for (const key of Object.keys(raw)) {
-    const k = removeAccents(key)
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "_");
-
-    sanitized[k] = raw[key];
-  }
-    
     return {
         uidFirebase: userId,
-
-        titulo:
-            sanitized.titulo ||
-            sanitized.nome ||
-            sanitized.nome_do_imovel ||
-            "Imóvel Rural",
-
-        tipo:
-            sanitized.tipo ||
-            sanitized.tipo_de_ativo ||
-            defaultAssetType ||
-            "rural-land",
-
-        price: parseAnyNumber(
-            sanitized.preco ||
-            sanitized.preco_r$ ||
-            sanitized.valor ||
-            sanitized.valor_total
-        ),
-        
+        titulo: findValueByKeys(raw, TITULO_KEYS) || "Sem título",
+        tipo: findValueByKeys(raw, TIPO_KEYS) || defaultAssetType || "terras_rurais",
+        price: parseAnyNumber(findValueByKeys(raw, PRECO_KEYS)),
         metadados: {
             ...raw,
-            areaHectares: parseAnyNumber(
-              sanitized.area_hectares ||
-              sanitized.area_ha ||
-              sanitized.area ||
-              sanitized.tamanho ||
-              sanitized.hectares
-            ),
+            areaHectares: parseAnyNumber(findValueByKeys(raw, AREA_KEYS)),
         },
-
         status: "Disponível",
         origin: `import:${integrationType}`,
         createdAt: timestamp,
     };
 }
 
+
 function parseVerticalSheet(rows: any[][]) {
   const obj: Record<string, any> = {};
 
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = 0; i < rows.length; i++) {
     const [key, value] = rows[i];
     if (!key) continue;
 
-    const normalizedKey = normalizeText(key)
-      .replace(/\s+/g, "_")
-      .replace(/[^\w_]/g, ""); // Allow underscore
-
-    obj[normalizedKey] = value;
+    // A normalização da chave acontece no findValueByKeys
+    obj[String(key)] = value;
   }
 
   return obj;
