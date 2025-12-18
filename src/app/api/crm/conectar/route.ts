@@ -73,7 +73,6 @@ function parseFlexibleNumber(value: any): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
-
 const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
 const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
 
@@ -190,11 +189,11 @@ export async function POST(req: Request) {
             const wb = XLSX.read(buffer);
             const sheet = wb.Sheets[wb.SheetNames[0]];
 
-            const matrix = XLSX.utils.sheet_to_json(sheet, {
+            const matrix = XLSX.utils.sheet_to_json<any[]>(sheet, {
               header: 1,
               raw: false,
               defval: null
-            });
+            }) as any[][];
           
             const record = parseVerticalSheet(matrix);
             const normalized = normalizeAndMapRecord(record, userId, integrationType, timestamp, defaultAssetType);
