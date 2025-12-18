@@ -25,8 +25,18 @@ async function clearCachePrefix(prefix: string) {
   }
 }
 
-// Universal number parser to handle various formats from XLSX files
-function parseAnyNumber(value: any): number {
+// CAMADA 1 — Normalização agressiva de texto
+function normalizeText(input: any): string {
+  return String(input ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Universal number parser to handle various formats
+function parseFlexibleNumber(value: any): number {
   if (value === null || value === undefined) return 0;
 
   let str = String(value)
@@ -45,51 +55,60 @@ function parseAnyNumber(value: any): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-function normalizeText(input: any): string {
-  return String(input ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove acentos
-    .replace(/\s+/g, " ")
-    .trim();
+// Semantic Key Definitions
+const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
+const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
+
+// CAMADA 4 — Leitura por chave + fallback por valor textual
+function extractFields(record: Record<string, any>) {
+  let preco: number | null = null;
+  let area: number | null = null;
+
+  for (const [rawKey, rawValue] of Object.entries(record)) {
+    const key = normalizeText(rawKey);
+    const value = normalizeText(rawValue);
+
+    // PREÇO
+    if (preco === null && PRECO_KEYS.some(k => key.includes(k))) {
+      preco = parseFlexibleNumber(rawValue);
+    }
+
+    // ÁREA
+    if (area === null && AREA_KEYS.some(k => key.includes(k))) {
+      let num = parseFlexibleNumber(rawValue);
+
+      // Conversões automáticas
+      if (value.includes("m2")) num = num ? num / 10000 : num;
+      if (value.includes("km2")) num = num ? num * 100 : num;
+
+      area = num;
+    }
+  }
+
+  return {
+    preco,
+    area_hectares: area,
+  };
 }
 
-// --- Semantic Key Definitions ---
-const TITULO_KEYS = ["titulo", "nome", "nome do imovel", "titulo do ativo", "nome do ativo"];
-const TIPO_KEYS = ["tipo", "categoria", "tipo de ativo"];
-const PRECO_KEYS = ["preco", "preco r$", "valor", "valor r$", "price", "preco total", "valor total", "venda", "preco de venda", "r$", "reais"];
-const AREA_KEYS = ["area hectares", "area ha", "area", "tamanho", "area total", "hectares", "ha", "extensao", "metragem", "m2", "km2"];
-
-// Helper function to find a value by searching through a list of possible keys
-function findValueByKeys(record: Record<string, any>, keys: string[]): any {
-    const normalizedRecord: Record<string, any> = {};
-    for (const key in record) {
-        normalizedRecord[normalizeText(key)] = record[key];
-    }
-    
-    for (const key of keys) {
-        if (normalizedRecord[key] !== undefined && normalizedRecord[key] !== null) {
-            return normalizedRecord[key];
-        }
-    }
-    return null;
-}
 
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
     const sanitized: { [key: string]: any } = {};
     for (const key of Object.keys(raw)) {
-        const k = normalizeText(key).replace(/\s+/g, "_");
+        const k = normalizeText(key);
         sanitized[k] = raw[key];
     }
+    
+    const { preco, area_hectares } = extractFields(raw);
 
     return {
         uidFirebase: userId,
-        titulo: findValueByKeys(raw, TITULO_KEYS) || "Sem título",
-        tipo: findValueByKeys(raw, TIPO_KEYS) || defaultAssetType || "terras_rurais",
-        price: parseAnyNumber(findValueByKeys(raw, PRECO_KEYS)),
+        titulo: sanitized["titulo"] || sanitized["nome"] || sanitized["nome do imovel"] || "Imóvel Rural",
+        tipo: sanitized["tipo"] || sanitized["tipo de ativo"] || defaultAssetType || "terras_rurais",
+        price: preco,
         metadados: {
             ...raw,
-            areaHectares: parseAnyNumber(findValueByKeys(raw, AREA_KEYS)),
+            areaHectares: area_hectares,
         },
         status: "Disponível",
         origin: `import:${integrationType}`,
@@ -104,8 +123,6 @@ function parseVerticalSheet(rows: any[][]) {
   for (let i = 0; i < rows.length; i++) {
     const [key, value] = rows[i];
     if (!key) continue;
-
-    // A normalização da chave acontece no findValueByKeys
     obj[String(key)] = value;
   }
 
