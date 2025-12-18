@@ -45,7 +45,6 @@ function parseAnyNumber(value: any): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-
 function normalizeAndMapRecord(raw: any, userId: string, integrationType: string, timestamp: Date, defaultAssetType?: string) {
   const sanitized: { [key: string]: any } = {};
 
@@ -97,23 +96,23 @@ function normalizeAndMapRecord(raw: any, userId: string, integrationType: string
     };
 }
 
-function parseSingleAdFromXLSX(buffer: Buffer) {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
+function parseVerticalSheet(rows: any[][]) {
+  const obj: Record<string, any> = {};
 
-  const ad: any = {};
+  for (let i = 1; i < rows.length; i++) {
+    const [key, value] = rows[i];
+    if (!key) continue;
 
-  for (const row of rows) {
-    if (!row[0] || row[1] === null || row[1] === undefined) continue;
+    const normalizedKey = removeAccents(String(key))
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^\w]/g, "");
 
-    const key = removeAccents(String(row[0])).trim().toLowerCase().replace(/\s+/g, "_");
-    const value = row[1];
-
-    ad[key] = value;
+    obj[normalizedKey] = value;
   }
 
-  return ad;
+  return obj;
 }
 
 
@@ -142,8 +141,7 @@ export async function POST(req: Request) {
       }
 
       let allRecords: any[] = [];
-      let savedCount = 0;
-
+      
       for (const file of files) {
         if (!(file instanceof Blob)) {
             console.warn("Item inválido ignorado:", file);
@@ -153,28 +151,17 @@ export async function POST(req: Request) {
         const name = file.name.toLowerCase();
 
         if (name.endsWith(".xlsx")) {
-            const adObject = parseSingleAdFromXLSX(buffer);
-            
-            const anuncioToCreate = {
-              uidFirebase: userId,
-              titulo: adObject["titulo"] || "Sem título",
-              tipo: adObject["tipo_transacao"] === "venda" ? "rural-land" : (adObject["tipo_transacao"] || defaultAssetType || "other"),
-              price: parseAnyNumber(adObject["valor_reais"]),
-              status: "Disponível",
-              origin: `import:${integrationType}`,
-              createdAt: timestamp,
-              metadados: {
-                ...adObject,
-                owner: adObject["dono"],
-                registration: adObject["numero_propriedade"],
-                location: `${adObject["municipio"]}, ${adObject["estado"]}`,
-                sizeHa: parseAnyNumber(adObject["tamanho_hectares"]),
-                businessType: adObject["tipo_transacao"] || 'Venda',
-              },
-              descricao: adObject["descricao"]
-            };
-            await Anuncio.create(anuncioToCreate);
-            savedCount++;
+            const wb = XLSX.read(buffer);
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+
+            const matrix = XLSX.utils.sheet_to_json(sheet, {
+              header: 1,
+              raw: false,
+              defval: null
+            });
+          
+            const record = parseVerticalSheet(matrix);
+            allRecords.push(record);
 
         } else {
             let rows: any[] = [];
@@ -191,36 +178,19 @@ export async function POST(req: Request) {
               const xml = parser.parse(buffer.toString());
               rows = xml?.anuncios?.anuncio || xml?.anuncios || [];
             }
-             // For non-xlsx files, use the multi-record logic
-            if (rows.length > 0) {
-                const normalized = rows.map((raw) => {
-                    const sanitized: { [key: string]: any } = {};
-                    for (const key of Object.keys(raw)) {
-                        const k = removeAccents(key).trim().toLowerCase().replace(/\s+/g, "_");
-                        sanitized[k] = raw[key];
-                    }
-
-                    console.log("IMPORT CHECK", {
-                        preco_raw: sanitized.preco,
-                        area_raw: sanitized.area_hectares,
-                        preco_final: parseAnyNumber(sanitized.preco),
-                        area_final: parseAnyNumber(sanitized.area_hectares),
-                    });
-
-                    return normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType);
-                });
-                const saved = await Anuncio.insertMany(normalized);
-                savedCount += saved.length;
-            }
+             allRecords.push(...rows);
         }
       }
       
-      if (savedCount === 0) {
+      if (allRecords.length === 0) {
          return NextResponse.json(
           { error: "Nenhum registro válido encontrado nos arquivos." },
           { status: 400 }
         );
       }
+      
+      const normalized = allRecords.map(raw => normalizeAndMapRecord(raw, userId, integrationType, timestamp, defaultAssetType));
+      const saved = await Anuncio.insertMany(normalized);
 
       await clearCachePrefix("anuncios");
 
@@ -228,13 +198,13 @@ export async function POST(req: Request) {
         userId,
         integrationType,
         originalFileName: files.map((f) => f.name).join(", "),
-        totalRegistros: savedCount,
+        totalRegistros: saved.length,
         createdAt: timestamp,
       });
 
       return NextResponse.json({
         message: "Importação concluída",
-        registrosSalvos: savedCount,
+        registrosSalvos: saved.length,
         userId,
       });
 
