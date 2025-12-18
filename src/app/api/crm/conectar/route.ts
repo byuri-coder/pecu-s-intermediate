@@ -35,29 +35,47 @@ function normalizeText(input: any): string {
     .trim();
 }
 
-// Universal number parser to handle various formats
-function parseFlexibleNumber(value: any): number {
-  if (value === null || value === undefined) return 0;
+const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
+const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
+
+function parseFlexibleNumber(value: any): number | null {
+  if (value === null || value === undefined) return null;
 
   let str = String(value)
     .toLowerCase()
-    .normalize("NFD")               // remove acentos
+    .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/r\$/g, "")
     .replace(/reais?/g, "")
-    .replace(/ha|hectares?/g, "")
-    .replace(/m2|metros?/g, "")
-    .replace(/[^0-9.,-]/g, "")      // remove tudo que não for número
-    .replace(/\.(?=.*\.)/g, "")     // remove separador de milhar
-    .replace(/,/g, ".");
+    .replace(/[^0-9.,]/g, "");
+
+  if (!str) return null;
+
+  // Caso: 1.234,56
+  if (str.includes(".") && str.includes(",")) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  }
+  // Caso: 1.234
+  else if (str.includes(".") && !str.includes(",")) {
+    const parts = str.split(".");
+    if (parts[1]?.length === 3) {
+      str = parts.join("");
+    }
+  }
+  // Caso: 1,234
+  else if (str.includes(",") && !str.includes(".")) {
+    const parts = str.split(",");
+    if (parts[1]?.length === 3) {
+      str = parts.join("");
+    } else {
+      str = parts.join(".");
+    }
+  }
 
   const num = Number(str);
-  return Number.isFinite(num) ? num : 0;
+  return Number.isFinite(num) ? num : null;
 }
 
-// Semantic Key Definitions
-const AREA_KEYS = ["area", "tamanho", "hectares", "extensao", "metragem", "m2", "km2"];
-const PRECO_KEYS = ["preco", "valor", "venda", "r$", "reais"];
 
 // CAMADA 4 — Leitura por chave + fallback por valor textual
 function extractFields(record: Record<string, any>) {
@@ -123,7 +141,14 @@ function parseVerticalSheet(rows: any[][]) {
   for (let i = 0; i < rows.length; i++) {
     const [key, value] = rows[i];
     if (!key) continue;
-    obj[String(key)] = value;
+    
+    const normalizedKey = removeAccents(String(key))
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^\w_]/g, "");
+
+    obj[normalizedKey] = value;
   }
 
   return obj;
